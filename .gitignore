@@ -37,3 +37,6 @@ Thumbs.db
 .codex/tmp/
 .codex/cache/
 
+# Local workspace notes
+AGENTS.md
+docs/collaboration-method.md
