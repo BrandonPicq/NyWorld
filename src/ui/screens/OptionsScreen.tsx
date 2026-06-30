@@ -53,7 +53,7 @@ export function OptionsScreen({
     <main className="app-shell options-screen" aria-labelledby="options-heading">
       <TerminalPanel className="options-panel">
         <p className="terminal-kicker">{optionsView.kicker}</p>
-        <h1 className="terminal-heading" id="options-heading">
+        <h1 className="terminal-heading-md" id="options-heading">
           {optionsView.heading}
         </h1>
         <p className="options-copy">{optionsView.copy}</p>

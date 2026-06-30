@@ -165,7 +165,7 @@ export function GameScreen({ keyboardLayout, onBackToTitle }: GameScreenProps) {
         {/* Center Panel: Map Canvas */}
         <TerminalPanel className="game-layout__center">
           <p className="terminal-kicker">SESSION ACTIVE</p>
-          <h1 className="terminal-heading" id="game-heading">
+          <h1 className="terminal-heading-md" id="game-heading">
             {snapshot.zoneName}
           </h1>
 
@@ -232,7 +232,7 @@ export function GameScreen({ keyboardLayout, onBackToTitle }: GameScreenProps) {
               onClick={(e) => e.stopPropagation()}
             >
               <p className="terminal-kicker">CHARACTER PROFILE</p>
-              <h2 className="terminal-heading">Character Sheet</h2>
+              <h2 className="terminal-heading-md">Character Sheet</h2>
 
               <div className="stats-modal__content">
                 <div className="stats-modal__section">
