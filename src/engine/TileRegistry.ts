@@ -12,6 +12,10 @@ const registry: Record<TileId, TileDef> = {
   1: { name: "wall",  walkable: false, glyph: "#", color: "#666666" },
 };
 
+export function hasTileDef(id: TileId): boolean {
+  return Object.prototype.hasOwnProperty.call(registry, id);
+}
+
 export function getTileDef(id: TileId): TileDef {
   return registry[id] ?? registry[0];
 }

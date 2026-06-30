@@ -79,13 +79,17 @@ Les sons de menu V0 sont generes par une petite couche Web Audio cote UI. Cette 
 
 ## Tests et validation
 
-Tests unitaires a prevoir avec Vitest :
+Tests unitaires V0 avec Vitest :
 
-- le joueur se deplace correctement dans les quatre directions ;
-- le joueur ne sort pas de la carte ;
-- une action valide incremente le tick ;
-- une carte JSON valide est acceptee ;
-- une carte JSON invalide est refusee.
+- menus, themes et reglages audio ;
+- moteur gameplay : deplacements cardinaux, blocage par la carte, ticks et journal ;
+- chargement de zone : donnees valides, tile ids inconnus, depart invalide et depart bloque.
+
+Tests a completer avec les prochaines tranches :
+
+- rendu Canvas lisible et correctement cadre ;
+- integration clavier/UI sur l'ecran de jeu ;
+- validation plus complete des futurs schemas de contenu.
 
 Validation manuelle :
 

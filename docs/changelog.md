@@ -4,6 +4,13 @@ This file tracks meaningful project changes by commit-oriented slices.
 
 Keep entries short and practical. When a slice is committed, its changelog section should stay aligned with the commit title so the project history remains easy to read after restores or bisects.
 
+## 2026-06-30 - [TEST]: Harden zone loading and engine movement
+
+- Add GameplayEngine tests for cardinal movement, blocked movement, ticks, and logs.
+- Add zone loader tests for valid data, unknown tile ids, invalid starts, and blocked starts.
+- Reject unknown tile ids during zone loading.
+- Reject non-integer player starts and starts on blocked tiles.
+
 ## 2026-06-30 - [ADD]: Build gameplay engine and connect to UI
 
 - Add ECS core (World, EntityId, Component) for entity and component management.

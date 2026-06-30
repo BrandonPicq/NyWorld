@@ -1,4 +1,5 @@
 import { GameMap } from "./GameMap";
+import { getTileDef, hasTileDef } from "./TileRegistry";
 import type { ZoneData } from "./ZoneTypes";
 
 export class ZoneLoadError extends Error {
@@ -25,11 +26,19 @@ export function loadZone(data: unknown): GameMap {
     throw new ZoneLoadError("missing or invalid name");
   }
 
-  if (typeof data.width !== "number" || !Number.isInteger(data.width) || data.width < 1) {
+  if (
+    typeof data.width !== "number" ||
+    !Number.isInteger(data.width) ||
+    data.width < 1
+  ) {
     throw new ZoneLoadError("width must be a positive integer");
   }
 
-  if (typeof data.height !== "number" || !Number.isInteger(data.height) || data.height < 1) {
+  if (
+    typeof data.height !== "number" ||
+    !Number.isInteger(data.height) ||
+    data.height < 1
+  ) {
     throw new ZoneLoadError("height must be a positive integer");
   }
 
@@ -60,7 +69,17 @@ export function loadZone(data: unknown): GameMap {
       if (typeof row[x] !== "number" || !Number.isInteger(row[x])) {
         throw new ZoneLoadError(`tile at (${x}, ${y}) must be an integer`);
       }
+
+      if (!hasTileDef(row[x])) {
+        throw new ZoneLoadError(`unknown tile id ${row[x]} at (${x}, ${y})`);
+      }
     }
+  }
+
+  const startTileId = data.tiles[data.playerStart.y][data.playerStart.x];
+
+  if (!getTileDef(startTileId).walkable) {
+    throw new ZoneLoadError("playerStart must be on a walkable tile");
   }
 
   return new GameMap(data as unknown as ZoneData);
@@ -74,6 +93,8 @@ function isPlayerStart(value: unknown): value is { x: number; y: number } {
   return (
     isRecord(value) &&
     typeof value.x === "number" &&
-    typeof value.y === "number"
+    Number.isInteger(value.x) &&
+    typeof value.y === "number" &&
+    Number.isInteger(value.y)
   );
 }
