@@ -31,7 +31,7 @@ Le code sera separe en deux grandes zones :
 
 React ne doit pas contenir les regles du jeu. Il affiche des snapshots du moteur et envoie des commandes comme `MoveNorth`, `MoveSouth`, `MoveWest`, `MoveEast`.
 
-Le Canvas ne decide pas de l'etat du monde. Il recoit seulement les informations necessaires pour dessiner la grille et les entites visibles.
+Le Canvas ne decide pas de l'etat du monde. Il recoit seulement un snapshot de rendu prepare a partir du snapshot moteur, avec les informations necessaires pour dessiner la grille et les entites visibles.
 
 ## Structure projet V0
 
@@ -91,6 +91,7 @@ Tests unitaires V0 avec Vitest :
 Tests a completer avec les prochaines tranches :
 
 - rendu Canvas lisible et correctement cadre ;
+- snapshots de rendu entre moteur et Canvas ;
 - integration clavier/UI sur l'ecran de jeu ;
 - validation plus complete des futurs schemas de contenu.
 

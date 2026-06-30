@@ -1,24 +1,17 @@
 import { useEffect, useRef } from "react";
 import { GridRenderer } from "../../rendering/GridRenderer";
+import type { GridRenderSnapshot } from "../../rendering/renderSnapshot";
 
 type GameCanvasProps = {
   ariaLabel?: string;
   className?: string;
-  tiles: number[][];
-  playerX: number;
-  playerY: number;
-  mapWidth: number;
-  mapHeight: number;
+  renderSnapshot: GridRenderSnapshot;
 };
 
 export function GameCanvas({
   ariaLabel,
   className,
-  tiles,
-  playerX,
-  playerY,
-  mapWidth,
-  mapHeight,
+  renderSnapshot,
 }: GameCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const rendererRef = useRef<GridRenderer | null>(null);
@@ -28,18 +21,18 @@ export function GameCanvas({
     if (!canvas) return;
 
     const renderer = new GridRenderer(canvas);
-    renderer.setDimensions(mapWidth, mapHeight);
+    renderer.setDimensions(renderSnapshot.width, renderSnapshot.height);
     rendererRef.current = renderer;
 
     return () => {
       renderer.destroy();
       rendererRef.current = null;
     };
-  }, [mapWidth, mapHeight]);
+  }, [renderSnapshot.height, renderSnapshot.width]);
 
   useEffect(() => {
-    rendererRef.current?.render(tiles, playerX, playerY);
-  }, [tiles, playerX, playerY]);
+    rendererRef.current?.render(renderSnapshot);
+  }, [renderSnapshot]);
 
   return (
     <canvas

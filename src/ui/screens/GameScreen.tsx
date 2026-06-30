@@ -3,6 +3,7 @@ import type { GameCommand } from "../../engine/commands";
 import { GameplayEngine } from "../../engine/GameplayEngine";
 import { loadZone } from "../../engine/zoneLoader";
 import type { GameSnapshot } from "../../engine/GameplayEngine";
+import { createGridRenderSnapshot } from "../../rendering";
 import testZoneData from "../../content/zones/test_zone.json";
 import { GameCanvas } from "../components/GameCanvas";
 import { TerminalButton } from "../components/TerminalButton";
@@ -73,6 +74,8 @@ export function GameScreen({ keyboardLayout, onBackToTitle }: GameScreenProps) {
     );
   }
 
+  const gridRenderSnapshot = createGridRenderSnapshot(snapshot);
+
   return (
     <main className="app-shell" aria-labelledby="game-heading">
       <TerminalPanel className="game-screen">
@@ -84,11 +87,7 @@ export function GameScreen({ keyboardLayout, onBackToTitle }: GameScreenProps) {
         <GameCanvas
           ariaLabel="Zone grid"
           className="game-screen__canvas"
-          tiles={snapshot.tiles}
-          playerX={snapshot.playerX}
-          playerY={snapshot.playerY}
-          mapWidth={snapshot.mapWidth}
-          mapHeight={snapshot.mapHeight}
+          renderSnapshot={gridRenderSnapshot}
         />
 
         <div className="game-screen__debug">

@@ -1,11 +1,21 @@
-import { getTileDef } from "../engine/TileRegistry";
+import type { GridRenderSnapshot, GridRenderTile } from "./renderSnapshot";
+
+type RenderColors = {
+  accent: string;
+  bg: string;
+  border: string;
+  text: string;
+};
 
 export class GridRenderer {
   private ctx: CanvasRenderingContext2D;
   private cellSize: number;
+  private canvasWidth = 0;
+  private canvasHeight = 0;
   private mapWidth = 0;
   private mapHeight = 0;
-  private colors: { bg: string; border: string; text: string; accent: string } | null = null;
+  private colors: RenderColors | null = null;
+  private lastSnapshot: GridRenderSnapshot | null = null;
   private observer: MutationObserver | null = null;
 
   constructor(canvas: HTMLCanvasElement, cellSize = 32) {
@@ -23,6 +33,7 @@ export class GridRenderer {
         for (const mutation of mutations) {
           if (mutation.attributeName === "data-theme") {
             this.updateColors();
+            this.renderLastSnapshot();
           }
         }
       });
@@ -40,9 +51,16 @@ export class GridRenderer {
   setDimensions(mapWidth: number, mapHeight: number): void {
     this.mapWidth = mapWidth;
     this.mapHeight = mapHeight;
+    this.canvasWidth = mapWidth * this.cellSize;
+    this.canvasHeight = mapHeight * this.cellSize;
 
-    this.ctx.canvas.width = mapWidth * this.cellSize;
-    this.ctx.canvas.height = mapHeight * this.cellSize;
+    const pixelRatio = getCanvasPixelRatio();
+
+    this.ctx.canvas.width = Math.floor(this.canvasWidth * pixelRatio);
+    this.ctx.canvas.height = Math.floor(this.canvasHeight * pixelRatio);
+    this.ctx.canvas.style.width = `${this.canvasWidth}px`;
+    this.ctx.canvas.style.height = `${this.canvasHeight}px`;
+    this.ctx.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
   }
 
   private updateColors(): void {
@@ -55,8 +73,10 @@ export class GridRenderer {
     };
   }
 
-  render(tiles: number[][], playerX: number, playerY: number): void {
-    const { ctx, cellSize, mapWidth, mapHeight } = this;
+  render(snapshot: GridRenderSnapshot): void {
+    this.lastSnapshot = snapshot;
+
+    const { ctx, canvasWidth, canvasHeight, mapWidth, mapHeight } = this;
 
     if (!this.colors) {
       this.updateColors();
@@ -64,43 +84,47 @@ export class GridRenderer {
 
     const colors = this.colors!;
 
-    ctx.clearRect(0, 0, mapWidth * cellSize, mapHeight * cellSize);
+    ctx.clearRect(0, 0, canvasWidth, canvasHeight);
 
     for (let y = 0; y < mapHeight; y++) {
       for (let x = 0; x < mapWidth; x++) {
-        const tileId = tiles[y]?.[x];
+        const tile = snapshot.tiles[y]?.[x];
 
-        if (tileId == null) {
+        if (!tile) {
           continue;
         }
 
-        this.drawTile(x, y, tileId, colors);
+        this.drawTile(x, y, tile, colors);
       }
     }
 
-    this.drawPlayer(playerX, playerY, colors.accent);
+    this.drawPlayer(snapshot.player.x, snapshot.player.y, colors.accent);
+  }
+
+  private renderLastSnapshot(): void {
+    if (this.lastSnapshot) {
+      this.render(this.lastSnapshot);
+    }
   }
 
   private drawTile(
     x: number,
     y: number,
-    tileId: number,
-    colors: { bg: string; border: string; text: string },
+    tile: GridRenderTile,
+    colors: Pick<RenderColors, "bg" | "border" | "text">,
   ): void {
     const { ctx, cellSize } = this;
-    const def = getTileDef(tileId);
     const px = x * cellSize;
     const py = y * cellSize;
 
-    // Floor (0) uses background, Wall (1) uses border/panel color
-    ctx.fillStyle = tileId === 1 ? colors.border : colors.bg;
+    ctx.fillStyle = tile.role === "blocked" ? colors.border : colors.bg;
     ctx.fillRect(px, py, cellSize, cellSize);
 
     ctx.fillStyle = colors.text;
     ctx.font = `${Math.floor(cellSize * 0.6)}px monospace`;
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
-    ctx.fillText(def.glyph, px + cellSize / 2, py + cellSize / 2);
+    ctx.fillText(tile.glyph, px + cellSize / 2, py + cellSize / 2);
   }
 
   private drawPlayer(x: number, y: number, colorAccent: string): void {
@@ -114,4 +138,12 @@ export class GridRenderer {
     ctx.arc(px + cellSize / 2, py + cellSize / 2, radius, 0, Math.PI * 2);
     ctx.fill();
   }
+}
+
+function getCanvasPixelRatio(): number {
+  if (typeof window === "undefined") {
+    return 1;
+  }
+
+  return window.devicePixelRatio || 1;
 }

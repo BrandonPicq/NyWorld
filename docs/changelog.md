@@ -4,6 +4,13 @@ This file tracks meaningful project changes by commit-oriented slices.
 
 Keep entries short and practical. When a slice is committed, its changelog section should stay aligned with the commit title so the project history remains easy to read after restores or bisects.
 
+## 2026-06-30 - [UPDATE]: Improve canvas render boundaries
+
+- Add render-ready grid snapshots between engine data and Canvas drawing.
+- Remove the GridRenderer dependency on tile gameplay definitions.
+- Scale canvas backing pixels with devicePixelRatio for sharper rendering.
+- Add tests for grid render snapshot conversion.
+
 ## 2026-06-30 - [REFACTOR]: Extract game input mapping
 
 - Move game keyboard mapping out of GameScreen into a reusable controls module.
