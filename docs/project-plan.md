@@ -46,6 +46,8 @@ Le code applicatif est decoupe par responsabilite :
 
 La logique reutilisable de navigation de menu vit sous `ui/menu`. Les composants visuels comme `TerminalMenu` ne doivent porter que l'adaptation React et le rendu terminal.
 
+La logique reutilisable d'input joueur vit sous `ui/controls`. Les ecrans React ecoutent les evenements et deleguent le mapping clavier vers les commandes moteur a ces modules.
+
 ## Systeme minimal
 
 La V0 inclura :
@@ -82,6 +84,7 @@ Les sons de menu V0 sont generes par une petite couche Web Audio cote UI. Cette 
 Tests unitaires V0 avec Vitest :
 
 - menus, themes et reglages audio ;
+- mapping d'input jeu : fleches, QWERTY, AZERTY, exclusivite des layouts et labels ;
 - moteur gameplay : deplacements cardinaux, blocage par la carte, ticks et journal ;
 - chargement de zone : donnees valides, tile ids inconnus, depart invalide et depart bloque.
 

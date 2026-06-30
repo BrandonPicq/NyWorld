@@ -7,43 +7,15 @@ import testZoneData from "../../content/zones/test_zone.json";
 import { GameCanvas } from "../components/GameCanvas";
 import { TerminalButton } from "../components/TerminalButton";
 import { TerminalPanel } from "../components/TerminalPanel";
-
+import {
+  getGameCommandForKey,
+  getMovementKeyLabel,
+} from "../controls/gameInput";
 import type { KeyboardLayout } from "../controls/keyboardLayout";
 
 type GameScreenProps = {
   keyboardLayout: KeyboardLayout;
   onBackToTitle: () => void;
-};
-
-const getKeyboardCommands = (layout: KeyboardLayout): Record<string, GameCommand["type"]> => {
-  const common = {
-    ArrowUp: "MoveNorth",
-    ArrowDown: "MoveSouth",
-    ArrowLeft: "MoveWest",
-    ArrowRight: "MoveEast",
-    s: "MoveSouth",
-    S: "MoveSouth",
-    d: "MoveEast",
-    D: "MoveEast",
-  } as const;
-
-  if (layout === "azerty") {
-    return {
-      ...common,
-      z: "MoveNorth",
-      Z: "MoveNorth",
-      q: "MoveWest",
-      Q: "MoveWest",
-    };
-  }
-
-  return {
-    ...common,
-    w: "MoveNorth",
-    W: "MoveNorth",
-    a: "MoveWest",
-    A: "MoveWest",
-  };
 };
 
 export function GameScreen({ keyboardLayout, onBackToTitle }: GameScreenProps) {
@@ -72,10 +44,8 @@ export function GameScreen({ keyboardLayout, onBackToTitle }: GameScreenProps) {
   }, [snapshot?.log]);
 
   useEffect(() => {
-    const keyCommands = getKeyboardCommands(keyboardLayout);
-
     function handleKeyDown(event: KeyboardEvent) {
-      const commandType = keyCommands[event.key];
+      const commandType = getGameCommandForKey(event.key, keyboardLayout);
 
       if (commandType) {
         event.preventDefault();
@@ -132,17 +102,17 @@ export function GameScreen({ keyboardLayout, onBackToTitle }: GameScreenProps) {
         <div className="game-screen__controls" role="group" aria-label="Movement controls">
           <div />
           <TerminalButton onClick={() => executeCommand({ type: "MoveNorth" })}>
-            &uarr; North [{keyboardLayout === "azerty" ? "Z" : "W"}]
+            &uarr; North [{getMovementKeyLabel("MoveNorth", keyboardLayout)}]
           </TerminalButton>
           <div />
           <TerminalButton onClick={() => executeCommand({ type: "MoveWest" })}>
-            &larr; West [{keyboardLayout === "azerty" ? "Q" : "A"}]
+            &larr; West [{getMovementKeyLabel("MoveWest", keyboardLayout)}]
           </TerminalButton>
           <TerminalButton onClick={() => executeCommand({ type: "MoveSouth" })}>
-            &darr; South [S]
+            &darr; South [{getMovementKeyLabel("MoveSouth", keyboardLayout)}]
           </TerminalButton>
           <TerminalButton onClick={() => executeCommand({ type: "MoveEast" })}>
-            &rarr; East [D]
+            &rarr; East [{getMovementKeyLabel("MoveEast", keyboardLayout)}]
           </TerminalButton>
         </div>
 
