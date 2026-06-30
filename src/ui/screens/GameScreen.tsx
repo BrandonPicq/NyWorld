@@ -5,6 +5,8 @@ import { loadZone } from "../../engine/zoneLoader";
 import type { GameSnapshot } from "../../engine/GameplayEngine";
 import { createGridRenderSnapshot } from "../../rendering";
 import testZoneData from "../../content/zones/test_zone.json";
+import testZone2Data from "../../content/zones/test_zone_2.json";
+import type { ZoneData } from "../../engine/ZoneTypes";
 import { GameCanvas } from "../components/GameCanvas";
 import { TerminalButton } from "../components/TerminalButton";
 import { TerminalPanel } from "../components/TerminalPanel";
@@ -19,6 +21,11 @@ type GameScreenProps = {
   onBackToTitle: () => void;
 };
 
+const zoneRegistry: Record<string, ZoneData> = {
+  test_zone: testZoneData as ZoneData,
+  test_zone_2: testZone2Data as ZoneData,
+};
+
 export function GameScreen({ keyboardLayout, onBackToTitle }: GameScreenProps) {
   const [snapshot, setSnapshot] = useState<GameSnapshot | null>(null);
   const engineRef = useRef<GameplayEngine | null>(null);
@@ -26,7 +33,12 @@ export function GameScreen({ keyboardLayout, onBackToTitle }: GameScreenProps) {
 
   useEffect(() => {
     const map = loadZone(testZoneData);
-    const engine = new GameplayEngine(map);
+    const engine = new GameplayEngine(map, {
+      resolveZone: (zoneId) => {
+        const zoneData = zoneRegistry[zoneId];
+        return zoneData ? loadZone(zoneData) : undefined;
+      },
+    });
     engineRef.current = engine;
     setSnapshot(engine.getSnapshot());
   }, []);

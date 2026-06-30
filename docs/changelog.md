@@ -4,6 +4,14 @@ This file tracks meaningful project changes by commit-oriented slices.
 
 Keep entries short and practical. When a slice is committed, its changelog section should stay aligned with the commit title so the project history remains easy to read after restores or bisects.
 
+## 2026-06-30 - [ADD]: Add test zone transitions
+
+- Add transition data between the two test zones.
+- Validate transition entries during zone loading.
+- Let GameplayEngine resolve zone transitions after successful movement.
+- Fix the second test zone start position so the zone can load.
+- Add tests for transition loading, detection, zone entry, and current test content.
+
 ## 2026-06-30 - [UPDATE]: Improve canvas render boundaries
 
 - Add render-ready grid snapshots between engine data and Canvas drawing.

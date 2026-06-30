@@ -59,6 +59,7 @@ La V0 inclura :
 - un systeme de mouvement cardinal ;
 - un compteur de ticks ;
 - une carte chargee depuis JSON ;
+- une transition simple entre zones de test ;
 - un journal textuel minimal des actions.
 
 ## Interface V0
@@ -101,6 +102,7 @@ Validation manuelle :
 - voir la carte vide ;
 - deplacer le joueur au clavier ;
 - deplacer le joueur avec les boutons UI ;
+- verifier une transition entre deux zones de test ;
 - verifier que la position XY, le tick et le journal changent correctement.
 
 ## Jalon suivant probable

@@ -7,6 +7,14 @@ export interface PlayerStart {
 
 export type TileGrid = TileId[][];
 
+export interface ZoneTransitionData {
+  x: number;
+  y: number;
+  targetZoneId: string;
+  targetX: number;
+  targetY: number;
+}
+
 export interface ZoneData {
   version: string;
   zoneId: string;
@@ -15,4 +23,5 @@ export interface ZoneData {
   height: number;
   playerStart: PlayerStart;
   tiles: TileGrid;
+  transitions?: ZoneTransitionData[];
 }

@@ -1,6 +1,6 @@
 import { GameMap } from "./GameMap";
 import { getTileDef, hasTileDef } from "./TileRegistry";
-import type { ZoneData } from "./ZoneTypes";
+import type { ZoneData, ZoneTransitionData } from "./ZoneTypes";
 
 export class ZoneLoadError extends Error {
   constructor(message: string) {
@@ -80,6 +80,60 @@ export function loadZone(data: unknown): GameMap {
 
   if (!getTileDef(startTileId).walkable) {
     throw new ZoneLoadError("playerStart must be on a walkable tile");
+  }
+
+  if (data.transitions !== undefined) {
+    if (!Array.isArray(data.transitions)) {
+      throw new ZoneLoadError("transitions must be an array");
+    }
+
+    for (let i = 0; i < data.transitions.length; i++) {
+      const t = data.transitions[i];
+
+      if (!isRecord(t)) {
+        throw new ZoneLoadError(`transition at index ${i} must be an object`);
+      }
+
+      if (
+        typeof t.x !== "number" ||
+        !Number.isInteger(t.x) ||
+        t.x < 0 ||
+        t.x >= data.width
+      ) {
+        throw new ZoneLoadError(`transition at index ${i} has an invalid x`);
+      }
+
+      if (
+        typeof t.y !== "number" ||
+        !Number.isInteger(t.y) ||
+        t.y < 0 ||
+        t.y >= data.height
+      ) {
+        throw new ZoneLoadError(`transition at index ${i} has an invalid y`);
+      }
+
+      if (typeof t.targetZoneId !== "string") {
+        throw new ZoneLoadError(
+          `transition at index ${i} is missing a valid targetZoneId`,
+        );
+      }
+
+      if (typeof t.targetX !== "number" || !Number.isInteger(t.targetX)) {
+        throw new ZoneLoadError(`transition at index ${i} has an invalid targetX`);
+      }
+
+      if (typeof t.targetY !== "number" || !Number.isInteger(t.targetY)) {
+        throw new ZoneLoadError(`transition at index ${i} has an invalid targetY`);
+      }
+
+      const transitionTileId = data.tiles[t.y][t.x];
+
+      if (!getTileDef(transitionTileId).walkable) {
+        throw new ZoneLoadError(
+          `transition at index ${i} must be on a walkable tile`,
+        );
+      }
+    }
   }
 
   return new GameMap(data as unknown as ZoneData);

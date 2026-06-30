@@ -1,21 +1,21 @@
 {
   "version": "0.1",
-  "zoneId": "test_zone",
-  "name": "Test Zone",
+  "zoneId": "test_zone_2",
+  "name": "Test Zone 2",
   "width": 10,
   "height": 8,
-  "playerStart": { "x": 5, "y": 4 },
+  "playerStart": { "x": 1, "y": 4 },
   "tiles": [
     [1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
     [1, 0, 0, 0, 0, 0, 0, 0, 0, 1],
     [1, 0, 0, 0, 0, 0, 0, 0, 0, 1],
     [1, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-    [1, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 1, 1, 1, 0, 0, 0, 1],
     [1, 0, 0, 0, 0, 0, 0, 0, 0, 1],
     [1, 0, 0, 0, 0, 0, 0, 0, 0, 1],
     [1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
   ],
   "transitions": [
-    { "x": 9, "y": 4, "targetZoneId": "test_zone_2", "targetX": 1, "targetY": 4 }
+    { "x": 0, "y": 4, "targetZoneId": "test_zone", "targetX": 8, "targetY": 4 }
   ]
 }

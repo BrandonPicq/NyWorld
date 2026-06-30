@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
+import testZoneData from "../content/zones/test_zone.json";
+import testZone2Data from "../content/zones/test_zone_2.json";
 import { GameplayEngine } from "./GameplayEngine";
+import type { ZoneData } from "./ZoneTypes";
 import { loadZone } from "./zoneLoader";
 
 const zoneData = {
@@ -57,6 +60,217 @@ describe("GameplayEngine", () => {
       "Entered Movement Test.",
       "Moved east to (2, 1).",
       "Cannot move east — blocked at (3, 1).",
+    ]);
+  });
+
+  it("detects a pending transition at the player position", () => {
+    const engine = new GameplayEngine(
+      loadZone({
+        ...zoneData,
+        transitions: [
+          {
+            targetX: 1,
+            targetY: 1,
+            targetZoneId: "next_zone",
+            x: 2,
+            y: 1,
+          },
+        ],
+      }),
+    );
+
+    engine.execute({ type: "MoveEast" });
+
+    expect(engine.getPendingTransition()).toEqual({
+      targetX: 1,
+      targetY: 1,
+      targetZoneId: "next_zone",
+      x: 2,
+      y: 1,
+    });
+  });
+
+  it("enters another zone at the requested entry position", () => {
+    const engine = createEngine();
+    const nextMap = loadZone({
+      ...zoneData,
+      name: "Next Zone",
+      playerStart: { x: 2, y: 2 },
+      zoneId: "next_zone",
+    });
+
+    engine.enterZone(nextMap, 2, 1);
+
+    expect(engine.getSnapshot()).toMatchObject({
+      playerX: 2,
+      playerY: 1,
+      tick: 0,
+      zoneId: "next_zone",
+      zoneName: "Next Zone",
+    });
+    expect(engine.getSnapshot().log.map((entry) => entry.message)).toEqual([
+      "Entered Movement Test.",
+      "Entered Next Zone.",
+    ]);
+  });
+
+  it("resolves transitions after successful movement", () => {
+    const nextMap = loadZone({
+      ...zoneData,
+      name: "Next Zone",
+      playerStart: { x: 1, y: 1 },
+      zoneId: "next_zone",
+    });
+    const engine = new GameplayEngine(
+      loadZone({
+        ...zoneData,
+        transitions: [
+          {
+            targetX: 2,
+            targetY: 1,
+            targetZoneId: "next_zone",
+            x: 2,
+            y: 1,
+          },
+        ],
+      }),
+      {
+        resolveZone: (zoneId) => (zoneId === "next_zone" ? nextMap : undefined),
+      },
+    );
+
+    engine.execute({ type: "MoveEast" });
+
+    expect(engine.getSnapshot()).toMatchObject({
+      playerX: 2,
+      playerY: 1,
+      tick: 1,
+      zoneId: "next_zone",
+      zoneName: "Next Zone",
+    });
+    expect(engine.getSnapshot().log.map((entry) => entry.message)).toEqual([
+      "Entered Movement Test.",
+      "Moved east to (2, 1).",
+      "Entered Next Zone.",
+    ]);
+  });
+
+  it("resolves an edge transition before the next movement command", () => {
+    const firstMap = loadZone({
+      version: "0.1",
+      zoneId: "first_zone",
+      name: "First Zone",
+      width: 10,
+      height: 8,
+      playerStart: { x: 8, y: 4 },
+      tiles: [
+        [1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+        [1, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+        [1, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+        [1, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+        [1, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [1, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+        [1, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+        [1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+      ],
+      transitions: [
+        {
+          targetX: 1,
+          targetY: 4,
+          targetZoneId: "second_zone",
+          x: 9,
+          y: 4,
+        },
+      ],
+    });
+    const secondMap = loadZone({
+      version: "0.1",
+      zoneId: "second_zone",
+      name: "Second Zone",
+      width: 10,
+      height: 8,
+      playerStart: { x: 1, y: 4 },
+      tiles: [
+        [1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+        [1, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+        [1, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+        [1, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+        [0, 0, 0, 1, 1, 1, 0, 0, 0, 1],
+        [1, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+        [1, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+        [1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+      ],
+    });
+    const engine = new GameplayEngine(firstMap, {
+      resolveZone: (zoneId) =>
+        zoneId === "second_zone" ? secondMap : undefined,
+    });
+
+    engine.execute({ type: "MoveEast" });
+    expect(engine.getSnapshot()).toMatchObject({
+      playerX: 1,
+      playerY: 4,
+      tick: 1,
+      zoneId: "second_zone",
+    });
+
+    engine.execute({ type: "MoveEast" });
+    expect(engine.getSnapshot()).toMatchObject({
+      playerX: 2,
+      playerY: 4,
+      tick: 2,
+      zoneId: "second_zone",
+    });
+    expect(engine.getSnapshot().log.map((entry) => entry.message)).toEqual([
+      "Entered First Zone.",
+      "Moved east to (9, 4).",
+      "Entered Second Zone.",
+      "Moved east to (2, 4).",
+    ]);
+  });
+
+  it("resolves the real test zone east transition before another east movement", () => {
+    const zoneRegistry: Record<string, ZoneData> = {
+      test_zone: testZoneData as ZoneData,
+      test_zone_2: testZone2Data as ZoneData,
+    };
+    const engine = new GameplayEngine(loadZone(testZoneData), {
+      resolveZone: (zoneId) => {
+        const zoneData = zoneRegistry[zoneId];
+        return zoneData ? loadZone(zoneData) : undefined;
+      },
+    });
+
+    engine.execute({ type: "MoveEast" });
+    engine.execute({ type: "MoveEast" });
+    engine.execute({ type: "MoveEast" });
+    engine.execute({ type: "MoveEast" });
+
+    expect(engine.getSnapshot()).toMatchObject({
+      playerX: 1,
+      playerY: 4,
+      tick: 4,
+      zoneId: "test_zone_2",
+      zoneName: "Test Zone 2",
+    });
+
+    engine.execute({ type: "MoveEast" });
+
+    expect(engine.getSnapshot()).toMatchObject({
+      playerX: 2,
+      playerY: 4,
+      tick: 5,
+      zoneId: "test_zone_2",
+      zoneName: "Test Zone 2",
+    });
+    expect(engine.getSnapshot().log.map((entry) => entry.message)).toEqual([
+      "Entered Test Zone.",
+      "Moved east to (6, 4).",
+      "Moved east to (7, 4).",
+      "Moved east to (8, 4).",
+      "Moved east to (9, 4).",
+      "Entered Test Zone 2.",
+      "Moved east to (2, 4).",
     ]);
   });
 });

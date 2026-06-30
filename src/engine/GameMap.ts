@@ -1,5 +1,10 @@
 import { getTileDef } from "./TileRegistry";
-import type { PlayerStart, TileId, ZoneData } from "./ZoneTypes";
+import type {
+  PlayerStart,
+  TileId,
+  ZoneData,
+  ZoneTransitionData,
+} from "./ZoneTypes";
 
 export class GameMap {
   readonly zoneId: string;
@@ -9,6 +14,7 @@ export class GameMap {
   readonly playerStart: PlayerStart;
 
   private tiles: TileId[][];
+  private transitions: Map<string, ZoneTransitionData>;
 
   constructor(data: ZoneData) {
     this.zoneId = data.zoneId;
@@ -17,6 +23,11 @@ export class GameMap {
     this.height = data.height;
     this.playerStart = { ...data.playerStart };
     this.tiles = data.tiles.map((row) => [...row]);
+    this.transitions = new Map();
+
+    for (const transition of data.transitions ?? []) {
+      this.transitions.set(`${transition.x},${transition.y}`, transition);
+    }
   }
 
   isInBounds(x: number, y: number): boolean {
@@ -32,5 +43,9 @@ export class GameMap {
 
   getTileId(x: number, y: number): TileId {
     return this.tiles[y][x];
+  }
+
+  getTransitionAt(x: number, y: number): ZoneTransitionData | undefined {
+    return this.transitions.get(`${x},${y}`);
   }
 }

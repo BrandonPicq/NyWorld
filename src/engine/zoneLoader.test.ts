@@ -1,4 +1,6 @@
 import { describe, expect, it } from "vitest";
+import testZoneData from "../content/zones/test_zone.json";
+import testZone2Data from "../content/zones/test_zone_2.json";
 import { ZoneLoadError, loadZone } from "./zoneLoader";
 
 const validZoneData = {
@@ -34,6 +36,11 @@ describe("loadZone", () => {
     expect(map.isWalkable(1, 1)).toBe(true);
   });
 
+  it("accepts the current test content zones", () => {
+    expect(() => loadZone(testZoneData)).not.toThrow();
+    expect(() => loadZone(testZone2Data)).not.toThrow();
+  });
+
   it("rejects unknown tile ids", () => {
     const tiles = validZoneData.tiles.map((row) => [...row]);
     tiles[1][1] = 99;
@@ -54,5 +61,47 @@ describe("loadZone", () => {
     expect(() =>
       loadZone(zoneDataWith({ playerStart: { x: 0, y: 0 } })),
     ).toThrow("playerStart must be on a walkable tile");
+  });
+
+  it("accepts transitions on walkable tiles", () => {
+    const map = loadZone(
+      zoneDataWith({
+        transitions: [
+          {
+            targetX: 1,
+            targetY: 1,
+            targetZoneId: "next_zone",
+            x: 1,
+            y: 1,
+          },
+        ],
+      }),
+    );
+
+    expect(map.getTransitionAt(1, 1)).toEqual({
+      targetX: 1,
+      targetY: 1,
+      targetZoneId: "next_zone",
+      x: 1,
+      y: 1,
+    });
+  });
+
+  it("rejects transitions on blocked tiles", () => {
+    expect(() =>
+      loadZone(
+        zoneDataWith({
+          transitions: [
+            {
+              targetX: 1,
+              targetY: 1,
+              targetZoneId: "next_zone",
+              x: 0,
+              y: 0,
+            },
+          ],
+        }),
+      ),
+    ).toThrow("transition at index 0 must be on a walkable tile");
   });
 });
