@@ -4,6 +4,7 @@ import { GameplayEngine } from "../../engine/GameplayEngine";
 import { loadZone } from "../../engine/zoneLoader";
 import type { GameSnapshot } from "../../engine/GameplayEngine";
 import testZoneData from "../../content/zones/test_zone.json";
+import { GameCanvas } from "../components/GameCanvas";
 import { TerminalButton } from "../components/TerminalButton";
 import { TerminalPanel } from "../components/TerminalPanel";
 
@@ -16,11 +17,6 @@ const KEY_COMMAND: Record<string, GameCommand["type"]> = {
   ArrowDown: "MoveSouth",
   ArrowLeft: "MoveWest",
   ArrowRight: "MoveEast",
-};
-
-const TILE_GLYPH: Record<number, string> = {
-  0: ".",
-  1: "#",
 };
 
 export function GameScreen({ onBackToTitle }: GameScreenProps) {
@@ -79,9 +75,15 @@ export function GameScreen({ onBackToTitle }: GameScreenProps) {
           {snapshot.zoneName}
         </h1>
 
-        <pre className="game-screen__grid" aria-label="Zone grid">
-          {renderGrid(snapshot)}
-        </pre>
+        <GameCanvas
+          ariaLabel="Zone grid"
+          className="game-screen__canvas"
+          tiles={snapshot.tiles}
+          playerX={snapshot.playerX}
+          playerY={snapshot.playerY}
+          mapWidth={snapshot.mapWidth}
+          mapHeight={snapshot.mapHeight}
+        />
 
         <div className="game-screen__debug">
           <p>
@@ -119,24 +121,4 @@ export function GameScreen({ onBackToTitle }: GameScreenProps) {
       </TerminalPanel>
     </main>
   );
-}
-
-function renderGrid(snapshot: GameSnapshot): string {
-  const rows: string[] = [];
-
-  for (let y = 0; y < snapshot.mapHeight; y++) {
-    let row = "";
-
-    for (let x = 0; x < snapshot.mapWidth; x++) {
-      if (x === snapshot.playerX && y === snapshot.playerY) {
-        row += "@";
-      } else {
-        row += TILE_GLYPH[snapshot.tiles[y][x]] ?? "?";
-      }
-    }
-
-    rows.push(row);
-  }
-
-  return rows.join("\n");
 }

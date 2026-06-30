@@ -4,6 +4,13 @@ This file tracks meaningful project changes by commit-oriented slices.
 
 Keep entries short and practical. When a slice is committed, its changelog section should stay aligned with the commit title so the project history remains easy to read after restores or bisects.
 
+## 2026-06-30 - [ADD]: Render game grid with canvas
+
+- Add a Canvas 2D grid renderer for zone tiles and the player marker.
+- Add a GameCanvas React adapter around the renderer.
+- Replace the text grid on the game screen with the canvas renderer.
+- Add canvas-specific game screen styles.
+
 ## 2026-06-30 - [TEST]: Harden zone loading and engine movement
 
 - Add GameplayEngine tests for cardinal movement, blocked movement, ticks, and logs.

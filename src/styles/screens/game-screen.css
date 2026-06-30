@@ -7,18 +7,14 @@
   margin: 0;
 }
 
-.game-screen__grid {
-  margin: 0;
-  padding: var(--space-2);
+.game-screen__canvas {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  margin: 0 auto;
   border: 1px solid var(--color-border);
   border-radius: var(--radius-xs);
   background: var(--color-bg-inset);
-  color: var(--color-text-soft);
-  font-family: var(--font-mono);
-  font-size: var(--text-sm);
-  line-height: 1.4;
-  letter-spacing: 0.2em;
-  overflow: auto;
 }
 
 .game-screen__debug {
