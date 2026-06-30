@@ -5,6 +5,8 @@ export class GridRenderer {
   private cellSize: number;
   private mapWidth = 0;
   private mapHeight = 0;
+  private colors: { bg: string; border: string; text: string; accent: string } | null = null;
+  private observer: MutationObserver | null = null;
 
   constructor(canvas: HTMLCanvasElement, cellSize = 32) {
     const ctx = canvas.getContext("2d");
@@ -15,6 +17,24 @@ export class GridRenderer {
 
     this.ctx = ctx;
     this.cellSize = cellSize;
+
+    if (typeof window !== "undefined" && typeof MutationObserver !== "undefined") {
+      this.observer = new MutationObserver((mutations) => {
+        for (const mutation of mutations) {
+          if (mutation.attributeName === "data-theme") {
+            this.updateColors();
+          }
+        }
+      });
+      this.observer.observe(document.documentElement, {
+        attributes: true,
+        attributeFilter: ["data-theme"],
+      });
+    }
+  }
+
+  destroy(): void {
+    this.observer?.disconnect();
   }
 
   setDimensions(mapWidth: number, mapHeight: number): void {
@@ -25,19 +45,26 @@ export class GridRenderer {
     this.ctx.canvas.height = mapHeight * this.cellSize;
   }
 
+  private updateColors(): void {
+    const style = window.getComputedStyle(this.ctx.canvas);
+    this.colors = {
+      bg: style.getPropertyValue("--color-background").trim() || "#050806",
+      border: style.getPropertyValue("--color-border-muted").trim() || "#25452d",
+      text: style.getPropertyValue("--color-text-soft").trim() || "#b7d8bf",
+      accent: style.getPropertyValue("--color-accent").trim() || "#7cff9b",
+    };
+  }
+
   render(tiles: number[][], playerX: number, playerY: number): void {
     const { ctx, cellSize, mapWidth, mapHeight } = this;
 
-    // Fetch theme colors dynamically from the canvas element style
-    const style = window.getComputedStyle(ctx.canvas);
-    const colorBg = style.getPropertyValue("--color-background").trim() || "#050806";
-    const colorBorder = style.getPropertyValue("--color-border-muted").trim() || "#25452d";
-    const colorText = style.getPropertyValue("--color-text-soft").trim() || "#b7d8bf";
-    const colorAccent = style.getPropertyValue("--color-accent").trim() || "#7cff9b";
+    if (!this.colors) {
+      this.updateColors();
+    }
+
+    const colors = this.colors!;
 
     ctx.clearRect(0, 0, mapWidth * cellSize, mapHeight * cellSize);
-
-    const colors = { bg: colorBg, border: colorBorder, text: colorText, accent: colorAccent };
 
     for (let y = 0; y < mapHeight; y++) {
       for (let x = 0; x < mapWidth; x++) {

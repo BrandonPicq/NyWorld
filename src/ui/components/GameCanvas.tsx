@@ -32,6 +32,7 @@ export function GameCanvas({
     rendererRef.current = renderer;
 
     return () => {
+      renderer.destroy();
       rendererRef.current = null;
     };
   }, [mapWidth, mapHeight]);

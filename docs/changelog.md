@@ -31,6 +31,12 @@ Keep entries short and practical. When a slice is committed, its changelog secti
 - Display text-based grid, debug panel (position, tick, zone), and action log.
 - Update styles and barrel exports for the new engine and game screen.
 
+## 2026-06-30 - [UPDATE]: Optimize canvas theme rendering performance
+
+- Cache theme-related CSS variable values in GridRenderer to remove style calculation from the hot render loop.
+- Watch for HTML data-theme attribute modifications using a MutationObserver to update colors.
+- Clean up and disconnect MutationObserver on canvas unmount.
+
 ## 2026-06-30 - [UPDATE]: Add keyboard layout toggle (QWERTY / AZERTY)
 
 - Add a QWERTY / AZERTY layout configuration setting under Options.
