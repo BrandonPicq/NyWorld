@@ -72,7 +72,9 @@ L'ecran sera a texte dominant :
 - zone principale de narration/log ;
 - carte Canvas compacte mais visible ;
 - boutons de deplacement ;
-- panneau debug/statistiques minimal.
+- informations de debug : tick, zone active, position ;
+- tableau de bord lateral (gauche) affichant les ressources vitales : jauge d'energie (decroissance par pas), monnaie decomposee (Platinum, Gold, Silver, Bronze), titre academique, avec boutons de repos et fiche de personnage ;
+- fiche de personnage detaillee (modal overlay) accessible avec la touche `C` ou clic, affichant la liste modulaire des attributs (Strength, Intelligence, Charisma) et le detail de la progression academique.
 
 Les sprites, portraits, sons, PNJs, combats, inventaire, sauvegardes et schedules ne sont pas inclus dans la V0, mais l'architecture doit eviter de les bloquer.
 

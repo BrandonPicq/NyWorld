@@ -52,6 +52,14 @@ Keep entries short and practical. When a slice is committed, its changelog secti
 - Display text-based grid, debug panel (position, tick, zone), and action log.
 - Update styles and barrel exports for the new engine and game screen.
 
+## 2026-06-30 - [ADD]: Add player stats dashboard and detailed character sheet modal
+
+- Introduce a modular ECS Stats component supporting energy, currency, attributes, and academic rank.
+- Implement energy decay (1 energy per valid movement step) and Rest command (recovers 15 energy, costs 1 tick).
+- Add currency conversion formatting to partition total bronze coins into Platinum (p), Gold (g), Silver (s), and Bronze (b) divisions.
+- Restructure the Game Screen layout on wide screens to display three columns: stats panel (left), map grid (center), and actions log (right).
+- Add detailed Character Sheet overlay (toggled with `C` or Esc) displaying attributes dynamically.
+
 ## 2026-06-30 - [UPDATE]: Optimize canvas theme rendering performance
 
 - Cache theme-related CSS variable values in GridRenderer to remove style calculation from the hot render loop.

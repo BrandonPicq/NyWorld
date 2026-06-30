@@ -1,5 +1,5 @@
 import type { GameCommand } from "./commands";
-import type { Position } from "./components/Position";
+import type { Position, Stats } from "./components";
 import { World } from "./ecs/World";
 import { GameMap } from "./GameMap";
 import { DIRECTION_DELTA, MovementSystem } from "./systems/MovementSystem";
@@ -22,6 +22,7 @@ export interface GameSnapshot {
   playerY: number;
   tiles: number[][];
   log: LogEntry[];
+  stats: Stats;
 }
 
 const COMMAND_DIRECTION: Record<string, Direction> = {
@@ -68,6 +69,21 @@ export class GameplayEngine {
     };
     this.world.addComponent(playerId, renderable);
 
+    const stats = {
+      type: "Stats" as const,
+      energy: 100,
+      maxEnergy: 100,
+      currency: 1550,
+      attributes: {
+        strength: 10,
+        intelligence: 10,
+        charisma: 10,
+      },
+      academicTitle: "Novice Scribe",
+      academicProgress: 0,
+    };
+    this.world.addComponent(playerId, stats);
+
     this.log.push({
       tick: this.tickCounter.tick,
       message: `Entered ${map.name}.`,
@@ -75,9 +91,23 @@ export class GameplayEngine {
   }
 
   execute(command: GameCommand): boolean {
+    if (command.type === "Rest") {
+      this.restPlayer();
+      return true;
+    }
+
     const direction = COMMAND_DIRECTION[command.type];
 
     if (!direction) {
+      return false;
+    }
+
+    const stats = this.getPlayerStats();
+    if (stats.energy <= 0) {
+      this.log.push({
+        tick: this.tickCounter.tick,
+        message: "You are too exhausted to move! Rest [R] to recover energy.",
+      });
       return false;
     }
 
@@ -86,6 +116,7 @@ export class GameplayEngine {
 
     if (moved) {
       this.tickCounter.advance();
+      stats.energy = Math.max(0, stats.energy - 1);
       const pos = this.getPlayerPosition();
       this.log.push({
         tick: this.tickCounter.tick,
@@ -142,8 +173,19 @@ export class GameplayEngine {
     this.enterZone(nextMap, transition.targetX, transition.targetY);
   }
 
+  private restPlayer(): void {
+    const stats = this.getPlayerStats();
+    stats.energy = Math.min(stats.maxEnergy, stats.energy + 15);
+    this.tickCounter.advance();
+    this.log.push({
+      tick: this.tickCounter.tick,
+      message: "Rested and recovered 15 energy.",
+    });
+  }
+
   getSnapshot(): GameSnapshot {
     const pos = this.getPlayerPosition();
+    const stats = this.getPlayerStats();
     const tiles: number[][] = [];
 
     for (let y = 0; y < this.map.height; y++) {
@@ -164,7 +206,16 @@ export class GameplayEngine {
       playerY: pos.y,
       tiles,
       log: [...this.log],
+      stats: {
+        ...stats,
+        attributes: { ...stats.attributes },
+      },
     };
+  }
+
+  private getPlayerStats(): Stats {
+    const [playerId] = this.world.entitiesWith("Stats", "PlayerControlled");
+    return this.world.getComponent<Stats>(playerId, "Stats")!;
   }
 
   private getPlayerPosition(): Position {
