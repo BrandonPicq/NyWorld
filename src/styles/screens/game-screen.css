@@ -11,7 +11,7 @@
   display: block;
   max-width: 100%;
   height: auto;
-  margin: 0 auto;
+  margin: 0 auto var(--space-4) auto;
   border: 1px solid var(--color-accent);
   border-radius: 0;
   background: var(--color-background);
@@ -19,10 +19,14 @@
 
 .game-screen__debug {
   display: flex;
-  gap: var(--space-4);
-  flex-wrap: wrap;
+  justify-content: space-around;
   color: var(--color-text-soft);
   font-size: 0.85rem;
+  border-top: 1px dashed var(--color-border-muted);
+  border-bottom: 1px dashed var(--color-border-muted);
+  padding: var(--space-2) 0;
+  margin: var(--space-3) auto var(--space-4) auto;
+  width: 100%;
 }
 
 .game-screen__debug p {
@@ -32,9 +36,9 @@
 .game-screen__controls {
   display: grid;
   grid-template-columns: repeat(3, 140px);
-  gap: var(--space-1);
+  gap: var(--space-2);
   justify-content: center;
-  margin: var(--space-1) auto;
+  margin: var(--space-4) auto var(--space-2) auto;
 }
 
 .game-screen__controls .terminal-button {
