@@ -23,6 +23,7 @@ pnpm-debug.log*
 # Environment and local secrets
 .env
 .env.*
+*.local
 !.env.example
 
 # Editor and OS files

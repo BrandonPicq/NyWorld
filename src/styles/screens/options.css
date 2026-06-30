@@ -1,0 +1,18 @@
+.options-panel {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.options-panel .terminal-heading,
+.options-copy {
+  margin: 0;
+}
+
+.options-copy {
+  color: var(--color-text-soft);
+  line-height: var(--line-height-copy);
+}
+
+.options-actions {
+  margin-top: var(--space-1);
+}

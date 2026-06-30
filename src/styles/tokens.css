@@ -1,0 +1,66 @@
+:root {
+  --color-background: #050806;
+  --color-panel-background: rgba(5, 8, 6, 0.92);
+  --color-button-background: #07110a;
+  --color-button-background-hover: #0d2213;
+  --color-text: #d8f3dc;
+  --color-text-strong: #f0fff4;
+  --color-text-muted: #9acda6;
+  --color-text-soft: #b7d8bf;
+  --color-accent: #7cff9b;
+  --color-border-muted: #25452d;
+  --color-disabled-border: #405545;
+  --color-disabled-text: #718878;
+  --color-scanline: rgba(130, 255, 166, 0.04);
+  --shadow-terminal-panel: 0 0 0 1px rgba(124, 255, 155, 0.18);
+
+  --font-terminal: "SFMono-Regular", Consolas, "Liberation Mono", Menlo,
+    monospace;
+
+  --space-1: 0.5rem;
+  --space-2: 0.75rem;
+  --space-3: 1rem;
+  --space-4: 2rem;
+
+  --shell-padding: var(--space-3);
+  --panel-width: 42rem;
+  --panel-padding: clamp(1rem, 4vw, 2rem);
+  --scanline-size: 2rem;
+  --line-height-copy: 1.6;
+  --focus-ring-width: 2px;
+  --focus-ring-offset: 2px;
+}
+
+:root[data-theme="amber"] {
+  --color-background: #090704;
+  --color-panel-background: rgba(9, 7, 4, 0.92);
+  --color-button-background: #140f06;
+  --color-button-background-hover: #251a09;
+  --color-text: #ffe8b8;
+  --color-text-strong: #fff7df;
+  --color-text-muted: #d4a85f;
+  --color-text-soft: #f0cc8b;
+  --color-accent: #ffbf5f;
+  --color-border-muted: #5a3a14;
+  --color-disabled-border: #5d4a2a;
+  --color-disabled-text: #9b8154;
+  --color-scanline: rgba(255, 191, 95, 0.045);
+  --shadow-terminal-panel: 0 0 0 1px rgba(255, 191, 95, 0.18);
+}
+
+:root[data-theme="blue"] {
+  --color-background: #04080c;
+  --color-panel-background: rgba(4, 8, 12, 0.92);
+  --color-button-background: #06111c;
+  --color-button-background-hover: #0a1f33;
+  --color-text: #d7edff;
+  --color-text-strong: #f1f9ff;
+  --color-text-muted: #8cbde0;
+  --color-text-soft: #b6d8f0;
+  --color-accent: #77c7ff;
+  --color-border-muted: #1f4c6d;
+  --color-disabled-border: #385468;
+  --color-disabled-text: #728ca0;
+  --color-scanline: rgba(119, 199, 255, 0.045);
+  --shadow-terminal-panel: 0 0 0 1px rgba(119, 199, 255, 0.18);
+}

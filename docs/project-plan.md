@@ -33,6 +33,19 @@ React ne doit pas contenir les regles du jeu. Il affiche des snapshots du moteur
 
 Le Canvas ne decide pas de l'etat du monde. Il recoit seulement les informations necessaires pour dessiner la grille et les entites visibles.
 
+## Structure projet V0
+
+Le code applicatif est decoupe par responsabilite :
+
+- `app` : orchestration React de haut niveau, navigation entre ecrans et initialisation future de partie ;
+- `ui` : ecrans et composants React, sans regles de gameplay ;
+- `engine` : logique pure du jeu, ECS, commandes et snapshots, a ajouter dans une tranche dediee ;
+- `rendering` : rendu Canvas 2D a partir d'etats deja prepares, a ajouter quand la grille sera branchee ;
+- `content` : donnees JSON et schemas de validation, a ajouter avec la premiere carte ;
+- `styles` : variables de design, styles de base, composants reutilisables et styles propres aux ecrans.
+
+La logique reutilisable de navigation de menu vit sous `ui/menu`. Les composants visuels comme `TerminalMenu` ne doivent porter que l'adaptation React et le rendu terminal.
+
 ## Systeme minimal
 
 La V0 inclura :
@@ -50,12 +63,19 @@ La V0 inclura :
 
 L'ecran sera a texte dominant :
 
+- textes visibles du jeu en anglais ;
+- menus navigables au clavier : fleches haut/bas pour choisir, entree pour confirmer, echap pour revenir quand l'ecran le permet, tabulation neutralisee dans les menus ;
+- options V0 organisees en categories : `Graphics -> Themes` et `Audio -> Sound` ;
 - zone principale de narration/log ;
 - carte Canvas compacte mais visible ;
 - boutons de deplacement ;
 - panneau debug/statistiques minimal.
 
 Les sprites, portraits, sons, PNJs, combats, inventaire, sauvegardes et schedules ne sont pas inclus dans la V0, mais l'architecture doit eviter de les bloquer.
+
+Les themes visuels sont pilotes par des variables CSS. Pour ajouter un theme, etendre la liste des presets cote UI et ajouter les overrides de tokens correspondants dans les styles.
+
+Les sons de menu V0 sont generes par une petite couche Web Audio cote UI. Cette couche sert uniquement au feedback des menus et reste separee du futur systeme audio du jeu.
 
 ## Tests et validation
 
@@ -84,4 +104,3 @@ Apres la V0, le jalon naturel sera une V1 orientee exploration + combat simple :
 - premiere rencontre conflictuelle ;
 - resolution de combat minimale ;
 - journal textuel plus riche.
-

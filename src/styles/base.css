@@ -1,0 +1,39 @@
+:root {
+  color: var(--color-text);
+  background: var(--color-background);
+  font-family: var(--font-terminal);
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  min-height: 100%;
+  margin: 0;
+}
+
+body {
+  min-width: 320px;
+  background:
+    linear-gradient(var(--color-scanline) 1px, transparent 1px),
+    var(--color-background);
+  background-size: 100% var(--scanline-size);
+}
+
+button {
+  font: inherit;
+}
+
+.app-shell {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: var(--shell-padding);
+}
