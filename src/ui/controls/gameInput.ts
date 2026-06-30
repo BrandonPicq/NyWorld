@@ -1,7 +1,7 @@
 import type { GameCommand } from "../../engine/commands";
 import type { KeyboardLayout } from "./keyboardLayout";
 
-export type MovementCommandType = GameCommand["type"];
+export type MovementCommandType = Exclude<GameCommand["type"], "Rest">;
 
 const arrowKeyCommands: Record<string, MovementCommandType> = {
   ArrowUp: "MoveNorth",

@@ -97,6 +97,10 @@
   max-width: 100% !important;
 }
 
+.game-layout__center--overlay {
+  position: relative;
+}
+
 .game-layout__sidebar-right .game-screen__log {
   max-height: 28rem;
   border-top: none;

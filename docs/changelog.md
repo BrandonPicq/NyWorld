@@ -4,6 +4,13 @@ This file tracks meaningful project changes by commit-oriented slices.
 
 Keep entries short and practical. When a slice is committed, its changelog section should stay aligned with the commit title so the project history remains easy to read after restores or bisects.
 
+## 2026-06-30 - [REFACTOR]: Split game screen components
+
+- Extract game screen panels, dialogue box, and character sheet into dedicated UI files.
+- Move dialogue typewriter state, progression, and text bleep playback into a dedicated hook.
+- Keep GameScreen focused on orchestration, input, and engine snapshot wiring.
+- Restrict movement input typing so Rest stays outside movement key mappings.
+
 ## 2026-06-30 - [ADD]: Add test zone transitions
 
 - Add transition data between the two test zones.

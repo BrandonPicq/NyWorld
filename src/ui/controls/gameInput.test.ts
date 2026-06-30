@@ -37,6 +37,11 @@ describe("game input mapping", () => {
     expect(getGameCommandForKey("Enter", "qwerty")).toBeUndefined();
   });
 
+  it("does not map rest as a movement command", () => {
+    expect(getGameCommandForKey("r", "qwerty")).toBeUndefined();
+    expect(getGameCommandForKey("r", "azerty")).toBeUndefined();
+  });
+
   it("returns movement key labels for the active layout", () => {
     expect(getMovementKeyLabel("MoveNorth", "qwerty")).toBe("W");
     expect(getMovementKeyLabel("MoveNorth", "azerty")).toBe("Z");
