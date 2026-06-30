@@ -3,15 +3,18 @@ import { TerminalMenu } from "../components/TerminalMenu";
 import { TerminalPanel } from "../components/TerminalPanel";
 import { type ThemeId, themePresets } from "../theme/theme";
 import type { KeyboardLayout } from "../controls/keyboardLayout";
+import type { TextSpeed } from "../controls/textSpeed";
 
 type OptionsScreenProps = {
   activeTheme: ThemeId;
   audioSettings: AudioSettings;
   keyboardLayout: KeyboardLayout;
+  textSpeed: TextSpeed;
   onBackToOptions: () => void;
   onBackToTitle: () => void;
   onChangeTheme: (themeId: ThemeId) => void;
   onChangeKeyboardLayout: (layout: KeyboardLayout) => void;
+  onChangeTextSpeed: (speed: TextSpeed) => void;
   onMenuConfirm?: () => void;
   onMenuMove?: () => void;
   onOpenAudio: () => void;
@@ -24,10 +27,12 @@ export function OptionsScreen({
   activeTheme,
   audioSettings,
   keyboardLayout,
+  textSpeed,
   onBackToOptions,
   onBackToTitle,
   onChangeTheme,
   onChangeKeyboardLayout,
+  onChangeTextSpeed,
   onMenuConfirm,
   onMenuMove,
   onOpenAudio,
@@ -39,10 +44,12 @@ export function OptionsScreen({
     activeTheme,
     audioSettings,
     keyboardLayout,
+    textSpeed,
     onBackToOptions,
     onBackToTitle,
     onChangeTheme,
     onChangeKeyboardLayout,
+    onChangeTextSpeed,
     onOpenAudio,
     onOpenGraphics,
     onToggleSound,
@@ -79,10 +86,12 @@ function getOptionsView({
   activeTheme,
   audioSettings,
   keyboardLayout,
+  textSpeed,
   onBackToOptions,
   onBackToTitle,
   onChangeTheme,
   onChangeKeyboardLayout,
+  onChangeTextSpeed,
   onOpenAudio,
   onOpenGraphics,
   onToggleSound,
@@ -102,17 +111,32 @@ function getOptionsView({
       onChangeTheme(themePresets[nextIndex].id);
     };
 
+    const textSpeedPresets: TextSpeed[] = ["slow", "normal", "fast", "instant"];
+    const cycleTextSpeed = (direction: 1 | -1) => {
+      const currentIndex = textSpeedPresets.indexOf(textSpeed);
+      const nextIndex =
+        (currentIndex + direction + textSpeedPresets.length) %
+        textSpeedPresets.length;
+      onChangeTextSpeed(textSpeedPresets[nextIndex]);
+    };
+
     return {
       ariaLabel: "Graphics options menu",
-      copy: "Configure visual presentation.",
-      heading: "Graphics",
-      kicker: "OPTIONS // GRAPHICS",
+      copy: "Configure visual presentation and text flow.",
+      heading: "Graphics & Text",
+      kicker: "OPTIONS // GRAPHICS & TEXT",
       items: [
         {
           label: `Theme: < ${currentThemeLabel} >`,
           onSelect: () => cycleTheme(1),
           onLeft: () => cycleTheme(-1),
           onRight: () => cycleTheme(1),
+        },
+        {
+          label: `Text Speed: < ${textSpeed.toUpperCase()} >`,
+          onSelect: () => cycleTextSpeed(1),
+          onLeft: () => cycleTextSpeed(-1),
+          onRight: () => cycleTextSpeed(1),
         },
         { label: "Back", onSelect: onBackToOptions },
       ],
@@ -147,7 +171,7 @@ function getOptionsView({
     heading: "Options",
     kicker: "SYSTEM OPTIONS",
     items: [
-      { label: "Graphics", onSelect: onOpenGraphics },
+      { label: "Graphics & Text", onSelect: onOpenGraphics },
       { label: "Audio", onSelect: onOpenAudio },
       {
         label: `Controls: < ${keyboardLayout.toUpperCase()} >`,

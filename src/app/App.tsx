@@ -21,6 +21,11 @@ import {
   readStoredKeyboardLayout,
   writeStoredKeyboardLayout,
 } from "../ui/controls/keyboardLayout";
+import {
+  type TextSpeed,
+  readStoredTextSpeed,
+  writeStoredTextSpeed,
+} from "../ui/controls/textSpeed";
 
 type OptionsScreenId =
   | "options"
@@ -39,6 +44,9 @@ function App() {
   const [keyboardLayout, setKeyboardLayout] = useState<KeyboardLayout>(() =>
     readStoredKeyboardLayout(),
   );
+  const [textSpeed, setTextSpeed] = useState<TextSpeed>(() =>
+    readStoredTextSpeed(),
+  );
 
   useEffect(() => {
     document.documentElement.dataset.theme = activeTheme;
@@ -52,6 +60,10 @@ function App() {
   useEffect(() => {
     writeStoredKeyboardLayout(keyboardLayout);
   }, [keyboardLayout]);
+
+  useEffect(() => {
+    writeStoredTextSpeed(textSpeed);
+  }, [textSpeed]);
 
   const menuFeedback = {
     onMenuConfirm: () => {
@@ -69,7 +81,9 @@ function App() {
   if (screen === "game") {
     return (
       <GameScreen
+        audioSettings={audioSettings}
         keyboardLayout={keyboardLayout}
+        textSpeed={textSpeed}
         onBackToTitle={() => setScreen("title")}
       />
     );
@@ -81,10 +95,12 @@ function App() {
         activeTheme={activeTheme}
         audioSettings={audioSettings}
         keyboardLayout={keyboardLayout}
+        textSpeed={textSpeed}
         {...menuFeedback}
         onBackToTitle={() => setScreen("title")}
         onChangeTheme={setActiveTheme}
         onChangeKeyboardLayout={setKeyboardLayout}
+        onChangeTextSpeed={setTextSpeed}
         onOpenAudio={() => setScreen("options-audio")}
         onOpenGraphics={() => setScreen("options-graphics")}
         onToggleSound={(soundEnabled) =>

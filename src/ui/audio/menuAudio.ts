@@ -27,6 +27,15 @@ export function playMenuConfirmSound() {
   });
 }
 
+export function playTextBleepSound(pitchFactor: number) {
+  const baseFreq = 160;
+  playMenuTone({
+    durationSeconds: 0.025,
+    frequency: baseFreq * pitchFactor,
+    gain: 0.015,
+  });
+}
+
 function playMenuTone({ durationSeconds, frequency, gain }: MenuToneOptions) {
   const context = getAudioContext();
 

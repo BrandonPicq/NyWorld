@@ -16,22 +16,55 @@ import {
 } from "../controls/gameInput";
 import type { KeyboardLayout } from "../controls/keyboardLayout";
 import { formatCurrency, capitalize } from "../controls/statsFormatter";
+import type { AudioSettings } from "../audio/audioSettings";
+import type { TextSpeed } from "../controls/textSpeed";
+import { playTextBleepSound } from "../audio/menuAudio";
 
 type GameScreenProps = {
+  audioSettings: AudioSettings;
   keyboardLayout: KeyboardLayout;
+  textSpeed: TextSpeed;
   onBackToTitle: () => void;
 };
+
+export interface DialogueNode {
+  speaker: string;
+  text: string;
+  pitch: number;
+}
 
 const zoneRegistry: Record<string, ZoneData> = {
   test_zone: testZoneData as ZoneData,
   test_zone_2: testZone2Data as ZoneData,
 };
 
-export function GameScreen({ keyboardLayout, onBackToTitle }: GameScreenProps) {
+export function GameScreen({
+  audioSettings,
+  keyboardLayout,
+  textSpeed,
+  onBackToTitle,
+}: GameScreenProps) {
   const [snapshot, setSnapshot] = useState<GameSnapshot | null>(null);
   const [isCharacterSheetOpen, setIsCharacterSheetOpen] = useState(false);
   const engineRef = useRef<GameplayEngine | null>(null);
   const logRef = useRef<HTMLDivElement>(null);
+
+  // Dialogue States
+  const [activeDialogue, setActiveDialogue] = useState<DialogueNode[] | null>(
+    null,
+  );
+  const [dialogueIndex, setDialogueIndex] = useState(0);
+  const [visibleText, setVisibleText] = useState("");
+  const [isTyping, setIsTyping] = useState(false);
+
+  const prevZoneIdRef = useRef<string | null>(null);
+
+  const triggerDialogue = useCallback((nodes: DialogueNode[]) => {
+    setActiveDialogue(nodes);
+    setDialogueIndex(0);
+    setVisibleText("");
+    setIsTyping(true);
+  }, []);
 
   useEffect(() => {
     const map = loadZone(testZoneData);
@@ -58,9 +91,131 @@ export function GameScreen({ keyboardLayout, onBackToTitle }: GameScreenProps) {
     }
   }, [snapshot?.log]);
 
+  const progressDialogue = useCallback(() => {
+    if (!activeDialogue) return;
+    const node = activeDialogue[dialogueIndex];
+    if (!node) return;
+
+    if (isTyping) {
+      // Skip typing: display the full text instantly
+      setVisibleText(node.text);
+      setIsTyping(false);
+    } else {
+      const nextIndex = dialogueIndex + 1;
+      if (nextIndex < activeDialogue.length) {
+        setDialogueIndex(nextIndex);
+        setVisibleText("");
+        setIsTyping(true);
+      } else {
+        setActiveDialogue(null);
+      }
+    }
+  }, [activeDialogue, dialogueIndex, isTyping]);
+
+  // Dialogue typing typewriter effect
+  useEffect(() => {
+    if (!activeDialogue) return;
+    const node = activeDialogue[dialogueIndex];
+    if (!node) {
+      setActiveDialogue(null);
+      return;
+    }
+
+    if (visibleText.length >= node.text.length) {
+      setIsTyping(false);
+      return;
+    }
+
+    const delay =
+      textSpeed === "slow"
+        ? 60
+        : textSpeed === "fast"
+          ? 10
+          : textSpeed === "instant"
+            ? 0
+            : 30;
+
+    if (delay === 0) {
+      setVisibleText(node.text);
+      setIsTyping(false);
+      return;
+    }
+
+    const timer = setTimeout(() => {
+      const nextChar = node.text[visibleText.length];
+      setVisibleText((prev) => prev + nextChar);
+
+      if (nextChar !== " " && audioSettings.soundEnabled) {
+        playTextBleepSound(node.pitch);
+      }
+    }, delay);
+
+    return () => clearTimeout(timer);
+  }, [activeDialogue, dialogueIndex, visibleText, textSpeed, audioSettings.soundEnabled]);
+
+  // Trigger dialogue when entering zones
+  useEffect(() => {
+    if (!snapshot) return;
+
+    if (prevZoneIdRef.current === null) {
+      prevZoneIdRef.current = snapshot.zoneId;
+      triggerDialogue([
+        {
+          speaker: "Narrator",
+          text: "Welcome to the test fields of NyWarudo.",
+          pitch: 1.0,
+        },
+        {
+          speaker: "Old Sage",
+          text: "Watch your steps, traveler. Each movement consumes your vital Energy.",
+          pitch: 0.7,
+        },
+      ]);
+      return;
+    }
+
+    if (prevZoneIdRef.current !== snapshot.zoneId) {
+      prevZoneIdRef.current = snapshot.zoneId;
+      if (snapshot.zoneId === "test_zone_2") {
+        triggerDialogue([
+          {
+            speaker: "Narrator",
+            text: "The air here grows heavy and cold.",
+            pitch: 0.9,
+          },
+          {
+            speaker: "Mysterious Voice",
+            text: "Who dares trespass in the Eastern Ruins?",
+            pitch: 1.4,
+          },
+        ]);
+      } else if (snapshot.zoneId === "test_zone") {
+        triggerDialogue([
+          {
+            speaker: "Narrator",
+            text: "You returned to the relative safety of the starting fields.",
+            pitch: 1.0,
+          },
+        ]);
+      }
+    }
+  }, [snapshot?.zoneId, triggerDialogue]);
+
   useEffect(() => {
     function handleKeyDown(event: KeyboardEvent) {
       const keyLower = event.key.toLowerCase();
+
+      // Block all control commands if a dialogue is active
+      if (activeDialogue) {
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          progressDialogue();
+        } else if (event.key === "Escape") {
+          event.preventDefault();
+          setActiveDialogue(null);
+        }
+        return;
+      }
 
       if (keyLower === "c") {
         event.preventDefault();
@@ -98,7 +253,14 @@ export function GameScreen({ keyboardLayout, onBackToTitle }: GameScreenProps) {
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [executeCommand, onBackToTitle, keyboardLayout, isCharacterSheetOpen]);
+  }, [
+    executeCommand,
+    onBackToTitle,
+    keyboardLayout,
+    isCharacterSheetOpen,
+    activeDialogue,
+    progressDialogue,
+  ]);
 
   if (!snapshot) {
     return (
@@ -163,7 +325,10 @@ export function GameScreen({ keyboardLayout, onBackToTitle }: GameScreenProps) {
         </TerminalPanel>
 
         {/* Center Panel: Map Canvas */}
-        <TerminalPanel className="game-layout__center">
+        <TerminalPanel
+          className="game-layout__center"
+          style={{ position: "relative" }}
+        >
           <p className="terminal-kicker">SESSION ACTIVE</p>
           <h1 className="terminal-heading-md" id="game-heading">
             {snapshot.zoneName}
@@ -199,6 +364,25 @@ export function GameScreen({ keyboardLayout, onBackToTitle }: GameScreenProps) {
               &rarr; East [{getMovementKeyLabel("MoveEast", keyboardLayout)}]
             </TerminalButton>
           </div>
+
+          {/* Dialogue Box overlay */}
+          {activeDialogue && activeDialogue[dialogueIndex] && (
+            <div className="dialogue-box" onClick={progressDialogue}>
+              <div className="dialogue-box__header">
+                <span className="dialogue-box__speaker">
+                  {activeDialogue[dialogueIndex].speaker}
+                </span>
+              </div>
+              <div className="dialogue-box__body">
+                <p className="dialogue-box__text">{visibleText}</p>
+              </div>
+              <div className="dialogue-box__footer">
+                <span className="dialogue-box__prompt">
+                  {isTyping ? "..." : "Press Enter or Click to Continue"}
+                </span>
+              </div>
+            </div>
+          )}
         </TerminalPanel>
 
         {/* Right Panel: Action Log */}
