@@ -8,20 +8,48 @@ import { GameCanvas } from "../components/GameCanvas";
 import { TerminalButton } from "../components/TerminalButton";
 import { TerminalPanel } from "../components/TerminalPanel";
 
+import type { KeyboardLayout } from "../controls/keyboardLayout";
+
 type GameScreenProps = {
+  keyboardLayout: KeyboardLayout;
   onBackToTitle: () => void;
 };
 
-const KEY_COMMAND: Record<string, GameCommand["type"]> = {
-  ArrowUp: "MoveNorth",
-  ArrowDown: "MoveSouth",
-  ArrowLeft: "MoveWest",
-  ArrowRight: "MoveEast",
+const getKeyboardCommands = (layout: KeyboardLayout): Record<string, GameCommand["type"]> => {
+  const common = {
+    ArrowUp: "MoveNorth",
+    ArrowDown: "MoveSouth",
+    ArrowLeft: "MoveWest",
+    ArrowRight: "MoveEast",
+    s: "MoveSouth",
+    S: "MoveSouth",
+    d: "MoveEast",
+    D: "MoveEast",
+  } as const;
+
+  if (layout === "azerty") {
+    return {
+      ...common,
+      z: "MoveNorth",
+      Z: "MoveNorth",
+      q: "MoveWest",
+      Q: "MoveWest",
+    };
+  }
+
+  return {
+    ...common,
+    w: "MoveNorth",
+    W: "MoveNorth",
+    a: "MoveWest",
+    A: "MoveWest",
+  };
 };
 
-export function GameScreen({ onBackToTitle }: GameScreenProps) {
+export function GameScreen({ keyboardLayout, onBackToTitle }: GameScreenProps) {
   const [snapshot, setSnapshot] = useState<GameSnapshot | null>(null);
   const engineRef = useRef<GameplayEngine | null>(null);
+  const logRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const map = loadZone(testZoneData);
@@ -38,8 +66,16 @@ export function GameScreen({ onBackToTitle }: GameScreenProps) {
   }, []);
 
   useEffect(() => {
+    if (logRef.current) {
+      logRef.current.scrollTop = logRef.current.scrollHeight;
+    }
+  }, [snapshot?.log]);
+
+  useEffect(() => {
+    const keyCommands = getKeyboardCommands(keyboardLayout);
+
     function handleKeyDown(event: KeyboardEvent) {
-      const commandType = KEY_COMMAND[event.key];
+      const commandType = keyCommands[event.key];
 
       if (commandType) {
         event.preventDefault();
@@ -55,7 +91,7 @@ export function GameScreen({ onBackToTitle }: GameScreenProps) {
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [executeCommand, onBackToTitle]);
+  }, [executeCommand, onBackToTitle, keyboardLayout]);
 
   if (!snapshot) {
     return (
@@ -94,23 +130,28 @@ export function GameScreen({ onBackToTitle }: GameScreenProps) {
         </div>
 
         <div className="game-screen__controls" role="group" aria-label="Movement controls">
+          <div />
           <TerminalButton onClick={() => executeCommand({ type: "MoveNorth" })}>
-            &uarr; North
+            &uarr; North [{keyboardLayout === "azerty" ? "Z" : "W"}]
           </TerminalButton>
-          <div className="game-screen__controls-row">
-            <TerminalButton onClick={() => executeCommand({ type: "MoveWest" })}>
-              &larr; West
-            </TerminalButton>
-            <TerminalButton onClick={() => executeCommand({ type: "MoveSouth" })}>
-              &darr; South
-            </TerminalButton>
-            <TerminalButton onClick={() => executeCommand({ type: "MoveEast" })}>
-              &rarr; East
-            </TerminalButton>
-          </div>
+          <div />
+          <TerminalButton onClick={() => executeCommand({ type: "MoveWest" })}>
+            &larr; West [{keyboardLayout === "azerty" ? "Q" : "A"}]
+          </TerminalButton>
+          <TerminalButton onClick={() => executeCommand({ type: "MoveSouth" })}>
+            &darr; South [S]
+          </TerminalButton>
+          <TerminalButton onClick={() => executeCommand({ type: "MoveEast" })}>
+            &rarr; East [D]
+          </TerminalButton>
         </div>
 
-        <div className="game-screen__log" role="log" aria-label="Game log">
+        <div
+          className="game-screen__log"
+          ref={logRef}
+          role="log"
+          aria-label="Game log"
+        >
           {snapshot.log.map((entry, i) => (
             <p key={i} className="game-screen__log-entry">
               <span className="game-screen__log-tick">[{entry.tick}]</span>{" "}

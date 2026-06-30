@@ -31,6 +31,23 @@ Keep entries short and practical. When a slice is committed, its changelog secti
 - Display text-based grid, debug panel (position, tick, zone), and action log.
 - Update styles and barrel exports for the new engine and game screen.
 
+## 2026-06-30 - [UPDATE]: Add keyboard layout toggle (QWERTY / AZERTY)
+
+- Add a QWERTY / AZERTY layout configuration setting under Options.
+- Persist keyboard layout configuration in localStorage.
+- Enforce layout exclusivity for inputs (WASD when QWERTY is selected, ZQSD when AZERTY is selected).
+- Update GameScreen control button labels to adapt dynamically to the active layout.
+- Update project plan documentation.
+
+## 2026-06-30 - [UPDATE]: Polish game screen layout, canvas colors, and controls
+
+- Restructure game movement controls in a uniform CSS Grid (D-pad layout with identical button sizes).
+- Add support for WASD and ZQSD keyboard layouts for directional movement.
+- Retrieve active theme colors dynamically in GridRenderer to style tiles and player marker.
+- Fix missing/invalid CSS design variables in game screen layout stylesheet.
+- Add automatic scroll-to-bottom for the action log container.
+- Update project plan documentation.
+
 ## 2026-06-30 - [UPDATE]: Convert audio sound settings to inline toggle
 
 - Replace the separate Sound: On/Off options with a single inline toggle.

@@ -64,8 +64,8 @@ La V0 inclura :
 L'ecran sera a texte dominant :
 
 - textes visibles du jeu en anglais ;
-- menus navigables au clavier : fleches haut/bas pour choisir, entree pour confirmer, echap pour revenir quand l'ecran le permet, tabulation neutralisee dans les menus ;
-- options V0 organisees en categories : `Graphics` (avec selection de theme en ligne) et `Audio` (avec activation du son en ligne) ;
+- menus navigables au clavier : fleches haut/bas pour choisir, entree pour confirmer, echap pour revenir quand l'ecran le permet, tabulation neutralisee dans les menus ; deplacement en jeu avec les fleches directionnelles et WASD ou ZQSD (selon la configuration clavier QWERTY/AZERTY active) ;
+- options V0 organisees en categories : `Graphics` (avec selection de theme en ligne), `Audio` (avec activation du son en ligne) et configuration clavier `Controls` en ligne ;
 - zone principale de narration/log ;
 - carte Canvas compacte mais visible ;
 - boutons de deplacement ;

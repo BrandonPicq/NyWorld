@@ -2,13 +2,16 @@ import type { AudioSettings } from "../audio/audioSettings";
 import { TerminalMenu } from "../components/TerminalMenu";
 import { TerminalPanel } from "../components/TerminalPanel";
 import { type ThemeId, themePresets } from "../theme/theme";
+import type { KeyboardLayout } from "../controls/keyboardLayout";
 
 type OptionsScreenProps = {
   activeTheme: ThemeId;
   audioSettings: AudioSettings;
+  keyboardLayout: KeyboardLayout;
   onBackToOptions: () => void;
   onBackToTitle: () => void;
   onChangeTheme: (themeId: ThemeId) => void;
+  onChangeKeyboardLayout: (layout: KeyboardLayout) => void;
   onMenuConfirm?: () => void;
   onMenuMove?: () => void;
   onOpenAudio: () => void;
@@ -20,9 +23,11 @@ type OptionsScreenProps = {
 export function OptionsScreen({
   activeTheme,
   audioSettings,
+  keyboardLayout,
   onBackToOptions,
   onBackToTitle,
   onChangeTheme,
+  onChangeKeyboardLayout,
   onMenuConfirm,
   onMenuMove,
   onOpenAudio,
@@ -33,9 +38,11 @@ export function OptionsScreen({
   const optionsView = getOptionsView({
     activeTheme,
     audioSettings,
+    keyboardLayout,
     onBackToOptions,
     onBackToTitle,
     onChangeTheme,
+    onChangeKeyboardLayout,
     onOpenAudio,
     onOpenGraphics,
     onToggleSound,
@@ -71,9 +78,11 @@ type OptionsViewInput = Omit<OptionsScreenProps, "onMenuConfirm" | "onMenuMove">
 function getOptionsView({
   activeTheme,
   audioSettings,
+  keyboardLayout,
   onBackToOptions,
   onBackToTitle,
   onChangeTheme,
+  onChangeKeyboardLayout,
   onOpenAudio,
   onOpenGraphics,
   onToggleSound,
@@ -134,12 +143,21 @@ function getOptionsView({
 
   return {
     ariaLabel: "Options menu",
-    copy: "Configure graphics and audio settings.",
+    copy: "Configure controls, graphics and audio settings.",
     heading: "Options",
     kicker: "SYSTEM OPTIONS",
     items: [
       { label: "Graphics", onSelect: onOpenGraphics },
       { label: "Audio", onSelect: onOpenAudio },
+      {
+        label: `Controls: < ${keyboardLayout.toUpperCase()} >`,
+        onSelect: () =>
+          onChangeKeyboardLayout(keyboardLayout === "qwerty" ? "azerty" : "qwerty"),
+        onLeft: () =>
+          onChangeKeyboardLayout(keyboardLayout === "qwerty" ? "azerty" : "qwerty"),
+        onRight: () =>
+          onChangeKeyboardLayout(keyboardLayout === "qwerty" ? "azerty" : "qwerty"),
+      },
       { label: "Back", onSelect: onBackToTitle },
     ],
     onBack: onBackToTitle,

@@ -16,6 +16,11 @@ import {
   readStoredThemeId,
   writeStoredThemeId,
 } from "../ui/theme/theme";
+import {
+  type KeyboardLayout,
+  readStoredKeyboardLayout,
+  writeStoredKeyboardLayout,
+} from "../ui/controls/keyboardLayout";
 
 type OptionsScreenId =
   | "options"
@@ -31,6 +36,9 @@ function App() {
   const [audioSettings, setAudioSettings] = useState<AudioSettings>(() =>
     readStoredAudioSettings(),
   );
+  const [keyboardLayout, setKeyboardLayout] = useState<KeyboardLayout>(() =>
+    readStoredKeyboardLayout(),
+  );
 
   useEffect(() => {
     document.documentElement.dataset.theme = activeTheme;
@@ -40,6 +48,10 @@ function App() {
   useEffect(() => {
     writeStoredAudioSettings(audioSettings);
   }, [audioSettings]);
+
+  useEffect(() => {
+    writeStoredKeyboardLayout(keyboardLayout);
+  }, [keyboardLayout]);
 
   const menuFeedback = {
     onMenuConfirm: () => {
@@ -55,7 +67,12 @@ function App() {
   };
 
   if (screen === "game") {
-    return <GameScreen onBackToTitle={() => setScreen("title")} />;
+    return (
+      <GameScreen
+        keyboardLayout={keyboardLayout}
+        onBackToTitle={() => setScreen("title")}
+      />
+    );
   }
 
   if (isOptionsScreenId(screen)) {
@@ -63,9 +80,11 @@ function App() {
       <OptionsScreen
         activeTheme={activeTheme}
         audioSettings={audioSettings}
+        keyboardLayout={keyboardLayout}
         {...menuFeedback}
         onBackToTitle={() => setScreen("title")}
         onChangeTheme={setActiveTheme}
+        onChangeKeyboardLayout={setKeyboardLayout}
         onOpenAudio={() => setScreen("options-audio")}
         onOpenGraphics={() => setScreen("options-graphics")}
         onToggleSound={(soundEnabled) =>
