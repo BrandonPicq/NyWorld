@@ -1,0 +1,36 @@
+import { getTileDef } from "./TileRegistry";
+import type { PlayerStart, TileId, ZoneData } from "./ZoneTypes";
+
+export class GameMap {
+  readonly zoneId: string;
+  readonly name: string;
+  readonly width: number;
+  readonly height: number;
+  readonly playerStart: PlayerStart;
+
+  private tiles: TileId[][];
+
+  constructor(data: ZoneData) {
+    this.zoneId = data.zoneId;
+    this.name = data.name;
+    this.width = data.width;
+    this.height = data.height;
+    this.playerStart = { ...data.playerStart };
+    this.tiles = data.tiles.map((row) => [...row]);
+  }
+
+  isInBounds(x: number, y: number): boolean {
+    return x >= 0 && x < this.width && y >= 0 && y < this.height;
+  }
+
+  isWalkable(x: number, y: number): boolean {
+    if (!this.isInBounds(x, y)) {
+      return false;
+    }
+    return getTileDef(this.tiles[y][x]).walkable;
+  }
+
+  getTileId(x: number, y: number): TileId {
+    return this.tiles[y][x];
+  }
+}

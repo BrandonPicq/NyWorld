@@ -3,4 +3,5 @@
 @import "./styles/components/terminal.css";
 @import "./styles/screens/title.css";
 @import "./styles/screens/game-placeholder.css";
+@import "./styles/screens/game-screen.css";
 @import "./styles/screens/options.css";

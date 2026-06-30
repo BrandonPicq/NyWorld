@@ -1,6 +1,8 @@
 export type MenuItem = {
   label: string;
   onSelect?: () => void;
+  onLeft?: () => void;
+  onRight?: () => void;
   disabled?: boolean;
 };
 

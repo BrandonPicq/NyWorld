@@ -8,7 +8,7 @@ import {
   playMenuConfirmSound,
   playMenuMoveSound,
 } from "../ui/audio/menuAudio";
-import { GamePlaceholderScreen } from "../ui/screens/GamePlaceholderScreen";
+import { GameScreen } from "../ui/screens/GameScreen";
 import { OptionsScreen } from "../ui/screens/OptionsScreen";
 import { TitleScreen } from "../ui/screens/TitleScreen";
 import {
@@ -20,7 +20,6 @@ import {
 type OptionsScreenId =
   | "options"
   | "options-graphics"
-  | "options-themes"
   | "options-audio";
 type AppScreen = "title" | "game" | OptionsScreenId;
 
@@ -56,12 +55,7 @@ function App() {
   };
 
   if (screen === "game") {
-    return (
-      <GamePlaceholderScreen
-        onBackToTitle={() => setScreen("title")}
-        {...menuFeedback}
-      />
-    );
+    return <GameScreen onBackToTitle={() => setScreen("title")} />;
   }
 
   if (isOptionsScreenId(screen)) {
@@ -74,12 +68,10 @@ function App() {
         onChangeTheme={setActiveTheme}
         onOpenAudio={() => setScreen("options-audio")}
         onOpenGraphics={() => setScreen("options-graphics")}
-        onOpenThemes={() => setScreen("options-themes")}
         onToggleSound={(soundEnabled) =>
           setAudioSettings({ soundEnabled })
         }
         onBackToOptions={() => setScreen("options")}
-        onBackToGraphics={() => setScreen("options-graphics")}
         screen={screen}
       />
     );
@@ -100,7 +92,6 @@ function isOptionsScreenId(screen: AppScreen): screen is OptionsScreenId {
   return (
     screen === "options" ||
     screen === "options-graphics" ||
-    screen === "options-themes" ||
     screen === "options-audio"
   );
 }

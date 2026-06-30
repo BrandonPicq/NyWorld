@@ -107,6 +107,26 @@ export function TerminalMenu({
       return;
     }
 
+    if (event.key === "ArrowLeft") {
+      const selectedItem = items[selectedIndex];
+      if (selectedItem?.onLeft && !selectedItem.disabled) {
+        event.preventDefault();
+        selectedItem.onLeft();
+        onMoveSelection?.();
+      }
+      return;
+    }
+
+    if (event.key === "ArrowRight") {
+      const selectedItem = items[selectedIndex];
+      if (selectedItem?.onRight && !selectedItem.disabled) {
+        event.preventDefault();
+        selectedItem.onRight();
+        onMoveSelection?.();
+      }
+      return;
+    }
+
     if (event.key === "Escape") {
       handleBackAction(event);
     }
