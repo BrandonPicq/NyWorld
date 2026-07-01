@@ -16,7 +16,7 @@ type OptionsScreenProps = {
   keyboardLayout: KeyboardLayout;
   textSpeed: TextSpeed;
   onBackToOptions: () => void;
-  onBackToTitle: () => void;
+  onBack: () => void;
   onChangeTheme: (themeId: ThemeId) => void;
   onChangeKeyboardLayout: (layout: KeyboardLayout) => void;
   onChangeTextSpeed: (speed: TextSpeed) => void;
@@ -37,7 +37,7 @@ export function OptionsScreen({
   keyboardLayout,
   textSpeed,
   onBackToOptions,
-  onBackToTitle,
+  onBack,
   onChangeTheme,
   onChangeKeyboardLayout,
   onChangeTextSpeed,
@@ -57,7 +57,7 @@ export function OptionsScreen({
     keyboardLayout,
     textSpeed,
     onBackToOptions,
-    onBackToTitle,
+    onBack,
     onChangeTheme,
     onChangeKeyboardLayout,
     onChangeTextSpeed,
@@ -102,7 +102,7 @@ function getOptionsView({
   keyboardLayout,
   textSpeed,
   onBackToOptions,
-  onBackToTitle,
+  onBack,
   onChangeTheme,
   onChangeKeyboardLayout,
   onChangeTextSpeed,
@@ -256,8 +256,8 @@ function getOptionsView({
         onRight: () =>
           onChangeKeyboardLayout(keyboardLayout === "qwerty" ? "azerty" : "qwerty"),
       },
-      { label: "Back", onSelect: onBackToTitle },
+      { label: "Back", onSelect: onBack },
     ],
-    onBack: onBackToTitle,
+    onBack,
   };
 }

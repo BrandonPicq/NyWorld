@@ -9,4 +9,8 @@ export class TickCounter {
     this.current += 1;
     return this.current;
   }
+
+  restoreTo(tick: number): void {
+    this.current = tick;
+  }
 }

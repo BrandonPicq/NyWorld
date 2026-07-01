@@ -4,6 +4,7 @@ import testZoneData from "../../content/zones/test_zone.json";
 import testZone2Data from "../../content/zones/test_zone_2.json";
 import type { ZoneData } from "../../engine/ZoneTypes";
 import type { GameCommand } from "../../engine";
+import type { GameSaveData } from "../../engine/GameSaveData";
 import { TerminalPanel } from "../components/TerminalPanel";
 import { TerminalButton } from "../components/TerminalButton";
 import type { KeyboardLayout } from "../controls/keyboardLayout";
@@ -22,6 +23,9 @@ import { useZoneEntryDialogue } from "../game/useZoneEntryDialogue";
 import { InteractionChoiceModal } from "../game/InteractionChoiceModal";
 import { InventoryModal } from "../game/InventoryModal";
 import { PauseModal } from "../game/PauseModal";
+import { SaveSlotsModal } from "../save/SaveSlotsModal";
+import { GameToast } from "../toast/GameToast";
+import { readAllSaves, writeSlot } from "../save/gameSaveStorage";
 import {
   createInteractionCommand,
   getInteractionTargets,
@@ -32,7 +36,9 @@ type GameScreenProps = {
   gameplaySettings: GameplaySettings;
   keyboardLayout: KeyboardLayout;
   textSpeed: TextSpeed;
+  initialSaveData?: GameSaveData;
   onBackToTitle: () => void;
+  onLoadError?: (message: string) => void;
   onOpenOptions: () => void;
 };
 
@@ -46,7 +52,9 @@ export function GameScreen({
   gameplaySettings,
   keyboardLayout,
   textSpeed,
+  initialSaveData,
   onBackToTitle,
+  onLoadError,
   onOpenOptions,
 }: GameScreenProps) {
   const [isCharacterSheetOpen, setIsCharacterSheetOpen] = useState(false);
@@ -54,6 +62,8 @@ export function GameScreen({
   const [isInventoryOpen, setIsInventoryOpen] = useState(false);
   const [inventoryNotice, setInventoryNotice] = useState<string | null>(null);
   const [isPauseMenuOpen, setIsPauseMenuOpen] = useState(false);
+  const [isSaveSlotsOpen, setIsSaveSlotsOpen] = useState(false);
+  const [gameToast, setGameToast] = useState<string | null>(null);
   const logRef = useRef<HTMLDivElement>(null);
   const {
     activeDialogue,
@@ -69,11 +79,14 @@ export function GameScreen({
     isCharacterSheetOpen ||
     isInteractChoiceOpen ||
     isInventoryOpen ||
-    isPauseMenuOpen;
-  const { executeCommand, snapshot } = useGameplayEngine({
+    isPauseMenuOpen ||
+    isSaveSlotsOpen;
+  const { createSaveData, executeCommand, snapshot } = useGameplayEngine({
     audioSettings,
+    initialSaveData,
     initialZoneData: zoneRegistry.test_zone,
     onDialogue: triggerDialogue,
+    onLoadError,
     onNotice: setInventoryNotice,
     zoneRegistry,
   });
@@ -81,6 +94,25 @@ export function GameScreen({
   const interactionTargets = snapshot
     ? getInteractionTargets(snapshot, gameplaySettings)
     : [];
+
+  const handleSaveGame = () => {
+    setIsPauseMenuOpen(false);
+    setIsSaveSlotsOpen(true);
+  };
+
+  const handleSaveToSlot = (slotIndex: number) => {
+    const saveData = createSaveData();
+    if (!saveData) return;
+
+    const didSave = writeSlot(slotIndex, saveData);
+    if (!didSave) {
+      setGameToast(`Could not save to slot ${slotIndex + 1}.`);
+      return;
+    }
+
+    setIsSaveSlotsOpen(false);
+    setGameToast(`Game saved to slot ${slotIndex + 1}.`);
+  };
 
   const handleExecuteCommand = (command: GameCommand) => {
     if (
@@ -126,6 +158,7 @@ export function GameScreen({
     isInventoryNoticeOpen: inventoryNotice !== null,
     isInventoryOpen,
     isPauseMenuOpen,
+    isSaveSlotsOpen,
     keyboardLayout,
     onOpenPauseMenu: () => setIsPauseMenuOpen(true),
     progressDialogue,
@@ -135,6 +168,7 @@ export function GameScreen({
       setInventoryNotice(next ? "" : null);
     },
     setIsInventoryOpen,
+    setIsSaveSlotsOpen,
   });
 
   if (!snapshot) {
@@ -260,6 +294,22 @@ export function GameScreen({
             onClose={() => setIsPauseMenuOpen(false)}
             onOpenOptions={onOpenOptions}
             onQuit={onBackToTitle}
+            onSave={handleSaveGame}
+          />
+        )}
+
+        {isSaveSlotsOpen && (
+          <SaveSlotsModal
+            onClose={() => setIsSaveSlotsOpen(false)}
+            onSave={handleSaveToSlot}
+            slots={readAllSaves()}
+          />
+        )}
+
+        {gameToast !== null && (
+          <GameToast
+            message={gameToast}
+            onDismiss={() => setGameToast(null)}
           />
         )}
       </div>

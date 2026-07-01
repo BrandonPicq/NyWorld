@@ -5,6 +5,7 @@ import {
   type DialogueNode,
   type EngineEffect,
   type GameCommand,
+  type GameSaveData,
   type GameSnapshot,
   type ZoneData,
 } from "../../engine";
@@ -14,7 +15,9 @@ import { playItemCollectSound, playMenuConfirmSound } from "../audio/menuAudio";
 type UseGameplayEngineInput = {
   audioSettings: AudioSettings;
   initialZoneData: ZoneData;
+  initialSaveData?: GameSaveData;
   onDialogue: (nodes: DialogueNode[]) => void;
+  onLoadError?: (message: string) => void;
   onNotice?: (message: string) => void;
   zoneRegistry: Record<string, ZoneData>;
 };
@@ -29,24 +32,43 @@ type UseGameplayEngineInput = {
 export function useGameplayEngine({
   audioSettings,
   initialZoneData,
+  initialSaveData,
   onDialogue,
+  onLoadError,
   onNotice,
   zoneRegistry,
 }: UseGameplayEngineInput) {
   const [snapshot, setSnapshot] = useState<GameSnapshot | null>(null);
   const engineRef = useRef<GameplayEngine | null>(null);
+  const initialSaveDataRef = useRef(initialSaveData);
+  const onLoadErrorRef = useRef(onLoadError);
+
+  if (initialSaveDataRef.current !== initialSaveData) {
+    initialSaveDataRef.current = initialSaveData;
+  }
+  onLoadErrorRef.current = onLoadError;
 
   useEffect(() => {
-    const map = loadZone(initialZoneData);
-    const engine = new GameplayEngine(map, {
-      resolveZone: (zoneId) => {
-        const zoneData = zoneRegistry[zoneId];
-        return zoneData ? loadZone(zoneData) : undefined;
-      },
-    });
+    const resolveZone = (zoneId: string) => {
+      const zoneData = zoneRegistry[zoneId];
+      return zoneData ? loadZone(zoneData) : undefined;
+    };
 
-    engineRef.current = engine;
-    setSnapshot(engine.getSnapshot());
+    try {
+      const saveData = initialSaveDataRef.current;
+      const engine = saveData
+        ? GameplayEngine.fromSaveData(saveData, { resolveZone })
+        : new GameplayEngine(loadZone(initialZoneData), { resolveZone });
+
+      engineRef.current = engine;
+      setSnapshot(engine.getSnapshot());
+    } catch (error) {
+      engineRef.current = null;
+      setSnapshot(null);
+      const message =
+        error instanceof Error ? error.message : "Cannot load saved game.";
+      onLoadErrorRef.current?.(message);
+    }
 
     return () => {
       engineRef.current = null;
@@ -77,6 +99,7 @@ export function useGameplayEngine({
   );
 
   return {
+    createSaveData: () => engineRef.current?.createSaveData(),
     executeCommand,
     snapshot,
   };

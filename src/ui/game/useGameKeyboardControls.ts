@@ -16,12 +16,14 @@ type UseGameKeyboardControlsInput = {
   isInventoryNoticeOpen: boolean;
   isInventoryOpen: boolean;
   isPauseMenuOpen: boolean;
+  isSaveSlotsOpen?: boolean;
   keyboardLayout: KeyboardLayout;
   onOpenPauseMenu: () => void;
   progressDialogue: () => void;
   setIsCharacterSheetOpen: Dispatch<SetStateAction<boolean>>;
   setIsInventoryNoticeOpen: Dispatch<SetStateAction<boolean>>;
   setIsInventoryOpen: Dispatch<SetStateAction<boolean>>;
+  setIsSaveSlotsOpen?: Dispatch<SetStateAction<boolean>>;
 };
 
 /**
@@ -40,16 +42,18 @@ export function useGameKeyboardControls({
   isInventoryNoticeOpen,
   isInventoryOpen,
   isPauseMenuOpen,
+  isSaveSlotsOpen = false,
   keyboardLayout,
   onOpenPauseMenu,
   progressDialogue,
   setIsCharacterSheetOpen,
   setIsInventoryNoticeOpen,
   setIsInventoryOpen,
+  setIsSaveSlotsOpen,
 }: UseGameKeyboardControlsInput): void {
   useEffect(() => {
     function handleKeyDown(event: KeyboardEvent) {
-      if (isInteractChoiceOpen || isPauseMenuOpen) {
+      if (isInteractChoiceOpen || isPauseMenuOpen || isSaveSlotsOpen) {
         return;
       }
 
@@ -134,6 +138,7 @@ export function useGameKeyboardControls({
     isInventoryNoticeOpen,
     isInventoryOpen,
     isPauseMenuOpen,
+    isSaveSlotsOpen,
     keyboardLayout,
     onOpenPauseMenu,
     progressDialogue,

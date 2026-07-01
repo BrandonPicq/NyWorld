@@ -42,3 +42,5 @@ export type {
   LogEntry,
   RenderEntity,
 } from "./GameplayEngine";
+export type { GameSaveData } from "./GameSaveData";
+export { SAVE_VERSION } from "./GameSaveData";

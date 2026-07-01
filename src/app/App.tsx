@@ -11,6 +11,7 @@ import {
 import { GameScreen } from "../ui/screens/GameScreen";
 import { OptionsScreen } from "../ui/screens/OptionsScreen";
 import { TitleScreen } from "../ui/screens/TitleScreen";
+import { readAllSaves, readSlot } from "../ui/save/gameSaveStorage";
 import {
   type ThemeId,
   readStoredThemeId,
@@ -31,6 +32,7 @@ import {
   readStoredGameplaySettings,
   writeStoredGameplaySettings,
 } from "../ui/controls/gameplaySettings";
+import type { GameSaveData } from "../engine/GameSaveData";
 
 type OptionsScreenId =
   | "options"
@@ -42,6 +44,13 @@ type AppScreen = "title" | "game" | OptionsScreenId;
 function App() {
   const [screen, setScreen] = useState<AppScreen>("title");
   const [isGameActive, setIsGameActive] = useState(false);
+  const [saves, setSaves] = useState<(GameSaveData | null)[]>(() =>
+    readAllSaves(),
+  );
+  const [loadedSaveData, setLoadedSaveData] = useState<GameSaveData | null>(
+    null,
+  );
+  const [titleNotice, setTitleNotice] = useState<string | null>(null);
   const [activeTheme, setActiveTheme] = useState<ThemeId>(() =>
     readStoredThemeId(),
   );
@@ -96,6 +105,37 @@ function App() {
   const showOptions = isOptionsScreenId(screen);
   const showTitle = screen === "title" && !isGameActive;
 
+  const handleStartNewGame = () => {
+    setLoadedSaveData(null);
+    setTitleNotice(null);
+    setIsGameActive(true);
+    setScreen("game");
+  };
+
+  const handleLoadSlot = (slotIndex: number) => {
+    const save = readSlot(slotIndex);
+    if (!save) return;
+    setTitleNotice(null);
+    setLoadedSaveData(save);
+    setIsGameActive(true);
+    setScreen("game");
+  };
+
+  const handleBackToTitle = () => {
+    setLoadedSaveData(null);
+    setIsGameActive(false);
+    setScreen("title");
+    setSaves(readAllSaves());
+  };
+
+  const handleGameLoadError = (message: string) => {
+    setLoadedSaveData(null);
+    setIsGameActive(false);
+    setScreen("title");
+    setSaves(readAllSaves());
+    setTitleNotice(message);
+  };
+
   return (
     <>
       {isGameActive && (
@@ -103,12 +143,11 @@ function App() {
           <GameScreen
             audioSettings={audioSettings}
             gameplaySettings={gameplaySettings}
+            initialSaveData={loadedSaveData ?? undefined}
             keyboardLayout={keyboardLayout}
             textSpeed={textSpeed}
-            onBackToTitle={() => {
-              setIsGameActive(false);
-              setScreen("title");
-            }}
+            onBackToTitle={handleBackToTitle}
+            onLoadError={handleGameLoadError}
             onOpenOptions={() => setScreen("options")}
           />
         </div>
@@ -118,10 +157,10 @@ function App() {
         <TitleScreen
           {...menuFeedback}
           onOpenOptions={() => setScreen("options")}
-          onStartNewGame={() => {
-            setIsGameActive(true);
-            setScreen("game");
-          }}
+          onStartNewGame={handleStartNewGame}
+          onLoadSlot={handleLoadSlot}
+          notice={titleNotice}
+          saves={saves}
         />
       )}
 
@@ -133,7 +172,7 @@ function App() {
           keyboardLayout={keyboardLayout}
           textSpeed={textSpeed}
           {...menuFeedback}
-          onBackToTitle={() => {
+          onBack={() => {
             if (isGameActive) {
               setScreen("game");
             } else {

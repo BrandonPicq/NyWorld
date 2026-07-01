@@ -17,6 +17,8 @@ import { DIRECTION_DELTA, MovementSystem } from "./systems/MovementSystem";
 import type { Direction } from "./systems/MovementSystem";
 import { TickCounter } from "./tick";
 import type { ZoneTransitionData } from "./ZoneTypes";
+import type { GameSaveData } from "./GameSaveData";
+import { SAVE_VERSION } from "./GameSaveData";
 
 export interface LogEntry {
   tick: number;
@@ -527,6 +529,97 @@ export class GameplayEngine {
       tick: this.tickCounter.tick,
       message: `Entered ${map.name}.`,
     });
+  }
+
+  /**
+   * Serializes the current engine state into a versioned save payload.
+   *
+   * The save only captures mutable gameplay state — zone identity, position,
+   * stats, inventory, log, and collected item keys. Zone geometry, NPCs, and
+   * ground items are rehydrated from content data when the save is restored.
+   */
+  createSaveData(): GameSaveData {
+    const pos = this.getPlayerPosition();
+    const stats = this.getPlayerStats();
+    const inventory = this.getPlayerInventory();
+
+    return {
+      version: SAVE_VERSION,
+      savedAt: new Date().toISOString(),
+      zoneId: this.map.zoneId,
+      tick: this.tickCounter.tick,
+      playerX: pos.x,
+      playerY: pos.y,
+      playerFacing: this.playerFacing,
+      stats: {
+        type: "Stats",
+        energy: stats.energy,
+        maxEnergy: stats.maxEnergy,
+        currency: stats.currency,
+        attributes: { ...stats.attributes },
+        academicTitle: stats.academicTitle,
+        academicProgress: stats.academicProgress,
+      },
+      inventory: {
+        type: "Inventory",
+        items: inventory.items.map((stack) => ({ ...stack })),
+      },
+      log: this.log.map((entry) => ({ ...entry })),
+      pickedUpItemSpawnKeys: Array.from(this.pickedUpItemSpawnKeys),
+    };
+  }
+
+  /**
+   * Creates a GameplayEngine from a previously persisted save.
+   *
+   * The engine is constructed with the saved zone, then all dynamic state
+   * (position, stats, inventory, log, tick, facing, and collected item keys)
+   * is restored. The zone's NPCs and uncollected items are respawned via
+   * enterZone to respect the saved pickedUpItemSpawnKeys.
+   */
+  static fromSaveData(
+    saveData: GameSaveData,
+    options: { resolveZone: ZoneResolver },
+  ): GameplayEngine {
+    const map = options.resolveZone(saveData.zoneId);
+
+    if (!map) {
+      throw new Error(
+        `Cannot load save: zone "${saveData.zoneId}" is not available.`,
+      );
+    }
+
+    const engine = new GameplayEngine(map, options);
+
+    const [playerId] = engine.world.entitiesWith("PlayerControlled");
+
+    const stats = engine.world.getComponent<Stats>(playerId, "Stats")!;
+    stats.energy = saveData.stats.energy;
+    stats.maxEnergy = saveData.stats.maxEnergy;
+    stats.currency = saveData.stats.currency;
+    stats.attributes = { ...saveData.stats.attributes };
+    stats.academicTitle = saveData.stats.academicTitle;
+    stats.academicProgress = saveData.stats.academicProgress;
+
+    const inventory = engine.world.getComponent<Inventory>(
+      playerId,
+      "Inventory",
+    )!;
+    inventory.items = saveData.inventory.items.map((stack) => ({ ...stack }));
+
+    engine.tickCounter.restoreTo(saveData.tick);
+    engine.playerFacing = saveData.playerFacing;
+    engine.log = saveData.log.map((entry) => ({ ...entry }));
+    engine.pickedUpItemSpawnKeys = new Set(saveData.pickedUpItemSpawnKeys);
+
+    engine.spawnNpcs();
+    engine.spawnItems();
+
+    const pos = engine.getPlayerPosition();
+    pos.x = saveData.playerX;
+    pos.y = saveData.playerY;
+
+    return engine;
   }
 
   private resolvePendingTransition(): void {

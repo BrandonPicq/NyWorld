@@ -797,4 +797,141 @@ describe("GameplayEngine", () => {
       );
     });
   });
+
+  describe("SaveData", () => {
+    it("createSaveData captures zone, tick, position, facing, stats, and inventory", () => {
+      const engine = createEngine();
+      engine.execute({ type: "MoveEast" });
+      engine.execute({ type: "MoveSouth" });
+
+      const save = engine.createSaveData();
+
+      expect(save.version).toBe("0.1");
+      expect(save.zoneId).toBe("movement_test");
+      expect(save.tick).toBe(2);
+      expect(save.playerX).toBe(2);
+      expect(save.playerY).toBe(2);
+      expect(save.playerFacing).toBe("south");
+      expect(save.stats.energy).toBe(98);
+      expect(save.stats.maxEnergy).toBe(100);
+      expect(save.inventory.items).toHaveLength(3);
+      expect(save.log.length).toBeGreaterThan(0);
+      expect(save.pickedUpItemSpawnKeys).toEqual([]);
+    });
+
+    it("createSaveData includes collected item spawn keys", () => {
+      const mapWithItem = loadZone({
+        ...zoneData,
+        items: [{ itemId: "healing_herb", x: 2, y: 1, quantity: 1 }],
+      });
+      const engine = new GameplayEngine(mapWithItem);
+      engine.execute({ type: "MoveEast" });
+
+      const save = engine.createSaveData();
+
+      expect(save.pickedUpItemSpawnKeys).toHaveLength(1);
+      expect(save.pickedUpItemSpawnKeys[0]).toContain("healing_herb");
+      expect(save.pickedUpItemSpawnKeys[0]).toContain("2,1");
+    });
+
+    it("fromSaveData restores tick, position, facing, stats, and inventory", () => {
+      const engine = createEngine();
+      engine.execute({ type: "MoveEast" });
+      engine.execute({ type: "MoveSouth" });
+
+      const save = engine.createSaveData();
+
+      const restored = GameplayEngine.fromSaveData(save, {
+        resolveZone: (zoneId) =>
+          zoneId === "movement_test" ? loadZone(zoneData) : undefined,
+      });
+
+      const snap = restored.getSnapshot();
+      expect(snap.tick).toBe(2);
+      expect(snap.playerX).toBe(2);
+      expect(snap.playerY).toBe(2);
+      expect(snap.playerFacing).toBe("south");
+      expect(snap.stats.energy).toBe(98);
+      expect(snap.inventory.items).toHaveLength(3);
+    });
+
+    it("fromSaveData does not respawn already-collected items", () => {
+      const mapWithItem = loadZone({
+        ...zoneData,
+        items: [{ itemId: "healing_herb", x: 2, y: 1, quantity: 1 }],
+      });
+      const engine = new GameplayEngine(mapWithItem);
+      engine.execute({ type: "MoveEast" });
+
+      const save = engine.createSaveData();
+      expect(save.pickedUpItemSpawnKeys).toHaveLength(1);
+
+      const restored = GameplayEngine.fromSaveData(save, {
+        resolveZone: (zoneId) =>
+          zoneId === "movement_test" ? mapWithItem : undefined,
+      });
+
+      const afterSnap = restored.getSnapshot();
+      expect(afterSnap.playerX).toBe(2);
+      expect(afterSnap.playerY).toBe(1);
+
+      const herbEntities = afterSnap.entities.filter(
+        (e) => e.x === 2 && e.y === 1 && e.glyph === "*",
+      );
+      expect(herbEntities).toHaveLength(0);
+    });
+
+    it("fromSaveData restores log entries", () => {
+      const engine = createEngine();
+      engine.execute({ type: "MoveEast" });
+
+      const save = engine.createSaveData();
+
+      const restored = GameplayEngine.fromSaveData(save, {
+        resolveZone: (zoneId) =>
+          zoneId === "movement_test" ? loadZone(zoneData) : undefined,
+      });
+
+      const logMessages = restored.getSnapshot().log.map((e) => e.message);
+      expect(logMessages).toContain("Entered Movement Test.");
+      expect(logMessages).toContain("Moved east to (2, 1).");
+    });
+
+    it("save roundtrip through fromSaveData produces equivalent snapshot data", () => {
+      const engine = createEngine();
+      engine.execute({ type: "MoveEast" });
+      engine.execute({ type: "MoveSouth" });
+
+      const original = engine.getSnapshot();
+      const save = engine.createSaveData();
+
+      const restored = GameplayEngine.fromSaveData(save, {
+        resolveZone: (zoneId) =>
+          zoneId === "movement_test" ? loadZone(zoneData) : undefined,
+      });
+
+      const restoredSnap = restored.getSnapshot();
+
+      expect(restoredSnap.tick).toBe(original.tick);
+      expect(restoredSnap.zoneId).toBe(original.zoneId);
+      expect(restoredSnap.playerX).toBe(original.playerX);
+      expect(restoredSnap.playerY).toBe(original.playerY);
+      expect(restoredSnap.playerFacing).toBe(original.playerFacing);
+      expect(restoredSnap.stats.energy).toBe(original.stats.energy);
+      expect(restoredSnap.stats.maxEnergy).toBe(original.stats.maxEnergy);
+      expect(restoredSnap.inventory.items).toEqual(original.inventory.items);
+      expect(restoredSnap.log.length).toBe(original.log.length);
+    });
+
+    it("fromSaveData throws when the saved zone is not available", () => {
+      const engine = createEngine();
+      const save = engine.createSaveData();
+
+      expect(() =>
+        GameplayEngine.fromSaveData(save, {
+          resolveZone: () => undefined,
+        }),
+      ).toThrow("not available");
+    });
+  });
 });

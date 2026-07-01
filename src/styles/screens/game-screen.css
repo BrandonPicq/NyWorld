@@ -477,3 +477,26 @@
   0%, 100% { opacity: 0.5; }
   50% { opacity: 1; }
 }
+
+/* Game Toast */
+.game-toast {
+  position: fixed;
+  top: var(--space-4);
+  left: 50%;
+  transform: translateX(-50%) translateY(-120%);
+  background: var(--color-panel-background);
+  border: 2px solid var(--color-accent);
+  padding: var(--space-2) var(--space-4);
+  font-family: var(--font-mono);
+  font-size: 0.95rem;
+  color: var(--color-accent);
+  z-index: 2000;
+  opacity: 0;
+  transition: transform 0.3s ease, opacity 0.3s ease;
+  pointer-events: none;
+}
+
+.game-toast[data-visible="true"] {
+  transform: translateX(-50%) translateY(0);
+  opacity: 1;
+}

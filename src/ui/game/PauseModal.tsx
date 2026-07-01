@@ -8,6 +8,7 @@ type PauseModalProps = {
   onClose: () => void;
   onOpenOptions: () => void;
   onQuit: () => void;
+  onSave: () => void;
 };
 
 export function PauseModal({
@@ -15,6 +16,7 @@ export function PauseModal({
   onClose,
   onOpenOptions,
   onQuit,
+  onSave,
 }: PauseModalProps) {
   const menuFeedback = {
     onActivateItem: () => {
@@ -44,6 +46,10 @@ export function PauseModal({
     {
       label: "Options",
       onSelect: () => onOpenOptions(),
+    },
+    {
+      label: "Save Game",
+      onSelect: () => onSave(),
     },
     {
       label: "Quit to Title",

@@ -4,6 +4,31 @@ This file tracks meaningful project changes by commit-oriented slices.
 
 Keep entries short and practical. When a slice is committed, its changelog section should stay aligned with the commit title so the project history remains easy to read after restores or bisects.
 
+## 2026-07-01 - [ADD]: Implement basic game save and load with 3 slots
+
+- Add GameSaveData versioned interface and SAVE_VERSION constant.
+- Add TickCounter.restoreTo to support save restoration.
+- Add GameplayEngine.createSaveData serializing zone, tick, position, facing, stats, inventory, log, and collected item keys.
+- Add static GameplayEngine.fromSaveData restoring engine state from a save and respawning only uncollected items.
+- Add multi-slot localStorage persistence layer (3 slots) with deep version validation and safe read/write/delete functions.
+- Add Save Slots modal for choosing a save slot from the pause menu.
+- Add GameToast component with slide-in animation for save confirmation.
+- Add Save Game entry to the pause menu.
+- Add Continue entries on the title screen for each occupied save slot.
+- Wire useGameplayEngine to accept initialSaveData for restoring from a save.
+- Wire App.tsx to orchestrate New Game, Continue, and Back to Title flows.
+- Recover from unavailable saved zones by returning to the title screen with a notice.
+- Ask for confirmation before overwriting an occupied save slot.
+- Add engine tests for createSaveData serialization and fromSaveData roundtrip and item respawn prevention.
+- Add storage tests for read/write roundtrip, write failures, invalid JSON, wrong version, missing fields, and invalid nested data.
+
+## 2026-07-01 - [ADD]: Allow opening game options from the pause menu
+
+- Add an Options entry to the pause menu.
+- Keep the active game mounted while browsing options from a paused game.
+- Return from options back to the paused game when options were opened from gameplay.
+- Keep title-screen options returning to the title screen.
+
 ## 2026-07-01 - [ADD]: Use consumable items for energy restoration
 
 - Add a UseItem command accepting an itemId and rejecting non-consumables or missing inventory entries.
