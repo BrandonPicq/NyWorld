@@ -23,6 +23,7 @@ export interface DialogueNodeData {
 
 export interface NpcSpawnData {
   npcId: string;
+  dialogueId?: string;
   x: number;
   y: number;
 }

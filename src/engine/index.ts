@@ -47,6 +47,8 @@ export { getItemDef, hasItemDef } from "./items/itemRegistry";
 export type { ItemDef, ItemDefMap } from "./items/ItemDef";
 export { getItemMapPresentation } from "./items/itemMapPresentation";
 export type { ItemMapPresentation } from "./items/itemMapPresentation";
+export { getDialogue, hasDialogue } from "./dialogues/dialogueRegistry";
+export type { DialogueDefMap, DialogueId } from "./dialogues/DialogueDef";
 export {
   COMMON_NPC_GLYPH,
   getNpcMapPresentation,

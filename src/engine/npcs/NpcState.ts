@@ -3,6 +3,7 @@ export interface NpcState {
   relationship: number;
   progressionLevel: number;
   currentRole: string;
+  currentDialogueId?: string;
   knownFlags: string[];
 }
 

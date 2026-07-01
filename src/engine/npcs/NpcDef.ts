@@ -1,5 +1,3 @@
-import type { DialogueNodeData } from "../ZoneTypes";
-
 export type NpcRace = "human" | "elf" | "dwarf" | "orc" | "unknown";
 
 export type NpcImportance = "common" | "notable" | "story";
@@ -15,7 +13,7 @@ export interface NpcDef {
   race: NpcRace;
   importance?: NpcImportance;
   presentation?: NpcPresentationOverride;
-  dialogue: DialogueNodeData[];
+  defaultDialogueId: string;
 }
 
 export type NpcDefMap = Record<string, NpcDef>;

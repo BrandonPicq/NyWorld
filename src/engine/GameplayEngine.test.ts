@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
 import testZoneData from "../content/zones/test_zone.json";
 import testZone2Data from "../content/zones/test_zone_2.json";
+import { getDialogue } from "./dialogues/dialogueRegistry";
 import { SAVE_VERSION } from "./GameSaveData";
 import { GameplayEngine } from "./GameplayEngine";
-import { getNpcDef } from "./npcs/npcRegistry";
 import type { ZoneData } from "./ZoneTypes";
 import {
   START_WORLD_TIME_MINUTES,
@@ -374,7 +374,7 @@ describe("GameplayEngine", () => {
     const result = engine.execute({ type: "MoveEast" });
 
     expect(result.success).toBe(false);
-    expect(result.dialogue).toEqual(getNpcDef("old_scholar").dialogue);
+    expect(result.dialogue).toEqual(getDialogue("old_scholar.default"));
 
     expect(engine.getSnapshot()).toMatchObject({
       playerX: 1,
@@ -398,7 +398,7 @@ describe("GameplayEngine", () => {
     const result = engine.execute({ type: "Interact" });
 
     expect(result.success).toBe(true);
-    expect(result.dialogue).toEqual(getNpcDef("old_scholar").dialogue);
+    expect(result.dialogue).toEqual(getDialogue("old_scholar.default"));
     expect(engine.getSnapshot()).toMatchObject({
       playerX: 1,
       playerY: 1,
@@ -408,6 +408,24 @@ describe("GameplayEngine", () => {
       "Entered Movement Test.",
       "Talked to Old Scholar.",
     ]);
+  });
+
+  it("uses zone-specific dialogue overrides for NPC spawns", () => {
+    const mapWithNpc = loadZone({
+      ...zoneData,
+      npcs: [
+        {
+          ...adjacentNpc,
+          dialogueId: "old_scholar.test_fields",
+        },
+      ],
+    });
+    const engine = new GameplayEngine(mapWithNpc);
+
+    const result = engine.execute({ type: "Interact" });
+
+    expect(result.success).toBe(true);
+    expect(result.dialogue).toEqual(getDialogue("old_scholar.test_fields"));
   });
 
   it("advances world time when dialogue starts without advancing the tick", () => {
@@ -464,7 +482,7 @@ describe("GameplayEngine", () => {
     });
 
     expect(result.success).toBe(true);
-    expect(result.dialogue).toEqual(getNpcDef("old_wizard").dialogue);
+    expect(result.dialogue).toEqual(getDialogue("old_wizard.default"));
     expect(engine.getSnapshot().log.map((entry) => entry.message)).toEqual([
       "Entered Movement Test.",
       "Talked to Old Wizard.",
@@ -506,7 +524,7 @@ describe("GameplayEngine", () => {
     // 1. Without targeted NPC ID, standard interact talks to the first found PNJ
     const result1 = engine.execute({ type: "Interact" });
     expect(result1.success).toBe(true);
-    expect(result1.dialogue).toEqual(getNpcDef("old_scholar").dialogue);
+    expect(result1.dialogue).toEqual(getDialogue("old_scholar.default"));
 
     // 2. With targeted NPC ID, interact talks specifically to the targeted PNJ
     const result2 = engine.execute({
@@ -514,7 +532,7 @@ describe("GameplayEngine", () => {
       targetNpcId: "young_page",
     });
     expect(result2.success).toBe(true);
-    expect(result2.dialogue).toEqual(getNpcDef("young_page").dialogue);
+    expect(result2.dialogue).toEqual(getDialogue("young_page.default"));
 
     expect(engine.getSnapshot().log.map((entry) => entry.message)).toEqual([
       "Entered Movement Test.",
@@ -952,6 +970,7 @@ describe("GameplayEngine", () => {
               relationship: 12,
               progressionLevel: 3,
               currentRole: "academy_mentor",
+              currentDialogueId: "old_scholar.test_fields",
               knownFlags: ["met_player"],
             }
           : state,
@@ -975,8 +994,36 @@ describe("GameplayEngine", () => {
         relationship: 12,
         progressionLevel: 3,
         currentRole: "academy_mentor",
+        currentDialogueId: "old_scholar.test_fields",
         knownFlags: ["met_player"],
       });
+    });
+
+    it("fromSaveData uses saved NPC dialogue state when the zone has no override", () => {
+      const mapWithNpc = loadZone({
+        ...zoneData,
+        npcs: [adjacentNpc],
+      });
+      const engine = new GameplayEngine(mapWithNpc);
+      const save = engine.createSaveData();
+      save.npcStates = save.npcStates.map((state) =>
+        state.npcId === "old_scholar"
+          ? {
+              ...state,
+              currentDialogueId: "old_scholar.test_fields",
+            }
+          : state,
+      );
+
+      const restored = GameplayEngine.fromSaveData(save, {
+        resolveZone: (zoneId) =>
+          zoneId === "movement_test" ? mapWithNpc : undefined,
+      });
+
+      const result = restored.execute({ type: "Interact" });
+
+      expect(result.success).toBe(true);
+      expect(result.dialogue).toEqual(getDialogue("old_scholar.test_fields"));
     });
 
     it("fromSaveData does not respawn already-collected items", () => {

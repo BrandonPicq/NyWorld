@@ -4,6 +4,17 @@ This file tracks meaningful project changes by commit-oriented slices.
 
 Keep entries short and practical. When a slice is committed, its changelog section should stay aligned with the commit title so the project history remains easy to read after restores or bisects.
 
+## 2026-07-01 - [ADD]: Resolve NPC dialogue through dialogue ids
+
+- Move NPC dialogue content into dedicated dialogue JSON files.
+- Auto-discover NPC and dialogue JSON files from their content directories.
+- Replace inline NPC definition dialogue with defaultDialogueId references.
+- Allow zone NPC spawns to override dialogue with a contextual dialogueId.
+- Resolve NPC dialogue from zone override, saved NPC state, or character default.
+- Add optional currentDialogueId to persistent NPC state for future progression.
+- Validate dialogue references in NPC definitions, zone loading, and save data.
+- Add registry, loader, engine, and save-storage tests for contextual dialogue.
+
 ## 2026-07-01 - [ADD]: Add persistent NPC state foundation
 
 - Add NpcState for mutable per-character progress keyed by npcId.

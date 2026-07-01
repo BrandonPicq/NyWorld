@@ -25,6 +25,7 @@
   "npcs": [
     {
       "npcId": "old_scholar",
+      "dialogueId": "old_scholar.test_fields",
       "x": 3,
       "y": 3
     },

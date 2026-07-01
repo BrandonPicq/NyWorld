@@ -10,6 +10,7 @@ describe("npcRegistry", () => {
       race: "human",
       importance: "story",
       presentation: { glyph: "S", color: "#ffb000" },
+      defaultDialogueId: "old_scholar.default",
     });
   });
 
@@ -19,15 +20,14 @@ describe("npcRegistry", () => {
       npcId: "unknown_npc",
       name: "Unknown NPC",
       race: "unknown",
+      defaultDialogueId: "unknown_npc.default",
     });
   });
 
-  it("protects registry dialogue from external mutation", () => {
-    const firstRead = getNpcDef("old_wizard");
-    firstRead.dialogue[0].text = "Changed outside the registry.";
+  it("protects registry definitions from external mutation", () => {
+    const firstRead = getNpcDef("old_scholar");
+    firstRead.presentation!.color = "#000000";
 
-    expect(getNpcDef("old_wizard").dialogue[0].text).toBe(
-      "Hocus Pocus! I am an adjacent Wizard.",
-    );
+    expect(getNpcDef("old_scholar").presentation!.color).toBe("#ffb000");
   });
 });

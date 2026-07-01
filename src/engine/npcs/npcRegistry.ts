@@ -1,25 +1,18 @@
-import oldScholarData from "../../content/npcs/old_scholar.json";
-import oldWizardData from "../../content/npcs/old_wizard.json";
-import youngPageData from "../../content/npcs/young_page.json";
+import { hasDialogue } from "../dialogues/dialogueRegistry";
 import type { NpcDef, NpcDefMap, NpcImportance, NpcRace } from "./NpcDef";
 
-const npcDefs = [
-  oldScholarData,
-  oldWizardData,
-  youngPageData,
-] as unknown[];
+const npcDefs = getSortedContentModules(
+  import.meta.glob<unknown>("../../content/npcs/*.json", {
+    eager: true,
+    import: "default",
+  }),
+);
 
 const fallback: NpcDef = {
   npcId: "unknown_npc",
   name: "Unknown NPC",
   race: "unknown",
-  dialogue: [
-    {
-      speaker: "Unknown NPC",
-      text: "They have nothing to say yet.",
-      pitch: 1,
-    },
-  ],
+  defaultDialogueId: "unknown_npc.default",
 };
 
 const registry = buildRegistry(npcDefs);
@@ -48,7 +41,6 @@ function buildRegistry(defs: unknown[]): NpcDefMap {
 
     nextRegistry[def.npcId] = {
       ...def,
-      dialogue: def.dialogue.map((node) => ({ ...node })),
       presentation: def.presentation ? { ...def.presentation } : undefined,
     };
   }
@@ -56,10 +48,15 @@ function buildRegistry(defs: unknown[]): NpcDefMap {
   return nextRegistry;
 }
 
+function getSortedContentModules(modules: Record<string, unknown>): unknown[] {
+  return Object.entries(modules)
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([, module]) => module);
+}
+
 function cloneNpcDef(def: NpcDef): NpcDef {
   return {
     ...def,
-    dialogue: def.dialogue.map((node) => ({ ...node })),
     presentation: def.presentation ? { ...def.presentation } : undefined,
   };
 }
@@ -89,7 +86,20 @@ function assertNpcDef(value: unknown): asserts value is NpcDef {
     assertNpcPresentation(value.presentation, value.npcId);
   }
 
-  assertDialogueNodes(value.dialogue, value.npcId);
+  if (
+    typeof value.defaultDialogueId !== "string" ||
+    !value.defaultDialogueId.trim()
+  ) {
+    throw new Error(
+      `NPC definition "${value.npcId}" has invalid or missing defaultDialogueId.`,
+    );
+  }
+
+  if (!hasDialogue(value.defaultDialogueId)) {
+    throw new Error(
+      `NPC definition "${value.npcId}" references unknown defaultDialogueId "${value.defaultDialogueId}".`,
+    );
+  }
 }
 
 function assertNpcPresentation(value: unknown, npcId: string): void {
@@ -107,42 +117,6 @@ function assertNpcPresentation(value: unknown, npcId: string): void {
     throw new Error(
       `NPC definition "${npcId}" presentation has invalid color.`,
     );
-  }
-}
-
-function assertDialogueNodes(value: unknown, npcId: string): void {
-  if (!Array.isArray(value) || value.length === 0) {
-    throw new Error(`NPC definition "${npcId}" dialogue must contain nodes.`);
-  }
-
-  for (let i = 0; i < value.length; i++) {
-    const node = value[i];
-
-    if (!isRecord(node)) {
-      throw new Error(`NPC definition "${npcId}" dialogue node ${i} must be an object.`);
-    }
-
-    if (typeof node.speaker !== "string" || !node.speaker.trim()) {
-      throw new Error(
-        `NPC definition "${npcId}" dialogue node ${i} has invalid speaker.`,
-      );
-    }
-
-    if (typeof node.text !== "string" || !node.text.trim()) {
-      throw new Error(
-        `NPC definition "${npcId}" dialogue node ${i} has invalid text.`,
-      );
-    }
-
-    if (
-      typeof node.pitch !== "number" ||
-      !Number.isFinite(node.pitch) ||
-      node.pitch < 0.1
-    ) {
-      throw new Error(
-        `NPC definition "${npcId}" dialogue node ${i} has invalid pitch.`,
-      );
-    }
   }
 }
 

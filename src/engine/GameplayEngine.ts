@@ -8,6 +8,7 @@ import type {
   Renderable,
   Stats,
 } from "./components";
+import { getDialogue } from "./dialogues/dialogueRegistry";
 import { getItemDef } from "./items/itemRegistry";
 import { getItemMapPresentation } from "./items/itemMapPresentation";
 import { getNpcMapPresentation } from "./npcs/npcMapPresentation";
@@ -185,6 +186,11 @@ export class GameplayEngine {
     for (const npcData of this.map.npcs) {
       const npcDef = getNpcDef(npcData.npcId);
       const presentation = getNpcMapPresentation(npcDef);
+      const dialogueId =
+        npcData.dialogueId ??
+        this.npcStates[npcDef.npcId]?.currentDialogueId ??
+        npcDef.defaultDialogueId;
+      const dialogue = getDialogue(dialogueId);
       const entityId = this.world.createEntity();
 
       this.world.addComponent(entityId, {
@@ -205,7 +211,7 @@ export class GameplayEngine {
         name: npcDef.name,
         race: npcDef.race,
         importance: npcDef.importance ?? "common",
-        dialogue: npcDef.dialogue.map((d) => ({ ...d })),
+        dialogue,
       } as Npc);
     }
   }

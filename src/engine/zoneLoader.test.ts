@@ -176,6 +176,28 @@ describe("loadZone", () => {
     expect(map.npcs).toEqual([validNpc]);
   });
 
+  it("accepts NPC placements with known dialogue overrides", () => {
+    const npcWithDialogue = {
+      ...validNpc,
+      dialogueId: "old_scholar.test_fields",
+    };
+    const map = loadZone(
+      zoneDataWith({
+        height: 4,
+        width: 4,
+        tiles: [
+          [1, 1, 1, 1],
+          [1, 0, 0, 1],
+          [1, 0, 0, 1],
+          [1, 1, 1, 1],
+        ],
+        npcs: [npcWithDialogue],
+      }),
+    );
+
+    expect(map.npcs).toEqual([npcWithDialogue]);
+  });
+
   it("rejects NPC placements with unknown npcIds", () => {
     expect(() =>
       loadZone(
@@ -202,6 +224,26 @@ describe("loadZone", () => {
         }),
       ),
     ).toThrow("npc at index 0 has invalid or missing npcId");
+  });
+
+  it("rejects NPC placements with unknown dialogue overrides", () => {
+    expect(() =>
+      loadZone(
+        zoneDataWith({
+          npcs: [{ ...validNpc, dialogueId: "missing.dialogue" }],
+        }),
+      ),
+    ).toThrow('npc at index 0 references unknown dialogueId "missing.dialogue"');
+  });
+
+  it("rejects NPC placements with invalid dialogue overrides", () => {
+    expect(() =>
+      loadZone(
+        zoneDataWith({
+          npcs: [{ ...validNpc, dialogueId: "" }],
+        }),
+      ),
+    ).toThrow("npc at index 0 has invalid dialogueId");
   });
 
   it("rejects NPCs on blocked tiles", () => {

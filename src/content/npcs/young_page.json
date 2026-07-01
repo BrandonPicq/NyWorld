@@ -2,11 +2,5 @@
   "npcId": "young_page",
   "name": "Young Page",
   "race": "human",
-  "dialogue": [
-    {
-      "speaker": "Young Page",
-      "text": "Hello, I am a Young Page adjacent to you.",
-      "pitch": 1.5
-    }
-  ]
+  "defaultDialogueId": "young_page.default"
 }

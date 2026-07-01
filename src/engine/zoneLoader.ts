@@ -1,4 +1,5 @@
 import { GameMap } from "./GameMap";
+import { hasDialogue } from "./dialogues/dialogueRegistry";
 import { hasItemDef } from "./items/itemRegistry";
 import { hasNpcDef } from "./npcs/npcRegistry";
 import { getTileDef, hasTileDef } from "./TileRegistry";
@@ -168,6 +169,20 @@ export function loadZone(data: unknown): GameMap {
         throw new ZoneLoadError(
           `npc at index ${i} references unknown npcId "${npc.npcId}"`,
         );
+      }
+
+      if (npc.dialogueId !== undefined) {
+        if (typeof npc.dialogueId !== "string" || !npc.dialogueId.trim()) {
+          throw new ZoneLoadError(
+            `npc at index ${i} has invalid dialogueId`,
+          );
+        }
+
+        if (!hasDialogue(npc.dialogueId)) {
+          throw new ZoneLoadError(
+            `npc at index ${i} references unknown dialogueId "${npc.dialogueId}"`,
+          );
+        }
       }
 
       if (

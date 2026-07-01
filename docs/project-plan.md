@@ -66,6 +66,7 @@ La V0 inclura :
 - des dialogues d'entree de zone configures dans les donnees JSON ;
 - des personnages non-joueurs (PNJs) configurés dans des fiches de personnage réutilisables, puis placés par `npcId` dans les zones ;
 - un état mutable sauvegardable par PNJ (`npcId`) pour préparer relations, progression et rôles évolutifs ;
+- des dialogues de PNJ stockes dans un registre reutilisable, relies aux fiches par `defaultDialogueId` et aux apparitions de zone par `dialogueId` ;
 - un défilement de dialogue progressif ("typewriter") couplé à des signaux Web Audio ("bleeps") dont le pitch varie selon la voix du PNJ ;
 - un inventaire consultable en lecture seule, avec catégories, descriptions et état vide, accessible par bouton et raccourci clavier.
 
@@ -97,8 +98,8 @@ Tests unitaires V0 avec Vitest :
 
 - menus, themes, vitesse de défilement, réglages de confort gameplay et reglages audio ;
 - mapping d'input jeu : fleches, QWERTY, AZERTY, exclusivite des layouts et labels ;
-- moteur gameplay : deplacements cardinaux, interaction, blocage par la carte, ticks, date de monde, journal et collisions de dialogues avec les PNJs ;
-- chargement de zone : donnees valides, tile ids inconnus, depart invalide, depart bloque, dialogues d'entree et validation des PNJs.
+- moteur gameplay : deplacements cardinaux, interaction, blocage par la carte, ticks, date de monde, journal, collisions de dialogues avec les PNJs et resolution de dialogues contextualises ;
+- chargement de zone : donnees valides, tile ids inconnus, depart invalide, depart bloque, dialogues d'entree, validation des PNJs et validation des `dialogueId`.
 
 Tests a completer avec les prochaines tranches :
 

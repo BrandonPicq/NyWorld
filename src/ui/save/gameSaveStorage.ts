@@ -35,6 +35,13 @@ function isDirection(value: unknown): boolean {
   );
 }
 
+function isOptionalNonEmptyString(value: unknown): boolean {
+  return (
+    value === undefined ||
+    (typeof value === "string" && value.trim().length > 0)
+  );
+}
+
 function isSaveStats(value: unknown): boolean {
   if (!isRecord(value)) return false;
   if (!isRecord(value.attributes)) return false;
@@ -92,6 +99,7 @@ function isSaveNpcState(value: unknown): boolean {
     isPositiveInteger(value.progressionLevel) &&
     typeof value.currentRole === "string" &&
     value.currentRole.trim().length > 0 &&
+    isOptionalNonEmptyString(value.currentDialogueId) &&
     Array.isArray(value.knownFlags) &&
     value.knownFlags.every((flag) => typeof flag === "string")
   );

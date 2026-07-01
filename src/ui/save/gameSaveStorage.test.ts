@@ -107,6 +107,34 @@ describe("gameSaveStorage", () => {
     expect(restored!.pickedUpItemSpawnKeys).toEqual([]);
   });
 
+  it("writes and reads optional NPC dialogue state", () => {
+    const save = stubSave({
+      npcStates: [
+        {
+          npcId: "old_scholar",
+          relationship: 0,
+          progressionLevel: 1,
+          currentRole: "resident",
+          currentDialogueId: "old_scholar.test_fields",
+          knownFlags: [],
+        },
+      ],
+    });
+
+    expect(writeSlot(0, save)).toBe(true);
+
+    expect(readSlot(0)?.npcStates).toEqual([
+      {
+        npcId: "old_scholar",
+        relationship: 0,
+        progressionLevel: 1,
+        currentRole: "resident",
+        currentDialogueId: "old_scholar.test_fields",
+        knownFlags: [],
+      },
+    ]);
+  });
+
   it("uses independent storage per slot", () => {
     expect(writeSlot(0, stubSave({ zoneId: "slot_0" }))).toBe(true);
     expect(writeSlot(1, stubSave({ zoneId: "slot_1" }))).toBe(true);
@@ -194,6 +222,16 @@ describe("gameSaveStorage", () => {
 
     const raw = JSON.parse(localStorage.getItem("nywarudo_save_slot_0")!);
     raw.npcStates[0].progressionLevel = 0;
+    localStorage.setItem("nywarudo_save_slot_0", JSON.stringify(raw));
+
+    expect(readSlot(0)).toBeNull();
+  });
+
+  it("returns null for a save with invalid NPC dialogue state", () => {
+    writeSlot(0, stubSave());
+
+    const raw = JSON.parse(localStorage.getItem("nywarudo_save_slot_0")!);
+    raw.npcStates[0].currentDialogueId = "";
     localStorage.setItem("nywarudo_save_slot_0", JSON.stringify(raw));
 
     expect(readSlot(0)).toBeNull();

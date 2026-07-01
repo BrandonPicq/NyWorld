@@ -1,0 +1,21 @@
+{
+  "old_scholar.default": [
+    {
+      "speaker": "Old Scholar",
+      "text": "Greetings, apprentice.",
+      "pitch": 0.75
+    }
+  ],
+  "old_scholar.test_fields": [
+    {
+      "speaker": "Old Scholar",
+      "text": "Greetings, apprentice. I am researching the history of these ancient fields.",
+      "pitch": 0.75
+    },
+    {
+      "speaker": "Old Scholar",
+      "text": "They say that to the East, beyond the threshold, lies a colder land.",
+      "pitch": 0.75
+    }
+  ]
+}
