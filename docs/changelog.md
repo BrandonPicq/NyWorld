@@ -4,6 +4,15 @@ This file tracks meaningful project changes by commit-oriented slices.
 
 Keep entries short and practical. When a slice is committed, its changelog section should stay aligned with the commit title so the project history remains easy to read after restores or bisects.
 
+## 2026-07-01 - [UPDATE]: Simplify NPC map presentation
+
+- Add NPC race, importance, and optional presentation override fields to zone data.
+- Render common NPCs with a shared glyph and a race-based color.
+- Allow notable and story NPCs to use explicit glyph/color overrides.
+- Move NPC map presentation into a central engine helper.
+- Update test zone NPC data to reduce visual glyph noise.
+- Add loader, presentation, and engine tests for NPC map rendering rules.
+
 ## 2026-07-01 - [ADD]: Add world calendar and clock display
 
 - Add a 12-month, 30-day world calendar starting in year 425.

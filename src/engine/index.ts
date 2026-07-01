@@ -47,6 +47,11 @@ export { getItemDef, hasItemDef } from "./items/itemRegistry";
 export type { ItemDef, ItemDefMap } from "./items/ItemDef";
 export { getItemMapPresentation } from "./items/itemMapPresentation";
 export type { ItemMapPresentation } from "./items/itemMapPresentation";
+export {
+  COMMON_NPC_GLYPH,
+  getNpcMapPresentation,
+} from "./npcs/npcMapPresentation";
+export type { NpcMapPresentation } from "./npcs/npcMapPresentation";
 export type { GameCommand } from "./commands";
 export { GameplayEngine } from "./GameplayEngine";
 export type {

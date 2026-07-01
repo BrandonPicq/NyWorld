@@ -33,8 +33,7 @@ function createEngine() {
 const adjacentNpc = {
   npcId: "scholar",
   name: "Old Scholar",
-  glyph: "S",
-  color: "#ffcc00",
+  race: "human",
   x: 2,
   y: 1,
   dialogue: [
@@ -459,8 +458,7 @@ describe("GameplayEngine", () => {
     const southNpc = {
       npcId: "sage",
       name: "Old Sage",
-      glyph: "G",
-      color: "#ff0000",
+      race: "elf",
       x: 1,
       y: 2,
       dialogue: [{ speaker: "Old Sage", text: "Greetings, traveler.", pitch: 0.8 }],
@@ -509,8 +507,7 @@ describe("GameplayEngine", () => {
     const secondAdjacentNpc = {
       npcId: "scholar_2",
       name: "Old Sage",
-      glyph: "G",
-      color: "#ff0000",
+      race: "elf",
       x: 1,
       y: 2,
       dialogue: [{ speaker: "Old Sage", text: "Greetings, traveler.", pitch: 0.8 }],
@@ -563,6 +560,57 @@ describe("GameplayEngine", () => {
       "Entered Movement Test.",
       "That interaction target is no longer nearby.",
     ]);
+  });
+
+  it("renders common NPCs with a shared glyph and race color", () => {
+    const mapWithNpcs = loadZone({
+      ...zoneData,
+      npcs: [
+        {
+          ...adjacentNpc,
+          npcId: "human_student",
+          name: "Human Student",
+          race: "human",
+        },
+        {
+          npcId: "elf_student",
+          name: "Elf Student",
+          race: "elf",
+          x: 1,
+          y: 2,
+          dialogue: [
+            { speaker: "Elf Student", text: "A quiet nod.", pitch: 1.1 },
+          ],
+        },
+        {
+          npcId: "story_scholar",
+          name: "Story Scholar",
+          race: "human",
+          importance: "story",
+          presentation: { glyph: "S", color: "#ffcc00" },
+          x: 2,
+          y: 2,
+          dialogue: [
+            { speaker: "Story Scholar", text: "Remember this place.", pitch: 0.8 },
+          ],
+        },
+      ],
+    });
+    const engine = new GameplayEngine(mapWithNpcs);
+
+    const human = engine
+      .getSnapshot()
+      .entities.find((entity) => entity.npcId === "human_student");
+    const elf = engine
+      .getSnapshot()
+      .entities.find((entity) => entity.npcId === "elf_student");
+    const story = engine
+      .getSnapshot()
+      .entities.find((entity) => entity.npcId === "story_scholar");
+
+    expect(human).toMatchObject({ glyph: "n", color: "#f2cdcd" });
+    expect(elf).toMatchObject({ glyph: "n", color: "#a6e3a1" });
+    expect(story).toMatchObject({ glyph: "S", color: "#ffcc00" });
   });
 
   it("exposes starter inventory items in snapshots", () => {

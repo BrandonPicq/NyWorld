@@ -64,7 +64,7 @@ La V0 inclura :
 - un journal textuel minimal des actions ;
 - une commande d'interaction contextuelle pour parler aux PNJs proches, avec ciblage autour du joueur ou seulement dans la direction regardee ;
 - des dialogues d'entree de zone configures dans les donnees JSON ;
-- des personnages non-joueurs (PNJs) configurés de manière déclarative, s'affichant sur le canvas et déclenchant des boîtes de dialogue interactives sur collision ;
+- des personnages non-joueurs (PNJs) configurés de manière déclarative, avec race, importance et presentation de carte derivee pour garder le canvas lisible ;
 - un défilement de dialogue progressif ("typewriter") couplé à des signaux Web Audio ("bleeps") dont le pitch varie selon la voix du PNJ ;
 - un inventaire consultable en lecture seule, avec catégories, descriptions et état vide, accessible par bouton et raccourci clavier.
 
@@ -76,7 +76,7 @@ L'ecran sera a texte dominant :
 - menus navigables au clavier : fleches haut/bas pour choisir, entree pour confirmer, echap pour revenir quand l'ecran le permet, tabulation neutralisee dans les menus ; deplacement en jeu avec les fleches directionnelles et WASD ou ZQSD (selon la configuration clavier QWERTY/AZERTY active) ;
 - options V0 organisees en categories : `Graphics & Text` (avec selection de theme et vitesse de texte Slow/Normal/Fast/Instant en ligne), `Audio` (avec activation du son en ligne), configuration clavier `Controls` en ligne et réglages `Gameplay` (avec assistant d'interaction intelligent et ciblage Around/Facing) ;
 - zone principale de narration/log ;
-- carte Canvas compacte mais visible affichant le joueur et les PNJs (glyphes colorés) ;
+- carte Canvas compacte mais visible affichant le joueur et les PNJs (glyph commun pour les PNJs ordinaires, couleur par race) ;
 - boutons de deplacement en forme de croix directionnelle (D-pad) avec le bouton d'interaction contextuel `Interact [E]` au centre ;
 - informations de debug : zone active, position et direction regardee ;
 - tableau de bord lateral (gauche) affichant les ressources vitales : jauge d'energie (decroissance par pas), monnaie decomposee (Platinum, Gold, Silver, Bronze), titre academique, avec boutons de repos et fiche de personnage ;

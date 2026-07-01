@@ -167,12 +167,16 @@ export function loadZone(data: unknown): GameMap {
         throw new ZoneLoadError(`npc at index ${i} has invalid or missing name`);
       }
 
-      if (typeof npc.glyph !== "string" || npc.glyph.length !== 1) {
-        throw new ZoneLoadError(`npc at index ${i} has invalid or missing glyph (must be 1 char)`);
+      if (!isNpcRace(npc.race)) {
+        throw new ZoneLoadError(`npc at index ${i} has invalid or missing race`);
       }
 
-      if (typeof npc.color !== "string" || !npc.color.trim()) {
-        throw new ZoneLoadError(`npc at index ${i} has invalid or missing color`);
+      if (npc.importance !== undefined && !isNpcImportance(npc.importance)) {
+        throw new ZoneLoadError(`npc at index ${i} has invalid importance`);
+      }
+
+      if (npc.presentation !== undefined) {
+        validateNpcPresentation(npc.presentation, i);
       }
 
       if (
@@ -297,6 +301,40 @@ function isPlayerStart(value: unknown): value is { x: number; y: number } {
     typeof value.y === "number" &&
     Number.isInteger(value.y)
   );
+}
+
+function isNpcRace(value: unknown): boolean {
+  return (
+    value === "human" ||
+    value === "elf" ||
+    value === "dwarf" ||
+    value === "orc" ||
+    value === "unknown"
+  );
+}
+
+function isNpcImportance(value: unknown): boolean {
+  return value === "common" || value === "notable" || value === "story";
+}
+
+function validateNpcPresentation(value: unknown, npcIndex: number): void {
+  if (!isRecord(value)) {
+    throw new ZoneLoadError(
+      `npc at index ${npcIndex} presentation must be an object`,
+    );
+  }
+
+  if (typeof value.glyph !== "string" || value.glyph.length !== 1) {
+    throw new ZoneLoadError(
+      `npc at index ${npcIndex} presentation has invalid glyph (must be 1 char)`,
+    );
+  }
+
+  if (typeof value.color !== "string" || !value.color.trim()) {
+    throw new ZoneLoadError(
+      `npc at index ${npcIndex} presentation has invalid color`,
+    );
+  }
 }
 
 function validateDialogueNodes(value: unknown, context: string): void {

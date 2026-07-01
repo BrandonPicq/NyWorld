@@ -20,8 +20,7 @@ const validZoneData = {
 const validNpc = {
   npcId: "scholar",
   name: "Old Scholar",
-  glyph: "S",
-  color: "#ffcc00",
+  race: "human",
   x: 2,
   y: 1,
   dialogue: [{ speaker: "Old Scholar", text: "Welcome!", pitch: 0.9 }],
@@ -178,6 +177,53 @@ describe("loadZone", () => {
     );
 
     expect(map.npcs).toEqual([validNpc]);
+  });
+
+  it("accepts notable NPCs with presentation overrides", () => {
+    const npc = {
+      ...validNpc,
+      importance: "notable",
+      presentation: { glyph: "S", color: "#ffcc00" },
+    };
+    const map = loadZone(zoneDataWith({ npcs: [npc] }));
+
+    expect(map.npcs).toEqual([npc]);
+  });
+
+  it("rejects NPCs without a known race", () => {
+    expect(() =>
+      loadZone(
+        zoneDataWith({
+          npcs: [{ ...validNpc, race: "celestial" }],
+        }),
+      ),
+    ).toThrow("npc at index 0 has invalid or missing race");
+  });
+
+  it("rejects NPCs with invalid importance", () => {
+    expect(() =>
+      loadZone(
+        zoneDataWith({
+          npcs: [{ ...validNpc, importance: "legendary" }],
+        }),
+      ),
+    ).toThrow("npc at index 0 has invalid importance");
+  });
+
+  it("rejects NPC presentation overrides with invalid glyphs", () => {
+    expect(() =>
+      loadZone(
+        zoneDataWith({
+          npcs: [
+            {
+              ...validNpc,
+              importance: "notable",
+              presentation: { glyph: "NPC", color: "#ffcc00" },
+            },
+          ],
+        }),
+      ),
+    ).toThrow("npc at index 0 presentation has invalid glyph");
   });
 
   it("rejects NPCs without dialogue nodes", () => {

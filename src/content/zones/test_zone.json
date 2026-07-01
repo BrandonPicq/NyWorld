@@ -26,8 +26,12 @@
     {
       "npcId": "scholar_sage",
       "name": "Old Scholar",
-      "glyph": "S",
-      "color": "#ffb000",
+      "race": "human",
+      "importance": "story",
+      "presentation": {
+        "glyph": "S",
+        "color": "#ffb000"
+      },
       "x": 3,
       "y": 3,
       "dialogue": [
@@ -38,8 +42,7 @@
     {
       "npcId": "old_wizard",
       "name": "Old Wizard",
-      "glyph": "W",
-      "color": "#00aaff",
+      "race": "elf",
       "x": 5,
       "y": 3,
       "dialogue": [
@@ -49,8 +52,7 @@
     {
       "npcId": "young_page",
       "name": "Young Page",
-      "glyph": "P",
-      "color": "#ff55ff",
+      "race": "human",
       "x": 4,
       "y": 4,
       "dialogue": [
