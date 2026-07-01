@@ -1,0 +1,12 @@
+{
+  "npcId": "old_wizard",
+  "name": "Old Wizard",
+  "race": "elf",
+  "dialogue": [
+    {
+      "speaker": "Old Wizard",
+      "text": "Hocus Pocus! I am an adjacent Wizard.",
+      "pitch": 1.2
+    }
+  ]
+}

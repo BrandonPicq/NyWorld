@@ -1,5 +1,6 @@
 import { GameMap } from "./GameMap";
 import { hasItemDef } from "./items/itemRegistry";
+import { hasNpcDef } from "./npcs/npcRegistry";
 import { getTileDef, hasTileDef } from "./TileRegistry";
 import type { ZoneData, ZoneTransitionData } from "./ZoneTypes";
 
@@ -163,20 +164,10 @@ export function loadZone(data: unknown): GameMap {
         throw new ZoneLoadError(`npc at index ${i} has invalid or missing npcId`);
       }
 
-      if (typeof npc.name !== "string" || !npc.name.trim()) {
-        throw new ZoneLoadError(`npc at index ${i} has invalid or missing name`);
-      }
-
-      if (!isNpcRace(npc.race)) {
-        throw new ZoneLoadError(`npc at index ${i} has invalid or missing race`);
-      }
-
-      if (npc.importance !== undefined && !isNpcImportance(npc.importance)) {
-        throw new ZoneLoadError(`npc at index ${i} has invalid importance`);
-      }
-
-      if (npc.presentation !== undefined) {
-        validateNpcPresentation(npc.presentation, i);
+      if (!hasNpcDef(npc.npcId)) {
+        throw new ZoneLoadError(
+          `npc at index ${i} references unknown npcId "${npc.npcId}"`,
+        );
       }
 
       if (
@@ -196,8 +187,6 @@ export function loadZone(data: unknown): GameMap {
       ) {
         throw new ZoneLoadError(`npc at index ${i} has an invalid y coordinate`);
       }
-
-      validateDialogueNodes(npc.dialogue, `npc at index ${i} dialogue`);
 
       const npcTileId = data.tiles[npc.y][npc.x];
       if (!getTileDef(npcTileId).walkable) {
@@ -301,40 +290,6 @@ function isPlayerStart(value: unknown): value is { x: number; y: number } {
     typeof value.y === "number" &&
     Number.isInteger(value.y)
   );
-}
-
-function isNpcRace(value: unknown): boolean {
-  return (
-    value === "human" ||
-    value === "elf" ||
-    value === "dwarf" ||
-    value === "orc" ||
-    value === "unknown"
-  );
-}
-
-function isNpcImportance(value: unknown): boolean {
-  return value === "common" || value === "notable" || value === "story";
-}
-
-function validateNpcPresentation(value: unknown, npcIndex: number): void {
-  if (!isRecord(value)) {
-    throw new ZoneLoadError(
-      `npc at index ${npcIndex} presentation must be an object`,
-    );
-  }
-
-  if (typeof value.glyph !== "string" || value.glyph.length !== 1) {
-    throw new ZoneLoadError(
-      `npc at index ${npcIndex} presentation has invalid glyph (must be 1 char)`,
-    );
-  }
-
-  if (typeof value.color !== "string" || !value.color.trim()) {
-    throw new ZoneLoadError(
-      `npc at index ${npcIndex} presentation has invalid color`,
-    );
-  }
 }
 
 function validateDialogueNodes(value: unknown, context: string): void {

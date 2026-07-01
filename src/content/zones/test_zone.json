@@ -24,44 +24,23 @@
   ],
   "npcs": [
     {
-      "npcId": "scholar_sage",
-      "name": "Old Scholar",
-      "race": "human",
-      "importance": "story",
-      "presentation": {
-        "glyph": "S",
-        "color": "#ffb000"
-      },
+      "npcId": "old_scholar",
       "x": 3,
-      "y": 3,
-      "dialogue": [
-        { "speaker": "Old Scholar", "text": "Greetings, apprentice. I am researching the history of these ancient fields.", "pitch": 0.75 },
-        { "speaker": "Old Scholar", "text": "They say that to the East, beyond the threshold, lies a colder land.", "pitch": 0.75 }
-      ]
+      "y": 3
     },
     {
       "npcId": "old_wizard",
-      "name": "Old Wizard",
-      "race": "elf",
-      "x": 5,
-      "y": 3,
-      "dialogue": [
-        { "speaker": "Old Wizard", "text": "Hocus Pocus! I am an adjacent Wizard.", "pitch": 1.2 }
-      ]
+      "x": 7,
+      "y": 6
     },
     {
       "npcId": "young_page",
-      "name": "Young Page",
-      "race": "human",
-      "x": 4,
-      "y": 4,
-      "dialogue": [
-        { "speaker": "Young Page", "text": "Hello, I am a Young Page adjacent to you.", "pitch": 1.5 }
-      ]
+      "x": 6,
+      "y": 3
     }
   ],
   "items": [
     { "itemId": "healing_herb", "x": 2, "y": 5, "quantity": 1 },
-    { "itemId": "old_coin", "x": 7, "y": 6, "quantity": 1 }
+    { "itemId": "old_coin", "x": 7, "y": 3, "quantity": 1 }
   ]
 }

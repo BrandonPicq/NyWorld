@@ -52,6 +52,14 @@ export {
   getNpcMapPresentation,
 } from "./npcs/npcMapPresentation";
 export type { NpcMapPresentation } from "./npcs/npcMapPresentation";
+export { getNpcDef, hasNpcDef } from "./npcs/npcRegistry";
+export type {
+  NpcDef,
+  NpcDefMap,
+  NpcImportance,
+  NpcPresentationOverride,
+  NpcRace,
+} from "./npcs/NpcDef";
 export type { GameCommand } from "./commands";
 export { GameplayEngine } from "./GameplayEngine";
 export type {

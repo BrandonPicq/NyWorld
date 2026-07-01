@@ -4,6 +4,15 @@ This file tracks meaningful project changes by commit-oriented slices.
 
 Keep entries short and practical. When a slice is committed, its changelog section should stay aligned with the commit title so the project history remains easy to read after restores or bisects.
 
+## 2026-07-01 - [UPDATE]: Move NPC definitions into character files
+
+- Add per-NPC character JSON files under content/npcs.
+- Add NpcDef types and an NPC registry with known-definition lookup.
+- Simplify zone NPC spawns to npcId and coordinates only.
+- Resolve NPC names, dialogue, race, importance, and map presentation from the registry during spawning.
+- Validate zone NPC spawns against known npcIds.
+- Add registry, loader, and engine tests for NPC definition resolution.
+
 ## 2026-07-01 - [UPDATE]: Simplify NPC map presentation
 
 - Add NPC race, importance, and optional presentation override fields to zone data.

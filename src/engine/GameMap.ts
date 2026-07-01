@@ -36,10 +36,7 @@ export class GameMap {
     this.playerStart = { ...data.playerStart };
     this.tiles = data.tiles.map((row) => [...row]);
     this.transitions = new Map();
-    this.npcs = data.npcs ? data.npcs.map((npc) => ({
-      ...npc,
-      dialogue: npc.dialogue.map((d) => ({ ...d })),
-    })) : [];
+    this.npcs = data.npcs ? data.npcs.map((npc) => ({ ...npc })) : [];
     this.items = data.items
       ? data.items.map((item) => ({ ...item }))
       : [];

@@ -3,6 +3,7 @@ import testZoneData from "../content/zones/test_zone.json";
 import testZone2Data from "../content/zones/test_zone_2.json";
 import { SAVE_VERSION } from "./GameSaveData";
 import { GameplayEngine } from "./GameplayEngine";
+import { getNpcDef } from "./npcs/npcRegistry";
 import type { ZoneData } from "./ZoneTypes";
 import {
   START_WORLD_TIME_MINUTES,
@@ -31,14 +32,9 @@ function createEngine() {
 }
 
 const adjacentNpc = {
-  npcId: "scholar",
-  name: "Old Scholar",
-  race: "human",
+  npcId: "old_scholar",
   x: 2,
   y: 1,
-  dialogue: [
-    { speaker: "Old Scholar", text: "Welcome!", pitch: 0.9 },
-  ],
 };
 
 describe("GameplayEngine", () => {
@@ -378,9 +374,7 @@ describe("GameplayEngine", () => {
     const result = engine.execute({ type: "MoveEast" });
 
     expect(result.success).toBe(false);
-    expect(result.dialogue).toEqual([
-      { speaker: "Old Scholar", text: "Welcome!", pitch: 0.9 },
-    ]);
+    expect(result.dialogue).toEqual(getNpcDef("old_scholar").dialogue);
 
     expect(engine.getSnapshot()).toMatchObject({
       playerX: 1,
@@ -404,9 +398,7 @@ describe("GameplayEngine", () => {
     const result = engine.execute({ type: "Interact" });
 
     expect(result.success).toBe(true);
-    expect(result.dialogue).toEqual([
-      { speaker: "Old Scholar", text: "Welcome!", pitch: 0.9 },
-    ]);
+    expect(result.dialogue).toEqual(getNpcDef("old_scholar").dialogue);
     expect(engine.getSnapshot()).toMatchObject({
       playerX: 1,
       playerY: 1,
@@ -456,12 +448,9 @@ describe("GameplayEngine", () => {
 
   it("limits interaction checks to a requested direction", () => {
     const southNpc = {
-      npcId: "sage",
-      name: "Old Sage",
-      race: "elf",
+      npcId: "old_wizard",
       x: 1,
       y: 2,
-      dialogue: [{ speaker: "Old Sage", text: "Greetings, traveler.", pitch: 0.8 }],
     };
     const mapWithMultipleNpcs = loadZone({
       ...zoneData,
@@ -475,12 +464,10 @@ describe("GameplayEngine", () => {
     });
 
     expect(result.success).toBe(true);
-    expect(result.dialogue).toEqual([
-      { speaker: "Old Sage", text: "Greetings, traveler.", pitch: 0.8 },
-    ]);
+    expect(result.dialogue).toEqual(getNpcDef("old_wizard").dialogue);
     expect(engine.getSnapshot().log.map((entry) => entry.message)).toEqual([
       "Entered Movement Test.",
-      "Talked to Old Sage.",
+      "Talked to Old Wizard.",
     ]);
   });
 
@@ -505,12 +492,9 @@ describe("GameplayEngine", () => {
 
   it("resolves interaction ambiguity when multiple NPCs are adjacent", () => {
     const secondAdjacentNpc = {
-      npcId: "scholar_2",
-      name: "Old Sage",
-      race: "elf",
+      npcId: "young_page",
       x: 1,
       y: 2,
-      dialogue: [{ speaker: "Old Sage", text: "Greetings, traveler.", pitch: 0.8 }],
     };
 
     const mapWithMultipleNpcs = loadZone({
@@ -522,24 +506,20 @@ describe("GameplayEngine", () => {
     // 1. Without targeted NPC ID, standard interact talks to the first found PNJ
     const result1 = engine.execute({ type: "Interact" });
     expect(result1.success).toBe(true);
-    expect(result1.dialogue).toEqual([
-      { speaker: "Old Scholar", text: "Welcome!", pitch: 0.9 },
-    ]);
+    expect(result1.dialogue).toEqual(getNpcDef("old_scholar").dialogue);
 
     // 2. With targeted NPC ID, interact talks specifically to the targeted PNJ
     const result2 = engine.execute({
       type: "Interact",
-      targetNpcId: "scholar_2",
+      targetNpcId: "young_page",
     });
     expect(result2.success).toBe(true);
-    expect(result2.dialogue).toEqual([
-      { speaker: "Old Sage", text: "Greetings, traveler.", pitch: 0.8 },
-    ]);
+    expect(result2.dialogue).toEqual(getNpcDef("young_page").dialogue);
 
     expect(engine.getSnapshot().log.map((entry) => entry.message)).toEqual([
       "Entered Movement Test.",
       "Talked to Old Scholar.",
-      "Talked to Old Sage.",
+      "Talked to Young Page.",
     ]);
   });
 
@@ -566,51 +546,26 @@ describe("GameplayEngine", () => {
     const mapWithNpcs = loadZone({
       ...zoneData,
       npcs: [
-        {
-          ...adjacentNpc,
-          npcId: "human_student",
-          name: "Human Student",
-          race: "human",
-        },
-        {
-          npcId: "elf_student",
-          name: "Elf Student",
-          race: "elf",
-          x: 1,
-          y: 2,
-          dialogue: [
-            { speaker: "Elf Student", text: "A quiet nod.", pitch: 1.1 },
-          ],
-        },
-        {
-          npcId: "story_scholar",
-          name: "Story Scholar",
-          race: "human",
-          importance: "story",
-          presentation: { glyph: "S", color: "#ffcc00" },
-          x: 2,
-          y: 2,
-          dialogue: [
-            { speaker: "Story Scholar", text: "Remember this place.", pitch: 0.8 },
-          ],
-        },
+        { npcId: "young_page", x: 2, y: 1 },
+        { npcId: "old_wizard", x: 1, y: 2 },
+        { npcId: "old_scholar", x: 2, y: 2 },
       ],
     });
     const engine = new GameplayEngine(mapWithNpcs);
 
     const human = engine
       .getSnapshot()
-      .entities.find((entity) => entity.npcId === "human_student");
+      .entities.find((entity) => entity.npcId === "young_page");
     const elf = engine
       .getSnapshot()
-      .entities.find((entity) => entity.npcId === "elf_student");
+      .entities.find((entity) => entity.npcId === "old_wizard");
     const story = engine
       .getSnapshot()
-      .entities.find((entity) => entity.npcId === "story_scholar");
+      .entities.find((entity) => entity.npcId === "old_scholar");
 
     expect(human).toMatchObject({ glyph: "n", color: "#f2cdcd" });
     expect(elf).toMatchObject({ glyph: "n", color: "#a6e3a1" });
-    expect(story).toMatchObject({ glyph: "S", color: "#ffcc00" });
+    expect(story).toMatchObject({ glyph: "S", color: "#ffb000" });
   });
 
   it("exposes starter inventory items in snapshots", () => {

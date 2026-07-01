@@ -18,12 +18,9 @@ const validZoneData = {
 };
 
 const validNpc = {
-  npcId: "scholar",
-  name: "Old Scholar",
-  race: "human",
+  npcId: "old_scholar",
   x: 2,
   y: 1,
-  dialogue: [{ speaker: "Old Scholar", text: "Welcome!", pitch: 0.9 }],
 };
 
 const validEntryDialogue = [
@@ -161,7 +158,7 @@ describe("loadZone", () => {
     ).toThrow("transition at index 0 must be on a walkable tile");
   });
 
-  it("accepts NPCs on walkable tiles with dialogue nodes", () => {
+  it("accepts NPC placements on walkable tiles with known npcIds", () => {
     const map = loadZone(
       zoneDataWith({
         height: 4,
@@ -179,54 +176,17 @@ describe("loadZone", () => {
     expect(map.npcs).toEqual([validNpc]);
   });
 
-  it("accepts notable NPCs with presentation overrides", () => {
-    const npc = {
-      ...validNpc,
-      importance: "notable",
-      presentation: { glyph: "S", color: "#ffcc00" },
-    };
-    const map = loadZone(zoneDataWith({ npcs: [npc] }));
-
-    expect(map.npcs).toEqual([npc]);
-  });
-
-  it("rejects NPCs without a known race", () => {
+  it("rejects NPC placements with unknown npcIds", () => {
     expect(() =>
       loadZone(
         zoneDataWith({
-          npcs: [{ ...validNpc, race: "celestial" }],
+          npcs: [{ ...validNpc, npcId: "missing_npc" }],
         }),
       ),
-    ).toThrow("npc at index 0 has invalid or missing race");
+    ).toThrow('npc at index 0 references unknown npcId "missing_npc"');
   });
 
-  it("rejects NPCs with invalid importance", () => {
-    expect(() =>
-      loadZone(
-        zoneDataWith({
-          npcs: [{ ...validNpc, importance: "legendary" }],
-        }),
-      ),
-    ).toThrow("npc at index 0 has invalid importance");
-  });
-
-  it("rejects NPC presentation overrides with invalid glyphs", () => {
-    expect(() =>
-      loadZone(
-        zoneDataWith({
-          npcs: [
-            {
-              ...validNpc,
-              importance: "notable",
-              presentation: { glyph: "NPC", color: "#ffcc00" },
-            },
-          ],
-        }),
-      ),
-    ).toThrow("npc at index 0 presentation has invalid glyph");
-  });
-
-  it("rejects NPCs without dialogue nodes", () => {
+  it("rejects NPC placements without npcIds", () => {
     expect(() =>
       loadZone(
         zoneDataWith({
@@ -238,10 +198,10 @@ describe("loadZone", () => {
             [1, 0, 0, 1],
             [1, 1, 1, 1],
           ],
-          npcs: [{ ...validNpc, dialogue: [] }],
+          npcs: [{ x: 2, y: 1 }],
         }),
       ),
-    ).toThrow("npc at index 0 dialogue array must contain at least one node");
+    ).toThrow("npc at index 0 has invalid or missing npcId");
   });
 
   it("rejects NPCs on blocked tiles", () => {

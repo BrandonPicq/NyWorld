@@ -21,24 +21,10 @@ export interface DialogueNodeData {
   pitch: number;
 }
 
-export type NpcRace = "human" | "elf" | "dwarf" | "orc" | "unknown";
-
-export type NpcImportance = "common" | "notable" | "story";
-
-export interface NpcPresentationOverride {
-  glyph: string;
-  color: string;
-}
-
 export interface NpcSpawnData {
   npcId: string;
-  name: string;
-  race: NpcRace;
-  importance?: NpcImportance;
-  presentation?: NpcPresentationOverride;
   x: number;
   y: number;
-  dialogue: DialogueNodeData[];
 }
 
 export interface ItemSpawnData {

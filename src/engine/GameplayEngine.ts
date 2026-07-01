@@ -11,6 +11,7 @@ import type {
 import { getItemDef } from "./items/itemRegistry";
 import { getItemMapPresentation } from "./items/itemMapPresentation";
 import { getNpcMapPresentation } from "./npcs/npcMapPresentation";
+import { getNpcDef } from "./npcs/npcRegistry";
 import { World } from "./ecs/World";
 import type { EntityId } from "./ecs/types";
 import { GameMap } from "./GameMap";
@@ -174,7 +175,8 @@ export class GameplayEngine {
     }
 
     for (const npcData of this.map.npcs) {
-      const presentation = getNpcMapPresentation(npcData);
+      const npcDef = getNpcDef(npcData.npcId);
+      const presentation = getNpcMapPresentation(npcDef);
       const entityId = this.world.createEntity();
 
       this.world.addComponent(entityId, {
@@ -191,11 +193,11 @@ export class GameplayEngine {
 
       this.world.addComponent(entityId, {
         type: "Npc" as const,
-        npcId: npcData.npcId,
-        name: npcData.name,
-        race: npcData.race,
-        importance: npcData.importance ?? "common",
-        dialogue: npcData.dialogue.map((d) => ({ ...d })),
+        npcId: npcDef.npcId,
+        name: npcDef.name,
+        race: npcDef.race,
+        importance: npcDef.importance ?? "common",
+        dialogue: npcDef.dialogue.map((d) => ({ ...d })),
       } as Npc);
     }
   }

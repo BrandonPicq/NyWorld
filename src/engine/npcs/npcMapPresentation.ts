@@ -1,4 +1,4 @@
-import type { NpcImportance, NpcRace, NpcSpawnData } from "../ZoneTypes";
+import type { NpcDef, NpcImportance, NpcRace } from "./NpcDef";
 
 export interface NpcMapPresentation {
   glyph: string;
@@ -22,7 +22,7 @@ const RACE_COLORS: Record<NpcRace, string> = {
  * Notable and story NPCs can opt into an explicit presentation override.
  */
 export function getNpcMapPresentation(
-  npc: Pick<NpcSpawnData, "race" | "importance" | "presentation">,
+  npc: Pick<NpcDef, "race" | "importance" | "presentation">,
 ): NpcMapPresentation {
   const importance = npc.importance ?? "common";
 

@@ -1,5 +1,5 @@
 import type { Component } from "../ecs/types";
-import type { NpcImportance, NpcRace } from "../ZoneTypes";
+import type { NpcImportance, NpcRace } from "../npcs/NpcDef";
 
 export interface DialogueNode {
   speaker: string;
