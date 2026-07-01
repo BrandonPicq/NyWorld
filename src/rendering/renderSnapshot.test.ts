@@ -25,6 +25,7 @@ const gameSnapshot: GameSnapshot = {
     academicProgress: 0,
   },
   entities: [],
+  entryDialogue: [],
 };
 
 describe("createGridRenderSnapshot", () => {

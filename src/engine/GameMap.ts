@@ -5,6 +5,7 @@ import type {
   ZoneData,
   ZoneTransitionData,
   NpcSpawnData,
+  DialogueNodeData,
 } from "./ZoneTypes";
 
 export class GameMap {
@@ -14,6 +15,7 @@ export class GameMap {
   readonly height: number;
   readonly playerStart: PlayerStart;
   readonly npcs: NpcSpawnData[];
+  readonly entryDialogue: DialogueNodeData[];
 
   private tiles: TileId[][];
   private transitions: Map<string, ZoneTransitionData>;
@@ -30,6 +32,9 @@ export class GameMap {
       ...npc,
       dialogue: npc.dialogue.map((d) => ({ ...d })),
     })) : [];
+    this.entryDialogue = data.entryDialogue
+      ? data.entryDialogue.map((dialogue) => ({ ...dialogue }))
+      : [];
 
     for (const transition of data.transitions ?? []) {
       this.transitions.set(`${transition.x},${transition.y}`, transition);

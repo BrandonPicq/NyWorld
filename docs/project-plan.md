@@ -61,6 +61,7 @@ La V0 inclura :
 - une carte chargee depuis JSON ;
 - une transition simple entre zones de test ;
 - un journal textuel minimal des actions ;
+- des dialogues d'entree de zone configures dans les donnees JSON ;
 - des personnages non-joueurs (PNJs) configurés de manière déclarative, s'affichant sur le canvas et déclenchant des boîtes de dialogue interactives sur collision ;
 - un défilement de dialogue progressif ("typewriter") couplé à des signaux Web Audio ("bleeps") dont le pitch varie selon la voix du PNJ.
 
@@ -92,7 +93,7 @@ Tests unitaires V0 avec Vitest :
 - menus, themes, vitesse de défilement et reglages audio ;
 - mapping d'input jeu : fleches, QWERTY, AZERTY, exclusivite des layouts et labels ;
 - moteur gameplay : deplacements cardinaux, blocage par la carte, ticks, journal et collisions de dialogues avec les PNJs ;
-- chargement de zone : donnees valides, tile ids inconnus, depart invalide, depart bloque, et validation des PNJs.
+- chargement de zone : donnees valides, tile ids inconnus, depart invalide, depart bloque, dialogues d'entree et validation des PNJs.
 
 Tests a completer avec les prochaines tranches :
 

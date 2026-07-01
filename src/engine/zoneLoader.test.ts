@@ -27,6 +27,10 @@ const validNpc = {
   dialogue: [{ speaker: "Old Scholar", text: "Welcome!", pitch: 0.9 }],
 };
 
+const validEntryDialogue = [
+  { speaker: "Narrator", text: "The road opens before you.", pitch: 1 },
+];
+
 function zoneDataWith(overrides: Record<string, unknown>) {
   return {
     ...validZoneData,
@@ -49,6 +53,42 @@ describe("loadZone", () => {
   it("accepts the current test content zones", () => {
     expect(() => loadZone(testZoneData)).not.toThrow();
     expect(() => loadZone(testZone2Data)).not.toThrow();
+  });
+
+  it("accepts entry dialogue nodes", () => {
+    const map = loadZone(
+      zoneDataWith({
+        entryDialogue: validEntryDialogue,
+      }),
+    );
+
+    expect(map.entryDialogue).toEqual(validEntryDialogue);
+  });
+
+  it("rejects empty entry dialogue arrays", () => {
+    expect(() =>
+      loadZone(
+        zoneDataWith({
+          entryDialogue: [],
+        }),
+      ),
+    ).toThrow("entryDialogue array must contain at least one node");
+  });
+
+  it("rejects invalid entry dialogue pitch values", () => {
+    expect(() =>
+      loadZone(
+        zoneDataWith({
+          entryDialogue: [
+            {
+              speaker: "Narrator",
+              text: "Something feels wrong.",
+              pitch: Number.NaN,
+            },
+          ],
+        }),
+      ),
+    ).toThrow("entryDialogue node 0 has invalid or missing pitch");
   });
 
   it("rejects unknown tile ids", () => {

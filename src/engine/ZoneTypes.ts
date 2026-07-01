@@ -15,6 +15,12 @@ export interface ZoneTransitionData {
   targetY: number;
 }
 
+export interface DialogueNodeData {
+  speaker: string;
+  text: string;
+  pitch: number;
+}
+
 export interface NpcSpawnData {
   npcId: string;
   name: string;
@@ -22,7 +28,7 @@ export interface NpcSpawnData {
   color: string;
   x: number;
   y: number;
-  dialogue: { speaker: string; text: string; pitch: number }[];
+  dialogue: DialogueNodeData[];
 }
 
 export interface ZoneData {
@@ -35,4 +41,5 @@ export interface ZoneData {
   tiles: TileGrid;
   transitions?: ZoneTransitionData[];
   npcs?: NpcSpawnData[];
+  entryDialogue?: DialogueNodeData[];
 }

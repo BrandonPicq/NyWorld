@@ -4,6 +4,14 @@ This file tracks meaningful project changes by commit-oriented slices.
 
 Keep entries short and practical. When a slice is committed, its changelog section should stay aligned with the commit title so the project history remains easy to read after restores or bisects.
 
+## 2026-07-01 - [UPDATE]: Move zone entry dialogue into content data
+
+- Add `entryDialogue` zone content for test zones.
+- Validate zone entry dialogue nodes during zone loading.
+- Expose current zone entry dialogue through gameplay snapshots.
+- Trigger zone entry dialogue from snapshot data instead of hardcoded UI text.
+- Add tests for entry dialogue validation and snapshot exposure.
+
 ## 2026-07-01 - [FIX]: Harden dialogue interaction blocking and NPC validation
 
 - Disable game command controls while dialogue or character sheet overlays are active.

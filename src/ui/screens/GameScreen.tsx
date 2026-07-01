@@ -83,51 +83,18 @@ export function GameScreen({
     }
   }, [snapshot?.log]);
 
-  // Trigger dialogue when entering zones
+  // Trigger content-defined dialogue when entering zones.
   useEffect(() => {
     if (!snapshot) return;
 
-    if (prevZoneIdRef.current === null) {
-      prevZoneIdRef.current = snapshot.zoneId;
-      triggerDialogue([
-        {
-          speaker: "Narrator",
-          text: "Welcome to the test fields of NyWarudo.",
-          pitch: 1.0,
-        },
-        {
-          speaker: "Old Sage",
-          text: "Watch your steps, traveler. Each movement consumes your vital Energy.",
-          pitch: 0.7,
-        },
-      ]);
+    if (prevZoneIdRef.current === snapshot.zoneId) {
       return;
     }
 
-    if (prevZoneIdRef.current !== snapshot.zoneId) {
-      prevZoneIdRef.current = snapshot.zoneId;
-      if (snapshot.zoneId === "test_zone_2") {
-        triggerDialogue([
-          {
-            speaker: "Narrator",
-            text: "The air here grows heavy and cold.",
-            pitch: 0.9,
-          },
-          {
-            speaker: "Mysterious Voice",
-            text: "Who dares trespass in the Eastern Ruins?",
-            pitch: 1.4,
-          },
-        ]);
-      } else if (snapshot.zoneId === "test_zone") {
-        triggerDialogue([
-          {
-            speaker: "Narrator",
-            text: "You returned to the relative safety of the starting fields.",
-            pitch: 1.0,
-          },
-        ]);
-      }
+    prevZoneIdRef.current = snapshot.zoneId;
+
+    if (snapshot.entryDialogue.length > 0) {
+      triggerDialogue(snapshot.entryDialogue);
     }
   }, [snapshot?.zoneId, triggerDialogue]);
 

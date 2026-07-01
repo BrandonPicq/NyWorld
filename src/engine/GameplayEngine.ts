@@ -31,6 +31,7 @@ export interface GameSnapshot {
   log: LogEntry[];
   stats: Stats;
   entities: RenderEntity[];
+  entryDialogue: DialogueNode[];
 }
 
 const COMMAND_DIRECTION: Record<string, Direction> = {
@@ -282,6 +283,9 @@ export class GameplayEngine {
         attributes: { ...stats.attributes },
       },
       entities,
+      entryDialogue: this.map.entryDialogue.map((dialogue) => ({
+        ...dialogue,
+      })),
     };
   }
 

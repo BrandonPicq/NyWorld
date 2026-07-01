@@ -63,6 +63,21 @@ describe("GameplayEngine", () => {
     ]);
   });
 
+  it("exposes current zone entry dialogue in snapshots", () => {
+    const engine = new GameplayEngine(
+      loadZone({
+        ...zoneData,
+        entryDialogue: [
+          { speaker: "Narrator", text: "The test begins.", pitch: 1 },
+        ],
+      }),
+    );
+
+    expect(engine.getSnapshot().entryDialogue).toEqual([
+      { speaker: "Narrator", text: "The test begins.", pitch: 1 },
+    ]);
+  });
+
   it("detects a pending transition at the player position", () => {
     const engine = new GameplayEngine(
       loadZone({
@@ -117,6 +132,9 @@ describe("GameplayEngine", () => {
   it("resolves transitions after successful movement", () => {
     const nextMap = loadZone({
       ...zoneData,
+      entryDialogue: [
+        { speaker: "Narrator", text: "A new room unfolds.", pitch: 1 },
+      ],
       name: "Next Zone",
       playerStart: { x: 1, y: 1 },
       zoneId: "next_zone",
@@ -147,6 +165,9 @@ describe("GameplayEngine", () => {
       tick: 1,
       zoneId: "next_zone",
       zoneName: "Next Zone",
+      entryDialogue: [
+        { speaker: "Narrator", text: "A new room unfolds.", pitch: 1 },
+      ],
     });
     expect(engine.getSnapshot().log.map((entry) => entry.message)).toEqual([
       "Entered Movement Test.",

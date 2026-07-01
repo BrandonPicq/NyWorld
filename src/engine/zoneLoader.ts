@@ -136,6 +136,10 @@ export function loadZone(data: unknown): GameMap {
     }
   }
 
+  if (data.entryDialogue !== undefined) {
+    validateDialogueNodes(data.entryDialogue, "entryDialogue");
+  }
+
   if (data.npcs !== undefined) {
     if (!Array.isArray(data.npcs)) {
       throw new ZoneLoadError("npcs must be an array");
@@ -182,29 +186,7 @@ export function loadZone(data: unknown): GameMap {
         throw new ZoneLoadError(`npc at index ${i} has an invalid y coordinate`);
       }
 
-      if (!Array.isArray(npc.dialogue)) {
-        throw new ZoneLoadError(`npc at index ${i} has invalid or missing dialogue array`);
-      }
-
-      if (npc.dialogue.length === 0) {
-        throw new ZoneLoadError(`npc at index ${i} dialogue array must contain at least one node`);
-      }
-
-      for (let j = 0; j < npc.dialogue.length; j++) {
-        const node = npc.dialogue[j];
-        if (!isRecord(node)) {
-          throw new ZoneLoadError(`npc at index ${i} dialogue node ${j} must be an object`);
-        }
-        if (typeof node.speaker !== "string" || !node.speaker.trim()) {
-          throw new ZoneLoadError(`npc at index ${i} dialogue node ${j} has invalid or missing speaker`);
-        }
-        if (typeof node.text !== "string" || !node.text.trim()) {
-          throw new ZoneLoadError(`npc at index ${i} dialogue node ${j} has invalid or missing text`);
-        }
-        if (typeof node.pitch !== "number" || !Number.isFinite(node.pitch) || node.pitch < 0.1) {
-          throw new ZoneLoadError(`npc at index ${i} dialogue node ${j} has invalid or missing pitch`);
-        }
-      }
+      validateDialogueNodes(npc.dialogue, `npc at index ${i} dialogue`);
 
       const npcTileId = data.tiles[npc.y][npc.x];
       if (!getTileDef(npcTileId).walkable) {
@@ -228,4 +210,42 @@ function isPlayerStart(value: unknown): value is { x: number; y: number } {
     typeof value.y === "number" &&
     Number.isInteger(value.y)
   );
+}
+
+function validateDialogueNodes(value: unknown, context: string): void {
+  if (!Array.isArray(value)) {
+    throw new ZoneLoadError(`${context} must be an array`);
+  }
+
+  if (value.length === 0) {
+    throw new ZoneLoadError(`${context} array must contain at least one node`);
+  }
+
+  for (let i = 0; i < value.length; i++) {
+    const node = value[i];
+
+    if (!isRecord(node)) {
+      throw new ZoneLoadError(`${context} node ${i} must be an object`);
+    }
+
+    if (typeof node.speaker !== "string" || !node.speaker.trim()) {
+      throw new ZoneLoadError(
+        `${context} node ${i} has invalid or missing speaker`,
+      );
+    }
+
+    if (typeof node.text !== "string" || !node.text.trim()) {
+      throw new ZoneLoadError(`${context} node ${i} has invalid or missing text`);
+    }
+
+    if (
+      typeof node.pitch !== "number" ||
+      !Number.isFinite(node.pitch) ||
+      node.pitch < 0.1
+    ) {
+      throw new ZoneLoadError(
+        `${context} node ${i} has invalid or missing pitch`,
+      );
+    }
+  }
 }

@@ -13,6 +13,7 @@ export type {
   ZoneData,
   ZoneTransitionData,
   NpcSpawnData,
+  DialogueNodeData,
 } from "./ZoneTypes";
 export { DIRECTION_DELTA, MovementSystem } from "./systems";
 export type { Direction } from "./systems";
