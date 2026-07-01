@@ -642,4 +642,159 @@ describe("GameplayEngine", () => {
 
     expect(result.effects).toBeUndefined();
   });
+
+  describe("UseItem", () => {
+    it("restores energy when using a consumable", () => {
+      const engine = createEngine();
+
+      const directions = ["MoveEast", "MoveSouth", "MoveWest", "MoveNorth"] as const;
+      for (let i = 0; i < 10; i++) {
+        engine.execute({ type: directions[i % 4] });
+      }
+
+      expect(engine.getSnapshot().stats.energy).toBe(90);
+
+      engine.execute({ type: "UseItem", itemId: "travel_ration" });
+
+      expect(engine.getSnapshot().stats.energy).toBe(100);
+    });
+
+    it("reports the actual restored energy when capped by max energy", () => {
+      const engine = createEngine();
+
+      const directions = ["MoveEast", "MoveSouth", "MoveWest", "MoveNorth"] as const;
+      for (let i = 0; i < 5; i++) {
+        engine.execute({ type: directions[i % 4] });
+      }
+
+      expect(engine.getSnapshot().stats.energy).toBe(95);
+
+      const result = engine.execute({ type: "UseItem", itemId: "travel_ration" });
+
+      expect(engine.getSnapshot().stats.energy).toBe(100);
+      expect(result.effects).toEqual([
+        { type: "ItemUsed", itemId: "travel_ration", energyRestored: 5 },
+      ]);
+      expect(engine.getSnapshot().log.map((e) => e.message)).toContain(
+        "Used Travel Ration. Recovered 5 energy.",
+      );
+    });
+
+    it("decrements the stack quantity when using a consumable", () => {
+      const engine = createEngine();
+
+      const directions = ["MoveEast", "MoveSouth", "MoveWest", "MoveNorth"] as const;
+      for (let i = 0; i < 10; i++) {
+        engine.execute({ type: directions[i % 4] });
+      }
+
+      engine.execute({ type: "UseItem", itemId: "travel_ration" });
+
+      const stacks = engine
+        .getSnapshot()
+        .inventory.items.filter((s) => s.itemId === "travel_ration");
+
+      expect(stacks).toEqual([{ itemId: "travel_ration", quantity: 2 }]);
+    });
+
+    it("removes the stack when quantity reaches zero", () => {
+      const engine = createEngine();
+      const directions = ["MoveEast", "MoveSouth", "MoveWest", "MoveNorth"] as const;
+
+      for (let i = 0; i < 10; i++) {
+        engine.execute({ type: directions[i % 4] });
+      }
+      engine.execute({ type: "UseItem", itemId: "travel_ration" });
+
+      for (let i = 0; i < 10; i++) {
+        engine.execute({ type: directions[i % 4] });
+      }
+      engine.execute({ type: "UseItem", itemId: "travel_ration" });
+
+      for (let i = 0; i < 10; i++) {
+        engine.execute({ type: directions[i % 4] });
+      }
+      engine.execute({ type: "UseItem", itemId: "travel_ration" });
+
+      const stacks = engine
+        .getSnapshot()
+        .inventory.items.filter((s) => s.itemId === "travel_ration");
+
+      expect(stacks).toEqual([]);
+    });
+
+    it("fails gracefully when the item is not in the inventory", () => {
+      const engine = createEngine();
+
+      const result = engine.execute({ type: "UseItem", itemId: "nonexistent" });
+
+      expect(result.success).toBe(false);
+      expect(result.effects).toBeUndefined();
+      expect(engine.getSnapshot().log.map((e) => e.message)).toContain(
+        "You don't have that item.",
+      );
+    });
+
+    it("fails gracefully when the item is not a consumable", () => {
+      const engine = createEngine();
+
+      const result = engine.execute({ type: "UseItem", itemId: "academy_notebook" });
+
+      expect(result.success).toBe(false);
+      expect(result.effects).toBeUndefined();
+      expect(engine.getSnapshot().log.map((e) => e.message)).toContain(
+        "Academy Notebook cannot be used.",
+      );
+    });
+
+    it("returns an ItemUsed effect only on success", () => {
+      const engine = createEngine();
+      const directions = ["MoveEast", "MoveSouth", "MoveWest", "MoveNorth"] as const;
+
+      for (let i = 0; i < 10; i++) {
+        engine.execute({ type: directions[i % 4] });
+      }
+
+      const success = engine.execute({ type: "UseItem", itemId: "travel_ration" });
+      expect(success.effects).toEqual([
+        { type: "ItemUsed", itemId: "travel_ration", energyRestored: 10 },
+      ]);
+
+      const fail = engine.execute({ type: "UseItem", itemId: "academy_notebook" });
+      expect(fail.effects).toBeUndefined();
+    });
+
+    it("rejects usage when energy is already at maximum", () => {
+      const engine = createEngine();
+
+      const directions = ["MoveEast", "MoveSouth", "MoveWest", "MoveNorth"] as const;
+      for (let i = 0; i < 10; i++) {
+        engine.execute({ type: directions[i % 4] });
+      }
+
+      engine.execute({ type: "UseItem", itemId: "travel_ration" });
+
+      const result = engine.execute({ type: "UseItem", itemId: "travel_ration" });
+
+      expect(result.success).toBe(false);
+      expect(result.effects).toEqual([
+        {
+          type: "ItemUseRejected",
+          itemId: "travel_ration",
+          reason: "energy_full",
+          message: "Travel Ration would have no effect right now.",
+        },
+      ]);
+
+      const stacks = engine
+        .getSnapshot()
+        .inventory.items.filter((s) => s.itemId === "travel_ration");
+
+      expect(stacks).toEqual([{ itemId: "travel_ration", quantity: 2 }]);
+      expect(engine.getSnapshot().tick).toBe(11);
+      expect(engine.getSnapshot().log.map((e) => e.message)).toContain(
+        "Travel Ration would have no effect right now.",
+      );
+    });
+  });
 });

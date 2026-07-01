@@ -5,6 +5,7 @@ import testZone2Data from "../../content/zones/test_zone_2.json";
 import type { ZoneData } from "../../engine/ZoneTypes";
 import type { GameCommand } from "../../engine";
 import { TerminalPanel } from "../components/TerminalPanel";
+import { TerminalButton } from "../components/TerminalButton";
 import type { KeyboardLayout } from "../controls/keyboardLayout";
 import type { AudioSettings } from "../audio/audioSettings";
 import type { TextSpeed } from "../controls/textSpeed";
@@ -48,6 +49,7 @@ export function GameScreen({
   const [isCharacterSheetOpen, setIsCharacterSheetOpen] = useState(false);
   const [isInteractChoiceOpen, setIsInteractChoiceOpen] = useState(false);
   const [isInventoryOpen, setIsInventoryOpen] = useState(false);
+  const [inventoryNotice, setInventoryNotice] = useState<string | null>(null);
   const logRef = useRef<HTMLDivElement>(null);
   const {
     activeDialogue,
@@ -67,6 +69,7 @@ export function GameScreen({
     audioSettings,
     initialZoneData: zoneRegistry.test_zone,
     onDialogue: triggerDialogue,
+    onNotice: setInventoryNotice,
     zoneRegistry,
   });
 
@@ -115,11 +118,16 @@ export function GameScreen({
     executeCommand: handleExecuteCommand,
     isCharacterSheetOpen,
     isInteractChoiceOpen,
+    isInventoryNoticeOpen: inventoryNotice !== null,
     isInventoryOpen,
     keyboardLayout,
     onBackToTitle,
     progressDialogue,
     setIsCharacterSheetOpen,
+    setIsInventoryNoticeOpen: (open) => {
+      const next = typeof open === "function" ? open(inventoryNotice !== null) : open;
+      setInventoryNotice(next ? "" : null);
+    },
     setIsInventoryOpen,
   });
 
@@ -181,7 +189,44 @@ export function GameScreen({
             audioSettings={audioSettings}
             inventory={snapshot.inventory}
             onClose={() => setIsInventoryOpen(false)}
+            onUseItem={(itemId) =>
+              handleExecuteCommand({ type: "UseItem", itemId })
+            }
           />
+        )}
+
+        {inventoryNotice !== null && (
+          <div
+            className="modal-overlay"
+            onClick={() => setInventoryNotice(null)}
+            onKeyDown={(e) => {
+              if (e.key === "Escape") {
+                e.preventDefault();
+                setInventoryNotice(null);
+              }
+              e.stopPropagation();
+            }}
+          >
+            <TerminalPanel
+              className="stats-modal"
+              style={{ maxWidth: "360px" }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <p className="terminal-kicker">NOTICE</p>
+              <h2 className="terminal-heading-md" style={{ marginBottom: "var(--space-4)" }}>
+                Cannot Use Item
+              </h2>
+              <p>{inventoryNotice}</p>
+              <div
+                className="stats-modal__actions"
+                style={{ marginTop: "var(--space-4)" }}
+              >
+                <TerminalButton onClick={() => setInventoryNotice(null)}>
+                  [OK]
+                </TerminalButton>
+              </div>
+            </TerminalPanel>
+          </div>
         )}
 
         {isInteractChoiceOpen && (

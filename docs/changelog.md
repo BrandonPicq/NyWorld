@@ -4,6 +4,18 @@ This file tracks meaningful project changes by commit-oriented slices.
 
 Keep entries short and practical. When a slice is committed, its changelog section should stay aligned with the commit title so the project history remains easy to read after restores or bisects.
 
+## 2026-07-01 - [ADD]: Use consumable items for energy restoration
+
+- Add a UseItem command accepting an itemId and rejecting non-consumables or missing inventory entries.
+- Map consumable item ids to energy restore values (travel_ration: 10, healing_herb: 20).
+- Restore only missing energy, report the actual recovered amount, and consume one stack item only when the use succeeds.
+- Reject usage at max energy or without a configured effect, keeping quantity and tick unchanged.
+- Return ItemUsed and ItemUseRejected effects so the UI can play feedback or show a notice independently.
+- Wire the inventory modal to display a Use button only on consumable stacks.
+- Display an inventory notice popup for rejected uses, closable by click, Escape, or [OK].
+- Update keyboard controls so Escape closes the notice before the inventory.
+- Add tests covering energy restoration, actual capped recovery, stack changes, rejection cases, and effect emission.
+
 ## 2026-07-01 - [UPDATE]: Improve ground item readability and pickup feedback
 
 - Drop per-item glyph and color from the item catalog and resolve map presentation centrally from the item category.

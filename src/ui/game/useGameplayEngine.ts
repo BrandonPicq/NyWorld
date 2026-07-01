@@ -9,12 +9,13 @@ import {
   type ZoneData,
 } from "../../engine";
 import type { AudioSettings } from "../audio/audioSettings";
-import { playItemCollectSound } from "../audio/menuAudio";
+import { playItemCollectSound, playMenuConfirmSound } from "../audio/menuAudio";
 
 type UseGameplayEngineInput = {
   audioSettings: AudioSettings;
   initialZoneData: ZoneData;
   onDialogue: (nodes: DialogueNode[]) => void;
+  onNotice?: (message: string) => void;
   zoneRegistry: Record<string, ZoneData>;
 };
 
@@ -22,12 +23,14 @@ type UseGameplayEngineInput = {
  * Owns the React bridge to GameplayEngine for a game screen.
  *
  * The hook keeps the engine instance outside React state, publishes snapshots,
- * and turns engine dialogue results and effects into UI callbacks.
+ * and turns engine dialogue results, effects, and rejection notices into UI
+ * callbacks.
  */
 export function useGameplayEngine({
   audioSettings,
   initialZoneData,
   onDialogue,
+  onNotice,
   zoneRegistry,
 }: UseGameplayEngineInput) {
   const [snapshot, setSnapshot] = useState<GameSnapshot | null>(null);
@@ -63,10 +66,14 @@ export function useGameplayEngine({
       }
 
       for (const effect of result.effects ?? []) {
-        playEffect(effect, audioSettings);
+        if (effect.type === "ItemUseRejected") {
+          onNotice?.(effect.message);
+        } else {
+          playEffect(effect, audioSettings);
+        }
       }
     },
-    [audioSettings, onDialogue],
+    [audioSettings, onDialogue, onNotice],
   );
 
   return {
@@ -82,6 +89,12 @@ function playEffect(
   if (effect.type === "ItemCollected") {
     if (audioSettings.soundEnabled) {
       playItemCollectSound();
+    }
+  }
+
+  if (effect.type === "ItemUsed") {
+    if (audioSettings.soundEnabled) {
+      playMenuConfirmSound();
     }
   }
 }

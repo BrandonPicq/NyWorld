@@ -6,4 +6,5 @@ export type GameCommand =
   | { type: "MoveWest" }
   | { type: "MoveEast" }
   | { type: "Interact"; targetNpcId?: string; targetDirection?: Direction }
-  | { type: "Rest" };
+  | { type: "Rest" }
+  | { type: "UseItem"; itemId: string };

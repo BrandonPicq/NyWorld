@@ -9,6 +9,7 @@ type InventoryModalProps = {
   audioSettings: AudioSettings;
   inventory: Inventory;
   onClose: () => void;
+  onUseItem: (itemId: string) => void;
 };
 
 const CATEGORY_LABELS: Record<InventoryItemCategory, string> = {
@@ -22,6 +23,7 @@ export function InventoryModal({
   audioSettings,
   inventory,
   onClose,
+  onUseItem,
 }: InventoryModalProps) {
   const handleClose = () => {
     if (audioSettings.soundEnabled) {
@@ -75,6 +77,14 @@ export function InventoryModal({
                     <p className="stats-modal__inventory-description">
                       {def.description}
                     </p>
+                    {def.category === "consumable" && (
+                      <TerminalButton
+                        className="stats-modal__inventory-use"
+                        onClick={() => onUseItem(stack.itemId)}
+                      >
+                        [Use]
+                      </TerminalButton>
+                    )}
                   </div>
                 );
               })}

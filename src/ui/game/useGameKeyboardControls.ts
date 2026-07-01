@@ -13,11 +13,13 @@ type UseGameKeyboardControlsInput = {
   executeCommand: (command: GameCommand) => void;
   isCharacterSheetOpen: boolean;
   isInteractChoiceOpen?: boolean;
+  isInventoryNoticeOpen: boolean;
   isInventoryOpen: boolean;
   keyboardLayout: KeyboardLayout;
   onBackToTitle: () => void;
   progressDialogue: () => void;
   setIsCharacterSheetOpen: Dispatch<SetStateAction<boolean>>;
+  setIsInventoryNoticeOpen: Dispatch<SetStateAction<boolean>>;
   setIsInventoryOpen: Dispatch<SetStateAction<boolean>>;
 };
 
@@ -34,11 +36,13 @@ export function useGameKeyboardControls({
   executeCommand,
   isCharacterSheetOpen,
   isInteractChoiceOpen = false,
+  isInventoryNoticeOpen,
   isInventoryOpen,
   keyboardLayout,
   onBackToTitle,
   progressDialogue,
   setIsCharacterSheetOpen,
+  setIsInventoryNoticeOpen,
   setIsInventoryOpen,
 }: UseGameKeyboardControlsInput): void {
   useEffect(() => {
@@ -68,7 +72,9 @@ export function useGameKeyboardControls({
         if (audioSettings.soundEnabled) {
           playMenuConfirmSound();
         }
-        if (isCharacterSheetOpen) {
+        if (isInventoryNoticeOpen) {
+          setIsInventoryNoticeOpen(false);
+        } else if (isCharacterSheetOpen) {
           setIsCharacterSheetOpen(false);
         } else if (isInventoryOpen) {
           setIsInventoryOpen(false);
@@ -123,11 +129,13 @@ export function useGameKeyboardControls({
     executeCommand,
     isCharacterSheetOpen,
     isInteractChoiceOpen,
+    isInventoryNoticeOpen,
     isInventoryOpen,
     keyboardLayout,
     onBackToTitle,
     progressDialogue,
     setIsCharacterSheetOpen,
+    setIsInventoryNoticeOpen,
     setIsInventoryOpen,
   ]);
 }

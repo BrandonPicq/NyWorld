@@ -24,7 +24,14 @@ export interface LogEntry {
 }
 
 export type EngineEffect =
-  | { type: "ItemCollected"; itemId: string; quantity: number };
+  | { type: "ItemCollected"; itemId: string; quantity: number }
+  | { type: "ItemUsed"; itemId: string; energyRestored: number }
+  | {
+      type: "ItemUseRejected";
+      itemId: string;
+      reason: "energy_full" | "no_effect";
+      message: string;
+    };
 
 export interface ExecuteResult {
   success: boolean;
@@ -66,6 +73,11 @@ const COMMAND_DIRECTION: Record<string, Direction> = {
 };
 
 const INTERACTION_DIRECTIONS: Direction[] = ["north", "east", "south", "west"];
+
+const CONSUMABLE_ENERGY: Record<string, number> = {
+  travel_ration: 10,
+  healing_herb: 20,
+};
 
 type ZoneResolver = (zoneId: string) => GameMap | undefined;
 
@@ -234,6 +246,10 @@ export class GameplayEngine {
       return this.interact(command.targetNpcId, command.targetDirection);
     }
 
+    if (command.type === "UseItem") {
+      return this.useItem(command.itemId);
+    }
+
     const direction = COMMAND_DIRECTION[command.type];
 
     if (!direction) {
@@ -395,6 +411,80 @@ export class GameplayEngine {
       type: "ItemCollected",
       itemId: item.itemId,
       quantity: item.quantity,
+    };
+  }
+
+  private useItem(itemId: string): ExecuteResult {
+    const inventory = this.getPlayerInventory();
+    const stackIndex = inventory.items.findIndex(
+      (stack) => stack.itemId === itemId,
+    );
+
+    if (stackIndex === -1) {
+      this.log.push({
+        tick: this.tickCounter.tick,
+        message: "You don't have that item.",
+      });
+      return { success: false };
+    }
+
+    const def = getItemDef(itemId);
+
+    if (def.category !== "consumable") {
+      this.log.push({
+        tick: this.tickCounter.tick,
+        message: `${def.name} cannot be used.`,
+      });
+      return { success: false };
+    }
+
+    const energyRestored = CONSUMABLE_ENERGY[itemId];
+
+    if (energyRestored === undefined) {
+      const message = `${def.name} has no usable effect yet.`;
+      this.log.push({ tick: this.tickCounter.tick, message });
+      return {
+        success: false,
+        effects: [
+          { type: "ItemUseRejected", itemId, reason: "no_effect", message },
+        ],
+      };
+    }
+
+    const stats = this.getPlayerStats();
+    if (stats.energy >= stats.maxEnergy) {
+      const message = `${def.name} would have no effect right now.`;
+      this.log.push({ tick: this.tickCounter.tick, message });
+      return {
+        success: false,
+        effects: [
+          { type: "ItemUseRejected", itemId, reason: "energy_full", message },
+        ],
+      };
+    }
+
+    const nextEnergy = Math.min(stats.maxEnergy, stats.energy + energyRestored);
+    const actualEnergyRestored = nextEnergy - stats.energy;
+    stats.energy = nextEnergy;
+
+    const stack = inventory.items[stackIndex];
+    stack.quantity -= 1;
+
+    if (stack.quantity <= 0) {
+      inventory.items.splice(stackIndex, 1);
+    }
+
+    this.tickCounter.advance();
+    this.log.push({
+      tick: this.tickCounter.tick,
+      message: `Used ${def.name}. Recovered ${actualEnergyRestored} energy.`,
+    });
+
+    return {
+      success: true,
+      effects: [
+        { type: "ItemUsed", itemId, energyRestored: actualEnergyRestored },
+      ],
     };
   }
 

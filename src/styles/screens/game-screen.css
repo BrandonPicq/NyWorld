@@ -310,6 +310,11 @@
   line-height: var(--line-height-copy);
 }
 
+.stats-modal__inventory-use {
+  margin-top: var(--space-1);
+  align-self: flex-start;
+}
+
 .stats-modal__actions {
   display: flex;
   justify-content: flex-end;
