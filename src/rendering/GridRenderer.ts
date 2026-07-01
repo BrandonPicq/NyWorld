@@ -99,6 +99,27 @@ export class GridRenderer {
     }
 
     this.drawPlayer(snapshot.player.x, snapshot.player.y, colors.accent);
+
+    for (const entity of snapshot.entities) {
+      this.drawEntity(entity.x, entity.y, entity.glyph, entity.color);
+    }
+  }
+
+  private drawEntity(
+    x: number,
+    y: number,
+    glyph: string,
+    color: string,
+  ): void {
+    const { ctx, cellSize } = this;
+    const px = x * cellSize;
+    const py = y * cellSize;
+
+    ctx.fillStyle = color;
+    ctx.font = `bold ${Math.floor(cellSize * 0.7)}px monospace`;
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText(glyph, px + cellSize / 2, py + cellSize / 2);
   }
 
   private renderLastSnapshot(): void {

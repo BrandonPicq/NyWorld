@@ -136,6 +136,79 @@ export function loadZone(data: unknown): GameMap {
     }
   }
 
+  if (data.npcs !== undefined) {
+    if (!Array.isArray(data.npcs)) {
+      throw new ZoneLoadError("npcs must be an array");
+    }
+
+    for (let i = 0; i < data.npcs.length; i++) {
+      const npc = data.npcs[i];
+
+      if (!isRecord(npc)) {
+        throw new ZoneLoadError(`npc at index ${i} must be an object`);
+      }
+
+      if (typeof npc.npcId !== "string" || !npc.npcId.trim()) {
+        throw new ZoneLoadError(`npc at index ${i} has invalid or missing npcId`);
+      }
+
+      if (typeof npc.name !== "string" || !npc.name.trim()) {
+        throw new ZoneLoadError(`npc at index ${i} has invalid or missing name`);
+      }
+
+      if (typeof npc.glyph !== "string" || npc.glyph.length !== 1) {
+        throw new ZoneLoadError(`npc at index ${i} has invalid or missing glyph (must be 1 char)`);
+      }
+
+      if (typeof npc.color !== "string" || !npc.color.trim()) {
+        throw new ZoneLoadError(`npc at index ${i} has invalid or missing color`);
+      }
+
+      if (
+        typeof npc.x !== "number" ||
+        !Number.isInteger(npc.x) ||
+        npc.x < 0 ||
+        npc.x >= data.width
+      ) {
+        throw new ZoneLoadError(`npc at index ${i} has an invalid x coordinate`);
+      }
+
+      if (
+        typeof npc.y !== "number" ||
+        !Number.isInteger(npc.y) ||
+        npc.y < 0 ||
+        npc.y >= data.height
+      ) {
+        throw new ZoneLoadError(`npc at index ${i} has an invalid y coordinate`);
+      }
+
+      if (!Array.isArray(npc.dialogue)) {
+        throw new ZoneLoadError(`npc at index ${i} has invalid or missing dialogue array`);
+      }
+
+      for (let j = 0; j < npc.dialogue.length; j++) {
+        const node = npc.dialogue[j];
+        if (!isRecord(node)) {
+          throw new ZoneLoadError(`npc at index ${i} dialogue node ${j} must be an object`);
+        }
+        if (typeof node.speaker !== "string" || !node.speaker.trim()) {
+          throw new ZoneLoadError(`npc at index ${i} dialogue node ${j} has invalid or missing speaker`);
+        }
+        if (typeof node.text !== "string" || !node.text.trim()) {
+          throw new ZoneLoadError(`npc at index ${i} dialogue node ${j} has invalid or missing text`);
+        }
+        if (typeof node.pitch !== "number" || node.pitch < 0.1) {
+          throw new ZoneLoadError(`npc at index ${i} dialogue node ${j} has invalid or missing pitch`);
+        }
+      }
+
+      const npcTileId = data.tiles[npc.y][npc.x];
+      if (!getTileDef(npcTileId).walkable) {
+        throw new ZoneLoadError(`npc at index ${i} must spawn on a walkable tile`);
+      }
+    }
+  }
+
   return new GameMap(data as unknown as ZoneData);
 }
 

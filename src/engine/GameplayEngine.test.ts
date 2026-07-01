@@ -28,8 +28,8 @@ describe("GameplayEngine", () => {
   it("moves the player with cardinal commands", () => {
     const engine = createEngine();
 
-    expect(engine.execute({ type: "MoveEast" })).toBe(true);
-    expect(engine.execute({ type: "MoveSouth" })).toBe(true);
+    expect(engine.execute({ type: "MoveEast" }).success).toBe(true);
+    expect(engine.execute({ type: "MoveSouth" }).success).toBe(true);
 
     expect(engine.getSnapshot()).toMatchObject({
       playerX: 2,
@@ -41,7 +41,7 @@ describe("GameplayEngine", () => {
   it("blocks movement into non-walkable tiles without advancing the tick", () => {
     const engine = createEngine();
 
-    expect(engine.execute({ type: "MoveWest" })).toBe(false);
+    expect(engine.execute({ type: "MoveWest" }).success).toBe(false);
 
     expect(engine.getSnapshot()).toMatchObject({
       playerX: 1,
@@ -272,5 +272,42 @@ describe("GameplayEngine", () => {
       "Entered Test Zone 2.",
       "Moved east to (2, 4).",
     ]);
+  });
+
+  it("interacts with NPCs when player collides with their tile", () => {
+    const mapWithNpc = loadZone({
+      ...zoneData,
+      npcs: [
+        {
+          npcId: "scholar",
+          name: "Old Scholar",
+          glyph: "S",
+          color: "#ffcc00",
+          x: 2,
+          y: 1,
+          dialogue: [
+            { speaker: "Old Scholar", text: "Welcome!", pitch: 0.9 }
+          ],
+        }
+      ]
+    });
+    const engine = new GameplayEngine(mapWithNpc);
+
+    // Player starts at (1, 1). NPC is at (2, 1).
+    // Let's try to move east onto (2, 1).
+    const result = engine.execute({ type: "MoveEast" });
+
+    // The execution should return success: false and the dialogue sequence!
+    expect(result.success).toBe(false);
+    expect(result.dialogue).toEqual([
+      { speaker: "Old Scholar", text: "Welcome!", pitch: 0.9 }
+    ]);
+
+    // Position and tick should not advance
+    expect(engine.getSnapshot()).toMatchObject({
+      playerX: 1,
+      playerY: 1,
+      tick: 0,
+    });
   });
 });

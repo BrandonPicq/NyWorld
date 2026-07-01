@@ -60,7 +60,9 @@ La V0 inclura :
 - un compteur de ticks ;
 - une carte chargee depuis JSON ;
 - une transition simple entre zones de test ;
-- un journal textuel minimal des actions.
+- un journal textuel minimal des actions ;
+- des personnages non-joueurs (PNJs) configurés de manière déclarative, s'affichant sur le canvas et déclenchant des boîtes de dialogue interactives sur collision ;
+- un défilement de dialogue progressif ("typewriter") couplé à des signaux Web Audio ("bleeps") dont le pitch varie selon la voix du PNJ.
 
 ## Interface V0
 
@@ -68,15 +70,16 @@ L'ecran sera a texte dominant :
 
 - textes visibles du jeu en anglais ;
 - menus navigables au clavier : fleches haut/bas pour choisir, entree pour confirmer, echap pour revenir quand l'ecran le permet, tabulation neutralisee dans les menus ; deplacement en jeu avec les fleches directionnelles et WASD ou ZQSD (selon la configuration clavier QWERTY/AZERTY active) ;
-- options V0 organisees en categories : `Graphics` (avec selection de theme en ligne), `Audio` (avec activation du son en ligne) et configuration clavier `Controls` en ligne ;
+- options V0 organisees en categories : `Graphics & Text` (avec selection de theme et vitesse de texte Slow/Normal/Fast/Instant en ligne), `Audio` (avec activation du son en ligne) et configuration clavier `Controls` en ligne ;
 - zone principale de narration/log ;
-- carte Canvas compacte mais visible ;
+- carte Canvas compacte mais visible affichant le joueur et les PNJs (glyphes colorés) ;
 - boutons de deplacement ;
 - informations de debug : tick, zone active, position ;
 - tableau de bord lateral (gauche) affichant les ressources vitales : jauge d'energie (decroissance par pas), monnaie decomposee (Platinum, Gold, Silver, Bronze), titre academique, avec boutons de repos et fiche de personnage ;
-- fiche de personnage detaillee (modal overlay) accessible avec la touche `C` ou clic, affichant la liste modulaire des attributs (Strength, Intelligence, Charisma) et le detail de la progression academique.
+- fiche de personnage detaillee (modal overlay) accessible avec la touche `C` ou clic, affichant la liste modulaire des attributs (Strength, Intelligence, Charisma) et le detail de la progression academique ;
+- boîte de dialogue superposée (bas de carte) bloquant temporairement les inputs de déplacement lors d'un échange avec un PNJ.
 
-Les sprites, portraits, sons, PNJs, combats, inventaire, sauvegardes et schedules ne sont pas inclus dans la V0, mais l'architecture doit eviter de les bloquer.
+Les sprites, portraits, sons de fond, combats, inventaire, sauvegardes et schedules ne sont pas inclus dans la V0, mais l'architecture doit eviter de les bloquer.
 
 Les themes visuels sont pilotes par des variables CSS. Pour ajouter un theme, etendre la liste des presets cote UI et ajouter les overrides de tokens correspondants dans les styles.
 
@@ -86,10 +89,10 @@ Les sons de menu V0 sont generes par une petite couche Web Audio cote UI. Cette 
 
 Tests unitaires V0 avec Vitest :
 
-- menus, themes et reglages audio ;
+- menus, themes, vitesse de défilement et reglages audio ;
 - mapping d'input jeu : fleches, QWERTY, AZERTY, exclusivite des layouts et labels ;
-- moteur gameplay : deplacements cardinaux, blocage par la carte, ticks et journal ;
-- chargement de zone : donnees valides, tile ids inconnus, depart invalide et depart bloque.
+- moteur gameplay : deplacements cardinaux, blocage par la carte, ticks, journal et collisions de dialogues avec les PNJs ;
+- chargement de zone : donnees valides, tile ids inconnus, depart invalide, depart bloque, et validation des PNJs.
 
 Tests a completer avec les prochaines tranches :
 

@@ -4,6 +4,16 @@ This file tracks meaningful project changes by commit-oriented slices.
 
 Keep entries short and practical. When a slice is committed, its changelog section should stay aligned with the commit title so the project history remains easy to read after restores or bisects.
 
+## 2026-07-01 - [ADD]: Introduce interactive NPCs and collision dialogue
+
+- Define `Npc` component and register it in engine barrel exports.
+- Spawn map-defined NPCs inside ECS during initialization and zone entry.
+- Implement collision detection when player moves onto an NPC coordinate to block move and return NPC dialogue sequence.
+- Expose secondary entities in `GameSnapshot` and render them as colored bold text glyphs on the canvas.
+- Wire movement results in UI to trigger dialogue sequences when walking into NPCs.
+- Populate starting zone with an "Old Scholar" NPC at (3, 3) with custom dialogue and gravelly voice bleep.
+- Add unit tests for NPC validation, parsing, spawning, and dialogue collisions.
+
 ## 2026-06-30 - [REFACTOR]: Split game screen components
 
 - Extract game screen panels, dialogue box, and character sheet into dedicated UI files.

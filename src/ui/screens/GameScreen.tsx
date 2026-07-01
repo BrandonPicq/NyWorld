@@ -67,9 +67,13 @@ export function GameScreen({
   const executeCommand = useCallback((command: GameCommand) => {
     const engine = engineRef.current;
     if (!engine) return;
-    engine.execute(command);
+    const result = engine.execute(command);
     setSnapshot(engine.getSnapshot());
-  }, []);
+
+    if (result.dialogue) {
+      triggerDialogue(result.dialogue);
+    }
+  }, [triggerDialogue]);
 
   useEffect(() => {
     if (logRef.current) {

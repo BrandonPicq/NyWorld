@@ -1,4 +1,4 @@
-import type { GameSnapshot } from "../engine/GameplayEngine";
+import type { GameSnapshot, RenderEntity } from "../engine/GameplayEngine";
 import { getTileDef } from "../engine/TileRegistry";
 
 export type GridTileRenderRole = "blocked" | "open";
@@ -16,6 +16,7 @@ export type GridRenderSnapshot = {
     y: number;
   };
   tiles: GridRenderTile[][];
+  entities: RenderEntity[];
 };
 
 export function createGridRenderSnapshot(
@@ -38,5 +39,6 @@ export function createGridRenderSnapshot(
       }),
     ),
     width: snapshot.mapWidth,
+    entities: snapshot.entities.map((e) => ({ ...e })),
   };
 }

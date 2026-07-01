@@ -1,5 +1,5 @@
 import type { GameCommand } from "./commands";
-import type { Position, Stats } from "./components";
+import type { Position, Stats, Npc, DialogueNode, Renderable } from "./components";
 import { World } from "./ecs/World";
 import { GameMap } from "./GameMap";
 import { DIRECTION_DELTA, MovementSystem } from "./systems/MovementSystem";
@@ -10,6 +10,13 @@ import type { ZoneTransitionData } from "./ZoneTypes";
 export interface LogEntry {
   tick: number;
   message: string;
+}
+
+export interface RenderEntity {
+  x: number;
+  y: number;
+  glyph: string;
+  color: string;
 }
 
 export interface GameSnapshot {
@@ -23,6 +30,7 @@ export interface GameSnapshot {
   tiles: number[][];
   log: LogEntry[];
   stats: Stats;
+  entities: RenderEntity[];
 }
 
 const COMMAND_DIRECTION: Record<string, Direction> = {
@@ -84,22 +92,54 @@ export class GameplayEngine {
     };
     this.world.addComponent(playerId, stats);
 
+    this.spawnNpcs();
+
     this.log.push({
       tick: this.tickCounter.tick,
       message: `Entered ${map.name}.`,
     });
   }
 
-  execute(command: GameCommand): boolean {
+  private spawnNpcs(): void {
+    const existingNpcs = this.world.entitiesWith("Npc");
+    for (const npcId of existingNpcs) {
+      this.world.destroyEntity(npcId);
+    }
+
+    for (const npcData of this.map.npcs) {
+      const entityId = this.world.createEntity();
+
+      this.world.addComponent(entityId, {
+        type: "Position" as const,
+        x: npcData.x,
+        y: npcData.y,
+      });
+
+      this.world.addComponent(entityId, {
+        type: "Renderable" as const,
+        glyph: npcData.glyph,
+        color: npcData.color,
+      });
+
+      this.world.addComponent(entityId, {
+        type: "Npc" as const,
+        npcId: npcData.npcId,
+        name: npcData.name,
+        dialogue: npcData.dialogue.map((d) => ({ ...d })),
+      });
+    }
+  }
+
+  execute(command: GameCommand): { success: boolean; dialogue?: DialogueNode[] } {
     if (command.type === "Rest") {
       this.restPlayer();
-      return true;
+      return { success: true };
     }
 
     const direction = COMMAND_DIRECTION[command.type];
 
     if (!direction) {
-      return false;
+      return { success: false };
     }
 
     const stats = this.getPlayerStats();
@@ -108,10 +148,22 @@ export class GameplayEngine {
         tick: this.tickCounter.tick,
         message: "You are too exhausted to move! Rest [R] to recover energy.",
       });
-      return false;
+      return { success: false };
     }
 
     const positionBefore = this.getPlayerPosition();
+    const target = this.getTargetPosition(positionBefore, direction);
+
+    // Collision check: check if there's an NPC at target cell
+    const npcEntities = this.world.entitiesWith("Position", "Npc");
+    for (const npcEntityId of npcEntities) {
+      const npcPos = this.world.getComponent<Position>(npcEntityId, "Position")!;
+      if (npcPos.x === target.x && npcPos.y === target.y) {
+        const npc = this.world.getComponent<Npc>(npcEntityId, "Npc")!;
+        return { success: false, dialogue: npc.dialogue };
+      }
+    }
+
     const moved = MovementSystem.move(this.world, direction, this.map);
 
     if (moved) {
@@ -124,15 +176,13 @@ export class GameplayEngine {
       });
       this.resolvePendingTransition();
     } else {
-      const pos = positionBefore;
-      const target = this.getTargetPosition(pos, direction);
       this.log.push({
         tick: this.tickCounter.tick,
         message: `Cannot move ${direction} — blocked at (${target.x}, ${target.y}).`,
       });
     }
 
-    return moved;
+    return { success: moved };
   }
 
   getPendingTransition(): ZoneTransitionData | undefined {
@@ -142,6 +192,7 @@ export class GameplayEngine {
 
   enterZone(map: GameMap, entryX: number, entryY: number): void {
     this.map = map;
+    this.spawnNpcs();
 
     const pos = this.getPlayerPosition();
     pos.x = entryX;
@@ -196,6 +247,22 @@ export class GameplayEngine {
       tiles.push(row);
     }
 
+    const entities: RenderEntity[] = [];
+    const entityIds = this.world.entitiesWith("Position", "Renderable");
+    for (const entityId of entityIds) {
+      const isPlayer = this.world.hasComponent(entityId, "PlayerControlled");
+      if (isPlayer) continue;
+
+      const p = this.world.getComponent<Position>(entityId, "Position")!;
+      const r = this.world.getComponent<Renderable>(entityId, "Renderable")!;
+      entities.push({
+        x: p.x,
+        y: p.y,
+        glyph: r.glyph,
+        color: r.color,
+      });
+    }
+
     return {
       tick: this.tickCounter.tick,
       zoneId: this.map.zoneId,
@@ -210,6 +277,7 @@ export class GameplayEngine {
         ...stats,
         attributes: { ...stats.attributes },
       },
+      entities,
     };
   }
 

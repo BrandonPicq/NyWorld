@@ -24,6 +24,7 @@ const gameSnapshot: GameSnapshot = {
     academicTitle: "Novice Scribe",
     academicProgress: 0,
   },
+  entities: [],
 };
 
 describe("createGridRenderSnapshot", () => {
@@ -45,6 +46,7 @@ describe("createGridRenderSnapshot", () => {
         ],
       ],
       width: 2,
+      entities: [],
     });
   });
 });

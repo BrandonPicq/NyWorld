@@ -1,4 +1,4 @@
-export type { PlayerControlled, Position, Renderable } from "./components";
+export type { PlayerControlled, Position, Renderable, Npc, DialogueNode } from "./components";
 export { World } from "./ecs";
 export type { Component, EntityId } from "./ecs";
 export { GameMap } from "./GameMap";
@@ -12,6 +12,7 @@ export type {
   TileId,
   ZoneData,
   ZoneTransitionData,
+  NpcSpawnData,
 } from "./ZoneTypes";
 export { DIRECTION_DELTA, MovementSystem } from "./systems";
 export type { Direction } from "./systems";
