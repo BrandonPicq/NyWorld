@@ -1,0 +1,42 @@
+{
+  "academy_notebook": {
+    "name": "Academy Notebook",
+    "description": "A worn leather-bound notebook filled with scribbled lectures.",
+    "category": "quest",
+    "defaultQuantity": 1,
+    "glyph": "N",
+    "color": "#cba6f7"
+  },
+  "travel_ration": {
+    "name": "Travel Ration",
+    "description": "Dried meat and hardtack. Keeps you going.",
+    "category": "consumable",
+    "defaultQuantity": 1,
+    "glyph": "R",
+    "color": "#fab387"
+  },
+  "chalk_piece": {
+    "name": "Chalk Piece",
+    "description": "White chalk used for temporary markings.",
+    "category": "material",
+    "defaultQuantity": 1,
+    "glyph": "c",
+    "color": "#cdd6f4"
+  },
+  "healing_herb": {
+    "name": "Healing Herb",
+    "description": "A small bundle of dried herbs with a faint medicinal scent.",
+    "category": "consumable",
+    "defaultQuantity": 1,
+    "glyph": "h",
+    "color": "#a6e3a1"
+  },
+  "old_coin": {
+    "name": "Old Coin",
+    "description": "A tarnished coin from a forgotten era. Worth a few bronze to a collector.",
+    "category": "misc",
+    "defaultQuantity": 1,
+    "glyph": "¢",
+    "color": "#f9e2af"
+  }
+}

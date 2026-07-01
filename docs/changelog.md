@@ -4,6 +4,19 @@ This file tracks meaningful project changes by commit-oriented slices.
 
 Keep entries short and practical. When a slice is committed, its changelog section should stay aligned with the commit title so the project history remains easy to read after restores or bisects.
 
+## 2026-07-01 - [ADD]: Pick up ground items and grow the item catalog
+
+- Add an Item ECS component (itemId, quantity) for ground entities.
+- Add an external item catalog at content/items/items.json with five items including starter definitions.
+- Add an ItemRegistry that exposes getItemDef and hasItemDef, mirroring the TileRegistry pattern.
+- Normalize InventoryStack to { itemId, quantity }, resolving name, description, and category from the registry at render time.
+- Allow zones to declare an items[] spawn list validated by the zone loader (walkable tile, valid itemId, positive integer quantity).
+- Auto-pick up ground items on collision, merging quantities into existing stacks when present.
+- Respawn uncollected zone items on zone entry alongside NPCs.
+- Keep picked-up zone item spawns collected for the current engine session.
+- Update the inventory modal to read display data from the item registry.
+- Add tests for pickup, stack merging, and item validation.
+
 ## 2026-07-01 - [ADD]: Add read-only player inventory
 
 - Add an Inventory ECS component with InventoryStack items (itemId, name, description, category, quantity).

@@ -510,27 +510,9 @@ describe("GameplayEngine", () => {
     const engine = createEngine();
 
     expect(engine.getSnapshot().inventory.items).toEqual([
-      {
-        itemId: "academy_notebook",
-        name: "Academy Notebook",
-        description: "A worn leather-bound notebook filled with scribbled lectures.",
-        category: "quest",
-        quantity: 1,
-      },
-      {
-        itemId: "travel_ration",
-        name: "Travel Ration",
-        description: "Dried meat and hardtack. Keeps you going.",
-        category: "consumable",
-        quantity: 3,
-      },
-      {
-        itemId: "chalk_piece",
-        name: "Chalk Piece",
-        description: "White chalk used for temporary markings.",
-        category: "material",
-        quantity: 2,
-      },
+      { itemId: "academy_notebook", quantity: 1 },
+      { itemId: "travel_ration", quantity: 3 },
+      { itemId: "chalk_piece", quantity: 2 },
     ]);
   });
 
@@ -539,37 +521,77 @@ describe("GameplayEngine", () => {
     const snapshot = engine.getSnapshot();
 
     snapshot.inventory.items[0].quantity = 99;
-    snapshot.inventory.items[0].name = "Changed outside the engine";
     snapshot.inventory.items.push({
       itemId: "external_item",
-      name: "External Item",
-      description: "Added from a stale UI snapshot.",
-      category: "misc",
       quantity: 1,
     });
 
     expect(engine.getSnapshot().inventory.items).toEqual([
-      {
-        itemId: "academy_notebook",
-        name: "Academy Notebook",
-        description: "A worn leather-bound notebook filled with scribbled lectures.",
-        category: "quest",
-        quantity: 1,
-      },
-      {
-        itemId: "travel_ration",
-        name: "Travel Ration",
-        description: "Dried meat and hardtack. Keeps you going.",
-        category: "consumable",
-        quantity: 3,
-      },
-      {
-        itemId: "chalk_piece",
-        name: "Chalk Piece",
-        description: "White chalk used for temporary markings.",
-        category: "material",
-        quantity: 2,
-      },
+      { itemId: "academy_notebook", quantity: 1 },
+      { itemId: "travel_ration", quantity: 3 },
+      { itemId: "chalk_piece", quantity: 2 },
     ]);
+  });
+
+  it("picks up ground items on collision and adds a new stack", () => {
+    const mapWithItem = loadZone({
+      ...zoneData,
+      items: [{ itemId: "healing_herb", x: 2, y: 1, quantity: 1 }],
+    });
+    const engine = new GameplayEngine(mapWithItem);
+
+    const result = engine.execute({ type: "MoveEast" });
+
+    expect(result.success).toBe(true);
+    expect(engine.getSnapshot()).toMatchObject({
+      playerX: 2,
+      playerY: 1,
+      tick: 1,
+    });
+
+    const herbStacks = engine
+      .getSnapshot()
+      .inventory.items.filter((s) => s.itemId === "healing_herb");
+
+    expect(herbStacks).toEqual([{ itemId: "healing_herb", quantity: 1 }]);
+    expect(engine.getSnapshot().log.map((e) => e.message)).toEqual([
+      "Entered Movement Test.",
+      "Moved east to (2, 1).",
+      "Picked up Healing Herb.",
+    ]);
+  });
+
+  it("merges into an existing stack when picking up a known item", () => {
+    const mapWithItem = loadZone({
+      ...zoneData,
+      items: [{ itemId: "chalk_piece", x: 2, y: 1, quantity: 1 }],
+    });
+    const engine = new GameplayEngine(mapWithItem);
+
+    engine.execute({ type: "MoveEast" });
+
+    const chalkStacks = engine
+      .getSnapshot()
+      .inventory.items.filter((s) => s.itemId === "chalk_piece");
+
+    expect(chalkStacks).toEqual([{ itemId: "chalk_piece", quantity: 3 }]);
+  });
+
+  it("does not respawn picked up items after re-entering a zone", () => {
+    const mapWithItem = loadZone({
+      ...zoneData,
+      items: [{ itemId: "healing_herb", x: 2, y: 1, quantity: 1 }],
+    });
+    const engine = new GameplayEngine(mapWithItem);
+
+    engine.execute({ type: "MoveEast" });
+    engine.enterZone(mapWithItem, 1, 1);
+    engine.execute({ type: "MoveEast" });
+
+    const herbStacks = engine
+      .getSnapshot()
+      .inventory.items.filter((s) => s.itemId === "healing_herb");
+
+    expect(herbStacks).toEqual([{ itemId: "healing_herb", quantity: 1 }]);
   });
 });

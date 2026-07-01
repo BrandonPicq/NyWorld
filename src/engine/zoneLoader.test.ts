@@ -12,7 +12,7 @@ const validZoneData = {
   playerStart: { x: 1, y: 1 },
   tiles: [
     [1, 1, 1],
-    [1, 0, 1],
+    [1, 0, 0],
     [1, 1, 1],
   ],
 };
@@ -30,6 +30,13 @@ const validNpc = {
 const validEntryDialogue = [
   { speaker: "Narrator", text: "The road opens before you.", pitch: 1 },
 ];
+
+const validItem = {
+  itemId: "chalk_piece",
+  x: 2,
+  y: 1,
+  quantity: 1,
+};
 
 function zoneDataWith(overrides: Record<string, unknown>) {
   return {
@@ -199,5 +206,44 @@ describe("loadZone", () => {
         }),
       ),
     ).toThrow("npc at index 0 must spawn on a walkable tile");
+  });
+
+  it("accepts items on walkable tiles with a known itemId", () => {
+    const map = loadZone(zoneDataWith({ items: [validItem] }));
+
+    expect(map.items).toEqual([validItem]);
+  });
+
+  it("rejects items with an unknown itemId", () => {
+    expect(() =>
+      loadZone(
+        zoneDataWith({
+          items: [{ ...validItem, itemId: "no_such_item" }],
+        }),
+      ),
+    ).toThrow('item at index 0 references unknown itemId "no_such_item"');
+  });
+
+  it("rejects items on blocked tiles", () => {
+    expect(() =>
+      loadZone(zoneDataWith({ items: [{ ...validItem, x: 0, y: 0 }] })),
+    ).toThrow("item at index 0 must spawn on a walkable tile");
+  });
+
+  it("rejects items on the player start", () => {
+    expect(() =>
+      loadZone(zoneDataWith({ items: [{ ...validItem, x: 1, y: 1 }] })),
+    ).toThrow("item at index 0 must not spawn on the player start");
+  });
+
+  it("rejects items on NPCs", () => {
+    expect(() =>
+      loadZone(
+        zoneDataWith({
+          items: [validItem],
+          npcs: [validNpc],
+        }),
+      ),
+    ).toThrow("item at index 0 must not spawn on npc at index 0");
   });
 });

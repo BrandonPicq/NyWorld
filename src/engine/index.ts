@@ -3,6 +3,7 @@ export type {
   Inventory,
   InventoryItemCategory,
   InventoryStack,
+  Item,
   Npc,
   PlayerControlled,
   Position,
@@ -28,6 +29,8 @@ export type {
 export { DIRECTION_DELTA, MovementSystem } from "./systems";
 export type { Direction } from "./systems";
 export { TickCounter } from "./tick";
+export { getItemDef, hasItemDef } from "./items/itemRegistry";
+export type { ItemDef, ItemDefMap } from "./items/ItemDef";
 export type { GameCommand } from "./commands";
 export { GameplayEngine } from "./GameplayEngine";
 export type { GameSnapshot, LogEntry, RenderEntity } from "./GameplayEngine";

@@ -1,4 +1,5 @@
 import { GameMap } from "./GameMap";
+import { hasItemDef } from "./items/itemRegistry";
 import { getTileDef, hasTileDef } from "./TileRegistry";
 import type { ZoneData, ZoneTransitionData } from "./ZoneTypes";
 
@@ -197,6 +198,86 @@ export function loadZone(data: unknown): GameMap {
       const npcTileId = data.tiles[npc.y][npc.x];
       if (!getTileDef(npcTileId).walkable) {
         throw new ZoneLoadError(`npc at index ${i} must spawn on a walkable tile`);
+      }
+    }
+  }
+
+  if (data.items !== undefined) {
+    if (!Array.isArray(data.items)) {
+      throw new ZoneLoadError("items must be an array");
+    }
+
+    for (let i = 0; i < data.items.length; i++) {
+      const item = data.items[i];
+
+      if (!isRecord(item)) {
+        throw new ZoneLoadError(`item at index ${i} must be an object`);
+      }
+
+      if (typeof item.itemId !== "string" || !item.itemId.trim()) {
+        throw new ZoneLoadError(`item at index ${i} has invalid or missing itemId`);
+      }
+
+      if (!hasItemDef(item.itemId)) {
+        throw new ZoneLoadError(
+          `item at index ${i} references unknown itemId "${item.itemId}"`,
+        );
+      }
+
+      if (
+        typeof item.x !== "number" ||
+        !Number.isInteger(item.x) ||
+        item.x < 0 ||
+        item.x >= data.width
+      ) {
+        throw new ZoneLoadError(`item at index ${i} has an invalid x coordinate`);
+      }
+
+      if (
+        typeof item.y !== "number" ||
+        !Number.isInteger(item.y) ||
+        item.y < 0 ||
+        item.y >= data.height
+      ) {
+        throw new ZoneLoadError(`item at index ${i} has an invalid y coordinate`);
+      }
+
+      if (
+        typeof item.quantity !== "number" ||
+        !Number.isInteger(item.quantity) ||
+        item.quantity < 1
+      ) {
+        throw new ZoneLoadError(
+          `item at index ${i} has an invalid quantity (must be a positive integer)`,
+        );
+      }
+
+      const itemTileId = data.tiles[item.y][item.x];
+      if (!getTileDef(itemTileId).walkable) {
+        throw new ZoneLoadError(
+          `item at index ${i} must spawn on a walkable tile`,
+        );
+      }
+
+      if (item.x === data.playerStart.x && item.y === data.playerStart.y) {
+        throw new ZoneLoadError(
+          `item at index ${i} must not spawn on the player start`,
+        );
+      }
+
+      const overlappingNpcIndex = Array.isArray(data.npcs)
+        ? data.npcs.findIndex(
+            (npc) =>
+              isRecord(npc) &&
+              npc.x === item.x &&
+              npc.y === item.y,
+          )
+        : -1;
+
+      if (overlappingNpcIndex >= 0) {
+        throw new ZoneLoadError(
+          `item at index ${i} must not spawn on npc at index ${overlappingNpcIndex}`,
+        );
       }
     }
   }

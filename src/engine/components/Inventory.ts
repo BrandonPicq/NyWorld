@@ -4,9 +4,6 @@ export type InventoryItemCategory = "quest" | "consumable" | "material" | "misc"
 
 export interface InventoryStack {
   itemId: string;
-  name: string;
-  description: string;
-  category: InventoryItemCategory;
   quantity: number;
 }
 

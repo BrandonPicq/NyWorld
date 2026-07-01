@@ -57,5 +57,9 @@
         { "speaker": "Young Page", "text": "Hello, I am a Young Page adjacent to you.", "pitch": 1.5 }
       ]
     }
+  ],
+  "items": [
+    { "itemId": "healing_herb", "x": 2, "y": 5, "quantity": 1 },
+    { "itemId": "old_coin", "x": 7, "y": 6, "quantity": 1 }
   ]
 }

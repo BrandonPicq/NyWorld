@@ -31,6 +31,13 @@ export interface NpcSpawnData {
   dialogue: DialogueNodeData[];
 }
 
+export interface ItemSpawnData {
+  itemId: string;
+  x: number;
+  y: number;
+  quantity: number;
+}
+
 export interface ZoneData {
   version: string;
   zoneId: string;
@@ -41,5 +48,6 @@ export interface ZoneData {
   tiles: TileGrid;
   transitions?: ZoneTransitionData[];
   npcs?: NpcSpawnData[];
+  items?: ItemSpawnData[];
   entryDialogue?: DialogueNodeData[];
 }

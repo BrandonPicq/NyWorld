@@ -21,5 +21,8 @@
   ],
   "transitions": [
     { "x": 0, "y": 4, "targetZoneId": "test_zone", "targetX": 8, "targetY": 4 }
+  ],
+  "items": [
+    { "itemId": "chalk_piece", "x": 5, "y": 2, "quantity": 1 }
   ]
 }

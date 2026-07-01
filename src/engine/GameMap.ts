@@ -5,6 +5,7 @@ import type {
   ZoneData,
   ZoneTransitionData,
   NpcSpawnData,
+  ItemSpawnData,
   DialogueNodeData,
 } from "./ZoneTypes";
 
@@ -21,6 +22,7 @@ export class GameMap {
   readonly height: number;
   readonly playerStart: PlayerStart;
   readonly npcs: NpcSpawnData[];
+  readonly items: ItemSpawnData[];
   readonly entryDialogue: DialogueNodeData[];
 
   private tiles: TileId[][];
@@ -38,6 +40,9 @@ export class GameMap {
       ...npc,
       dialogue: npc.dialogue.map((d) => ({ ...d })),
     })) : [];
+    this.items = data.items
+      ? data.items.map((item) => ({ ...item }))
+      : [];
     this.entryDialogue = data.entryDialogue
       ? data.entryDialogue.map((dialogue) => ({ ...dialogue }))
       : [];

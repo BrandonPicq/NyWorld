@@ -1,4 +1,5 @@
 import type { Inventory, InventoryItemCategory } from "../../engine/components";
+import { getItemDef } from "../../engine/items/itemRegistry";
 import { TerminalButton } from "../components/TerminalButton";
 import { TerminalPanel } from "../components/TerminalPanel";
 import type { AudioSettings } from "../audio/audioSettings";
@@ -53,27 +54,30 @@ export function InventoryModal({
             <p className="stats-modal__empty">No items carried.</p>
           ) : (
             <div className="stats-modal__inventory-list">
-              {inventory.items.map((stack) => (
-                <div
-                  key={stack.itemId}
-                  className="stats-modal__inventory-item"
-                >
-                  <div className="stats-modal__inventory-header">
-                    <span className="stats-modal__inventory-name">
-                      {stack.name}
+              {inventory.items.map((stack) => {
+                const def = getItemDef(stack.itemId);
+                return (
+                  <div
+                    key={stack.itemId}
+                    className="stats-modal__inventory-item"
+                  >
+                    <div className="stats-modal__inventory-header">
+                      <span className="stats-modal__inventory-name">
+                        {def.name}
+                      </span>
+                      <span className="stats-modal__inventory-quantity">
+                        x{stack.quantity}
+                      </span>
+                    </div>
+                    <span className="stats-modal__inventory-category">
+                      {CATEGORY_LABELS[def.category] ?? def.category}
                     </span>
-                    <span className="stats-modal__inventory-quantity">
-                      x{stack.quantity}
-                    </span>
+                    <p className="stats-modal__inventory-description">
+                      {def.description}
+                    </p>
                   </div>
-                  <span className="stats-modal__inventory-category">
-                    {CATEGORY_LABELS[stack.category] ?? stack.category}
-                  </span>
-                  <p className="stats-modal__inventory-description">
-                    {stack.description}
-                  </p>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>

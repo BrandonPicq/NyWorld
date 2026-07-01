@@ -2,13 +2,15 @@ import type { GameCommand } from "./commands";
 import type {
   DialogueNode,
   Inventory,
-  InventoryStack,
+  Item,
   Npc,
   Position,
   Renderable,
   Stats,
 } from "./components";
+import { getItemDef } from "./items/itemRegistry";
 import { World } from "./ecs/World";
+import type { EntityId } from "./ecs/types";
 import { GameMap } from "./GameMap";
 import { DIRECTION_DELTA, MovementSystem } from "./systems/MovementSystem";
 import type { Direction } from "./systems/MovementSystem";
@@ -74,6 +76,7 @@ export class GameplayEngine {
 
   private log: LogEntry[] = [];
   private playerFacing: Direction = "south";
+  private pickedUpItemSpawnKeys = new Set<string>();
   private resolveZone?: ZoneResolver;
 
   constructor(map: GameMap, options: GameplayEngineOptions = {}) {
@@ -117,32 +120,15 @@ export class GameplayEngine {
     const inventory: Inventory = {
       type: "Inventory",
       items: [
-        {
-          itemId: "academy_notebook",
-          name: "Academy Notebook",
-          description: "A worn leather-bound notebook filled with scribbled lectures.",
-          category: "quest",
-          quantity: 1,
-        },
-        {
-          itemId: "travel_ration",
-          name: "Travel Ration",
-          description: "Dried meat and hardtack. Keeps you going.",
-          category: "consumable",
-          quantity: 3,
-        },
-        {
-          itemId: "chalk_piece",
-          name: "Chalk Piece",
-          description: "White chalk used for temporary markings.",
-          category: "material",
-          quantity: 2,
-        },
+        { itemId: "academy_notebook", quantity: 1 },
+        { itemId: "travel_ration", quantity: 3 },
+        { itemId: "chalk_piece", quantity: 2 },
       ],
     };
     this.world.addComponent(playerId, inventory);
 
     this.spawnNpcs();
+    this.spawnItems();
 
     this.log.push({
       tick: this.tickCounter.tick,
@@ -177,6 +163,47 @@ export class GameplayEngine {
         name: npcData.name,
         dialogue: npcData.dialogue.map((d) => ({ ...d })),
       } as Npc);
+    }
+  }
+
+  private spawnItems(): void {
+    const existingItems = this.world.entitiesWith("Item");
+    for (const itemId of existingItems) {
+      this.world.destroyEntity(itemId);
+    }
+
+    for (const itemData of this.map.items) {
+      const spawnKey = this.getItemSpawnKey(
+        this.map.zoneId,
+        itemData.itemId,
+        itemData.x,
+        itemData.y,
+      );
+      if (this.pickedUpItemSpawnKeys.has(spawnKey)) {
+        continue;
+      }
+
+      const def = getItemDef(itemData.itemId);
+      const entityId = this.world.createEntity();
+
+      this.world.addComponent(entityId, {
+        type: "Position" as const,
+        x: itemData.x,
+        y: itemData.y,
+      } as Position);
+
+      this.world.addComponent(entityId, {
+        type: "Renderable" as const,
+        glyph: def.glyph,
+        color: def.color,
+      } as Renderable);
+
+      this.world.addComponent(entityId, {
+        type: "Item" as const,
+        itemId: itemData.itemId,
+        quantity: itemData.quantity,
+        spawnKey,
+      } as Item);
     }
   }
 
@@ -232,6 +259,10 @@ export class GameplayEngine {
         tick: this.tickCounter.tick,
         message: `Moved ${direction} to (${pos.x}, ${pos.y}).`,
       });
+      const itemAtPosition = this.getItemAt(pos.x, pos.y);
+      if (itemAtPosition) {
+        this.pickupItem(itemAtPosition.entity, itemAtPosition.component);
+      }
       this.resolvePendingTransition();
     } else {
       this.log.push({
@@ -302,6 +333,49 @@ export class GameplayEngine {
     return undefined;
   }
 
+  private getItemAt(
+    x: number,
+    y: number,
+  ): { entity: EntityId; component: Item } | undefined {
+    const itemEntities = this.world.entitiesWith("Position", "Item");
+
+    for (const itemEntityId of itemEntities) {
+      const itemPos = this.world.getComponent<Position>(itemEntityId, "Position")!;
+
+      if (itemPos.x === x && itemPos.y === y) {
+        const component = this.world.getComponent<Item>(itemEntityId, "Item")!;
+        return { entity: itemEntityId, component };
+      }
+    }
+
+    return undefined;
+  }
+
+  private pickupItem(entity: EntityId, item: Item): void {
+    const def = getItemDef(item.itemId);
+    const inventory = this.getPlayerInventory();
+    const existingStack = inventory.items.find(
+      (stack) => stack.itemId === item.itemId,
+    );
+
+    if (existingStack) {
+      existingStack.quantity += item.quantity;
+    } else {
+      inventory.items.push({
+        itemId: item.itemId,
+        quantity: item.quantity,
+      });
+    }
+
+    this.world.destroyEntity(entity);
+    this.pickedUpItemSpawnKeys.add(item.spawnKey);
+
+    this.log.push({
+      tick: this.tickCounter.tick,
+      message: `Picked up ${def.name}${item.quantity > 1 ? ` x${item.quantity}` : ""}.`,
+    });
+  }
+
   private talkToNpc(
     npc: Npc,
     success: boolean,
@@ -326,11 +400,12 @@ export class GameplayEngine {
   }
 
   /**
-   * Moves the existing player entity into another map and respawns map-owned NPCs.
+   * Moves the existing player entity into another map and respawns map-owned NPCs and items.
    */
   enterZone(map: GameMap, entryX: number, entryY: number): void {
     this.map = map;
     this.spawnNpcs();
+    this.spawnItems();
 
     const pos = this.getPlayerPosition();
     pos.x = entryX;
@@ -460,5 +535,14 @@ export class GameplayEngine {
     const { dx, dy } = DIRECTION_DELTA[direction];
 
     return { x: pos.x + dx, y: pos.y + dy };
+  }
+
+  private getItemSpawnKey(
+    zoneId: string,
+    itemId: string,
+    x: number,
+    y: number,
+  ): string {
+    return `${zoneId}:${itemId}:${x},${y}`;
   }
 }
