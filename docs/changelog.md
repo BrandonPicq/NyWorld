@@ -4,6 +4,15 @@ This file tracks meaningful project changes by commit-oriented slices.
 
 Keep entries short and practical. When a slice is committed, its changelog section should stay aligned with the commit title so the project history remains easy to read after restores or bisects.
 
+## 2026-07-01 - [ADD]: Add persistent NPC state foundation
+
+- Add NpcState for mutable per-character progress keyed by npcId.
+- Initialize NPC state for every known NPC definition.
+- Expose NPC state through GameplayEngine snapshots and getNpcState.
+- Persist and restore NPC state through save data.
+- Bump save data version for the new required NPC state payload.
+- Add engine and save-storage tests for NPC state persistence and validation.
+
 ## 2026-07-01 - [UPDATE]: Move NPC definitions into character files
 
 - Add per-NPC character JSON files under content/npcs.

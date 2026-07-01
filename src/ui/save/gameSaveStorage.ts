@@ -82,6 +82,21 @@ function isSaveLogEntry(value: unknown): boolean {
   );
 }
 
+function isSaveNpcState(value: unknown): boolean {
+  if (!isRecord(value)) return false;
+
+  return (
+    typeof value.npcId === "string" &&
+    value.npcId.trim().length > 0 &&
+    isFiniteNumber(value.relationship) &&
+    isPositiveInteger(value.progressionLevel) &&
+    typeof value.currentRole === "string" &&
+    value.currentRole.trim().length > 0 &&
+    Array.isArray(value.knownFlags) &&
+    value.knownFlags.every((flag) => typeof flag === "string")
+  );
+}
+
 function isGameSaveData(value: unknown): value is GameSaveData {
   if (!isRecord(value)) return false;
   const obj = value;
@@ -99,6 +114,8 @@ function isGameSaveData(value: unknown): value is GameSaveData {
     isDirection(obj.playerFacing) &&
     isSaveStats(obj.stats) &&
     isSaveInventory(obj.inventory) &&
+    Array.isArray(obj.npcStates) &&
+    obj.npcStates.every(isSaveNpcState) &&
     Array.isArray(obj.log) &&
     obj.log.every(isSaveLogEntry) &&
     Array.isArray(obj.pickedUpItemSpawnKeys) &&

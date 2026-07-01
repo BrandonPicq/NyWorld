@@ -52,7 +52,7 @@ export {
   getNpcMapPresentation,
 } from "./npcs/npcMapPresentation";
 export type { NpcMapPresentation } from "./npcs/npcMapPresentation";
-export { getNpcDef, hasNpcDef } from "./npcs/npcRegistry";
+export { getAllNpcDefs, getNpcDef, hasNpcDef } from "./npcs/npcRegistry";
 export type {
   NpcDef,
   NpcDefMap,
@@ -60,6 +60,12 @@ export type {
   NpcPresentationOverride,
   NpcRace,
 } from "./npcs/NpcDef";
+export {
+  cloneNpcState,
+  cloneNpcStateMap,
+  createInitialNpcState,
+} from "./npcs/NpcState";
+export type { NpcState, NpcStateMap } from "./npcs/NpcState";
 export type { GameCommand } from "./commands";
 export { GameplayEngine } from "./GameplayEngine";
 export type {

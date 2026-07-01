@@ -65,6 +65,7 @@ const baseSnapshot: GameSnapshot = {
     type: "Inventory",
     items: [],
   },
+  npcStates: [],
 };
 
 describe("interactionTargets", () => {

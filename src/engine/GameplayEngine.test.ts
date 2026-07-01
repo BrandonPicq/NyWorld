@@ -568,6 +568,39 @@ describe("GameplayEngine", () => {
     expect(story).toMatchObject({ glyph: "S", color: "#ffb000" });
   });
 
+  it("initializes persistent NPC state for known NPC definitions", () => {
+    const engine = createEngine();
+
+    expect(engine.getNpcState("old_scholar")).toEqual({
+      npcId: "old_scholar",
+      relationship: 0,
+      progressionLevel: 1,
+      currentRole: "resident",
+      knownFlags: [],
+    });
+    expect(engine.getSnapshot().npcStates.map((state) => state.npcId)).toEqual([
+      "old_scholar",
+      "old_wizard",
+      "young_page",
+    ]);
+  });
+
+  it("protects NPC state from external mutations", () => {
+    const engine = createEngine();
+
+    const state = engine.getNpcState("old_scholar");
+    state!.relationship = 99;
+    state!.knownFlags.push("external_change");
+
+    expect(engine.getNpcState("old_scholar")).toEqual({
+      npcId: "old_scholar",
+      relationship: 0,
+      progressionLevel: 1,
+      currentRole: "resident",
+      knownFlags: [],
+    });
+  });
+
   it("exposes starter inventory items in snapshots", () => {
     const engine = createEngine();
 
@@ -861,7 +894,7 @@ describe("GameplayEngine", () => {
   });
 
   describe("SaveData", () => {
-    it("createSaveData captures zone, tick, world time, position, facing, stats, and inventory", () => {
+    it("createSaveData captures zone, tick, world time, position, facing, stats, inventory, and NPC state", () => {
       const engine = createEngine();
       engine.execute({ type: "MoveEast" });
       engine.execute({ type: "MoveSouth" });
@@ -880,6 +913,13 @@ describe("GameplayEngine", () => {
       expect(save.stats.energy).toBe(98);
       expect(save.stats.maxEnergy).toBe(100);
       expect(save.inventory.items).toHaveLength(3);
+      expect(save.npcStates).toContainEqual({
+        npcId: "old_scholar",
+        relationship: 0,
+        progressionLevel: 1,
+        currentRole: "resident",
+        knownFlags: [],
+      });
       expect(save.log.length).toBeGreaterThan(0);
       expect(save.pickedUpItemSpawnKeys).toEqual([]);
     });
@@ -899,12 +939,23 @@ describe("GameplayEngine", () => {
       expect(save.pickedUpItemSpawnKeys[0]).toContain("2,1");
     });
 
-    it("fromSaveData restores tick, world time, position, facing, stats, and inventory", () => {
+    it("fromSaveData restores tick, world time, position, facing, stats, inventory, and NPC state", () => {
       const engine = createEngine();
       engine.execute({ type: "MoveEast" });
       engine.execute({ type: "MoveSouth" });
 
       const save = engine.createSaveData();
+      save.npcStates = save.npcStates.map((state) =>
+        state.npcId === "old_scholar"
+          ? {
+              ...state,
+              relationship: 12,
+              progressionLevel: 3,
+              currentRole: "academy_mentor",
+              knownFlags: ["met_player"],
+            }
+          : state,
+      );
 
       const restored = GameplayEngine.fromSaveData(save, {
         resolveZone: (zoneId) =>
@@ -919,6 +970,13 @@ describe("GameplayEngine", () => {
       expect(snap.playerFacing).toBe("south");
       expect(snap.stats.energy).toBe(98);
       expect(snap.inventory.items).toHaveLength(3);
+      expect(restored.getNpcState("old_scholar")).toEqual({
+        npcId: "old_scholar",
+        relationship: 12,
+        progressionLevel: 3,
+        currentRole: "academy_mentor",
+        knownFlags: ["met_player"],
+      });
     });
 
     it("fromSaveData does not respawn already-collected items", () => {
@@ -987,6 +1045,7 @@ describe("GameplayEngine", () => {
       expect(restoredSnap.stats.energy).toBe(original.stats.energy);
       expect(restoredSnap.stats.maxEnergy).toBe(original.stats.maxEnergy);
       expect(restoredSnap.inventory.items).toEqual(original.inventory.items);
+      expect(restoredSnap.npcStates).toEqual(original.npcStates);
       expect(restoredSnap.log.length).toBe(original.log.length);
     });
 

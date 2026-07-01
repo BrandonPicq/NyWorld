@@ -11,7 +11,13 @@ import type {
 import { getItemDef } from "./items/itemRegistry";
 import { getItemMapPresentation } from "./items/itemMapPresentation";
 import { getNpcMapPresentation } from "./npcs/npcMapPresentation";
-import { getNpcDef } from "./npcs/npcRegistry";
+import { getAllNpcDefs, getNpcDef } from "./npcs/npcRegistry";
+import {
+  cloneNpcState,
+  createInitialNpcState,
+  type NpcState,
+  type NpcStateMap,
+} from "./npcs/NpcState";
 import { World } from "./ecs/World";
 import type { EntityId } from "./ecs/types";
 import { GameMap } from "./GameMap";
@@ -73,6 +79,7 @@ export interface GameSnapshot {
   log: LogEntry[];
   stats: Stats;
   inventory: Inventory;
+  npcStates: NpcState[];
   entities: RenderEntity[];
   entryDialogue: DialogueNode[];
 }
@@ -113,6 +120,7 @@ export class GameplayEngine {
   private pickedUpItemSpawnKeys = new Set<string>();
   private resolveZone?: ZoneResolver;
   private worldTimeMinutes = START_WORLD_TIME_MINUTES;
+  private npcStates: NpcStateMap = createInitialNpcStateMap();
 
   constructor(map: GameMap, options: GameplayEngineOptions = {}) {
     this.map = map;
@@ -556,6 +564,7 @@ export class GameplayEngine {
         type: "Inventory",
         items: inventory.items.map((stack) => ({ ...stack })),
       },
+      npcStates: Object.values(this.npcStates).map(cloneNpcState),
       log: this.log.map((entry) => ({ ...entry })),
       pickedUpItemSpawnKeys: Array.from(this.pickedUpItemSpawnKeys),
     };
@@ -601,6 +610,7 @@ export class GameplayEngine {
 
     engine.tickCounter.restoreTo(saveData.tick);
     engine.worldTimeMinutes = saveData.worldTimeMinutes;
+    engine.npcStates = createNpcStateMapFromSave(saveData.npcStates);
     engine.playerFacing = saveData.playerFacing;
     engine.log = saveData.log.map((entry) => ({ ...entry }));
     engine.pickedUpItemSpawnKeys = new Set(saveData.pickedUpItemSpawnKeys);
@@ -709,6 +719,7 @@ export class GameplayEngine {
         ...inventory,
         items: inventory.items.map((stack) => ({ ...stack })),
       },
+      npcStates: Object.values(this.npcStates).map(cloneNpcState),
       entities,
       entryDialogue: this.map.entryDialogue.map((dialogue) => ({
         ...dialogue,
@@ -724,6 +735,11 @@ export class GameplayEngine {
   private getPlayerStats(): Stats {
     const [playerId] = this.world.entitiesWith("Stats", "PlayerControlled");
     return this.world.getComponent<Stats>(playerId, "Stats")!;
+  }
+
+  getNpcState(npcId: string): NpcState | undefined {
+    const state = this.npcStates[npcId];
+    return state ? cloneNpcState(state) : undefined;
   }
 
   private getPlayerPosition(): Position {
@@ -751,4 +767,23 @@ export class GameplayEngine {
   ): string {
     return `${zoneId}:${itemId}:${x},${y}`;
   }
+}
+
+function createInitialNpcStateMap(): NpcStateMap {
+  return Object.fromEntries(
+    getAllNpcDefs().map((npcDef) => [
+      npcDef.npcId,
+      createInitialNpcState(npcDef.npcId),
+    ]),
+  );
+}
+
+function createNpcStateMapFromSave(savedStates: NpcState[]): NpcStateMap {
+  const nextStateMap = createInitialNpcStateMap();
+
+  for (const state of savedStates) {
+    nextStateMap[state.npcId] = cloneNpcState(state);
+  }
+
+  return nextStateMap;
 }

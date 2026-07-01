@@ -36,6 +36,7 @@ const gameSnapshot: GameSnapshot = {
     type: "Inventory",
     items: [],
   },
+  npcStates: [],
 };
 
 describe("createGridRenderSnapshot", () => {

@@ -65,6 +65,7 @@ La V0 inclura :
 - une commande d'interaction contextuelle pour parler aux PNJs proches, avec ciblage autour du joueur ou seulement dans la direction regardee ;
 - des dialogues d'entree de zone configures dans les donnees JSON ;
 - des personnages non-joueurs (PNJs) configurés dans des fiches de personnage réutilisables, puis placés par `npcId` dans les zones ;
+- un état mutable sauvegardable par PNJ (`npcId`) pour préparer relations, progression et rôles évolutifs ;
 - un défilement de dialogue progressif ("typewriter") couplé à des signaux Web Audio ("bleeps") dont le pitch varie selon la voix du PNJ ;
 - un inventaire consultable en lecture seule, avec catégories, descriptions et état vide, accessible par bouton et raccourci clavier.
 

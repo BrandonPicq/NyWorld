@@ -33,6 +33,15 @@ function stubSave(overrides: Partial<GameSaveData> = {}): GameSaveData {
       type: "Inventory",
       items: [{ itemId: "travel_ration", quantity: 3 }],
     },
+    npcStates: [
+      {
+        npcId: "old_scholar",
+        relationship: 0,
+        progressionLevel: 1,
+        currentRole: "resident",
+        knownFlags: [],
+      },
+    ],
     log: [
       {
         tick: 0,
@@ -86,6 +95,15 @@ describe("gameSaveStorage", () => {
     expect(restored!.playerFacing).toBe("south");
     expect(restored!.stats.energy).toBe(100);
     expect(restored!.inventory.items).toHaveLength(1);
+    expect(restored!.npcStates).toEqual([
+      {
+        npcId: "old_scholar",
+        relationship: 0,
+        progressionLevel: 1,
+        currentRole: "resident",
+        knownFlags: [],
+      },
+    ]);
     expect(restored!.pickedUpItemSpawnKeys).toEqual([]);
   });
 
@@ -166,6 +184,16 @@ describe("gameSaveStorage", () => {
 
     const raw = JSON.parse(localStorage.getItem("nywarudo_save_slot_0")!);
     raw.log[0].worldTimeMinutes = "08:00";
+    localStorage.setItem("nywarudo_save_slot_0", JSON.stringify(raw));
+
+    expect(readSlot(0)).toBeNull();
+  });
+
+  it("returns null for a save with invalid NPC state data", () => {
+    writeSlot(0, stubSave());
+
+    const raw = JSON.parse(localStorage.getItem("nywarudo_save_slot_0")!);
+    raw.npcStates[0].progressionLevel = 0;
     localStorage.setItem("nywarudo_save_slot_0", JSON.stringify(raw));
 
     expect(readSlot(0)).toBeNull();

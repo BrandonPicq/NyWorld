@@ -32,6 +32,10 @@ export function getNpcDef(npcId: string): NpcDef {
   return cloneNpcDef(registry[npcId] ?? fallback);
 }
 
+export function getAllNpcDefs(): NpcDef[] {
+  return Object.values(registry).map(cloneNpcDef);
+}
+
 function buildRegistry(defs: unknown[]): NpcDefMap {
   const nextRegistry: NpcDefMap = {};
 

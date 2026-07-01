@@ -1,8 +1,9 @@
 import type { Direction } from "./systems/MovementSystem";
 import type { Inventory, Stats } from "./components";
 import type { LogEntry } from "./GameplayEngine";
+import type { NpcState } from "./npcs/NpcState";
 
-export const SAVE_VERSION = "0.2";
+export const SAVE_VERSION = "0.3";
 
 export interface GameSaveData {
   version: string;
@@ -15,6 +16,7 @@ export interface GameSaveData {
   playerFacing: Direction;
   stats: Stats;
   inventory: Inventory;
+  npcStates: NpcState[];
   log: LogEntry[];
   pickedUpItemSpawnKeys: string[];
 }
