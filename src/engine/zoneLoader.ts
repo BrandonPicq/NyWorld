@@ -2,6 +2,7 @@ import { GameMap } from "./GameMap";
 import { hasDialogue } from "./dialogues/dialogueRegistry";
 import { hasItemDef } from "./items/itemRegistry";
 import { hasNpcDef } from "./npcs/npcRegistry";
+import { parseScheduleTime } from "./systems/NpcScheduleSystem";
 import { getTileDef, hasTileDef } from "./TileRegistry";
 import type { ZoneData, ZoneTransitionData } from "./ZoneTypes";
 
@@ -207,6 +208,10 @@ export function loadZone(data: unknown): GameMap {
       if (!getTileDef(npcTileId).walkable) {
         throw new ZoneLoadError(`npc at index ${i} must spawn on a walkable tile`);
       }
+
+      if (npc.schedule !== undefined) {
+        validateNpcSchedule(npc.schedule, i, data);
+      }
     }
   }
 
@@ -341,6 +346,82 @@ function validateDialogueNodes(value: unknown, context: string): void {
       throw new ZoneLoadError(
         `${context} node ${i} has invalid or missing pitch`,
       );
+    }
+  }
+}
+
+function validateNpcSchedule(
+  value: unknown,
+  npcIndex: number,
+  zone: Record<string, unknown>,
+): void {
+  if (!Array.isArray(value)) {
+    throw new ZoneLoadError(`npc at index ${npcIndex} schedule must be an array`);
+  }
+
+  if (value.length === 0) {
+    throw new ZoneLoadError(
+      `npc at index ${npcIndex} schedule must contain entries`,
+    );
+  }
+
+  const width = zone.width as number;
+  const height = zone.height as number;
+  const tiles = zone.tiles as number[][];
+
+  for (let i = 0; i < value.length; i++) {
+    const entry = value[i];
+
+    if (!isRecord(entry)) {
+      throw new ZoneLoadError(
+        `npc at index ${npcIndex} schedule entry ${i} must be an object`,
+      );
+    }
+
+    if (
+      typeof entry.time !== "string" ||
+      parseScheduleTime(entry.time) === undefined
+    ) {
+      throw new ZoneLoadError(
+        `npc at index ${npcIndex} schedule entry ${i} has invalid time`,
+      );
+    }
+
+    if (
+      typeof entry.x !== "number" ||
+      !Number.isInteger(entry.x) ||
+      entry.x < 0 ||
+      entry.x >= width
+    ) {
+      throw new ZoneLoadError(
+        `npc at index ${npcIndex} schedule entry ${i} has an invalid x coordinate`,
+      );
+    }
+
+    if (
+      typeof entry.y !== "number" ||
+      !Number.isInteger(entry.y) ||
+      entry.y < 0 ||
+      entry.y >= height
+    ) {
+      throw new ZoneLoadError(
+        `npc at index ${npcIndex} schedule entry ${i} has an invalid y coordinate`,
+      );
+    }
+
+    const targetTileId = tiles[entry.y][entry.x];
+    if (!getTileDef(targetTileId).walkable) {
+      throw new ZoneLoadError(
+        `npc at index ${npcIndex} schedule entry ${i} must target a walkable tile`,
+      );
+    }
+
+    if (entry.dialogueId !== undefined) {
+      if (typeof entry.dialogueId !== "string" || !hasDialogue(entry.dialogueId)) {
+        throw new ZoneLoadError(
+          `npc at index ${npcIndex} schedule entry ${i} has an unknown dialogueId "${entry.dialogueId}"`,
+        );
+      }
     }
   }
 }

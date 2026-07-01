@@ -60,6 +60,11 @@ export const START_WORLD_TIME_MINUTES = encodeWorldDateTime(
   WORLD_CALENDAR.start,
 );
 
+export function getWorldMinuteOfDay(totalMinutes: number): number {
+  const clampedMinutes = Math.max(0, Math.floor(totalMinutes));
+  return clampedMinutes % MINUTES_PER_DAY;
+}
+
 export function encodeWorldDateTime(dateTime: WorldDateTime): number {
   validateWorldDateTime(dateTime);
 

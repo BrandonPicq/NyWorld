@@ -13,5 +13,6 @@ export interface Npc extends Component {
   readonly name: string;
   readonly race: NpcRace;
   readonly importance: NpcImportance;
-  readonly dialogue: DialogueNode[];
+  readonly baseDialogueId: string;
+  dialogue: DialogueNode[];
 }

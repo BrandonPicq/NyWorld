@@ -24,6 +24,7 @@ import type { EntityId } from "./ecs/types";
 import { GameMap } from "./GameMap";
 import { DIRECTION_DELTA, MovementSystem } from "./systems/MovementSystem";
 import type { Direction } from "./systems/MovementSystem";
+import { NpcScheduleSystem } from "./systems/NpcScheduleSystem";
 import { TickCounter } from "./tick";
 import type { ZoneTransitionData } from "./ZoneTypes";
 import type { GameSaveData } from "./GameSaveData";
@@ -211,9 +212,12 @@ export class GameplayEngine {
         name: npcDef.name,
         race: npcDef.race,
         importance: npcDef.importance ?? "common",
+        baseDialogueId: dialogueId,
         dialogue,
       } as Npc);
     }
+
+    NpcScheduleSystem.apply(this.world, this.map, this.worldTimeMinutes);
   }
 
   private spawnItems(): void {
@@ -621,12 +625,12 @@ export class GameplayEngine {
     engine.log = saveData.log.map((entry) => ({ ...entry }));
     engine.pickedUpItemSpawnKeys = new Set(saveData.pickedUpItemSpawnKeys);
 
-    engine.spawnNpcs();
-    engine.spawnItems();
-
     const pos = engine.getPlayerPosition();
     pos.x = saveData.playerX;
     pos.y = saveData.playerY;
+
+    engine.spawnNpcs();
+    engine.spawnItems();
 
     return engine;
   }
@@ -658,6 +662,7 @@ export class GameplayEngine {
 
   private advanceWorldTime(minutes: number): void {
     this.worldTimeMinutes += minutes;
+    NpcScheduleSystem.apply(this.world, this.map, this.worldTimeMinutes);
   }
 
   private addLog(message: string): void {

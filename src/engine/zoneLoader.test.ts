@@ -198,6 +198,31 @@ describe("loadZone", () => {
     expect(map.npcs).toEqual([npcWithDialogue]);
   });
 
+  it("accepts NPC placements with schedule entries", () => {
+    const npcWithSchedule = {
+      ...validNpc,
+      schedule: [
+        { time: "08:00", x: 2, y: 1 },
+        { time: "18:00", x: 1, y: 2 },
+      ],
+    };
+    const map = loadZone(
+      zoneDataWith({
+        height: 4,
+        width: 4,
+        tiles: [
+          [1, 1, 1, 1],
+          [1, 0, 0, 1],
+          [1, 0, 0, 1],
+          [1, 1, 1, 1],
+        ],
+        npcs: [npcWithSchedule],
+      }),
+    );
+
+    expect(map.npcs).toEqual([npcWithSchedule]);
+  });
+
   it("rejects NPC placements with unknown npcIds", () => {
     expect(() =>
       loadZone(
@@ -244,6 +269,65 @@ describe("loadZone", () => {
         }),
       ),
     ).toThrow("npc at index 0 has invalid dialogueId");
+  });
+
+  it("rejects NPC schedules with invalid times", () => {
+    expect(() =>
+      loadZone(
+        zoneDataWith({
+          npcs: [
+            {
+              ...validNpc,
+              schedule: [{ time: "24:00", x: 2, y: 1 }],
+            },
+          ],
+        }),
+      ),
+    ).toThrow("npc at index 0 schedule entry 0 has invalid time");
+  });
+
+  it("rejects NPC schedules targeting blocked tiles", () => {
+    expect(() =>
+      loadZone(
+        zoneDataWith({
+          npcs: [
+            {
+              ...validNpc,
+              schedule: [{ time: "18:00", x: 0, y: 0 }],
+            },
+          ],
+        }),
+      ),
+    ).toThrow("npc at index 0 schedule entry 0 must target a walkable tile");
+  });
+
+  it("rejects NPC schedules with unknown dialogueId", () => {
+    expect(() =>
+      loadZone(
+        zoneDataWith({
+          npcs: [
+            {
+              ...validNpc,
+              schedule: [{ time: "18:00", x: 2, y: 1, dialogueId: "unknown_dialogue" }],
+            },
+          ],
+        }),
+      ),
+    ).toThrow('npc at index 0 schedule entry 0 has an unknown dialogueId "unknown_dialogue"');
+  });
+
+  it("accepts NPC schedules with a known dialogueId", () => {
+    const map = loadZone(
+      zoneDataWith({
+        npcs: [
+          {
+            ...validNpc,
+            schedule: [{ time: "18:00", x: 2, y: 1, dialogueId: "old_scholar.default" }],
+          },
+        ],
+      }),
+    );
+    expect(map.npcs[0].schedule?.[0].dialogueId).toBe("old_scholar.default");
   });
 
   it("rejects NPCs on blocked tiles", () => {

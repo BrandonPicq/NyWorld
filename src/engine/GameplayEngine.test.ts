@@ -8,6 +8,7 @@ import type { ZoneData } from "./ZoneTypes";
 import {
   START_WORLD_TIME_MINUTES,
   WORLD_TIME_ACTION_COST,
+  encodeWorldDateTime,
   formatWorldDateTime,
 } from "./time/WorldCalendar";
 import { loadZone } from "./zoneLoader";
@@ -36,6 +37,23 @@ const adjacentNpc = {
   x: 2,
   y: 1,
 };
+
+function createScheduledYoungPageMap() {
+  return loadZone({
+    ...zoneData,
+    npcs: [
+      {
+        npcId: "young_page",
+        x: 2,
+        y: 1,
+        schedule: [
+          { time: "08:00", x: 2, y: 1 },
+          { time: "18:00", x: 1, y: 2 },
+        ],
+      },
+    ],
+  });
+}
 
 describe("GameplayEngine", () => {
   it("moves the player with cardinal commands", () => {
@@ -445,6 +463,43 @@ describe("GameplayEngine", () => {
         timeLabel: "08:10",
       },
     });
+  });
+
+  it("moves scheduled NPCs when world time reaches a schedule entry", () => {
+    const engine = new GameplayEngine(createScheduledYoungPageMap());
+
+    expect(
+      engine.getSnapshot().entities.find((entity) => entity.npcId === "young_page"),
+    ).toMatchObject({ x: 2, y: 1 });
+
+    for (let i = 0; i < 10; i++) {
+      engine.execute({ type: "Rest" });
+    }
+
+    expect(engine.getSnapshot().worldTime.timeLabel).toBe("18:00");
+    expect(
+      engine.getSnapshot().entities.find((entity) => entity.npcId === "young_page"),
+    ).toMatchObject({ x: 1, y: 2 });
+  });
+
+  it("interacts with NPCs at their scheduled position", () => {
+    const engine = new GameplayEngine(createScheduledYoungPageMap());
+
+    for (let i = 0; i < 10; i++) {
+      engine.execute({ type: "Rest" });
+    }
+
+    const result = engine.execute({ type: "MoveSouth" });
+
+    expect(result.success).toBe(false);
+    expect(result.dialogue).toEqual(getDialogue("young_page.default"));
+    expect(engine.getSnapshot()).toMatchObject({
+      playerX: 1,
+      playerY: 1,
+    });
+    expect(engine.getSnapshot().log.map((entry) => entry.message)).toContain(
+      "Talked to Young Page.",
+    );
   });
 
   it("logs when interact finds nothing nearby", () => {
@@ -997,6 +1052,30 @@ describe("GameplayEngine", () => {
         currentDialogueId: "old_scholar.test_fields",
         knownFlags: ["met_player"],
       });
+    });
+
+    it("fromSaveData restores NPC positions from schedules at the saved time", () => {
+      const mapWithScheduledNpc = createScheduledYoungPageMap();
+      const engine = new GameplayEngine(mapWithScheduledNpc);
+      const save = engine.createSaveData();
+      save.worldTimeMinutes = encodeWorldDateTime({
+        year: 425,
+        month: 1,
+        day: 1,
+        hour: 18,
+        minute: 0,
+      });
+
+      const restored = GameplayEngine.fromSaveData(save, {
+        resolveZone: (zoneId) =>
+          zoneId === "movement_test" ? mapWithScheduledNpc : undefined,
+      });
+
+      expect(
+        restored
+          .getSnapshot()
+          .entities.find((entity) => entity.npcId === "young_page"),
+      ).toMatchObject({ x: 1, y: 2 });
     });
 
     it("fromSaveData uses saved NPC dialogue state when the zone has no override", () => {

@@ -24,10 +24,16 @@ export type {
   ZoneData,
   ZoneTransitionData,
   NpcSpawnData,
+  NpcScheduleEntryData,
   DialogueNodeData,
 } from "./ZoneTypes";
-export { DIRECTION_DELTA, MovementSystem } from "./systems";
-export type { Direction } from "./systems";
+export {
+  DIRECTION_DELTA,
+  MovementSystem,
+  NpcScheduleSystem,
+  parseScheduleTime,
+} from "./systems";
+export type { Direction, ScheduledNpcPosition } from "./systems";
 export { TickCounter } from "./tick";
 export {
   START_WORLD_TIME_MINUTES,
@@ -37,6 +43,7 @@ export {
   createWorldTimeSnapshot,
   encodeWorldDateTime,
   formatWorldDateTime,
+  getWorldMinuteOfDay,
 } from "./time/WorldCalendar";
 export type {
   WorldDateTime,

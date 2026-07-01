@@ -26,6 +26,14 @@ export interface NpcSpawnData {
   dialogueId?: string;
   x: number;
   y: number;
+  schedule?: NpcScheduleEntryData[];
+}
+
+export interface NpcScheduleEntryData {
+  time: string;
+  x: number;
+  y: number;
+  dialogueId?: string;
 }
 
 export interface ItemSpawnData {
