@@ -6,10 +6,16 @@ export type MenuItem = {
   disabled?: boolean;
 };
 
+/**
+ * Finds the initial focus target for menus with disabled entries.
+ */
 export function getFirstEnabledMenuItemIndex(items: MenuItem[]) {
   return items.findIndex((item) => !item.disabled);
 }
 
+/**
+ * Cycles through enabled menu entries while preserving wraparound navigation.
+ */
 export function getNextEnabledMenuItemIndex(
   items: MenuItem[],
   currentIndex: number,

@@ -9,6 +9,12 @@ export class ZoneLoadError extends Error {
   }
 }
 
+/**
+ * Validates raw zone content and converts it into a runtime GameMap.
+ *
+ * Keep validation here so imported JSON never reaches gameplay systems with
+ * unknown tile ids, invalid spawn positions, or malformed dialogue.
+ */
 export function loadZone(data: unknown): GameMap {
   if (!isRecord(data)) {
     throw new ZoneLoadError("expected an object");

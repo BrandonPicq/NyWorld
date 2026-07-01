@@ -13,6 +13,9 @@ export function getDefaultAudioSettings(): AudioSettings {
   return { ...defaultAudioSettings };
 }
 
+/**
+ * Runtime guard for values loaded from storage or other untyped sources.
+ */
 export function isAudioSettings(value: unknown): value is AudioSettings {
   return (
     typeof value === "object" &&
@@ -22,6 +25,9 @@ export function isAudioSettings(value: unknown): value is AudioSettings {
   );
 }
 
+/**
+ * Reads persisted audio settings, falling back safely when storage is unavailable.
+ */
 export function readStoredAudioSettings(
   storage = getBrowserAudioSettingsStorage(),
 ): AudioSettings {
@@ -45,6 +51,9 @@ export function readStoredAudioSettings(
   }
 }
 
+/**
+ * Persists audio settings when browser storage is available.
+ */
 export function writeStoredAudioSettings(
   audioSettings: AudioSettings,
   storage = getBrowserAudioSettingsStorage(),

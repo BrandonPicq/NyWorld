@@ -1,3 +1,6 @@
+/**
+ * Formats the smallest currency unit into medieval coin denominations.
+ */
 export function formatCurrency(bronzeCoins: number): string {
   const platinum = Math.floor(bronzeCoins / 1000000);
   const gold = Math.floor((bronzeCoins % 1000000) / 10000);
@@ -13,6 +16,9 @@ export function formatCurrency(bronzeCoins: number): string {
   return parts.join(" ");
 }
 
+/**
+ * Capitalizes labels generated from data keys without changing the rest of the word.
+ */
 export function capitalize(str: string): string {
   if (!str) return "";
   return str.charAt(0).toUpperCase() + str.slice(1);

@@ -9,6 +9,9 @@ export function getDefaultKeyboardLayout(): KeyboardLayout {
   return defaultLayout;
 }
 
+/**
+ * Reads the preferred movement-key layout, defaulting to QWERTY.
+ */
 export function readStoredKeyboardLayout(storage = getBrowserStorage()): KeyboardLayout {
   if (!storage) {
     return defaultLayout;
@@ -22,6 +25,9 @@ export function readStoredKeyboardLayout(storage = getBrowserStorage()): Keyboar
   }
 }
 
+/**
+ * Persists the selected movement-key layout when browser storage is available.
+ */
 export function writeStoredKeyboardLayout(
   layout: KeyboardLayout,
   storage = getBrowserStorage(),

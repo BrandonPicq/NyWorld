@@ -4,6 +4,13 @@ This file tracks meaningful project changes by commit-oriented slices.
 
 Keep entries short and practical. When a slice is committed, its changelog section should stay aligned with the commit title so the project history remains easy to read after restores or bisects.
 
+## 2026-07-01 - [REFACTOR]: Extract game screen hooks and document public APIs
+
+- Move game engine snapshot orchestration into a reusable hook.
+- Move game-screen keyboard shortcuts into a dedicated hook.
+- Move zone entry dialogue triggering into a dedicated hook.
+- Add concise API documentation to gameplay, rendering, input, and settings helpers.
+
 ## 2026-07-01 - [UPDATE]: Move zone entry dialogue into content data
 
 - Add `entryDialogue` zone content for test zones.

@@ -46,6 +46,9 @@ const movementKeyLabels: Record<
   },
 };
 
+/**
+ * Maps browser keyboard events to movement commands for arrow keys and layout keys.
+ */
 export function getGameCommandForKey(
   key: string,
   layout: KeyboardLayout,
@@ -53,6 +56,9 @@ export function getGameCommandForKey(
   return arrowKeyCommands[key] ?? layoutKeyCommands[layout][key.toLowerCase()];
 }
 
+/**
+ * Returns the player-facing key label for a movement command in the active layout.
+ */
 export function getMovementKeyLabel(
   commandType: MovementCommandType,
   layout: KeyboardLayout,

@@ -47,6 +47,12 @@ type GameplayEngineOptions = {
   resolveZone?: ZoneResolver;
 };
 
+/**
+ * Owns the mutable game simulation state.
+ *
+ * React should interact with this class only through explicit commands and
+ * snapshots so gameplay rules stay independent from rendering and UI state.
+ */
 export class GameplayEngine {
   readonly world = new World();
   readonly tickCounter = new TickCounter();
@@ -131,6 +137,12 @@ export class GameplayEngine {
     }
   }
 
+  /**
+   * Applies one player command and returns any immediate UI-facing result.
+   *
+   * Movement commands may fail without advancing time when blocked by map
+   * geometry or an NPC dialogue collision.
+   */
   execute(command: GameCommand): { success: boolean; dialogue?: DialogueNode[] } {
     if (command.type === "Rest") {
       this.restPlayer();
@@ -190,11 +202,17 @@ export class GameplayEngine {
     return { success: moved };
   }
 
+  /**
+   * Returns the transition located under the player, if the current tile has one.
+   */
   getPendingTransition(): ZoneTransitionData | undefined {
     const pos = this.getPlayerPosition();
     return this.map.getTransitionAt(pos.x, pos.y);
   }
 
+  /**
+   * Moves the existing player entity into another map and respawns map-owned NPCs.
+   */
   enterZone(map: GameMap, entryX: number, entryY: number): void {
     this.map = map;
     this.spawnNpcs();
@@ -239,6 +257,9 @@ export class GameplayEngine {
     });
   }
 
+  /**
+   * Builds an immutable snapshot for React and render adapters.
+   */
   getSnapshot(): GameSnapshot {
     const pos = this.getPlayerPosition();
     const stats = this.getPlayerStats();

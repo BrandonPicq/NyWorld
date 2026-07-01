@@ -1,5 +1,11 @@
 import type { Component, EntityId } from "./types";
 
+/**
+ * Minimal ECS storage for entities and their data components.
+ *
+ * Systems query entities by component type strings; higher-level gameplay code
+ * owns the meaning of those components.
+ */
 export class World {
   private nextId = 1;
   private entities = new Map<EntityId, Map<string, Component>>();

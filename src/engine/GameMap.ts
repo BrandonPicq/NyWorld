@@ -8,6 +8,12 @@ import type {
   DialogueNodeData,
 } from "./ZoneTypes";
 
+/**
+ * Runtime representation of validated zone content.
+ *
+ * The constructor copies mutable arrays so gameplay code cannot accidentally
+ * mutate imported JSON data.
+ */
 export class GameMap {
   readonly zoneId: string;
   readonly name: string;

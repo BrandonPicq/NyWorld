@@ -9,6 +9,9 @@ type UseDialogueSequenceInput = {
   textSpeed: TextSpeed;
 };
 
+/**
+ * Manages progressive dialogue text, dialogue advancement, and per-character bleeps.
+ */
 export function useDialogueSequence({
   audioSettings,
   textSpeed,
@@ -109,6 +112,9 @@ export function useDialogueSequence({
   };
 }
 
+/**
+ * Converts the stored text speed option into a per-character delay in milliseconds.
+ */
 function getTextDelay(textSpeed: TextSpeed): number {
   if (textSpeed === "slow") {
     return 60;

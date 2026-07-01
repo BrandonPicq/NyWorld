@@ -19,6 +19,12 @@ export type GridRenderSnapshot = {
   entities: RenderEntity[];
 };
 
+/**
+ * Converts gameplay snapshots into the smaller render contract consumed by Canvas.
+ *
+ * Tile ids are resolved here so the renderer only receives display roles and
+ * glyphs, never gameplay tile definitions.
+ */
 export function createGridRenderSnapshot(
   snapshot: GameSnapshot,
 ): GridRenderSnapshot {

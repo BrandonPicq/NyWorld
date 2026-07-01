@@ -20,10 +20,16 @@ export function getDefaultThemeId() {
   return defaultThemeId;
 }
 
+/**
+ * Runtime guard for theme ids loaded from localStorage.
+ */
 export function isThemeId(value: string | null): value is ThemeId {
   return themePresets.some((theme) => theme.id === value);
 }
 
+/**
+ * Reads the persisted theme id, falling back to the default theme.
+ */
 export function readStoredThemeId(storage = getBrowserThemeStorage()) {
   if (!storage) {
     return defaultThemeId;
@@ -37,6 +43,9 @@ export function readStoredThemeId(storage = getBrowserThemeStorage()) {
   }
 }
 
+/**
+ * Persists the active theme id when browser storage is available.
+ */
 export function writeStoredThemeId(
   themeId: ThemeId,
   storage = getBrowserThemeStorage(),

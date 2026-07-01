@@ -12,6 +12,12 @@ export const DIRECTION_DELTA: Record<Direction, { dx: number; dy: number }> = {
 };
 
 export class MovementSystem {
+  /**
+   * Moves the first player-controlled positioned entity one cardinal step.
+   *
+   * Returns false when there is no player entity or the target map tile is not
+   * walkable. Time, energy, logs, and interactions are handled by GameplayEngine.
+   */
   static move(world: World, direction: Direction, map?: GameMap): boolean {
     const playerIds = world.entitiesWith("Position", "PlayerControlled");
 

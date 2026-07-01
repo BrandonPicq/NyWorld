@@ -1,14 +1,9 @@
-import { useCallback, useEffect, useRef, useState } from "react";
-import type { GameCommand } from "../../engine/commands";
-import { GameplayEngine } from "../../engine/GameplayEngine";
-import { loadZone } from "../../engine/zoneLoader";
-import type { GameSnapshot } from "../../engine/GameplayEngine";
+import { useEffect, useRef, useState } from "react";
 import { createGridRenderSnapshot } from "../../rendering";
 import testZoneData from "../../content/zones/test_zone.json";
 import testZone2Data from "../../content/zones/test_zone_2.json";
 import type { ZoneData } from "../../engine/ZoneTypes";
 import { TerminalPanel } from "../components/TerminalPanel";
-import { getGameCommandForKey } from "../controls/gameInput";
 import type { KeyboardLayout } from "../controls/keyboardLayout";
 import type { AudioSettings } from "../audio/audioSettings";
 import type { TextSpeed } from "../controls/textSpeed";
@@ -18,6 +13,9 @@ import { CharacterStatusPanel } from "../game/CharacterStatusPanel";
 import { DialogueBox } from "../game/DialogueBox";
 import { GameCenterPanel } from "../game/GameCenterPanel";
 import { useDialogueSequence } from "../game/useDialogueSequence";
+import { useGameKeyboardControls } from "../game/useGameKeyboardControls";
+import { useGameplayEngine } from "../game/useGameplayEngine";
+import { useZoneEntryDialogue } from "../game/useZoneEntryDialogue";
 
 type GameScreenProps = {
   audioSettings: AudioSettings;
@@ -37,11 +35,8 @@ export function GameScreen({
   textSpeed,
   onBackToTitle,
 }: GameScreenProps) {
-  const [snapshot, setSnapshot] = useState<GameSnapshot | null>(null);
   const [isCharacterSheetOpen, setIsCharacterSheetOpen] = useState(false);
-  const engineRef = useRef<GameplayEngine | null>(null);
   const logRef = useRef<HTMLDivElement>(null);
-  const prevZoneIdRef = useRef<string | null>(null);
   const {
     activeDialogue,
     closeDialogue,
@@ -52,30 +47,12 @@ export function GameScreen({
     visibleText,
   } = useDialogueSequence({ audioSettings, textSpeed });
   const controlsDisabled = activeDialogue !== null || isCharacterSheetOpen;
-
-  useEffect(() => {
-    const map = loadZone(testZoneData);
-    const engine = new GameplayEngine(map, {
-      resolveZone: (zoneId) => {
-        const zoneData = zoneRegistry[zoneId];
-        return zoneData ? loadZone(zoneData) : undefined;
-      },
-    });
-    engineRef.current = engine;
-    setSnapshot(engine.getSnapshot());
-  }, []);
-
-  const executeCommand = useCallback((command: GameCommand) => {
-    const engine = engineRef.current;
-    if (!engine || controlsDisabled) return;
-
-    const result = engine.execute(command);
-    setSnapshot(engine.getSnapshot());
-
-    if (result.dialogue) {
-      triggerDialogue(result.dialogue);
-    }
-  }, [controlsDisabled, triggerDialogue]);
+  const { executeCommand, snapshot } = useGameplayEngine({
+    controlsDisabled,
+    initialZoneData: zoneRegistry.test_zone,
+    onDialogue: triggerDialogue,
+    zoneRegistry,
+  });
 
   useEffect(() => {
     if (logRef.current) {
@@ -83,82 +60,17 @@ export function GameScreen({
     }
   }, [snapshot?.log]);
 
-  // Trigger content-defined dialogue when entering zones.
-  useEffect(() => {
-    if (!snapshot) return;
-
-    if (prevZoneIdRef.current === snapshot.zoneId) {
-      return;
-    }
-
-    prevZoneIdRef.current = snapshot.zoneId;
-
-    if (snapshot.entryDialogue.length > 0) {
-      triggerDialogue(snapshot.entryDialogue);
-    }
-  }, [snapshot?.zoneId, triggerDialogue]);
-
-  useEffect(() => {
-    function handleKeyDown(event: KeyboardEvent) {
-      const keyLower = event.key.toLowerCase();
-
-      // Block all control commands if a dialogue is active
-      if (activeDialogue) {
-        if (event.key === "Enter" || event.key === " ") {
-          event.preventDefault();
-          progressDialogue();
-        } else if (event.key === "Escape") {
-          event.preventDefault();
-          closeDialogue();
-        }
-        return;
-      }
-
-      if (keyLower === "c") {
-        event.preventDefault();
-        setIsCharacterSheetOpen((prev) => !prev);
-        return;
-      }
-
-      if (event.key === "Escape") {
-        event.preventDefault();
-        if (isCharacterSheetOpen) {
-          setIsCharacterSheetOpen(false);
-        } else {
-          onBackToTitle();
-        }
-        return;
-      }
-
-      if (isCharacterSheetOpen) {
-        return; // Ignore moves and rests while character sheet is open
-      }
-
-      if (keyLower === "r") {
-        event.preventDefault();
-        executeCommand({ type: "Rest" });
-        return;
-      }
-
-      const commandType = getGameCommandForKey(event.key, keyboardLayout);
-
-      if (commandType) {
-        event.preventDefault();
-        executeCommand({ type: commandType });
-      }
-    }
-
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [
-    executeCommand,
-    onBackToTitle,
-    keyboardLayout,
-    isCharacterSheetOpen,
+  useZoneEntryDialogue(snapshot, triggerDialogue);
+  useGameKeyboardControls({
     activeDialogue,
     closeDialogue,
+    executeCommand,
+    isCharacterSheetOpen,
+    keyboardLayout,
+    onBackToTitle,
     progressDialogue,
-  ]);
+    setIsCharacterSheetOpen,
+  });
 
   if (!snapshot) {
     return (
