@@ -1,5 +1,7 @@
-export interface Stats {
-  type: "Stats";
+import type { Component } from "../ecs/types";
+
+export interface Stats extends Component {
+  readonly type: "Stats";
   energy: number;
   maxEnergy: number;
   currency: number; // Total value in Bronze coins
