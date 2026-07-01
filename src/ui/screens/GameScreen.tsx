@@ -89,6 +89,7 @@ export function GameScreen({
   useZoneEntryDialogue(snapshot, triggerDialogue);
   useGameKeyboardControls({
     activeDialogue,
+    audioSettings,
     closeDialogue,
     executeCommand: handleExecuteCommand,
     isCharacterSheetOpen,
@@ -143,6 +144,7 @@ export function GameScreen({
 
         {isCharacterSheetOpen && (
           <CharacterSheetModal
+            audioSettings={audioSettings}
             onClose={() => setIsCharacterSheetOpen(false)}
             stats={snapshot.stats}
           />
@@ -150,6 +152,7 @@ export function GameScreen({
 
         {isInteractChoiceOpen && (
           <InteractChoiceModal
+            audioSettings={audioSettings}
             npcs={adjacentNpcs.map((npc) => ({
               npcId: npc.npcId || npc.glyph,
               name: npc.name || "NPC",

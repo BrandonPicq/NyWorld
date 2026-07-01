@@ -2,15 +2,29 @@ import type { Stats } from "../../engine/components";
 import { TerminalButton } from "../components/TerminalButton";
 import { TerminalPanel } from "../components/TerminalPanel";
 import { capitalize } from "../controls/statsFormatter";
+import type { AudioSettings } from "../audio/audioSettings";
+import { playMenuConfirmSound } from "../audio/menuAudio";
 
 type CharacterSheetModalProps = {
+  audioSettings: AudioSettings;
   onClose: () => void;
   stats: Stats;
 };
 
-export function CharacterSheetModal({ onClose, stats }: CharacterSheetModalProps) {
+export function CharacterSheetModal({
+  audioSettings,
+  onClose,
+  stats,
+}: CharacterSheetModalProps) {
+  const handleClose = () => {
+    if (audioSettings.soundEnabled) {
+      playMenuConfirmSound();
+    }
+    onClose();
+  };
+
   return (
-    <div className="modal-overlay" onClick={onClose}>
+    <div className="modal-overlay" onClick={handleClose}>
       <TerminalPanel className="stats-modal" onClick={(e) => e.stopPropagation()}>
         <p className="terminal-kicker">CHARACTER PROFILE</p>
         <h2 className="terminal-heading-md">Character Sheet</h2>
@@ -44,7 +58,7 @@ export function CharacterSheetModal({ onClose, stats }: CharacterSheetModalProps
         </div>
 
         <div className="stats-modal__actions">
-          <TerminalButton onClick={onClose}>Close [Esc]</TerminalButton>
+          <TerminalButton onClick={handleClose}>Close [Esc]</TerminalButton>
         </div>
       </TerminalPanel>
     </div>

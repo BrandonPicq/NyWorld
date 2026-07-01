@@ -2,10 +2,13 @@ import { useEffect, type Dispatch, type SetStateAction } from "react";
 import type { GameCommand } from "../../engine";
 import { getGameCommandForKey } from "../controls/gameInput";
 import type { KeyboardLayout } from "../controls/keyboardLayout";
+import type { AudioSettings } from "../audio/audioSettings";
+import { playMenuConfirmSound } from "../audio/menuAudio";
 import type { DialogueNode } from "./dialogueTypes";
 
 type UseGameKeyboardControlsInput = {
   activeDialogue: DialogueNode[] | null;
+  audioSettings: AudioSettings;
   closeDialogue: () => void;
   executeCommand: (command: GameCommand) => void;
   isCharacterSheetOpen: boolean;
@@ -24,6 +27,7 @@ type UseGameKeyboardControlsInput = {
  */
 export function useGameKeyboardControls({
   activeDialogue,
+  audioSettings,
   closeDialogue,
   executeCommand,
   isCharacterSheetOpen,
@@ -35,6 +39,10 @@ export function useGameKeyboardControls({
 }: UseGameKeyboardControlsInput): void {
   useEffect(() => {
     function handleKeyDown(event: KeyboardEvent) {
+      if (isInteractChoiceOpen) {
+        return;
+      }
+
       const keyLower = event.key.toLowerCase();
 
       if (activeDialogue) {
@@ -43,6 +51,9 @@ export function useGameKeyboardControls({
           progressDialogue();
         } else if (event.key === "Escape") {
           event.preventDefault();
+          if (audioSettings.soundEnabled) {
+            playMenuConfirmSound();
+          }
           closeDialogue();
         }
         return;
@@ -50,12 +61,18 @@ export function useGameKeyboardControls({
 
       if (keyLower === "c") {
         event.preventDefault();
+        if (audioSettings.soundEnabled) {
+          playMenuConfirmSound();
+        }
         setIsCharacterSheetOpen((prev) => !prev);
         return;
       }
 
       if (event.key === "Escape") {
         event.preventDefault();
+        if (audioSettings.soundEnabled) {
+          playMenuConfirmSound();
+        }
         if (isCharacterSheetOpen) {
           setIsCharacterSheetOpen(false);
         } else {
@@ -64,7 +81,7 @@ export function useGameKeyboardControls({
         return;
       }
 
-      if (isCharacterSheetOpen || isInteractChoiceOpen) {
+      if (isCharacterSheetOpen) {
         return;
       }
 
@@ -86,6 +103,7 @@ export function useGameKeyboardControls({
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [
     activeDialogue,
+    audioSettings,
     closeDialogue,
     executeCommand,
     isCharacterSheetOpen,

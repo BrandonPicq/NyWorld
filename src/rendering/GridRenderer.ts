@@ -94,7 +94,11 @@ export class GridRenderer {
           continue;
         }
 
-        this.drawTile(x, y, tile, colors);
+        const hasPlayer = snapshot.player.x === x && snapshot.player.y === y;
+        const hasEntity = snapshot.entities.some((e) => e.x === x && e.y === y);
+        const isOccupied = hasPlayer || hasEntity;
+
+        this.drawTile(x, y, tile, colors, isOccupied);
       }
     }
 
@@ -133,6 +137,7 @@ export class GridRenderer {
     y: number,
     tile: GridRenderTile,
     colors: Pick<RenderColors, "bg" | "border" | "text">,
+    isOccupied = false,
   ): void {
     const { ctx, cellSize } = this;
     const px = x * cellSize;
@@ -141,11 +146,13 @@ export class GridRenderer {
     ctx.fillStyle = tile.role === "blocked" ? colors.border : colors.bg;
     ctx.fillRect(px, py, cellSize, cellSize);
 
-    ctx.fillStyle = colors.text;
-    ctx.font = `${Math.floor(cellSize * 0.6)}px monospace`;
-    ctx.textAlign = "center";
-    ctx.textBaseline = "middle";
-    ctx.fillText(tile.glyph, px + cellSize / 2, py + cellSize / 2);
+    if (!isOccupied) {
+      ctx.fillStyle = colors.text;
+      ctx.font = `${Math.floor(cellSize * 0.6)}px monospace`;
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText(tile.glyph, px + cellSize / 2, py + cellSize / 2);
+    }
   }
 
   private drawPlayer(x: number, y: number, colorAccent: string): void {
