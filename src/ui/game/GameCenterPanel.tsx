@@ -6,10 +6,12 @@ import { TerminalButton } from "../components/TerminalButton";
 import { TerminalPanel } from "../components/TerminalPanel";
 import { getInteractKeyLabel, getMovementKeyLabel } from "../controls/gameInput";
 import type { KeyboardLayout } from "../controls/keyboardLayout";
+import type { GameplaySettings } from "../controls/gameplaySettings";
 
 type GameCenterPanelProps = {
   children?: ReactNode;
   controlsDisabled?: boolean;
+  gameplaySettings: GameplaySettings;
   keyboardLayout: KeyboardLayout;
   onExecuteCommand: (command: GameCommand) => void;
   renderSnapshot: GridRenderSnapshot;
@@ -19,11 +21,24 @@ type GameCenterPanelProps = {
 export function GameCenterPanel({
   children,
   controlsDisabled = false,
+  gameplaySettings,
   keyboardLayout,
   onExecuteCommand,
   renderSnapshot,
   snapshot,
 }: GameCenterPanelProps) {
+  const isInteractDisabled = (() => {
+    if (!gameplaySettings.smartInteract) {
+      return false;
+    }
+    const { playerX, playerY } = snapshot;
+    return !renderSnapshot.entities.some((entity) => {
+      const dx = Math.abs(entity.x - playerX);
+      const dy = Math.abs(entity.y - playerY);
+      return (dx === 1 && dy === 0) || (dx === 0 && dy === 1);
+    });
+  })();
+
   return (
     <TerminalPanel className="game-layout__center game-layout__center--overlay">
       <p className="terminal-kicker">SESSION ACTIVE</p>
@@ -65,10 +80,10 @@ export function GameCenterPanel({
           &larr; West [{getMovementKeyLabel("MoveWest", keyboardLayout)}]
         </TerminalButton>
         <TerminalButton
-          disabled={controlsDisabled}
-          onClick={() => onExecuteCommand({ type: "MoveSouth" })}
+          disabled={controlsDisabled || isInteractDisabled}
+          onClick={() => onExecuteCommand({ type: "Interact" })}
         >
-          &darr; South [{getMovementKeyLabel("MoveSouth", keyboardLayout)}]
+          Interact [{getInteractKeyLabel()}]
         </TerminalButton>
         <TerminalButton
           disabled={controlsDisabled}
@@ -79,9 +94,9 @@ export function GameCenterPanel({
         <div />
         <TerminalButton
           disabled={controlsDisabled}
-          onClick={() => onExecuteCommand({ type: "Interact" })}
+          onClick={() => onExecuteCommand({ type: "MoveSouth" })}
         >
-          Interact [{getInteractKeyLabel()}]
+          &darr; South [{getMovementKeyLabel("MoveSouth", keyboardLayout)}]
         </TerminalButton>
         <div />
       </div>

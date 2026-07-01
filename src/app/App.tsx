@@ -26,11 +26,17 @@ import {
   readStoredTextSpeed,
   writeStoredTextSpeed,
 } from "../ui/controls/textSpeed";
+import {
+  type GameplaySettings,
+  readStoredGameplaySettings,
+  writeStoredGameplaySettings,
+} from "../ui/controls/gameplaySettings";
 
 type OptionsScreenId =
   | "options"
   | "options-graphics"
-  | "options-audio";
+  | "options-audio"
+  | "options-gameplay";
 type AppScreen = "title" | "game" | OptionsScreenId;
 
 function App() {
@@ -46,6 +52,9 @@ function App() {
   );
   const [textSpeed, setTextSpeed] = useState<TextSpeed>(() =>
     readStoredTextSpeed(),
+  );
+  const [gameplaySettings, setGameplaySettings] = useState<GameplaySettings>(() =>
+    readStoredGameplaySettings(),
   );
 
   useEffect(() => {
@@ -65,6 +74,10 @@ function App() {
     writeStoredTextSpeed(textSpeed);
   }, [textSpeed]);
 
+  useEffect(() => {
+    writeStoredGameplaySettings(gameplaySettings);
+  }, [gameplaySettings]);
+
   const menuFeedback = {
     onMenuConfirm: () => {
       if (audioSettings.soundEnabled) {
@@ -82,6 +95,7 @@ function App() {
     return (
       <GameScreen
         audioSettings={audioSettings}
+        gameplaySettings={gameplaySettings}
         keyboardLayout={keyboardLayout}
         textSpeed={textSpeed}
         onBackToTitle={() => setScreen("title")}
@@ -94,6 +108,7 @@ function App() {
       <OptionsScreen
         activeTheme={activeTheme}
         audioSettings={audioSettings}
+        gameplaySettings={gameplaySettings}
         keyboardLayout={keyboardLayout}
         textSpeed={textSpeed}
         {...menuFeedback}
@@ -101,8 +116,10 @@ function App() {
         onChangeTheme={setActiveTheme}
         onChangeKeyboardLayout={setKeyboardLayout}
         onChangeTextSpeed={setTextSpeed}
+        onChangeGameplaySettings={setGameplaySettings}
         onOpenAudio={() => setScreen("options-audio")}
         onOpenGraphics={() => setScreen("options-graphics")}
+        onOpenGameplay={() => setScreen("options-gameplay")}
         onToggleSound={(soundEnabled) =>
           setAudioSettings({ soundEnabled })
         }
@@ -127,6 +144,7 @@ function isOptionsScreenId(screen: AppScreen): screen is OptionsScreenId {
   return (
     screen === "options" ||
     screen === "options-graphics" ||
-    screen === "options-audio"
+    screen === "options-audio" ||
+    screen === "options-gameplay"
   );
 }

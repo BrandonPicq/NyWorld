@@ -42,6 +42,14 @@ Keep entries short and practical. When a slice is committed, its changelog secti
 - Add a game log entry when player movement collides with an NPC.
 - Verify NPC interaction log entries in engine unit tests.
 
+## 2026-07-01 - [UPDATE]: Center D-pad layout and add Gameplay option screen
+
+- Reorganize direction keys in UI to place `Interact` dead-center and `South` at bottom-center.
+- Introduce `Gameplay` configurations section in system settings.
+- Implement `Smart Interact` togglable helper to disable the UI button when no NPC is adjacent.
+- Add local storage persistence for gameplay option choices.
+- Add unit tests for settings fallback loading and saving.
+
 ## 2026-07-01 - [ADD]: Introduce interactive NPCs and collision dialogue
 
 - Define `Npc` component and register it in engine barrel exports.

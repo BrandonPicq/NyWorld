@@ -72,11 +72,10 @@ L'ecran sera a texte dominant :
 
 - textes visibles du jeu en anglais ;
 - menus navigables au clavier : fleches haut/bas pour choisir, entree pour confirmer, echap pour revenir quand l'ecran le permet, tabulation neutralisee dans les menus ; deplacement en jeu avec les fleches directionnelles et WASD ou ZQSD (selon la configuration clavier QWERTY/AZERTY active) ;
-- options V0 organisees en categories : `Graphics & Text` (avec selection de theme et vitesse de texte Slow/Normal/Fast/Instant en ligne), `Audio` (avec activation du son en ligne) et configuration clavier `Controls` en ligne ;
+- options V0 organisees en categories : `Graphics & Text` (avec selection de theme et vitesse de texte Slow/Normal/Fast/Instant en ligne), `Audio` (avec activation du son en ligne), configuration clavier `Controls` en ligne et réglages `Gameplay` (avec assistant d'interaction intelligent) ;
 - zone principale de narration/log ;
 - carte Canvas compacte mais visible affichant le joueur et les PNJs (glyphes colorés) ;
-- boutons de deplacement ;
-- bouton d'interaction contextuelle ;
+- boutons de deplacement en forme de croix directionnelle (D-pad) avec le bouton d'interaction contextuel `Interact [E]` au centre ;
 - informations de debug : tick, zone active, position ;
 - tableau de bord lateral (gauche) affichant les ressources vitales : jauge d'energie (decroissance par pas), monnaie decomposee (Platinum, Gold, Silver, Bronze), titre academique, avec boutons de repos et fiche de personnage ;
 - fiche de personnage detaillee (modal overlay) accessible avec la touche `C` ou clic, affichant la liste modulaire des attributs (Strength, Intelligence, Charisma) et le detail de la progression academique ;
@@ -92,8 +91,8 @@ Les sons de menu V0 sont generes par une petite couche Web Audio cote UI. Cette 
 
 Tests unitaires V0 avec Vitest :
 
-- menus, themes, vitesse de défilement et reglages audio ;
-- mapping d'input jeu : fleches, QWERTY, AZERTY, interaction, exclusivite des layouts et labels ;
+- menus, themes, vitesse de défilement, réglages de confort gameplay et reglages audio ;
+- mapping d'input jeu : fleches, QWERTY, AZERTY, exclusivite des layouts et labels ;
 - moteur gameplay : deplacements cardinaux, interaction, blocage par la carte, ticks, journal et collisions de dialogues avec les PNJs ;
 - chargement de zone : donnees valides, tile ids inconnus, depart invalide, depart bloque, dialogues d'entree et validation des PNJs.
 

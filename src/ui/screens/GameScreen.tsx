@@ -7,6 +7,7 @@ import { TerminalPanel } from "../components/TerminalPanel";
 import type { KeyboardLayout } from "../controls/keyboardLayout";
 import type { AudioSettings } from "../audio/audioSettings";
 import type { TextSpeed } from "../controls/textSpeed";
+import type { GameplaySettings } from "../controls/gameplaySettings";
 import { ActionLogPanel } from "../game/ActionLogPanel";
 import { CharacterSheetModal } from "../game/CharacterSheetModal";
 import { CharacterStatusPanel } from "../game/CharacterStatusPanel";
@@ -19,6 +20,7 @@ import { useZoneEntryDialogue } from "../game/useZoneEntryDialogue";
 
 type GameScreenProps = {
   audioSettings: AudioSettings;
+  gameplaySettings: GameplaySettings;
   keyboardLayout: KeyboardLayout;
   textSpeed: TextSpeed;
   onBackToTitle: () => void;
@@ -31,6 +33,7 @@ const zoneRegistry: Record<string, ZoneData> = {
 
 export function GameScreen({
   audioSettings,
+  gameplaySettings,
   keyboardLayout,
   textSpeed,
   onBackToTitle,
@@ -96,6 +99,7 @@ export function GameScreen({
 
         <GameCenterPanel
           controlsDisabled={controlsDisabled}
+          gameplaySettings={gameplaySettings}
           keyboardLayout={keyboardLayout}
           onExecuteCommand={executeCommand}
           renderSnapshot={gridRenderSnapshot}

@@ -4,10 +4,12 @@ import { TerminalPanel } from "../components/TerminalPanel";
 import { type ThemeId, themePresets } from "../theme/theme";
 import type { KeyboardLayout } from "../controls/keyboardLayout";
 import type { TextSpeed } from "../controls/textSpeed";
+import type { GameplaySettings } from "../controls/gameplaySettings";
 
 type OptionsScreenProps = {
   activeTheme: ThemeId;
   audioSettings: AudioSettings;
+  gameplaySettings: GameplaySettings;
   keyboardLayout: KeyboardLayout;
   textSpeed: TextSpeed;
   onBackToOptions: () => void;
@@ -15,17 +17,20 @@ type OptionsScreenProps = {
   onChangeTheme: (themeId: ThemeId) => void;
   onChangeKeyboardLayout: (layout: KeyboardLayout) => void;
   onChangeTextSpeed: (speed: TextSpeed) => void;
+  onChangeGameplaySettings: (settings: GameplaySettings) => void;
   onMenuConfirm?: () => void;
   onMenuMove?: () => void;
   onOpenAudio: () => void;
   onOpenGraphics: () => void;
+  onOpenGameplay: () => void;
   onToggleSound: (soundEnabled: boolean) => void;
-  screen: "options" | "options-graphics" | "options-audio";
+  screen: "options" | "options-graphics" | "options-audio" | "options-gameplay";
 };
 
 export function OptionsScreen({
   activeTheme,
   audioSettings,
+  gameplaySettings,
   keyboardLayout,
   textSpeed,
   onBackToOptions,
@@ -33,16 +38,19 @@ export function OptionsScreen({
   onChangeTheme,
   onChangeKeyboardLayout,
   onChangeTextSpeed,
+  onChangeGameplaySettings,
   onMenuConfirm,
   onMenuMove,
   onOpenAudio,
   onOpenGraphics,
+  onOpenGameplay,
   onToggleSound,
   screen,
 }: OptionsScreenProps) {
   const optionsView = getOptionsView({
     activeTheme,
     audioSettings,
+    gameplaySettings,
     keyboardLayout,
     textSpeed,
     onBackToOptions,
@@ -50,8 +58,10 @@ export function OptionsScreen({
     onChangeTheme,
     onChangeKeyboardLayout,
     onChangeTextSpeed,
+    onChangeGameplaySettings,
     onOpenAudio,
     onOpenGraphics,
+    onOpenGameplay,
     onToggleSound,
     screen,
   });
@@ -85,6 +95,7 @@ type OptionsViewInput = Omit<OptionsScreenProps, "onMenuConfirm" | "onMenuMove">
 function getOptionsView({
   activeTheme,
   audioSettings,
+  gameplaySettings,
   keyboardLayout,
   textSpeed,
   onBackToOptions,
@@ -92,8 +103,10 @@ function getOptionsView({
   onChangeTheme,
   onChangeKeyboardLayout,
   onChangeTextSpeed,
+  onChangeGameplaySettings,
   onOpenAudio,
   onOpenGraphics,
+  onOpenGameplay,
   onToggleSound,
   screen,
 }: OptionsViewInput) {
@@ -165,14 +178,43 @@ function getOptionsView({
     };
   }
 
+  if (screen === "options-gameplay") {
+    const toggleSmartInteract = () => {
+      onChangeGameplaySettings({
+        ...gameplaySettings,
+        smartInteract: !gameplaySettings.smartInteract,
+      });
+    };
+
+    return {
+      ariaLabel: "Gameplay options menu",
+      copy: "Configure gameplay assistants and mechanics.",
+      heading: "Gameplay",
+      kicker: "OPTIONS // GAMEPLAY",
+      items: [
+        {
+          label: `Smart Interact: < ${
+            gameplaySettings.smartInteract ? "ON" : "OFF"
+          } >`,
+          onSelect: toggleSmartInteract,
+          onLeft: toggleSmartInteract,
+          onRight: toggleSmartInteract,
+        },
+        { label: "Back", onSelect: onBackToOptions },
+      ],
+      onBack: onBackToOptions,
+    };
+  }
+
   return {
     ariaLabel: "Options menu",
-    copy: "Configure controls, graphics and audio settings.",
+    copy: "Configure controls, graphics, audio and gameplay settings.",
     heading: "Options",
     kicker: "SYSTEM OPTIONS",
     items: [
       { label: "Graphics & Text", onSelect: onOpenGraphics },
       { label: "Audio", onSelect: onOpenAudio },
+      { label: "Gameplay", onSelect: onOpenGameplay },
       {
         label: `Controls: < ${keyboardLayout.toUpperCase()} >`,
         onSelect: () =>
