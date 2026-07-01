@@ -17,6 +17,16 @@ const validZoneData = {
   ],
 };
 
+const validNpc = {
+  npcId: "scholar",
+  name: "Old Scholar",
+  glyph: "S",
+  color: "#ffcc00",
+  x: 2,
+  y: 1,
+  dialogue: [{ speaker: "Old Scholar", text: "Welcome!", pitch: 0.9 }],
+};
+
 function zoneDataWith(overrides: Record<string, unknown>) {
   return {
     ...validZoneData,
@@ -103,5 +113,51 @@ describe("loadZone", () => {
         }),
       ),
     ).toThrow("transition at index 0 must be on a walkable tile");
+  });
+
+  it("accepts NPCs on walkable tiles with dialogue nodes", () => {
+    const map = loadZone(
+      zoneDataWith({
+        height: 4,
+        width: 4,
+        tiles: [
+          [1, 1, 1, 1],
+          [1, 0, 0, 1],
+          [1, 0, 0, 1],
+          [1, 1, 1, 1],
+        ],
+        npcs: [validNpc],
+      }),
+    );
+
+    expect(map.npcs).toEqual([validNpc]);
+  });
+
+  it("rejects NPCs without dialogue nodes", () => {
+    expect(() =>
+      loadZone(
+        zoneDataWith({
+          height: 4,
+          width: 4,
+          tiles: [
+            [1, 1, 1, 1],
+            [1, 0, 0, 1],
+            [1, 0, 0, 1],
+            [1, 1, 1, 1],
+          ],
+          npcs: [{ ...validNpc, dialogue: [] }],
+        }),
+      ),
+    ).toThrow("npc at index 0 dialogue array must contain at least one node");
+  });
+
+  it("rejects NPCs on blocked tiles", () => {
+    expect(() =>
+      loadZone(
+        zoneDataWith({
+          npcs: [{ ...validNpc, x: 0, y: 0 }],
+        }),
+      ),
+    ).toThrow("npc at index 0 must spawn on a walkable tile");
   });
 });

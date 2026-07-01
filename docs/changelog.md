@@ -4,6 +4,21 @@ This file tracks meaningful project changes by commit-oriented slices.
 
 Keep entries short and practical. When a slice is committed, its changelog section should stay aligned with the commit title so the project history remains easy to read after restores or bisects.
 
+## 2026-07-01 - [FIX]: Harden dialogue interaction blocking and NPC validation
+
+- Disable game command controls while dialogue or character sheet overlays are active.
+- Reject NPC content with empty dialogue arrays before creating a zone map.
+- Add zone loader tests for valid NPC data, empty NPC dialogue, and blocked NPC spawns.
+
+## 2026-07-01 - [FIX]: Resolve TypeScript excess property checking on inline object literals
+
+- Explicitly type NPC spawn component literals when adding them to the ECS world.
+
+## 2026-07-01 - [UPDATE]: Log NPC interaction details to game log
+
+- Add a game log entry when player movement collides with an NPC.
+- Verify NPC interaction log entries in engine unit tests.
+
 ## 2026-07-01 - [ADD]: Introduce interactive NPCs and collision dialogue
 
 - Define `Npc` component and register it in engine barrel exports.

@@ -51,6 +51,7 @@ export function GameScreen({
     triggerDialogue,
     visibleText,
   } = useDialogueSequence({ audioSettings, textSpeed });
+  const controlsDisabled = activeDialogue !== null || isCharacterSheetOpen;
 
   useEffect(() => {
     const map = loadZone(testZoneData);
@@ -66,14 +67,15 @@ export function GameScreen({
 
   const executeCommand = useCallback((command: GameCommand) => {
     const engine = engineRef.current;
-    if (!engine) return;
+    if (!engine || controlsDisabled) return;
+
     const result = engine.execute(command);
     setSnapshot(engine.getSnapshot());
 
     if (result.dialogue) {
       triggerDialogue(result.dialogue);
     }
-  }, [triggerDialogue]);
+  }, [controlsDisabled, triggerDialogue]);
 
   useEffect(() => {
     if (logRef.current) {
@@ -207,12 +209,14 @@ export function GameScreen({
     <main className="app-shell" aria-labelledby="game-heading">
       <div className="game-layout">
         <CharacterStatusPanel
+          controlsDisabled={controlsDisabled}
           onOpenSheet={() => setIsCharacterSheetOpen(true)}
           onRest={() => executeCommand({ type: "Rest" })}
           stats={snapshot.stats}
         />
 
         <GameCenterPanel
+          controlsDisabled={controlsDisabled}
           keyboardLayout={keyboardLayout}
           onExecuteCommand={executeCommand}
           renderSnapshot={gridRenderSnapshot}

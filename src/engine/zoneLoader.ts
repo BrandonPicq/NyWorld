@@ -186,6 +186,10 @@ export function loadZone(data: unknown): GameMap {
         throw new ZoneLoadError(`npc at index ${i} has invalid or missing dialogue array`);
       }
 
+      if (npc.dialogue.length === 0) {
+        throw new ZoneLoadError(`npc at index ${i} dialogue array must contain at least one node`);
+      }
+
       for (let j = 0; j < npc.dialogue.length; j++) {
         const node = npc.dialogue[j];
         if (!isRecord(node)) {
@@ -197,7 +201,7 @@ export function loadZone(data: unknown): GameMap {
         if (typeof node.text !== "string" || !node.text.trim()) {
           throw new ZoneLoadError(`npc at index ${i} dialogue node ${j} has invalid or missing text`);
         }
-        if (typeof node.pitch !== "number" || node.pitch < 0.1) {
+        if (typeof node.pitch !== "number" || !Number.isFinite(node.pitch) || node.pitch < 0.1) {
           throw new ZoneLoadError(`npc at index ${i} dialogue node ${j} has invalid or missing pitch`);
         }
       }

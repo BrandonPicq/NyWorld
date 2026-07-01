@@ -4,12 +4,14 @@ import { TerminalPanel } from "../components/TerminalPanel";
 import { formatCurrency } from "../controls/statsFormatter";
 
 type CharacterStatusPanelProps = {
+  controlsDisabled?: boolean;
   onOpenSheet: () => void;
   onRest: () => void;
   stats: Stats;
 };
 
 export function CharacterStatusPanel({
+  controlsDisabled = false,
   onOpenSheet,
   onRest,
   stats,
@@ -47,8 +49,13 @@ export function CharacterStatusPanel({
       </div>
 
       <div className="sidebar-actions">
-        <TerminalButton onClick={onOpenSheet}>[C] Sheet</TerminalButton>
-        <TerminalButton onClick={onRest} disabled={stats.energy >= stats.maxEnergy}>
+        <TerminalButton disabled={controlsDisabled} onClick={onOpenSheet}>
+          [C] Sheet
+        </TerminalButton>
+        <TerminalButton
+          disabled={controlsDisabled || stats.energy >= stats.maxEnergy}
+          onClick={onRest}
+        >
           [R] Rest
         </TerminalButton>
       </div>

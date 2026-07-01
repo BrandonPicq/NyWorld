@@ -9,6 +9,7 @@ import type { KeyboardLayout } from "../controls/keyboardLayout";
 
 type GameCenterPanelProps = {
   children?: ReactNode;
+  controlsDisabled?: boolean;
   keyboardLayout: KeyboardLayout;
   onExecuteCommand: (command: GameCommand) => void;
   renderSnapshot: GridRenderSnapshot;
@@ -17,6 +18,7 @@ type GameCenterPanelProps = {
 
 export function GameCenterPanel({
   children,
+  controlsDisabled = false,
   keyboardLayout,
   onExecuteCommand,
   renderSnapshot,
@@ -49,17 +51,29 @@ export function GameCenterPanel({
         aria-label="Movement controls"
       >
         <div />
-        <TerminalButton onClick={() => onExecuteCommand({ type: "MoveNorth" })}>
+        <TerminalButton
+          disabled={controlsDisabled}
+          onClick={() => onExecuteCommand({ type: "MoveNorth" })}
+        >
           &uarr; North [{getMovementKeyLabel("MoveNorth", keyboardLayout)}]
         </TerminalButton>
         <div />
-        <TerminalButton onClick={() => onExecuteCommand({ type: "MoveWest" })}>
+        <TerminalButton
+          disabled={controlsDisabled}
+          onClick={() => onExecuteCommand({ type: "MoveWest" })}
+        >
           &larr; West [{getMovementKeyLabel("MoveWest", keyboardLayout)}]
         </TerminalButton>
-        <TerminalButton onClick={() => onExecuteCommand({ type: "MoveSouth" })}>
+        <TerminalButton
+          disabled={controlsDisabled}
+          onClick={() => onExecuteCommand({ type: "MoveSouth" })}
+        >
           &darr; South [{getMovementKeyLabel("MoveSouth", keyboardLayout)}]
         </TerminalButton>
-        <TerminalButton onClick={() => onExecuteCommand({ type: "MoveEast" })}>
+        <TerminalButton
+          disabled={controlsDisabled}
+          onClick={() => onExecuteCommand({ type: "MoveEast" })}
+        >
           &rarr; East [{getMovementKeyLabel("MoveEast", keyboardLayout)}]
         </TerminalButton>
       </div>
