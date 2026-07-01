@@ -20,4 +20,4 @@ export type { Direction } from "./systems";
 export { TickCounter } from "./tick";
 export type { GameCommand } from "./commands";
 export { GameplayEngine } from "./GameplayEngine";
-export type { GameSnapshot, LogEntry } from "./GameplayEngine";
+export type { GameSnapshot, LogEntry, RenderEntity } from "./GameplayEngine";

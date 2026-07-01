@@ -4,7 +4,10 @@ import { TerminalPanel } from "../components/TerminalPanel";
 import { type ThemeId, themePresets } from "../theme/theme";
 import type { KeyboardLayout } from "../controls/keyboardLayout";
 import type { TextSpeed } from "../controls/textSpeed";
-import type { GameplaySettings } from "../controls/gameplaySettings";
+import type {
+  GameplaySettings,
+  InteractionTargetingMode,
+} from "../controls/gameplaySettings";
 
 type OptionsScreenProps = {
   activeTheme: ThemeId;
@@ -179,12 +182,35 @@ function getOptionsView({
   }
 
   if (screen === "options-gameplay") {
+    const interactionTargetingModes: Array<{
+      id: InteractionTargetingMode;
+      label: string;
+    }> = [
+      { id: "nearby", label: "AROUND" },
+      { id: "facing", label: "FACING" },
+    ];
     const toggleSmartInteract = () => {
       onChangeGameplaySettings({
         ...gameplaySettings,
         smartInteract: !gameplaySettings.smartInteract,
       });
     };
+    const cycleInteractionTargetingMode = (direction: 1 | -1) => {
+      const currentIndex = interactionTargetingModes.findIndex(
+        (mode) => mode.id === gameplaySettings.interactionTargetingMode,
+      );
+      const nextIndex =
+        (currentIndex + direction + interactionTargetingModes.length) %
+        interactionTargetingModes.length;
+      onChangeGameplaySettings({
+        ...gameplaySettings,
+        interactionTargetingMode: interactionTargetingModes[nextIndex].id,
+      });
+    };
+    const currentInteractionMode =
+      interactionTargetingModes.find(
+        (mode) => mode.id === gameplaySettings.interactionTargetingMode,
+      ) || interactionTargetingModes[0];
 
     return {
       ariaLabel: "Gameplay options menu",
@@ -199,6 +225,12 @@ function getOptionsView({
           onSelect: toggleSmartInteract,
           onLeft: toggleSmartInteract,
           onRight: toggleSmartInteract,
+        },
+        {
+          label: `Interact Scope: < ${currentInteractionMode.label} >`,
+          onSelect: () => cycleInteractionTargetingMode(1),
+          onLeft: () => cycleInteractionTargetingMode(-1),
+          onRight: () => cycleInteractionTargetingMode(1),
         },
         { label: "Back", onSelect: onBackToOptions },
       ],

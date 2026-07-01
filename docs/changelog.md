@@ -4,6 +4,14 @@ This file tracks meaningful project changes by commit-oriented slices.
 
 Keep entries short and practical. When a slice is committed, its changelog section should stay aligned with the commit title so the project history remains easy to read after restores or bisects.
 
+## 2026-07-01 - [UPDATE]: Add interaction targeting gameplay option
+
+- Track the player's facing direction in gameplay snapshots.
+- Add an interaction scope option for around-player or facing-only targets.
+- Extract reusable UI interaction target selection helpers.
+- Generalize the interaction choice modal for future non-NPC choices.
+- Harden gameplay settings persistence and targeted interaction fallback behavior.
+
 ## 2026-07-01 - [ADD]: Add contextual interact command
 
 - Add an `Interact` command for contextual game actions.

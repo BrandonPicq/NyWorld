@@ -18,7 +18,11 @@ import { useDialogueSequence } from "../game/useDialogueSequence";
 import { useGameKeyboardControls } from "../game/useGameKeyboardControls";
 import { useGameplayEngine } from "../game/useGameplayEngine";
 import { useZoneEntryDialogue } from "../game/useZoneEntryDialogue";
-import { InteractChoiceModal } from "../game/InteractChoiceModal";
+import { InteractionChoiceModal } from "../game/InteractionChoiceModal";
+import {
+  createInteractionCommand,
+  getInteractionTargets,
+} from "../game/interactionTargets";
 
 type GameScreenProps = {
   audioSettings: AudioSettings;
@@ -60,23 +64,34 @@ export function GameScreen({
     zoneRegistry,
   });
 
-  const adjacentNpcs = snapshot
-    ? snapshot.entities.filter((entity) => {
-        const dx = Math.abs(entity.x - snapshot.playerX);
-        const dy = Math.abs(entity.y - snapshot.playerY);
-        return (dx === 1 && dy === 0) || (dx === 0 && dy === 1);
-      })
+  const interactionTargets = snapshot
+    ? getInteractionTargets(snapshot, gameplaySettings)
     : [];
 
   const handleExecuteCommand = (command: GameCommand) => {
     if (
       command.type === "Interact" &&
       !command.targetNpcId &&
-      adjacentNpcs.length > 1
+      !command.targetDirection
     ) {
-      setIsInteractChoiceOpen(true);
+      if (interactionTargets.length > 1) {
+        setIsInteractChoiceOpen(true);
+        return;
+      }
+
+      if (interactionTargets.length === 1) {
+        executeCommand(createInteractionCommand(interactionTargets[0]));
+        return;
+      }
+
+      const fallbackCommand: GameCommand =
+        gameplaySettings.interactionTargetingMode === "facing" && snapshot
+          ? { type: "Interact", targetDirection: snapshot.playerFacing }
+          : { type: "Interact" };
+      executeCommand(fallbackCommand);
       return;
     }
+
     executeCommand(command);
   };
 
@@ -124,7 +139,9 @@ export function GameScreen({
 
         <GameCenterPanel
           controlsDisabled={controlsDisabled}
-          gameplaySettings={gameplaySettings}
+          isInteractDisabled={
+            gameplaySettings.smartInteract && interactionTargets.length === 0
+          }
           keyboardLayout={keyboardLayout}
           onExecuteCommand={handleExecuteCommand}
           renderSnapshot={gridRenderSnapshot}
@@ -151,14 +168,18 @@ export function GameScreen({
         )}
 
         {isInteractChoiceOpen && (
-          <InteractChoiceModal
+          <InteractionChoiceModal
             audioSettings={audioSettings}
-            npcs={adjacentNpcs.map((npc) => ({
-              npcId: npc.npcId || npc.glyph,
-              name: npc.name || "NPC",
-            }))}
-            onSelect={(npcId) => {
-              handleExecuteCommand({ type: "Interact", targetNpcId: npcId });
+            choices={interactionTargets}
+            onSelect={(choiceId) => {
+              const target = interactionTargets.find(
+                (interactionTarget) => interactionTarget.id === choiceId,
+              );
+
+              if (target) {
+                handleExecuteCommand(createInteractionCommand(target));
+              }
+
               setIsInteractChoiceOpen(false);
             }}
             onClose={() => setIsInteractChoiceOpen(false)}

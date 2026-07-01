@@ -6,12 +6,11 @@ import { TerminalButton } from "../components/TerminalButton";
 import { TerminalPanel } from "../components/TerminalPanel";
 import { getInteractKeyLabel, getMovementKeyLabel } from "../controls/gameInput";
 import type { KeyboardLayout } from "../controls/keyboardLayout";
-import type { GameplaySettings } from "../controls/gameplaySettings";
 
 type GameCenterPanelProps = {
   children?: ReactNode;
   controlsDisabled?: boolean;
-  gameplaySettings: GameplaySettings;
+  isInteractDisabled?: boolean;
   keyboardLayout: KeyboardLayout;
   onExecuteCommand: (command: GameCommand) => void;
   renderSnapshot: GridRenderSnapshot;
@@ -21,24 +20,12 @@ type GameCenterPanelProps = {
 export function GameCenterPanel({
   children,
   controlsDisabled = false,
-  gameplaySettings,
+  isInteractDisabled = false,
   keyboardLayout,
   onExecuteCommand,
   renderSnapshot,
   snapshot,
 }: GameCenterPanelProps) {
-  const isInteractDisabled = (() => {
-    if (!gameplaySettings.smartInteract) {
-      return false;
-    }
-    const { playerX, playerY } = snapshot;
-    return !renderSnapshot.entities.some((entity) => {
-      const dx = Math.abs(entity.x - playerX);
-      const dy = Math.abs(entity.y - playerY);
-      return (dx === 1 && dy === 0) || (dx === 0 && dy === 1);
-    });
-  })();
-
   return (
     <TerminalPanel className="game-layout__center game-layout__center--overlay">
       <p className="terminal-kicker">SESSION ACTIVE</p>
@@ -58,6 +45,7 @@ export function GameCenterPanel({
         </p>
         <p>Tick: {snapshot.tick}</p>
         <p>Zone: {snapshot.zoneId}</p>
+        <p>Facing: {snapshot.playerFacing}</p>
       </div>
 
       <div

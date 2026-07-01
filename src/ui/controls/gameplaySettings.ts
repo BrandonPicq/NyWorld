@@ -1,10 +1,29 @@
+export type InteractionTargetingMode = "nearby" | "facing";
+
 export type GameplaySettings = {
   smartInteract: boolean;
+  interactionTargetingMode: InteractionTargetingMode;
 };
 
 export interface StorageLike {
   getItem(key: string): string | null;
   setItem(key: string, value: string): void;
+}
+
+const defaultGameplaySettings: GameplaySettings = {
+  smartInteract: false,
+  interactionTargetingMode: "nearby",
+};
+const gameplaySettingsStorageKey = "nywarudo_gameplay_settings";
+
+export function getDefaultGameplaySettings(): GameplaySettings {
+  return { ...defaultGameplaySettings };
+}
+
+function isInteractionTargetingMode(
+  value: unknown,
+): value is InteractionTargetingMode {
+  return value === "nearby" || value === "facing";
 }
 
 export function readStoredGameplaySettings(
@@ -13,26 +32,36 @@ export function readStoredGameplaySettings(
     : undefined,
 ): GameplaySettings {
   if (!storage) {
-    return { smartInteract: false };
+    return getDefaultGameplaySettings();
   }
 
-  const stored = storage.getItem("nywarudo_gameplay_settings");
-  if (stored) {
-    try {
-      const parsed = JSON.parse(stored);
-      if (
-        typeof parsed === "object" &&
-        parsed !== null &&
-        typeof parsed.smartInteract === "boolean"
-      ) {
-        return parsed as GameplaySettings;
-      }
-    } catch {
-      // ignore parsing errors and fall back to default
+  try {
+    const stored = storage.getItem(gameplaySettingsStorageKey);
+    if (!stored) {
+      return getDefaultGameplaySettings();
     }
+
+    const parsed: unknown = JSON.parse(stored);
+    if (typeof parsed === "object" && parsed !== null) {
+      const maybeSettings = parsed as Partial<GameplaySettings>;
+
+      return {
+        smartInteract:
+          typeof maybeSettings.smartInteract === "boolean"
+            ? maybeSettings.smartInteract
+            : defaultGameplaySettings.smartInteract,
+        interactionTargetingMode: isInteractionTargetingMode(
+          maybeSettings.interactionTargetingMode,
+        )
+          ? maybeSettings.interactionTargetingMode
+          : defaultGameplaySettings.interactionTargetingMode,
+      };
+    }
+  } catch {
+    return getDefaultGameplaySettings();
   }
 
-  return { smartInteract: false };
+  return getDefaultGameplaySettings();
 }
 
 export function writeStoredGameplaySettings(
@@ -41,7 +70,13 @@ export function writeStoredGameplaySettings(
     ? window.localStorage
     : undefined,
 ): void {
-  if (storage) {
-    storage.setItem("nywarudo_gameplay_settings", JSON.stringify(settings));
+  if (!storage) {
+    return;
+  }
+
+  try {
+    storage.setItem(gameplaySettingsStorageKey, JSON.stringify(settings));
+  } catch {
+    // Gameplay persistence is optional; the current in-memory setting still applies.
   }
 }

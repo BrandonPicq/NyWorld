@@ -29,6 +29,7 @@ export interface GameSnapshot {
   mapHeight: number;
   playerX: number;
   playerY: number;
+  playerFacing: Direction;
   tiles: number[][];
   log: LogEntry[];
   stats: Stats;
@@ -63,6 +64,7 @@ export class GameplayEngine {
   map: GameMap;
 
   private log: LogEntry[] = [];
+  private playerFacing: Direction = "south";
   private resolveZone?: ZoneResolver;
 
   constructor(map: GameMap, options: GameplayEngineOptions = {}) {
@@ -144,9 +146,9 @@ export class GameplayEngine {
   /**
    * Applies one player command and returns any immediate UI-facing result.
    *
-   * Movement commands may fail without advancing time when blocked by map
-   * geometry or an NPC dialogue collision. Interact checks adjacent tiles for
-   * contextual actions without moving the player.
+   * Movement commands update facing and may fail without advancing time when
+   * blocked by map geometry or an NPC dialogue collision. Interact checks
+   * nearby or direction-limited tiles for contextual actions without moving.
    */
   execute(command: GameCommand): { success: boolean; dialogue?: DialogueNode[] } {
     if (command.type === "Rest") {
@@ -155,7 +157,7 @@ export class GameplayEngine {
     }
 
     if (command.type === "Interact") {
-      return this.interact(command.targetNpcId);
+      return this.interact(command.targetNpcId, command.targetDirection);
     }
 
     const direction = COMMAND_DIRECTION[command.type];
@@ -163,6 +165,8 @@ export class GameplayEngine {
     if (!direction) {
       return { success: false };
     }
+
+    this.playerFacing = direction;
 
     const stats = this.getPlayerStats();
     if (stats.energy <= 0) {
@@ -202,11 +206,17 @@ export class GameplayEngine {
     return { success: moved };
   }
 
-  private interact(targetNpcId?: string): { success: boolean; dialogue?: DialogueNode[] } {
+  private interact(
+    targetNpcId?: string,
+    targetDirection?: Direction,
+  ): { success: boolean; dialogue?: DialogueNode[] } {
     const playerPosition = this.getPlayerPosition();
     const adjacentNpcs: Npc[] = [];
+    const directionsToCheck = targetDirection
+      ? [targetDirection]
+      : INTERACTION_DIRECTIONS;
 
-    for (const direction of INTERACTION_DIRECTIONS) {
+    for (const direction of directionsToCheck) {
       const target = this.getTargetPosition(playerPosition, direction);
       const npc = this.getNpcAt(target.x, target.y);
 
@@ -218,7 +228,9 @@ export class GameplayEngine {
     if (adjacentNpcs.length === 0) {
       this.log.push({
         tick: this.tickCounter.tick,
-        message: "There is nothing to interact with nearby.",
+        message: targetDirection
+          ? "There is nothing to interact with there."
+          : "There is nothing to interact with nearby.",
       });
       return { success: false };
     }
@@ -228,6 +240,12 @@ export class GameplayEngine {
       if (targetNpc) {
         return this.talkToNpc(targetNpc, true);
       }
+
+      this.log.push({
+        tick: this.tickCounter.tick,
+        message: "That interaction target is no longer nearby.",
+      });
+      return { success: false };
     }
 
     return this.talkToNpc(adjacentNpcs[0], true);
@@ -360,6 +378,7 @@ export class GameplayEngine {
       mapHeight: this.map.height,
       playerX: pos.x,
       playerY: pos.y,
+      playerFacing: this.playerFacing,
       tiles,
       log: [...this.log],
       stats: {

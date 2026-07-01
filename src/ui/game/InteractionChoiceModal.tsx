@@ -3,24 +3,24 @@ import { TerminalMenu } from "../components/TerminalMenu";
 import type { AudioSettings } from "../audio/audioSettings";
 import { playMenuConfirmSound, playMenuMoveSound } from "../audio/menuAudio";
 
-type NpcChoice = {
-  npcId: string;
-  name: string;
+type InteractionChoice = {
+  id: string;
+  label: string;
 };
 
-type InteractChoiceModalProps = {
+type InteractionChoiceModalProps = {
   audioSettings: AudioSettings;
-  npcs: NpcChoice[];
-  onSelect: (npcId: string) => void;
+  choices: InteractionChoice[];
+  onSelect: (choiceId: string) => void;
   onClose: () => void;
 };
 
-export function InteractChoiceModal({
+export function InteractionChoiceModal({
   audioSettings,
-  npcs,
+  choices,
   onSelect,
   onClose,
-}: InteractChoiceModalProps) {
+}: InteractionChoiceModalProps) {
   const menuFeedback = {
     onActivateItem: () => {
       if (audioSettings.soundEnabled) {
@@ -58,24 +58,19 @@ export function InteractChoiceModal({
       >
         <p className="terminal-kicker">INTERACTION AMBIGUITY</p>
         <h2 className="terminal-heading-md" style={{ marginBottom: "var(--space-4)" }}>
-          Who do you want to talk to?
+          What do you want to do?
         </h2>
 
         <TerminalMenu
-          ariaLabel="NPC choices"
-          items={npcs.map((npc) => ({
-            label: npc.name,
+          ariaLabel="Interaction choices"
+          items={choices.map((choice) => ({
+            label: choice.label,
             onSelect: () => {
-              onSelect(npc.npcId);
+              onSelect(choice.id);
             },
           }))}
           {...menuFeedback}
           onBack={handleClose}
-          onBackAction={() => {
-            if (audioSettings.soundEnabled) {
-              playMenuConfirmSound();
-            }
-          }}
         />
       </TerminalPanel>
     </div>

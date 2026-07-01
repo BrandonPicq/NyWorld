@@ -8,6 +8,7 @@ const gameSnapshot: GameSnapshot = {
   mapWidth: 2,
   playerX: 1,
   playerY: 0,
+  playerFacing: "south",
   tick: 0,
   tiles: [
     [0, 1],
