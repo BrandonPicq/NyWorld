@@ -56,6 +56,10 @@ const baseSnapshot: GameSnapshot = {
     },
   ],
   entryDialogue: [],
+  inventory: {
+    type: "Inventory",
+    items: [],
+  },
 };
 
 describe("interactionTargets", () => {

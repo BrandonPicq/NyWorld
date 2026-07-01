@@ -505,4 +505,71 @@ describe("GameplayEngine", () => {
       "That interaction target is no longer nearby.",
     ]);
   });
+
+  it("exposes starter inventory items in snapshots", () => {
+    const engine = createEngine();
+
+    expect(engine.getSnapshot().inventory.items).toEqual([
+      {
+        itemId: "academy_notebook",
+        name: "Academy Notebook",
+        description: "A worn leather-bound notebook filled with scribbled lectures.",
+        category: "quest",
+        quantity: 1,
+      },
+      {
+        itemId: "travel_ration",
+        name: "Travel Ration",
+        description: "Dried meat and hardtack. Keeps you going.",
+        category: "consumable",
+        quantity: 3,
+      },
+      {
+        itemId: "chalk_piece",
+        name: "Chalk Piece",
+        description: "White chalk used for temporary markings.",
+        category: "material",
+        quantity: 2,
+      },
+    ]);
+  });
+
+  it("protects engine inventory state from snapshot mutations", () => {
+    const engine = createEngine();
+    const snapshot = engine.getSnapshot();
+
+    snapshot.inventory.items[0].quantity = 99;
+    snapshot.inventory.items[0].name = "Changed outside the engine";
+    snapshot.inventory.items.push({
+      itemId: "external_item",
+      name: "External Item",
+      description: "Added from a stale UI snapshot.",
+      category: "misc",
+      quantity: 1,
+    });
+
+    expect(engine.getSnapshot().inventory.items).toEqual([
+      {
+        itemId: "academy_notebook",
+        name: "Academy Notebook",
+        description: "A worn leather-bound notebook filled with scribbled lectures.",
+        category: "quest",
+        quantity: 1,
+      },
+      {
+        itemId: "travel_ration",
+        name: "Travel Ration",
+        description: "Dried meat and hardtack. Keeps you going.",
+        category: "consumable",
+        quantity: 3,
+      },
+      {
+        itemId: "chalk_piece",
+        name: "Chalk Piece",
+        description: "White chalk used for temporary markings.",
+        category: "material",
+        quantity: 2,
+      },
+    ]);
+  });
 });

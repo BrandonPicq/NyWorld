@@ -27,6 +27,10 @@ const gameSnapshot: GameSnapshot = {
   },
   entities: [],
   entryDialogue: [],
+  inventory: {
+    type: "Inventory",
+    items: [],
+  },
 };
 
 describe("createGridRenderSnapshot", () => {

@@ -4,6 +4,18 @@ This file tracks meaningful project changes by commit-oriented slices.
 
 Keep entries short and practical. When a slice is committed, its changelog section should stay aligned with the commit title so the project history remains easy to read after restores or bisects.
 
+## 2026-07-01 - [ADD]: Add read-only player inventory
+
+- Add an Inventory ECS component with InventoryStack items (itemId, name, description, category, quantity).
+- Define item categories as quest, consumable, material, and misc.
+- Provide three starter items (Academy Notebook, Travel Ration, Chalk Piece) on the player entity.
+- Expose inventory in the game snapshot with a deep copy so UI cannot mutate engine state.
+- Add an InventoryModal with item name, quantity, category label, and description.
+- Add an [I] Inventory button to the left sidebar alongside Sheet and Rest.
+- Add I key handling in useGameKeyboardControls to toggle the inventory modal.
+- Disable game controls while the inventory modal is open.
+- Update project plan documentation.
+
 ## 2026-07-01 - [REFACTOR]: Align Stats component contract
 
 - Make the `Stats` component extend the shared ECS component contract.

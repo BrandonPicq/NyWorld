@@ -253,6 +253,63 @@
   margin: 0;
 }
 
+.stats-modal__empty {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-family: var(--font-mono);
+  font-size: 0.95rem;
+}
+
+.stats-modal__inventory-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.stats-modal__inventory-item {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding: var(--space-2);
+  border: 1px solid var(--color-border-muted);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.stats-modal__inventory-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.stats-modal__inventory-name {
+  color: var(--color-text-strong);
+  font-family: var(--font-mono);
+  font-weight: bold;
+}
+
+.stats-modal__inventory-quantity {
+  color: var(--color-accent);
+  font-family: var(--font-mono);
+  font-size: 0.9rem;
+  font-weight: bold;
+}
+
+.stats-modal__inventory-category {
+  color: var(--color-text-muted);
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.stats-modal__inventory-description {
+  margin: 0;
+  color: var(--color-text-soft);
+  font-size: 0.9rem;
+  line-height: var(--line-height-copy);
+}
+
 .stats-modal__actions {
   display: flex;
   justify-content: flex-end;

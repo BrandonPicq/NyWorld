@@ -5,6 +5,7 @@ import { formatCurrency } from "../controls/statsFormatter";
 
 type CharacterStatusPanelProps = {
   controlsDisabled?: boolean;
+  onOpenInventory: () => void;
   onOpenSheet: () => void;
   onRest: () => void;
   stats: Stats;
@@ -12,6 +13,7 @@ type CharacterStatusPanelProps = {
 
 export function CharacterStatusPanel({
   controlsDisabled = false,
+  onOpenInventory,
   onOpenSheet,
   onRest,
   stats,
@@ -51,6 +53,9 @@ export function CharacterStatusPanel({
       <div className="sidebar-actions">
         <TerminalButton disabled={controlsDisabled} onClick={onOpenSheet}>
           [C] Sheet
+        </TerminalButton>
+        <TerminalButton disabled={controlsDisabled} onClick={onOpenInventory}>
+          [I] Inventory
         </TerminalButton>
         <TerminalButton
           disabled={controlsDisabled || stats.energy >= stats.maxEnergy}

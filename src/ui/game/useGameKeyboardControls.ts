@@ -13,10 +13,12 @@ type UseGameKeyboardControlsInput = {
   executeCommand: (command: GameCommand) => void;
   isCharacterSheetOpen: boolean;
   isInteractChoiceOpen?: boolean;
+  isInventoryOpen: boolean;
   keyboardLayout: KeyboardLayout;
   onBackToTitle: () => void;
   progressDialogue: () => void;
   setIsCharacterSheetOpen: Dispatch<SetStateAction<boolean>>;
+  setIsInventoryOpen: Dispatch<SetStateAction<boolean>>;
 };
 
 /**
@@ -32,10 +34,12 @@ export function useGameKeyboardControls({
   executeCommand,
   isCharacterSheetOpen,
   isInteractChoiceOpen = false,
+  isInventoryOpen,
   keyboardLayout,
   onBackToTitle,
   progressDialogue,
   setIsCharacterSheetOpen,
+  setIsInventoryOpen,
 }: UseGameKeyboardControlsInput): void {
   useEffect(() => {
     function handleKeyDown(event: KeyboardEvent) {
@@ -59,7 +63,22 @@ export function useGameKeyboardControls({
         return;
       }
 
-      if (keyLower === "c") {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        if (audioSettings.soundEnabled) {
+          playMenuConfirmSound();
+        }
+        if (isCharacterSheetOpen) {
+          setIsCharacterSheetOpen(false);
+        } else if (isInventoryOpen) {
+          setIsInventoryOpen(false);
+        } else {
+          onBackToTitle();
+        }
+        return;
+      }
+
+      if (keyLower === "c" && !isInventoryOpen) {
         event.preventDefault();
         if (audioSettings.soundEnabled) {
           playMenuConfirmSound();
@@ -68,20 +87,16 @@ export function useGameKeyboardControls({
         return;
       }
 
-      if (event.key === "Escape") {
+      if (keyLower === "i" && !isCharacterSheetOpen) {
         event.preventDefault();
         if (audioSettings.soundEnabled) {
           playMenuConfirmSound();
         }
-        if (isCharacterSheetOpen) {
-          setIsCharacterSheetOpen(false);
-        } else {
-          onBackToTitle();
-        }
+        setIsInventoryOpen((prev) => !prev);
         return;
       }
 
-      if (isCharacterSheetOpen) {
+      if (isCharacterSheetOpen || isInventoryOpen) {
         return;
       }
 
@@ -108,9 +123,11 @@ export function useGameKeyboardControls({
     executeCommand,
     isCharacterSheetOpen,
     isInteractChoiceOpen,
+    isInventoryOpen,
     keyboardLayout,
     onBackToTitle,
     progressDialogue,
     setIsCharacterSheetOpen,
+    setIsInventoryOpen,
   ]);
 }

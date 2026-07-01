@@ -1,4 +1,14 @@
-export type { PlayerControlled, Position, Renderable, Npc, DialogueNode } from "./components";
+export type {
+  DialogueNode,
+  Inventory,
+  InventoryItemCategory,
+  InventoryStack,
+  Npc,
+  PlayerControlled,
+  Position,
+  Renderable,
+  Stats,
+} from "./components";
 export { World } from "./ecs";
 export type { Component, EntityId } from "./ecs";
 export { GameMap } from "./GameMap";

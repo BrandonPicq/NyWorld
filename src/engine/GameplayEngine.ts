@@ -1,5 +1,13 @@
 import type { GameCommand } from "./commands";
-import type { Position, Stats, Npc, DialogueNode, Renderable } from "./components";
+import type {
+  DialogueNode,
+  Inventory,
+  InventoryStack,
+  Npc,
+  Position,
+  Renderable,
+  Stats,
+} from "./components";
 import { World } from "./ecs/World";
 import { GameMap } from "./GameMap";
 import { DIRECTION_DELTA, MovementSystem } from "./systems/MovementSystem";
@@ -33,6 +41,7 @@ export interface GameSnapshot {
   tiles: number[][];
   log: LogEntry[];
   stats: Stats;
+  inventory: Inventory;
   entities: RenderEntity[];
   entryDialogue: DialogueNode[];
 }
@@ -104,6 +113,34 @@ export class GameplayEngine {
       academicProgress: 0,
     };
     this.world.addComponent(playerId, stats);
+
+    const inventory: Inventory = {
+      type: "Inventory",
+      items: [
+        {
+          itemId: "academy_notebook",
+          name: "Academy Notebook",
+          description: "A worn leather-bound notebook filled with scribbled lectures.",
+          category: "quest",
+          quantity: 1,
+        },
+        {
+          itemId: "travel_ration",
+          name: "Travel Ration",
+          description: "Dried meat and hardtack. Keeps you going.",
+          category: "consumable",
+          quantity: 3,
+        },
+        {
+          itemId: "chalk_piece",
+          name: "Chalk Piece",
+          description: "White chalk used for temporary markings.",
+          category: "material",
+          quantity: 2,
+        },
+      ],
+    };
+    this.world.addComponent(playerId, inventory);
 
     this.spawnNpcs();
 
@@ -370,6 +407,8 @@ export class GameplayEngine {
       });
     }
 
+    const inventory = this.getPlayerInventory();
+
     return {
       tick: this.tickCounter.tick,
       zoneId: this.map.zoneId,
@@ -385,11 +424,20 @@ export class GameplayEngine {
         ...stats,
         attributes: { ...stats.attributes },
       },
+      inventory: {
+        ...inventory,
+        items: inventory.items.map((stack) => ({ ...stack })),
+      },
       entities,
       entryDialogue: this.map.entryDialogue.map((dialogue) => ({
         ...dialogue,
       })),
     };
+  }
+
+  private getPlayerInventory(): Inventory {
+    const [playerId] = this.world.entitiesWith("Inventory", "PlayerControlled");
+    return this.world.getComponent<Inventory>(playerId, "Inventory")!;
   }
 
   private getPlayerStats(): Stats {

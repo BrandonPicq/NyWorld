@@ -64,7 +64,8 @@ La V0 inclura :
 - une commande d'interaction contextuelle pour parler aux PNJs proches, avec ciblage autour du joueur ou seulement dans la direction regardee ;
 - des dialogues d'entree de zone configures dans les donnees JSON ;
 - des personnages non-joueurs (PNJs) configurés de manière déclarative, s'affichant sur le canvas et déclenchant des boîtes de dialogue interactives sur collision ;
-- un défilement de dialogue progressif ("typewriter") couplé à des signaux Web Audio ("bleeps") dont le pitch varie selon la voix du PNJ.
+- un défilement de dialogue progressif ("typewriter") couplé à des signaux Web Audio ("bleeps") dont le pitch varie selon la voix du PNJ ;
+- un inventaire consultable en lecture seule, avec catégories, descriptions et état vide, accessible par bouton et raccourci clavier.
 
 ## Interface V0
 

@@ -19,6 +19,7 @@ import { useGameKeyboardControls } from "../game/useGameKeyboardControls";
 import { useGameplayEngine } from "../game/useGameplayEngine";
 import { useZoneEntryDialogue } from "../game/useZoneEntryDialogue";
 import { InteractionChoiceModal } from "../game/InteractionChoiceModal";
+import { InventoryModal } from "../game/InventoryModal";
 import {
   createInteractionCommand,
   getInteractionTargets,
@@ -46,6 +47,7 @@ export function GameScreen({
 }: GameScreenProps) {
   const [isCharacterSheetOpen, setIsCharacterSheetOpen] = useState(false);
   const [isInteractChoiceOpen, setIsInteractChoiceOpen] = useState(false);
+  const [isInventoryOpen, setIsInventoryOpen] = useState(false);
   const logRef = useRef<HTMLDivElement>(null);
   const {
     activeDialogue,
@@ -57,7 +59,10 @@ export function GameScreen({
     visibleText,
   } = useDialogueSequence({ audioSettings, textSpeed });
   const controlsDisabled =
-    activeDialogue !== null || isCharacterSheetOpen || isInteractChoiceOpen;
+    activeDialogue !== null ||
+    isCharacterSheetOpen ||
+    isInteractChoiceOpen ||
+    isInventoryOpen;
   const { executeCommand, snapshot } = useGameplayEngine({
     initialZoneData: zoneRegistry.test_zone,
     onDialogue: triggerDialogue,
@@ -109,10 +114,12 @@ export function GameScreen({
     executeCommand: handleExecuteCommand,
     isCharacterSheetOpen,
     isInteractChoiceOpen,
+    isInventoryOpen,
     keyboardLayout,
     onBackToTitle,
     progressDialogue,
     setIsCharacterSheetOpen,
+    setIsInventoryOpen,
   });
 
   if (!snapshot) {
@@ -132,6 +139,7 @@ export function GameScreen({
       <div className="game-layout">
         <CharacterStatusPanel
           controlsDisabled={controlsDisabled}
+          onOpenInventory={() => setIsInventoryOpen(true)}
           onOpenSheet={() => setIsCharacterSheetOpen(true)}
           onRest={() => handleExecuteCommand({ type: "Rest" })}
           stats={snapshot.stats}
@@ -164,6 +172,14 @@ export function GameScreen({
             audioSettings={audioSettings}
             onClose={() => setIsCharacterSheetOpen(false)}
             stats={snapshot.stats}
+          />
+        )}
+
+        {isInventoryOpen && (
+          <InventoryModal
+            audioSettings={audioSettings}
+            inventory={snapshot.inventory}
+            onClose={() => setIsInventoryOpen(false)}
           />
         )}
 
