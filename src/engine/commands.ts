@@ -3,5 +3,5 @@ export type GameCommand =
   | { type: "MoveSouth" }
   | { type: "MoveWest" }
   | { type: "MoveEast" }
-  | { type: "Interact" }
+  | { type: "Interact"; targetNpcId?: string }
   | { type: "Rest" };

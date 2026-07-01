@@ -9,6 +9,7 @@ type UseGameKeyboardControlsInput = {
   closeDialogue: () => void;
   executeCommand: (command: GameCommand) => void;
   isCharacterSheetOpen: boolean;
+  isInteractChoiceOpen?: boolean;
   keyboardLayout: KeyboardLayout;
   onBackToTitle: () => void;
   progressDialogue: () => void;
@@ -26,6 +27,7 @@ export function useGameKeyboardControls({
   closeDialogue,
   executeCommand,
   isCharacterSheetOpen,
+  isInteractChoiceOpen = false,
   keyboardLayout,
   onBackToTitle,
   progressDialogue,
@@ -62,7 +64,7 @@ export function useGameKeyboardControls({
         return;
       }
 
-      if (isCharacterSheetOpen) {
+      if (isCharacterSheetOpen || isInteractChoiceOpen) {
         return;
       }
 
@@ -87,6 +89,7 @@ export function useGameKeyboardControls({
     closeDialogue,
     executeCommand,
     isCharacterSheetOpen,
+    isInteractChoiceOpen,
     keyboardLayout,
     onBackToTitle,
     progressDialogue,

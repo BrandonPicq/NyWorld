@@ -17,6 +17,8 @@ export interface RenderEntity {
   y: number;
   glyph: string;
   color: string;
+  npcId?: string;
+  name?: string;
 }
 
 export interface GameSnapshot {
@@ -153,7 +155,7 @@ export class GameplayEngine {
     }
 
     if (command.type === "Interact") {
-      return this.interact();
+      return this.interact(command.targetNpcId);
     }
 
     const direction = COMMAND_DIRECTION[command.type];
@@ -200,24 +202,35 @@ export class GameplayEngine {
     return { success: moved };
   }
 
-  private interact(): { success: boolean; dialogue?: DialogueNode[] } {
+  private interact(targetNpcId?: string): { success: boolean; dialogue?: DialogueNode[] } {
     const playerPosition = this.getPlayerPosition();
+    const adjacentNpcs: Npc[] = [];
 
     for (const direction of INTERACTION_DIRECTIONS) {
       const target = this.getTargetPosition(playerPosition, direction);
       const npc = this.getNpcAt(target.x, target.y);
 
       if (npc) {
-        return this.talkToNpc(npc, true);
+        adjacentNpcs.push(npc);
       }
     }
 
-    this.log.push({
-      tick: this.tickCounter.tick,
-      message: "There is nothing to interact with nearby.",
-    });
+    if (adjacentNpcs.length === 0) {
+      this.log.push({
+        tick: this.tickCounter.tick,
+        message: "There is nothing to interact with nearby.",
+      });
+      return { success: false };
+    }
 
-    return { success: false };
+    if (targetNpcId) {
+      const targetNpc = adjacentNpcs.find((n) => n.npcId === targetNpcId);
+      if (targetNpc) {
+        return this.talkToNpc(targetNpc, true);
+      }
+    }
+
+    return this.talkToNpc(adjacentNpcs[0], true);
   }
 
   private getNpcAt(x: number, y: number): Npc | undefined {
@@ -328,11 +341,14 @@ export class GameplayEngine {
 
       const p = this.world.getComponent<Position>(entityId, "Position")!;
       const r = this.world.getComponent<Renderable>(entityId, "Renderable")!;
+      const npc = this.world.getComponent<Npc>(entityId, "Npc");
       entities.push({
         x: p.x,
         y: p.y,
         glyph: r.glyph,
         color: r.color,
+        npcId: npc?.npcId,
+        name: npc?.name,
       });
     }
 

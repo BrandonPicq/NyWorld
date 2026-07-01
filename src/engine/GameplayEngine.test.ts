@@ -373,4 +373,45 @@ describe("GameplayEngine", () => {
       "There is nothing to interact with nearby.",
     ]);
   });
+
+  it("resolves interaction ambiguity when multiple NPCs are adjacent", () => {
+    const secondAdjacentNpc = {
+      npcId: "scholar_2",
+      name: "Old Sage",
+      glyph: "G",
+      color: "#ff0000",
+      x: 1,
+      y: 2,
+      dialogue: [{ speaker: "Old Sage", text: "Greetings, traveler.", pitch: 0.8 }],
+    };
+
+    const mapWithMultipleNpcs = loadZone({
+      ...zoneData,
+      npcs: [adjacentNpc, secondAdjacentNpc],
+    });
+    const engine = new GameplayEngine(mapWithMultipleNpcs);
+
+    // 1. Without targeted NPC ID, standard interact talks to the first found PNJ
+    const result1 = engine.execute({ type: "Interact" });
+    expect(result1.success).toBe(true);
+    expect(result1.dialogue).toEqual([
+      { speaker: "Old Scholar", text: "Welcome!", pitch: 0.9 },
+    ]);
+
+    // 2. With targeted NPC ID, interact talks specifically to the targeted PNJ
+    const result2 = engine.execute({
+      type: "Interact",
+      targetNpcId: "scholar_2",
+    });
+    expect(result2.success).toBe(true);
+    expect(result2.dialogue).toEqual([
+      { speaker: "Old Sage", text: "Greetings, traveler.", pitch: 0.8 },
+    ]);
+
+    expect(engine.getSnapshot().log.map((entry) => entry.message)).toEqual([
+      "Entered Movement Test.",
+      "Talked to Old Scholar.",
+      "Talked to Old Sage.",
+    ]);
+  });
 });

@@ -3,6 +3,7 @@ import { createGridRenderSnapshot } from "../../rendering";
 import testZoneData from "../../content/zones/test_zone.json";
 import testZone2Data from "../../content/zones/test_zone_2.json";
 import type { ZoneData } from "../../engine/ZoneTypes";
+import type { GameCommand } from "../../engine";
 import { TerminalPanel } from "../components/TerminalPanel";
 import type { KeyboardLayout } from "../controls/keyboardLayout";
 import type { AudioSettings } from "../audio/audioSettings";
@@ -17,6 +18,7 @@ import { useDialogueSequence } from "../game/useDialogueSequence";
 import { useGameKeyboardControls } from "../game/useGameKeyboardControls";
 import { useGameplayEngine } from "../game/useGameplayEngine";
 import { useZoneEntryDialogue } from "../game/useZoneEntryDialogue";
+import { InteractChoiceModal } from "../game/InteractChoiceModal";
 
 type GameScreenProps = {
   audioSettings: AudioSettings;
@@ -39,6 +41,7 @@ export function GameScreen({
   onBackToTitle,
 }: GameScreenProps) {
   const [isCharacterSheetOpen, setIsCharacterSheetOpen] = useState(false);
+  const [isInteractChoiceOpen, setIsInteractChoiceOpen] = useState(false);
   const logRef = useRef<HTMLDivElement>(null);
   const {
     activeDialogue,
@@ -49,13 +52,33 @@ export function GameScreen({
     triggerDialogue,
     visibleText,
   } = useDialogueSequence({ audioSettings, textSpeed });
-  const controlsDisabled = activeDialogue !== null || isCharacterSheetOpen;
+  const controlsDisabled =
+    activeDialogue !== null || isCharacterSheetOpen || isInteractChoiceOpen;
   const { executeCommand, snapshot } = useGameplayEngine({
-    controlsDisabled,
     initialZoneData: zoneRegistry.test_zone,
     onDialogue: triggerDialogue,
     zoneRegistry,
   });
+
+  const adjacentNpcs = snapshot
+    ? snapshot.entities.filter((entity) => {
+        const dx = Math.abs(entity.x - snapshot.playerX);
+        const dy = Math.abs(entity.y - snapshot.playerY);
+        return (dx === 1 && dy === 0) || (dx === 0 && dy === 1);
+      })
+    : [];
+
+  const handleExecuteCommand = (command: GameCommand) => {
+    if (
+      command.type === "Interact" &&
+      !command.targetNpcId &&
+      adjacentNpcs.length > 1
+    ) {
+      setIsInteractChoiceOpen(true);
+      return;
+    }
+    executeCommand(command);
+  };
 
   useEffect(() => {
     if (logRef.current) {
@@ -67,8 +90,9 @@ export function GameScreen({
   useGameKeyboardControls({
     activeDialogue,
     closeDialogue,
-    executeCommand,
+    executeCommand: handleExecuteCommand,
     isCharacterSheetOpen,
+    isInteractChoiceOpen,
     keyboardLayout,
     onBackToTitle,
     progressDialogue,
@@ -93,7 +117,7 @@ export function GameScreen({
         <CharacterStatusPanel
           controlsDisabled={controlsDisabled}
           onOpenSheet={() => setIsCharacterSheetOpen(true)}
-          onRest={() => executeCommand({ type: "Rest" })}
+          onRest={() => handleExecuteCommand({ type: "Rest" })}
           stats={snapshot.stats}
         />
 
@@ -101,7 +125,7 @@ export function GameScreen({
           controlsDisabled={controlsDisabled}
           gameplaySettings={gameplaySettings}
           keyboardLayout={keyboardLayout}
-          onExecuteCommand={executeCommand}
+          onExecuteCommand={handleExecuteCommand}
           renderSnapshot={gridRenderSnapshot}
           snapshot={snapshot}
         >
@@ -121,6 +145,20 @@ export function GameScreen({
           <CharacterSheetModal
             onClose={() => setIsCharacterSheetOpen(false)}
             stats={snapshot.stats}
+          />
+        )}
+
+        {isInteractChoiceOpen && (
+          <InteractChoiceModal
+            npcs={adjacentNpcs.map((npc) => ({
+              npcId: npc.npcId || npc.glyph,
+              name: npc.name || "NPC",
+            }))}
+            onSelect={(npcId) => {
+              handleExecuteCommand({ type: "Interact", targetNpcId: npcId });
+              setIsInteractChoiceOpen(false);
+            }}
+            onClose={() => setIsInteractChoiceOpen(false)}
           />
         )}
       </div>

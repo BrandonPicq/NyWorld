@@ -9,7 +9,6 @@ import {
 } from "../../engine";
 
 type UseGameplayEngineInput = {
-  controlsDisabled: boolean;
   initialZoneData: ZoneData;
   onDialogue: (nodes: DialogueNode[]) => void;
   zoneRegistry: Record<string, ZoneData>;
@@ -22,7 +21,6 @@ type UseGameplayEngineInput = {
  * and turns engine dialogue results into UI dialogue callbacks.
  */
 export function useGameplayEngine({
-  controlsDisabled,
   initialZoneData,
   onDialogue,
   zoneRegistry,
@@ -49,7 +47,7 @@ export function useGameplayEngine({
 
   const executeCommand = useCallback((command: GameCommand) => {
     const engine = engineRef.current;
-    if (!engine || controlsDisabled) return;
+    if (!engine) return;
 
     const result = engine.execute(command);
     setSnapshot(engine.getSnapshot());
@@ -57,7 +55,7 @@ export function useGameplayEngine({
     if (result.dialogue) {
       onDialogue(result.dialogue);
     }
-  }, [controlsDisabled, onDialogue]);
+  }, [onDialogue]);
 
   return {
     executeCommand,
