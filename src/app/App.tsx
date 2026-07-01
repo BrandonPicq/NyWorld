@@ -41,6 +41,7 @@ type AppScreen = "title" | "game" | OptionsScreenId;
 
 function App() {
   const [screen, setScreen] = useState<AppScreen>("title");
+  const [isGameActive, setIsGameActive] = useState(false);
   const [activeTheme, setActiveTheme] = useState<ThemeId>(() =>
     readStoredThemeId(),
   );
@@ -91,50 +92,69 @@ function App() {
     },
   };
 
-  if (screen === "game") {
-    return (
-      <GameScreen
-        audioSettings={audioSettings}
-        gameplaySettings={gameplaySettings}
-        keyboardLayout={keyboardLayout}
-        textSpeed={textSpeed}
-        onBackToTitle={() => setScreen("title")}
-      />
-    );
-  }
-
-  if (isOptionsScreenId(screen)) {
-    return (
-      <OptionsScreen
-        activeTheme={activeTheme}
-        audioSettings={audioSettings}
-        gameplaySettings={gameplaySettings}
-        keyboardLayout={keyboardLayout}
-        textSpeed={textSpeed}
-        {...menuFeedback}
-        onBackToTitle={() => setScreen("title")}
-        onChangeTheme={setActiveTheme}
-        onChangeKeyboardLayout={setKeyboardLayout}
-        onChangeTextSpeed={setTextSpeed}
-        onChangeGameplaySettings={setGameplaySettings}
-        onOpenAudio={() => setScreen("options-audio")}
-        onOpenGraphics={() => setScreen("options-graphics")}
-        onOpenGameplay={() => setScreen("options-gameplay")}
-        onToggleSound={(soundEnabled) =>
-          setAudioSettings({ soundEnabled })
-        }
-        onBackToOptions={() => setScreen("options")}
-        screen={screen}
-      />
-    );
-  }
+  const showGame = isGameActive && screen === "game";
+  const showOptions = isOptionsScreenId(screen);
+  const showTitle = screen === "title" && !isGameActive;
 
   return (
-    <TitleScreen
-      {...menuFeedback}
-      onOpenOptions={() => setScreen("options")}
-      onStartNewGame={() => setScreen("game")}
-    />
+    <>
+      {isGameActive && (
+        <div style={{ display: showGame ? "block" : "none" }}>
+          <GameScreen
+            audioSettings={audioSettings}
+            gameplaySettings={gameplaySettings}
+            keyboardLayout={keyboardLayout}
+            textSpeed={textSpeed}
+            onBackToTitle={() => {
+              setIsGameActive(false);
+              setScreen("title");
+            }}
+            onOpenOptions={() => setScreen("options")}
+          />
+        </div>
+      )}
+
+      {showTitle && (
+        <TitleScreen
+          {...menuFeedback}
+          onOpenOptions={() => setScreen("options")}
+          onStartNewGame={() => {
+            setIsGameActive(true);
+            setScreen("game");
+          }}
+        />
+      )}
+
+      {showOptions && (
+        <OptionsScreen
+          activeTheme={activeTheme}
+          audioSettings={audioSettings}
+          gameplaySettings={gameplaySettings}
+          keyboardLayout={keyboardLayout}
+          textSpeed={textSpeed}
+          {...menuFeedback}
+          onBackToTitle={() => {
+            if (isGameActive) {
+              setScreen("game");
+            } else {
+              setScreen("title");
+            }
+          }}
+          onChangeTheme={setActiveTheme}
+          onChangeKeyboardLayout={setKeyboardLayout}
+          onChangeTextSpeed={setTextSpeed}
+          onChangeGameplaySettings={setGameplaySettings}
+          onOpenAudio={() => setScreen("options-audio")}
+          onOpenGraphics={() => setScreen("options-graphics")}
+          onOpenGameplay={() => setScreen("options-gameplay")}
+          onToggleSound={(soundEnabled) =>
+            setAudioSettings({ soundEnabled })
+          }
+          onBackToOptions={() => setScreen("options")}
+          screen={screen}
+        />
+      )}
+    </>
   );
 }
 

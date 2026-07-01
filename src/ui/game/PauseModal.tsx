@@ -6,12 +6,14 @@ import { playMenuConfirmSound, playMenuMoveSound } from "../audio/menuAudio";
 type PauseModalProps = {
   audioSettings: AudioSettings;
   onClose: () => void;
+  onOpenOptions: () => void;
   onQuit: () => void;
 };
 
 export function PauseModal({
   audioSettings,
   onClose,
+  onOpenOptions,
   onQuit,
 }: PauseModalProps) {
   const menuFeedback = {
@@ -38,6 +40,10 @@ export function PauseModal({
     {
       label: "Resume",
       onSelect: () => onClose(),
+    },
+    {
+      label: "Options",
+      onSelect: () => onOpenOptions(),
     },
     {
       label: "Quit to Title",

@@ -33,6 +33,7 @@ type GameScreenProps = {
   keyboardLayout: KeyboardLayout;
   textSpeed: TextSpeed;
   onBackToTitle: () => void;
+  onOpenOptions: () => void;
 };
 
 const zoneRegistry: Record<string, ZoneData> = {
@@ -46,6 +47,7 @@ export function GameScreen({
   keyboardLayout,
   textSpeed,
   onBackToTitle,
+  onOpenOptions,
 }: GameScreenProps) {
   const [isCharacterSheetOpen, setIsCharacterSheetOpen] = useState(false);
   const [isInteractChoiceOpen, setIsInteractChoiceOpen] = useState(false);
@@ -256,6 +258,7 @@ export function GameScreen({
           <PauseModal
             audioSettings={audioSettings}
             onClose={() => setIsPauseMenuOpen(false)}
+            onOpenOptions={onOpenOptions}
             onQuit={onBackToTitle}
           />
         )}
