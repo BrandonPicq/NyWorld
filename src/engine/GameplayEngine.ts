@@ -41,6 +41,8 @@ const COMMAND_DIRECTION: Record<string, Direction> = {
   MoveEast: "east",
 };
 
+const INTERACTION_DIRECTIONS: Direction[] = ["north", "east", "south", "west"];
+
 type ZoneResolver = (zoneId: string) => GameMap | undefined;
 
 type GameplayEngineOptions = {
@@ -141,12 +143,17 @@ export class GameplayEngine {
    * Applies one player command and returns any immediate UI-facing result.
    *
    * Movement commands may fail without advancing time when blocked by map
-   * geometry or an NPC dialogue collision.
+   * geometry or an NPC dialogue collision. Interact checks adjacent tiles for
+   * contextual actions without moving the player.
    */
   execute(command: GameCommand): { success: boolean; dialogue?: DialogueNode[] } {
     if (command.type === "Rest") {
       this.restPlayer();
       return { success: true };
+    }
+
+    if (command.type === "Interact") {
+      return this.interact();
     }
 
     const direction = COMMAND_DIRECTION[command.type];
@@ -167,18 +174,9 @@ export class GameplayEngine {
     const positionBefore = this.getPlayerPosition();
     const target = this.getTargetPosition(positionBefore, direction);
 
-    // Collision check: check if there's an NPC at target cell
-    const npcEntities = this.world.entitiesWith("Position", "Npc");
-    for (const npcEntityId of npcEntities) {
-      const npcPos = this.world.getComponent<Position>(npcEntityId, "Position")!;
-      if (npcPos.x === target.x && npcPos.y === target.y) {
-        const npc = this.world.getComponent<Npc>(npcEntityId, "Npc")!;
-        this.log.push({
-          tick: this.tickCounter.tick,
-          message: `Talked to ${npc.name}.`,
-        });
-        return { success: false, dialogue: npc.dialogue };
-      }
+    const blockingNpc = this.getNpcAt(target.x, target.y);
+    if (blockingNpc) {
+      return this.talkToNpc(blockingNpc, false);
     }
 
     const moved = MovementSystem.move(this.world, direction, this.map);
@@ -200,6 +198,55 @@ export class GameplayEngine {
     }
 
     return { success: moved };
+  }
+
+  private interact(): { success: boolean; dialogue?: DialogueNode[] } {
+    const playerPosition = this.getPlayerPosition();
+
+    for (const direction of INTERACTION_DIRECTIONS) {
+      const target = this.getTargetPosition(playerPosition, direction);
+      const npc = this.getNpcAt(target.x, target.y);
+
+      if (npc) {
+        return this.talkToNpc(npc, true);
+      }
+    }
+
+    this.log.push({
+      tick: this.tickCounter.tick,
+      message: "There is nothing to interact with nearby.",
+    });
+
+    return { success: false };
+  }
+
+  private getNpcAt(x: number, y: number): Npc | undefined {
+    const npcEntities = this.world.entitiesWith("Position", "Npc");
+
+    for (const npcEntityId of npcEntities) {
+      const npcPos = this.world.getComponent<Position>(npcEntityId, "Position")!;
+
+      if (npcPos.x === x && npcPos.y === y) {
+        return this.world.getComponent<Npc>(npcEntityId, "Npc")!;
+      }
+    }
+
+    return undefined;
+  }
+
+  private talkToNpc(
+    npc: Npc,
+    success: boolean,
+  ): { success: boolean; dialogue: DialogueNode[] } {
+    this.log.push({
+      tick: this.tickCounter.tick,
+      message: `Talked to ${npc.name}.`,
+    });
+
+    return {
+      success,
+      dialogue: npc.dialogue,
+    };
   }
 
   /**

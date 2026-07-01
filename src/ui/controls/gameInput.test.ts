@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { getGameCommandForKey, getMovementKeyLabel } from "./gameInput";
+import {
+  getGameCommandForKey,
+  getInteractKeyLabel,
+  getMovementKeyLabel,
+} from "./gameInput";
 
 describe("game input mapping", () => {
   it("maps arrow keys independently from keyboard layout", () => {
@@ -42,10 +46,19 @@ describe("game input mapping", () => {
     expect(getGameCommandForKey("r", "azerty")).toBeUndefined();
   });
 
+  it("maps interact independently from keyboard layout", () => {
+    expect(getGameCommandForKey("e", "qwerty")).toBe("Interact");
+    expect(getGameCommandForKey("E", "azerty")).toBe("Interact");
+  });
+
   it("returns movement key labels for the active layout", () => {
     expect(getMovementKeyLabel("MoveNorth", "qwerty")).toBe("W");
     expect(getMovementKeyLabel("MoveNorth", "azerty")).toBe("Z");
     expect(getMovementKeyLabel("MoveWest", "qwerty")).toBe("A");
     expect(getMovementKeyLabel("MoveWest", "azerty")).toBe("Q");
+  });
+
+  it("returns the interact key label", () => {
+    expect(getInteractKeyLabel()).toBe("E");
   });
 });

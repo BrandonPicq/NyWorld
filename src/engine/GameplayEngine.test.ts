@@ -24,6 +24,18 @@ function createEngine() {
   return new GameplayEngine(loadZone(zoneData));
 }
 
+const adjacentNpc = {
+  npcId: "scholar",
+  name: "Old Scholar",
+  glyph: "S",
+  color: "#ffcc00",
+  x: 2,
+  y: 1,
+  dialogue: [
+    { speaker: "Old Scholar", text: "Welcome!", pitch: 0.9 },
+  ],
+};
+
 describe("GameplayEngine", () => {
   it("moves the player with cardinal commands", () => {
     const engine = createEngine();
@@ -298,43 +310,67 @@ describe("GameplayEngine", () => {
   it("interacts with NPCs when player collides with their tile", () => {
     const mapWithNpc = loadZone({
       ...zoneData,
-      npcs: [
-        {
-          npcId: "scholar",
-          name: "Old Scholar",
-          glyph: "S",
-          color: "#ffcc00",
-          x: 2,
-          y: 1,
-          dialogue: [
-            { speaker: "Old Scholar", text: "Welcome!", pitch: 0.9 }
-          ],
-        }
-      ]
+      npcs: [adjacentNpc],
     });
     const engine = new GameplayEngine(mapWithNpc);
 
-    // Player starts at (1, 1). NPC is at (2, 1).
-    // Let's try to move east onto (2, 1).
     const result = engine.execute({ type: "MoveEast" });
 
-    // The execution should return success: false and the dialogue sequence!
     expect(result.success).toBe(false);
     expect(result.dialogue).toEqual([
-      { speaker: "Old Scholar", text: "Welcome!", pitch: 0.9 }
+      { speaker: "Old Scholar", text: "Welcome!", pitch: 0.9 },
     ]);
 
-    // Position and tick should not advance
     expect(engine.getSnapshot()).toMatchObject({
       playerX: 1,
       playerY: 1,
       tick: 0,
     });
 
-    // The action log should contain the conversation log entry
     expect(engine.getSnapshot().log.map((entry) => entry.message)).toEqual([
       "Entered Movement Test.",
       "Talked to Old Scholar.",
+    ]);
+  });
+
+  it("interacts with adjacent NPCs without moving the player", () => {
+    const mapWithNpc = loadZone({
+      ...zoneData,
+      npcs: [adjacentNpc],
+    });
+    const engine = new GameplayEngine(mapWithNpc);
+
+    const result = engine.execute({ type: "Interact" });
+
+    expect(result.success).toBe(true);
+    expect(result.dialogue).toEqual([
+      { speaker: "Old Scholar", text: "Welcome!", pitch: 0.9 },
+    ]);
+    expect(engine.getSnapshot()).toMatchObject({
+      playerX: 1,
+      playerY: 1,
+      tick: 0,
+    });
+    expect(engine.getSnapshot().log.map((entry) => entry.message)).toEqual([
+      "Entered Movement Test.",
+      "Talked to Old Scholar.",
+    ]);
+  });
+
+  it("logs when interact finds nothing nearby", () => {
+    const engine = createEngine();
+
+    const result = engine.execute({ type: "Interact" });
+
+    expect(result).toEqual({ success: false });
+    expect(engine.getSnapshot()).toMatchObject({
+      playerX: 1,
+      playerY: 1,
+      tick: 0,
+    });
+    expect(engine.getSnapshot().log.map((entry) => entry.message)).toEqual([
+      "Entered Movement Test.",
+      "There is nothing to interact with nearby.",
     ]);
   });
 });

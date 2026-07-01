@@ -4,7 +4,7 @@ import type { GridRenderSnapshot } from "../../rendering";
 import { GameCanvas } from "../components/GameCanvas";
 import { TerminalButton } from "../components/TerminalButton";
 import { TerminalPanel } from "../components/TerminalPanel";
-import { getMovementKeyLabel } from "../controls/gameInput";
+import { getInteractKeyLabel, getMovementKeyLabel } from "../controls/gameInput";
 import type { KeyboardLayout } from "../controls/keyboardLayout";
 
 type GameCenterPanelProps = {
@@ -48,7 +48,7 @@ export function GameCenterPanel({
       <div
         className="game-screen__controls"
         role="group"
-        aria-label="Movement controls"
+        aria-label="Game controls"
       >
         <div />
         <TerminalButton
@@ -76,6 +76,14 @@ export function GameCenterPanel({
         >
           &rarr; East [{getMovementKeyLabel("MoveEast", keyboardLayout)}]
         </TerminalButton>
+        <div />
+        <TerminalButton
+          disabled={controlsDisabled}
+          onClick={() => onExecuteCommand({ type: "Interact" })}
+        >
+          Interact [{getInteractKeyLabel()}]
+        </TerminalButton>
+        <div />
       </div>
 
       {children}

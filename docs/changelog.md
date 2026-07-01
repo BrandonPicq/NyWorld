@@ -4,6 +4,14 @@ This file tracks meaningful project changes by commit-oriented slices.
 
 Keep entries short and practical. When a slice is committed, its changelog section should stay aligned with the commit title so the project history remains easy to read after restores or bisects.
 
+## 2026-07-01 - [ADD]: Add contextual interact command
+
+- Add an `Interact` command for contextual game actions.
+- Let Interact talk to adjacent NPCs without moving the player.
+- Map the `E` key and add an Interact button to the game controls.
+- Add tests for interaction input mapping and engine interaction behavior.
+- Update the V0 plan with contextual interaction support.
+
 ## 2026-07-01 - [REFACTOR]: Extract game screen hooks and document public APIs
 
 - Move game engine snapshot orchestration into a reusable hook.

@@ -1,7 +1,11 @@
 import type { GameCommand } from "../../engine/commands";
 import type { KeyboardLayout } from "./keyboardLayout";
 
-export type MovementCommandType = Exclude<GameCommand["type"], "Rest">;
+export type MovementCommandType = Extract<
+  GameCommand["type"],
+  "MoveNorth" | "MoveSouth" | "MoveWest" | "MoveEast"
+>;
+export type KeyboardGameCommandType = MovementCommandType | "Interact";
 
 const arrowKeyCommands: Record<string, MovementCommandType> = {
   ArrowUp: "MoveNorth",
@@ -52,8 +56,14 @@ const movementKeyLabels: Record<
 export function getGameCommandForKey(
   key: string,
   layout: KeyboardLayout,
-): MovementCommandType | undefined {
-  return arrowKeyCommands[key] ?? layoutKeyCommands[layout][key.toLowerCase()];
+): KeyboardGameCommandType | undefined {
+  const normalizedKey = key.toLowerCase();
+
+  if (normalizedKey === "e") {
+    return "Interact";
+  }
+
+  return arrowKeyCommands[key] ?? layoutKeyCommands[layout][normalizedKey];
 }
 
 /**
@@ -64,4 +74,11 @@ export function getMovementKeyLabel(
   layout: KeyboardLayout,
 ): string {
   return movementKeyLabels[layout][commandType];
+}
+
+/**
+ * Returns the player-facing key label for the contextual interaction command.
+ */
+export function getInteractKeyLabel(): string {
+  return "E";
 }

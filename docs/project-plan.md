@@ -61,6 +61,7 @@ La V0 inclura :
 - une carte chargee depuis JSON ;
 - une transition simple entre zones de test ;
 - un journal textuel minimal des actions ;
+- une commande d'interaction contextuelle pour parler aux PNJs adjacents ;
 - des dialogues d'entree de zone configures dans les donnees JSON ;
 - des personnages non-joueurs (PNJs) configurés de manière déclarative, s'affichant sur le canvas et déclenchant des boîtes de dialogue interactives sur collision ;
 - un défilement de dialogue progressif ("typewriter") couplé à des signaux Web Audio ("bleeps") dont le pitch varie selon la voix du PNJ.
@@ -75,6 +76,7 @@ L'ecran sera a texte dominant :
 - zone principale de narration/log ;
 - carte Canvas compacte mais visible affichant le joueur et les PNJs (glyphes colorés) ;
 - boutons de deplacement ;
+- bouton d'interaction contextuelle ;
 - informations de debug : tick, zone active, position ;
 - tableau de bord lateral (gauche) affichant les ressources vitales : jauge d'energie (decroissance par pas), monnaie decomposee (Platinum, Gold, Silver, Bronze), titre academique, avec boutons de repos et fiche de personnage ;
 - fiche de personnage detaillee (modal overlay) accessible avec la touche `C` ou clic, affichant la liste modulaire des attributs (Strength, Intelligence, Charisma) et le detail de la progression academique ;
@@ -91,8 +93,8 @@ Les sons de menu V0 sont generes par une petite couche Web Audio cote UI. Cette 
 Tests unitaires V0 avec Vitest :
 
 - menus, themes, vitesse de défilement et reglages audio ;
-- mapping d'input jeu : fleches, QWERTY, AZERTY, exclusivite des layouts et labels ;
-- moteur gameplay : deplacements cardinaux, blocage par la carte, ticks, journal et collisions de dialogues avec les PNJs ;
+- mapping d'input jeu : fleches, QWERTY, AZERTY, interaction, exclusivite des layouts et labels ;
+- moteur gameplay : deplacements cardinaux, interaction, blocage par la carte, ticks, journal et collisions de dialogues avec les PNJs ;
 - chargement de zone : donnees valides, tile ids inconnus, depart invalide, depart bloque, dialogues d'entree et validation des PNJs.
 
 Tests a completer avec les prochaines tranches :
