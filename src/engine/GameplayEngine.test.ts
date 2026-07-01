@@ -309,5 +309,11 @@ describe("GameplayEngine", () => {
       playerY: 1,
       tick: 0,
     });
+
+    // The action log should contain the conversation log entry
+    expect(engine.getSnapshot().log.map((entry) => entry.message)).toEqual([
+      "Entered Movement Test.",
+      "Talked to Old Scholar.",
+    ]);
   });
 });

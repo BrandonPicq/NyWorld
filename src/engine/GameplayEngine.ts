@@ -160,6 +160,10 @@ export class GameplayEngine {
       const npcPos = this.world.getComponent<Position>(npcEntityId, "Position")!;
       if (npcPos.x === target.x && npcPos.y === target.y) {
         const npc = this.world.getComponent<Npc>(npcEntityId, "Npc")!;
+        this.log.push({
+          tick: this.tickCounter.tick,
+          message: `Talked to ${npc.name}.`,
+        });
         return { success: false, dialogue: npc.dialogue };
       }
     }
