@@ -113,20 +113,20 @@ export class GameplayEngine {
         type: "Position" as const,
         x: npcData.x,
         y: npcData.y,
-      });
+      } as Position);
 
       this.world.addComponent(entityId, {
         type: "Renderable" as const,
         glyph: npcData.glyph,
         color: npcData.color,
-      });
+      } as Renderable);
 
       this.world.addComponent(entityId, {
         type: "Npc" as const,
         npcId: npcData.npcId,
         name: npcData.name,
         dialogue: npcData.dialogue.map((d) => ({ ...d })),
-      });
+      } as Npc);
     }
   }
 
