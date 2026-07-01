@@ -21,6 +21,7 @@ import { useGameplayEngine } from "../game/useGameplayEngine";
 import { useZoneEntryDialogue } from "../game/useZoneEntryDialogue";
 import { InteractionChoiceModal } from "../game/InteractionChoiceModal";
 import { InventoryModal } from "../game/InventoryModal";
+import { PauseModal } from "../game/PauseModal";
 import {
   createInteractionCommand,
   getInteractionTargets,
@@ -50,6 +51,7 @@ export function GameScreen({
   const [isInteractChoiceOpen, setIsInteractChoiceOpen] = useState(false);
   const [isInventoryOpen, setIsInventoryOpen] = useState(false);
   const [inventoryNotice, setInventoryNotice] = useState<string | null>(null);
+  const [isPauseMenuOpen, setIsPauseMenuOpen] = useState(false);
   const logRef = useRef<HTMLDivElement>(null);
   const {
     activeDialogue,
@@ -64,7 +66,8 @@ export function GameScreen({
     activeDialogue !== null ||
     isCharacterSheetOpen ||
     isInteractChoiceOpen ||
-    isInventoryOpen;
+    isInventoryOpen ||
+    isPauseMenuOpen;
   const { executeCommand, snapshot } = useGameplayEngine({
     audioSettings,
     initialZoneData: zoneRegistry.test_zone,
@@ -120,8 +123,9 @@ export function GameScreen({
     isInteractChoiceOpen,
     isInventoryNoticeOpen: inventoryNotice !== null,
     isInventoryOpen,
+    isPauseMenuOpen,
     keyboardLayout,
-    onBackToTitle,
+    onOpenPauseMenu: () => setIsPauseMenuOpen(true),
     progressDialogue,
     setIsCharacterSheetOpen,
     setIsInventoryNoticeOpen: (open) => {
@@ -245,6 +249,14 @@ export function GameScreen({
               setIsInteractChoiceOpen(false);
             }}
             onClose={() => setIsInteractChoiceOpen(false)}
+          />
+        )}
+
+        {isPauseMenuOpen && (
+          <PauseModal
+            audioSettings={audioSettings}
+            onClose={() => setIsPauseMenuOpen(false)}
+            onQuit={onBackToTitle}
           />
         )}
       </div>

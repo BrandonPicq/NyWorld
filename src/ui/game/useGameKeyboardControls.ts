@@ -15,8 +15,9 @@ type UseGameKeyboardControlsInput = {
   isInteractChoiceOpen?: boolean;
   isInventoryNoticeOpen: boolean;
   isInventoryOpen: boolean;
+  isPauseMenuOpen: boolean;
   keyboardLayout: KeyboardLayout;
-  onBackToTitle: () => void;
+  onOpenPauseMenu: () => void;
   progressDialogue: () => void;
   setIsCharacterSheetOpen: Dispatch<SetStateAction<boolean>>;
   setIsInventoryNoticeOpen: Dispatch<SetStateAction<boolean>>;
@@ -38,8 +39,9 @@ export function useGameKeyboardControls({
   isInteractChoiceOpen = false,
   isInventoryNoticeOpen,
   isInventoryOpen,
+  isPauseMenuOpen,
   keyboardLayout,
-  onBackToTitle,
+  onOpenPauseMenu,
   progressDialogue,
   setIsCharacterSheetOpen,
   setIsInventoryNoticeOpen,
@@ -47,7 +49,7 @@ export function useGameKeyboardControls({
 }: UseGameKeyboardControlsInput): void {
   useEffect(() => {
     function handleKeyDown(event: KeyboardEvent) {
-      if (isInteractChoiceOpen) {
+      if (isInteractChoiceOpen || isPauseMenuOpen) {
         return;
       }
 
@@ -79,7 +81,7 @@ export function useGameKeyboardControls({
         } else if (isInventoryOpen) {
           setIsInventoryOpen(false);
         } else {
-          onBackToTitle();
+          onOpenPauseMenu();
         }
         return;
       }
@@ -131,8 +133,9 @@ export function useGameKeyboardControls({
     isInteractChoiceOpen,
     isInventoryNoticeOpen,
     isInventoryOpen,
+    isPauseMenuOpen,
     keyboardLayout,
-    onBackToTitle,
+    onOpenPauseMenu,
     progressDialogue,
     setIsCharacterSheetOpen,
     setIsInventoryNoticeOpen,
