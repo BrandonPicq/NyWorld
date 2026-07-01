@@ -10,7 +10,7 @@ La V0 ne cherche pas encore a construire le jeu complet. Elle doit seulement pos
 - afficher une zone vide ;
 - afficher le joueur sur une grille ;
 - deplacer le joueur avec le clavier et des boutons UI ;
-- afficher les informations minimales de debug : position XY, tick courant, zone active.
+- afficher les informations minimales : position XY, date de monde, zone active.
 
 ## Stack verrouillee
 
@@ -19,7 +19,7 @@ La V0 ne cherche pas encore a construire le jeu complet. Elle doit seulement pos
 - Renderer Canvas 2D maison pour la grille.
 - ECS simple pour representer les entites, composants et systemes.
 - JSON + schemas pour les donnees de contenu.
-- Temps discret : le monde avance par ticks.
+- Temps discret : le moteur garde des ticks techniques et un temps narratif derive pour la date du monde.
 - Web-first, avec export desktop/mobile plus tard via wrappers type Tauri ou Capacitor.
 
 ## Architecture V0
@@ -58,6 +58,7 @@ La V0 inclura :
 - un composant ou marqueur `PlayerControlled` ;
 - un systeme de mouvement cardinal ;
 - un compteur de ticks ;
+- un calendrier de monde (12 mois de 30 jours) expose dans les snapshots ;
 - une carte chargee depuis JSON ;
 - une transition simple entre zones de test ;
 - un journal textuel minimal des actions ;
@@ -77,12 +78,13 @@ L'ecran sera a texte dominant :
 - zone principale de narration/log ;
 - carte Canvas compacte mais visible affichant le joueur et les PNJs (glyphes colorés) ;
 - boutons de deplacement en forme de croix directionnelle (D-pad) avec le bouton d'interaction contextuel `Interact [E]` au centre ;
-- informations de debug : tick, zone active, position et direction regardee ;
+- informations de debug : zone active, position et direction regardee ;
 - tableau de bord lateral (gauche) affichant les ressources vitales : jauge d'energie (decroissance par pas), monnaie decomposee (Platinum, Gold, Silver, Bronze), titre academique, avec boutons de repos et fiche de personnage ;
+- horloge et date de monde affichees dans le tableau de bord lateral ;
 - fiche de personnage detaillee (modal overlay) accessible avec la touche `C` ou clic, affichant la liste modulaire des attributs (Strength, Intelligence, Charisma) et le detail de la progression academique ;
 - boîte de dialogue superposée (bas de carte) bloquant temporairement les inputs de déplacement lors d'un échange avec un PNJ.
 
-Les sprites, portraits, sons de fond, combats, inventaire, sauvegardes et schedules ne sont pas inclus dans la V0, mais l'architecture doit eviter de les bloquer.
+Les sprites, portraits, sons de fond, combats, equipement et schedules ne sont pas inclus dans la V0, mais l'architecture doit eviter de les bloquer.
 
 Les themes visuels sont pilotes par des variables CSS. Pour ajouter un theme, etendre la liste des presets cote UI et ajouter les overrides de tokens correspondants dans les styles.
 
@@ -94,7 +96,7 @@ Tests unitaires V0 avec Vitest :
 
 - menus, themes, vitesse de défilement, réglages de confort gameplay et reglages audio ;
 - mapping d'input jeu : fleches, QWERTY, AZERTY, exclusivite des layouts et labels ;
-- moteur gameplay : deplacements cardinaux, interaction, blocage par la carte, ticks, journal et collisions de dialogues avec les PNJs ;
+- moteur gameplay : deplacements cardinaux, interaction, blocage par la carte, ticks, date de monde, journal et collisions de dialogues avec les PNJs ;
 - chargement de zone : donnees valides, tile ids inconnus, depart invalide, depart bloque, dialogues d'entree et validation des PNJs.
 
 Tests a completer avec les prochaines tranches :

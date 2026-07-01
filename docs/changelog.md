@@ -4,6 +4,17 @@ This file tracks meaningful project changes by commit-oriented slices.
 
 Keep entries short and practical. When a slice is committed, its changelog section should stay aligned with the commit title so the project history remains easy to read after restores or bisects.
 
+## 2026-07-01 - [ADD]: Add world calendar and clock display
+
+- Add a 12-month, 30-day world calendar starting in year 425.
+- Track narrative world time separately from technical ticks in GameplayEngine snapshots.
+- Advance world time through movement, rest, item use, and dialogue actions.
+- Display an analog clock and world date in the character status sidebar.
+- Show action log entries with world time instead of technical ticks.
+- Remove the technical tick from the central debug strip.
+- Persist world time in save data and show world dates in save slot summaries.
+- Add calendar, engine, and save validation tests for world time behavior.
+
 ## 2026-07-01 - [ADD]: Implement basic game save and load with 3 slots
 
 - Add GameSaveData versioned interface and SAVE_VERSION constant.

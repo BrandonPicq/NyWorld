@@ -1,8 +1,14 @@
 import { describe, expect, it } from "vitest";
 import testZoneData from "../content/zones/test_zone.json";
 import testZone2Data from "../content/zones/test_zone_2.json";
+import { SAVE_VERSION } from "./GameSaveData";
 import { GameplayEngine } from "./GameplayEngine";
 import type { ZoneData } from "./ZoneTypes";
+import {
+  START_WORLD_TIME_MINUTES,
+  WORLD_TIME_ACTION_COST,
+  formatWorldDateTime,
+} from "./time/WorldCalendar";
 import { loadZone } from "./zoneLoader";
 
 const zoneData = {
@@ -48,6 +54,40 @@ describe("GameplayEngine", () => {
       playerY: 2,
       tick: 2,
     });
+  });
+
+  it("starts the world calendar in year 425", () => {
+    const engine = createEngine();
+
+    expect(engine.getSnapshot().worldTime).toMatchObject({
+      totalMinutes: START_WORLD_TIME_MINUTES,
+      year: 425,
+      month: 1,
+      monthName: "Aubeclat",
+      day: 1,
+      hour: 8,
+      minute: 0,
+      dateLabel: "1 Aubeclat 425",
+      timeLabel: "08:00",
+    });
+  });
+
+  it("advances world time with successful player actions", () => {
+    const engine = createEngine();
+
+    engine.execute({ type: "MoveEast" });
+    expect(engine.getSnapshot().worldTime.totalMinutes).toBe(
+      START_WORLD_TIME_MINUTES + WORLD_TIME_ACTION_COST.movement,
+    );
+    expect(engine.getSnapshot().worldTime.timeLabel).toBe("08:10");
+
+    engine.execute({ type: "Rest" });
+    expect(engine.getSnapshot().worldTime.totalMinutes).toBe(
+      START_WORLD_TIME_MINUTES +
+        WORLD_TIME_ACTION_COST.movement +
+        WORLD_TIME_ACTION_COST.rest,
+    );
+    expect(engine.getSnapshot().worldTime.timeLabel).toBe("09:10");
   });
 
   it("tracks the player facing from the latest movement command", () => {
@@ -377,6 +417,25 @@ describe("GameplayEngine", () => {
       "Entered Movement Test.",
       "Talked to Old Scholar.",
     ]);
+  });
+
+  it("advances world time when dialogue starts without advancing the tick", () => {
+    const mapWithNpc = loadZone({
+      ...zoneData,
+      npcs: [adjacentNpc],
+    });
+    const engine = new GameplayEngine(mapWithNpc);
+
+    engine.execute({ type: "Interact" });
+
+    expect(engine.getSnapshot()).toMatchObject({
+      tick: 0,
+      worldTime: {
+        totalMinutes:
+          START_WORLD_TIME_MINUTES + WORLD_TIME_ACTION_COST.dialogue,
+        timeLabel: "08:10",
+      },
+    });
   });
 
   it("logs when interact finds nothing nearby", () => {
@@ -799,16 +858,19 @@ describe("GameplayEngine", () => {
   });
 
   describe("SaveData", () => {
-    it("createSaveData captures zone, tick, position, facing, stats, and inventory", () => {
+    it("createSaveData captures zone, tick, world time, position, facing, stats, and inventory", () => {
       const engine = createEngine();
       engine.execute({ type: "MoveEast" });
       engine.execute({ type: "MoveSouth" });
 
       const save = engine.createSaveData();
 
-      expect(save.version).toBe("0.1");
+      expect(save.version).toBe(SAVE_VERSION);
       expect(save.zoneId).toBe("movement_test");
       expect(save.tick).toBe(2);
+      expect(formatWorldDateTime(save.worldTimeMinutes)).toBe(
+        "1 Aubeclat 425, 08:20",
+      );
       expect(save.playerX).toBe(2);
       expect(save.playerY).toBe(2);
       expect(save.playerFacing).toBe("south");
@@ -834,7 +896,7 @@ describe("GameplayEngine", () => {
       expect(save.pickedUpItemSpawnKeys[0]).toContain("2,1");
     });
 
-    it("fromSaveData restores tick, position, facing, stats, and inventory", () => {
+    it("fromSaveData restores tick, world time, position, facing, stats, and inventory", () => {
       const engine = createEngine();
       engine.execute({ type: "MoveEast" });
       engine.execute({ type: "MoveSouth" });
@@ -848,6 +910,7 @@ describe("GameplayEngine", () => {
 
       const snap = restored.getSnapshot();
       expect(snap.tick).toBe(2);
+      expect(snap.worldTime.timeLabel).toBe("08:20");
       expect(snap.playerX).toBe(2);
       expect(snap.playerY).toBe(2);
       expect(snap.playerFacing).toBe("south");
@@ -913,6 +976,7 @@ describe("GameplayEngine", () => {
       const restoredSnap = restored.getSnapshot();
 
       expect(restoredSnap.tick).toBe(original.tick);
+      expect(restoredSnap.worldTime).toEqual(original.worldTime);
       expect(restoredSnap.zoneId).toBe(original.zoneId);
       expect(restoredSnap.playerX).toBe(original.playerX);
       expect(restoredSnap.playerY).toBe(original.playerY);

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { formatWorldDateTime } from "../../engine";
 import type { GameSaveData } from "../../engine/GameSaveData";
 import { TerminalPanel } from "../components/TerminalPanel";
 import { TerminalButton } from "../components/TerminalButton";
@@ -13,16 +14,9 @@ type SaveSlotsModalProps = {
 function formatSlotSummary(save: GameSaveData | null, index: number): string {
   if (!save) return `[Slot ${index + 1}] Empty`;
 
-  const date = new Date(save.savedAt).toLocaleDateString("en-US", {
-    month: "2-digit",
-    day: "2-digit",
-  });
-  const time = new Date(save.savedAt).toLocaleTimeString("en-US", {
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-
-  return `[Slot ${index + 1}] ${save.zoneId} — Tick ${save.tick} — ${date} ${time}`;
+  return `[Slot ${index + 1}] ${save.zoneId} — ${formatWorldDateTime(
+    save.worldTimeMinutes,
+  )}`;
 }
 
 export function SaveSlotsModal({

@@ -1,5 +1,6 @@
 import { TerminalMenu } from "../components/TerminalMenu";
 import { TerminalPanel } from "../components/TerminalPanel";
+import { formatWorldDateTime } from "../../engine";
 import type { GameSaveData } from "../../engine/GameSaveData";
 import { SAVE_SLOT_COUNT } from "../save/gameSaveStorage";
 
@@ -32,16 +33,10 @@ export function TitleScreen({
           if (!save || !onLoadSlot) {
             return { label: `Continue — Slot ${i + 1} — Empty`, disabled: true };
           }
-          const date = new Date(save.savedAt).toLocaleDateString("en-US", {
-            month: "2-digit",
-            day: "2-digit",
-          });
-          const time = new Date(save.savedAt).toLocaleTimeString("en-US", {
-            hour: "2-digit",
-            minute: "2-digit",
-          });
           return {
-            label: `Continue — ${save.zoneId} (Tick ${save.tick}) — ${date} ${time}`,
+            label: `Continue — ${save.zoneId} — ${formatWorldDateTime(
+              save.worldTimeMinutes,
+            )}`,
             onSelect: () => onLoadSlot(i),
           };
         })

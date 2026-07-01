@@ -192,6 +192,7 @@ export function GameScreen({
           onOpenSheet={() => setIsCharacterSheetOpen(true)}
           onRest={() => handleExecuteCommand({ type: "Rest" })}
           stats={snapshot.stats}
+          worldTime={snapshot.worldTime}
         />
 
         <GameCenterPanel

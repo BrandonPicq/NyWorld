@@ -1,6 +1,7 @@
 import { describe, expect, it, beforeEach } from "vitest";
 import { SAVE_VERSION } from "../../engine/GameSaveData";
 import type { GameSaveData } from "../../engine/GameSaveData";
+import { START_WORLD_TIME_MINUTES } from "../../engine";
 import {
   deleteSlot,
   hasAnySave,
@@ -15,6 +16,7 @@ function stubSave(overrides: Partial<GameSaveData> = {}): GameSaveData {
     savedAt: "2026-07-01T12:00:00.000Z",
     zoneId: "test_zone",
     tick: 42,
+    worldTimeMinutes: START_WORLD_TIME_MINUTES,
     playerX: 5,
     playerY: 4,
     playerFacing: "south",
@@ -31,7 +33,13 @@ function stubSave(overrides: Partial<GameSaveData> = {}): GameSaveData {
       type: "Inventory",
       items: [{ itemId: "travel_ration", quantity: 3 }],
     },
-    log: [{ tick: 0, message: "Entered Test Zone." }],
+    log: [
+      {
+        tick: 0,
+        worldTimeMinutes: START_WORLD_TIME_MINUTES,
+        message: "Entered Test Zone.",
+      },
+    ],
     pickedUpItemSpawnKeys: [],
     ...overrides,
   };
@@ -72,6 +80,7 @@ describe("gameSaveStorage", () => {
     expect(restored).not.toBeNull();
     expect(restored!.zoneId).toBe("test_zone");
     expect(restored!.tick).toBe(42);
+    expect(restored!.worldTimeMinutes).toBe(START_WORLD_TIME_MINUTES);
     expect(restored!.playerX).toBe(5);
     expect(restored!.playerY).toBe(4);
     expect(restored!.playerFacing).toBe("south");
@@ -132,11 +141,31 @@ describe("gameSaveStorage", () => {
     expect(readSlot(0)).toBeNull();
   });
 
+  it("returns null for a save with invalid world time", () => {
+    writeSlot(0, stubSave());
+
+    const raw = JSON.parse(localStorage.getItem("nywarudo_save_slot_0")!);
+    raw.worldTimeMinutes = -1;
+    localStorage.setItem("nywarudo_save_slot_0", JSON.stringify(raw));
+
+    expect(readSlot(0)).toBeNull();
+  });
+
   it("returns null for a save with invalid nested stats", () => {
     writeSlot(0, stubSave());
 
     const raw = JSON.parse(localStorage.getItem("nywarudo_save_slot_0")!);
     raw.stats = {};
+    localStorage.setItem("nywarudo_save_slot_0", JSON.stringify(raw));
+
+    expect(readSlot(0)).toBeNull();
+  });
+
+  it("returns null for a save with invalid log world time", () => {
+    writeSlot(0, stubSave());
+
+    const raw = JSON.parse(localStorage.getItem("nywarudo_save_slot_0")!);
+    raw.log[0].worldTimeMinutes = "08:00";
     localStorage.setItem("nywarudo_save_slot_0", JSON.stringify(raw));
 
     expect(readSlot(0)).toBeNull();

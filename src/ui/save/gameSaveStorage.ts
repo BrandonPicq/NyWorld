@@ -75,7 +75,11 @@ function isSaveInventory(value: unknown): boolean {
 function isSaveLogEntry(value: unknown): boolean {
   if (!isRecord(value)) return false;
 
-  return isNonNegativeInteger(value.tick) && typeof value.message === "string";
+  return (
+    isNonNegativeInteger(value.tick) &&
+    isNonNegativeInteger(value.worldTimeMinutes) &&
+    typeof value.message === "string"
+  );
 }
 
 function isGameSaveData(value: unknown): value is GameSaveData {
@@ -89,6 +93,7 @@ function isGameSaveData(value: unknown): value is GameSaveData {
     typeof obj.zoneId === "string" &&
     obj.zoneId.trim().length > 0 &&
     isNonNegativeInteger(obj.tick) &&
+    isNonNegativeInteger(obj.worldTimeMinutes) &&
     Number.isInteger(obj.playerX) &&
     Number.isInteger(obj.playerY) &&
     isDirection(obj.playerFacing) &&

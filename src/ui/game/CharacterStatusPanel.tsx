@@ -1,7 +1,9 @@
 import type { Stats } from "../../engine/components";
+import type { WorldTimeSnapshot } from "../../engine";
 import { TerminalButton } from "../components/TerminalButton";
 import { TerminalPanel } from "../components/TerminalPanel";
 import { formatCurrency } from "../controls/statsFormatter";
+import { WorldClock } from "./WorldClock";
 
 type CharacterStatusPanelProps = {
   controlsDisabled?: boolean;
@@ -9,6 +11,7 @@ type CharacterStatusPanelProps = {
   onOpenSheet: () => void;
   onRest: () => void;
   stats: Stats;
+  worldTime: WorldTimeSnapshot;
 };
 
 export function CharacterStatusPanel({
@@ -17,11 +20,14 @@ export function CharacterStatusPanel({
   onOpenSheet,
   onRest,
   stats,
+  worldTime,
 }: CharacterStatusPanelProps) {
   return (
     <TerminalPanel className="game-layout__sidebar-left">
       <p className="terminal-kicker">CHARACTER</p>
       <h2 className="terminal-heading-sm">Status</h2>
+
+      <WorldClock worldTime={worldTime} />
 
       <div className="sidebar-stats">
         <div className="sidebar-stats__section">

@@ -43,7 +43,6 @@ export function GameCenterPanel({
         <p>
           Position: ({snapshot.playerX}, {snapshot.playerY})
         </p>
-        <p>Tick: {snapshot.tick}</p>
         <p>Zone: {snapshot.zoneId}</p>
         <p>Facing: {snapshot.playerFacing}</p>
       </div>

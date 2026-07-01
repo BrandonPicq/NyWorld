@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
 import type { GameSnapshot } from "../engine/GameplayEngine";
+import {
+  START_WORLD_TIME_MINUTES,
+  createWorldTimeSnapshot,
+} from "../engine/time/WorldCalendar";
 import { createGridRenderSnapshot } from "./renderSnapshot";
 
 const gameSnapshot: GameSnapshot = {
@@ -10,6 +14,7 @@ const gameSnapshot: GameSnapshot = {
   playerY: 0,
   playerFacing: "south",
   tick: 0,
+  worldTime: createWorldTimeSnapshot(START_WORLD_TIME_MINUTES),
   tiles: [
     [0, 1],
     [1, 0],

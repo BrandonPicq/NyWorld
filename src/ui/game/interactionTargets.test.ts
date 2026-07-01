@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import type { GameSnapshot } from "../../engine";
+import {
+  START_WORLD_TIME_MINUTES,
+  createWorldTimeSnapshot,
+  type GameSnapshot,
+} from "../../engine";
 import {
   createInteractionCommand,
   getInteractionTargets,
@@ -7,6 +11,7 @@ import {
 
 const baseSnapshot: GameSnapshot = {
   tick: 0,
+  worldTime: createWorldTimeSnapshot(START_WORLD_TIME_MINUTES),
   zoneId: "test_zone",
   zoneName: "Test Zone",
   mapWidth: 5,

@@ -19,9 +19,16 @@ import { TickCounter } from "./tick";
 import type { ZoneTransitionData } from "./ZoneTypes";
 import type { GameSaveData } from "./GameSaveData";
 import { SAVE_VERSION } from "./GameSaveData";
+import {
+  START_WORLD_TIME_MINUTES,
+  WORLD_TIME_ACTION_COST,
+  createWorldTimeSnapshot,
+  type WorldTimeSnapshot,
+} from "./time/WorldCalendar";
 
 export interface LogEntry {
   tick: number;
+  worldTimeMinutes: number;
   message: string;
 }
 
@@ -52,6 +59,7 @@ export interface RenderEntity {
 
 export interface GameSnapshot {
   tick: number;
+  worldTime: WorldTimeSnapshot;
   zoneId: string;
   zoneName: string;
   mapWidth: number;
@@ -102,6 +110,7 @@ export class GameplayEngine {
   private playerFacing: Direction = "south";
   private pickedUpItemSpawnKeys = new Set<string>();
   private resolveZone?: ZoneResolver;
+  private worldTimeMinutes = START_WORLD_TIME_MINUTES;
 
   constructor(map: GameMap, options: GameplayEngineOptions = {}) {
     this.map = map;
@@ -154,10 +163,7 @@ export class GameplayEngine {
     this.spawnNpcs();
     this.spawnItems();
 
-    this.log.push({
-      tick: this.tickCounter.tick,
-      message: `Entered ${map.name}.`,
-    });
+    this.addLog(`Entered ${map.name}.`);
   }
 
   private spawnNpcs(): void {
@@ -262,10 +268,9 @@ export class GameplayEngine {
 
     const stats = this.getPlayerStats();
     if (stats.energy <= 0) {
-      this.log.push({
-        tick: this.tickCounter.tick,
-        message: "You are too exhausted to move! Rest [R] to recover energy.",
-      });
+      this.addLog(
+        "You are too exhausted to move! Rest [R] to recover energy.",
+      );
       return { success: false };
     }
 
@@ -281,12 +286,10 @@ export class GameplayEngine {
 
     if (moved) {
       this.tickCounter.advance();
+      this.advanceWorldTime(WORLD_TIME_ACTION_COST.movement);
       stats.energy = Math.max(0, stats.energy - 1);
       const pos = this.getPlayerPosition();
-      this.log.push({
-        tick: this.tickCounter.tick,
-        message: `Moved ${direction} to (${pos.x}, ${pos.y}).`,
-      });
+      this.addLog(`Moved ${direction} to (${pos.x}, ${pos.y}).`);
       const itemAtPosition = this.getItemAt(pos.x, pos.y);
       const effects: EngineEffect[] = [];
       if (itemAtPosition) {
@@ -300,10 +303,9 @@ export class GameplayEngine {
         : { success: true };
     }
 
-    this.log.push({
-      tick: this.tickCounter.tick,
-      message: `Cannot move ${direction} — blocked at (${target.x}, ${target.y}).`,
-    });
+    this.addLog(
+      `Cannot move ${direction} — blocked at (${target.x}, ${target.y}).`,
+    );
 
     return { success: false };
   }
@@ -328,12 +330,11 @@ export class GameplayEngine {
     }
 
     if (adjacentNpcs.length === 0) {
-      this.log.push({
-        tick: this.tickCounter.tick,
-        message: targetDirection
+      this.addLog(
+        targetDirection
           ? "There is nothing to interact with there."
           : "There is nothing to interact with nearby.",
-      });
+      );
       return { success: false };
     }
 
@@ -343,10 +344,7 @@ export class GameplayEngine {
         return this.talkToNpc(targetNpc, true);
       }
 
-      this.log.push({
-        tick: this.tickCounter.tick,
-        message: "That interaction target is no longer nearby.",
-      });
+      this.addLog("That interaction target is no longer nearby.");
       return { success: false };
     }
 
@@ -404,10 +402,9 @@ export class GameplayEngine {
     this.world.destroyEntity(entity);
     this.pickedUpItemSpawnKeys.add(item.spawnKey);
 
-    this.log.push({
-      tick: this.tickCounter.tick,
-      message: `Picked up ${def.name}${item.quantity > 1 ? ` x${item.quantity}` : ""}.`,
-    });
+    this.addLog(
+      `Picked up ${def.name}${item.quantity > 1 ? ` x${item.quantity}` : ""}.`,
+    );
 
     return {
       type: "ItemCollected",
@@ -423,20 +420,14 @@ export class GameplayEngine {
     );
 
     if (stackIndex === -1) {
-      this.log.push({
-        tick: this.tickCounter.tick,
-        message: "You don't have that item.",
-      });
+      this.addLog("You don't have that item.");
       return { success: false };
     }
 
     const def = getItemDef(itemId);
 
     if (def.category !== "consumable") {
-      this.log.push({
-        tick: this.tickCounter.tick,
-        message: `${def.name} cannot be used.`,
-      });
+      this.addLog(`${def.name} cannot be used.`);
       return { success: false };
     }
 
@@ -444,7 +435,7 @@ export class GameplayEngine {
 
     if (energyRestored === undefined) {
       const message = `${def.name} has no usable effect yet.`;
-      this.log.push({ tick: this.tickCounter.tick, message });
+      this.addLog(message);
       return {
         success: false,
         effects: [
@@ -456,7 +447,7 @@ export class GameplayEngine {
     const stats = this.getPlayerStats();
     if (stats.energy >= stats.maxEnergy) {
       const message = `${def.name} would have no effect right now.`;
-      this.log.push({ tick: this.tickCounter.tick, message });
+      this.addLog(message);
       return {
         success: false,
         effects: [
@@ -477,10 +468,8 @@ export class GameplayEngine {
     }
 
     this.tickCounter.advance();
-    this.log.push({
-      tick: this.tickCounter.tick,
-      message: `Used ${def.name}. Recovered ${actualEnergyRestored} energy.`,
-    });
+    this.advanceWorldTime(WORLD_TIME_ACTION_COST.useItem);
+    this.addLog(`Used ${def.name}. Recovered ${actualEnergyRestored} energy.`);
 
     return {
       success: true,
@@ -494,10 +483,8 @@ export class GameplayEngine {
     npc: Npc,
     success: boolean,
   ): ExecuteResult {
-    this.log.push({
-      tick: this.tickCounter.tick,
-      message: `Talked to ${npc.name}.`,
-    });
+    this.advanceWorldTime(WORLD_TIME_ACTION_COST.dialogue);
+    this.addLog(`Talked to ${npc.name}.`);
 
     return {
       success,
@@ -525,18 +512,16 @@ export class GameplayEngine {
     pos.x = entryX;
     pos.y = entryY;
 
-    this.log.push({
-      tick: this.tickCounter.tick,
-      message: `Entered ${map.name}.`,
-    });
+    this.addLog(`Entered ${map.name}.`);
   }
 
   /**
    * Serializes the current engine state into a versioned save payload.
    *
    * The save only captures mutable gameplay state — zone identity, position,
-   * stats, inventory, log, and collected item keys. Zone geometry, NPCs, and
-   * ground items are rehydrated from content data when the save is restored.
+   * stats, inventory, log, world time, and collected item keys. Zone geometry,
+   * NPCs, and ground items are rehydrated from content data when the save is
+   * restored.
    */
   createSaveData(): GameSaveData {
     const pos = this.getPlayerPosition();
@@ -548,6 +533,7 @@ export class GameplayEngine {
       savedAt: new Date().toISOString(),
       zoneId: this.map.zoneId,
       tick: this.tickCounter.tick,
+      worldTimeMinutes: this.worldTimeMinutes,
       playerX: pos.x,
       playerY: pos.y,
       playerFacing: this.playerFacing,
@@ -573,9 +559,9 @@ export class GameplayEngine {
    * Creates a GameplayEngine from a previously persisted save.
    *
    * The engine is constructed with the saved zone, then all dynamic state
-   * (position, stats, inventory, log, tick, facing, and collected item keys)
-   * is restored. The zone's NPCs and uncollected items are respawned via
-   * enterZone to respect the saved pickedUpItemSpawnKeys.
+   * (position, stats, inventory, log, tick, world time, facing, and collected
+   * item keys) is restored. The zone's NPCs and uncollected items are
+   * respawned via enterZone to respect the saved pickedUpItemSpawnKeys.
    */
   static fromSaveData(
     saveData: GameSaveData,
@@ -608,6 +594,7 @@ export class GameplayEngine {
     inventory.items = saveData.inventory.items.map((stack) => ({ ...stack }));
 
     engine.tickCounter.restoreTo(saveData.tick);
+    engine.worldTimeMinutes = saveData.worldTimeMinutes;
     engine.playerFacing = saveData.playerFacing;
     engine.log = saveData.log.map((entry) => ({ ...entry }));
     engine.pickedUpItemSpawnKeys = new Set(saveData.pickedUpItemSpawnKeys);
@@ -632,10 +619,7 @@ export class GameplayEngine {
     const nextMap = this.resolveZone(transition.targetZoneId);
 
     if (!nextMap) {
-      this.log.push({
-        tick: this.tickCounter.tick,
-        message: `Cannot enter missing zone ${transition.targetZoneId}.`,
-      });
+      this.addLog(`Cannot enter missing zone ${transition.targetZoneId}.`);
       return;
     }
 
@@ -646,9 +630,19 @@ export class GameplayEngine {
     const stats = this.getPlayerStats();
     stats.energy = Math.min(stats.maxEnergy, stats.energy + 15);
     this.tickCounter.advance();
+    this.advanceWorldTime(WORLD_TIME_ACTION_COST.rest);
+    this.addLog("Rested and recovered 15 energy.");
+  }
+
+  private advanceWorldTime(minutes: number): void {
+    this.worldTimeMinutes += minutes;
+  }
+
+  private addLog(message: string): void {
     this.log.push({
       tick: this.tickCounter.tick,
-      message: "Rested and recovered 15 energy.",
+      worldTimeMinutes: this.worldTimeMinutes,
+      message,
     });
   }
 
@@ -691,6 +685,7 @@ export class GameplayEngine {
 
     return {
       tick: this.tickCounter.tick,
+      worldTime: createWorldTimeSnapshot(this.worldTimeMinutes),
       zoneId: this.map.zoneId,
       zoneName: this.map.name,
       mapWidth: this.map.width,

@@ -29,6 +29,20 @@ export type {
 export { DIRECTION_DELTA, MovementSystem } from "./systems";
 export type { Direction } from "./systems";
 export { TickCounter } from "./tick";
+export {
+  START_WORLD_TIME_MINUTES,
+  WORLD_CALENDAR,
+  WORLD_MONTH_NAMES,
+  WORLD_TIME_ACTION_COST,
+  createWorldTimeSnapshot,
+  encodeWorldDateTime,
+  formatWorldDateTime,
+} from "./time/WorldCalendar";
+export type {
+  WorldDateTime,
+  WorldMonthName,
+  WorldTimeSnapshot,
+} from "./time/WorldCalendar";
 export { getItemDef, hasItemDef } from "./items/itemRegistry";
 export type { ItemDef, ItemDefMap } from "./items/ItemDef";
 export { getItemMapPresentation } from "./items/itemMapPresentation";

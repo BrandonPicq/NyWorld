@@ -1,5 +1,5 @@
 import type { RefObject } from "react";
-import type { LogEntry } from "../../engine";
+import { createWorldTimeSnapshot, type LogEntry } from "../../engine";
 import { TerminalPanel } from "../components/TerminalPanel";
 
 type ActionLogPanelProps = {
@@ -21,7 +21,9 @@ export function ActionLogPanel({ log, logRef }: ActionLogPanelProps) {
       >
         {log.map((entry, i) => (
           <p key={i} className="game-screen__log-entry">
-            <span className="game-screen__log-tick">[{entry.tick}]</span>{" "}
+            <span className="game-screen__log-time">
+              [{createWorldTimeSnapshot(entry.worldTimeMinutes).timeLabel}]
+            </span>{" "}
             {entry.message}
           </p>
         ))}
