@@ -262,8 +262,7 @@
 
 /* Inventory Rework */
 .stats-modal--inventory {
-  max-width: 600px;
-  width: 90%;
+  width: min(90%, 720px) !important;
 }
 
 .stats-modal__content--inventory {
