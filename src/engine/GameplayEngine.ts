@@ -9,6 +9,7 @@ import type {
   Stats,
 } from "./components";
 import { getItemDef } from "./items/itemRegistry";
+import { getItemMapPresentation } from "./items/itemMapPresentation";
 import { World } from "./ecs/World";
 import type { EntityId } from "./ecs/types";
 import { GameMap } from "./GameMap";
@@ -20,6 +21,15 @@ import type { ZoneTransitionData } from "./ZoneTypes";
 export interface LogEntry {
   tick: number;
   message: string;
+}
+
+export type EngineEffect =
+  | { type: "ItemCollected"; itemId: string; quantity: number };
+
+export interface ExecuteResult {
+  success: boolean;
+  dialogue?: DialogueNode[];
+  effects?: EngineEffect[];
 }
 
 export interface RenderEntity {
@@ -183,7 +193,7 @@ export class GameplayEngine {
         continue;
       }
 
-      const def = getItemDef(itemData.itemId);
+      const presentation = getItemMapPresentation(itemData.itemId);
       const entityId = this.world.createEntity();
 
       this.world.addComponent(entityId, {
@@ -194,8 +204,8 @@ export class GameplayEngine {
 
       this.world.addComponent(entityId, {
         type: "Renderable" as const,
-        glyph: def.glyph,
-        color: def.color,
+        glyph: presentation.glyph,
+        color: presentation.color,
       } as Renderable);
 
       this.world.addComponent(entityId, {
@@ -214,7 +224,7 @@ export class GameplayEngine {
    * blocked by map geometry or an NPC dialogue collision. Interact checks
    * nearby or direction-limited tiles for contextual actions without moving.
    */
-  execute(command: GameCommand): { success: boolean; dialogue?: DialogueNode[] } {
+  execute(command: GameCommand): ExecuteResult {
     if (command.type === "Rest") {
       this.restPlayer();
       return { success: true };
@@ -260,24 +270,30 @@ export class GameplayEngine {
         message: `Moved ${direction} to (${pos.x}, ${pos.y}).`,
       });
       const itemAtPosition = this.getItemAt(pos.x, pos.y);
+      const effects: EngineEffect[] = [];
       if (itemAtPosition) {
-        this.pickupItem(itemAtPosition.entity, itemAtPosition.component);
+        effects.push(
+          this.pickupItem(itemAtPosition.entity, itemAtPosition.component),
+        );
       }
       this.resolvePendingTransition();
-    } else {
-      this.log.push({
-        tick: this.tickCounter.tick,
-        message: `Cannot move ${direction} — blocked at (${target.x}, ${target.y}).`,
-      });
+      return effects.length > 0
+        ? { success: true, effects }
+        : { success: true };
     }
 
-    return { success: moved };
+    this.log.push({
+      tick: this.tickCounter.tick,
+      message: `Cannot move ${direction} — blocked at (${target.x}, ${target.y}).`,
+    });
+
+    return { success: false };
   }
 
   private interact(
     targetNpcId?: string,
     targetDirection?: Direction,
-  ): { success: boolean; dialogue?: DialogueNode[] } {
+  ): ExecuteResult {
     const playerPosition = this.getPlayerPosition();
     const adjacentNpcs: Npc[] = [];
     const directionsToCheck = targetDirection
@@ -351,7 +367,7 @@ export class GameplayEngine {
     return undefined;
   }
 
-  private pickupItem(entity: EntityId, item: Item): void {
+  private pickupItem(entity: EntityId, item: Item): EngineEffect {
     const def = getItemDef(item.itemId);
     const inventory = this.getPlayerInventory();
     const existingStack = inventory.items.find(
@@ -374,12 +390,18 @@ export class GameplayEngine {
       tick: this.tickCounter.tick,
       message: `Picked up ${def.name}${item.quantity > 1 ? ` x${item.quantity}` : ""}.`,
     });
+
+    return {
+      type: "ItemCollected",
+      itemId: item.itemId,
+      quantity: item.quantity,
+    };
   }
 
   private talkToNpc(
     npc: Npc,
     success: boolean,
-  ): { success: boolean; dialogue: DialogueNode[] } {
+  ): ExecuteResult {
     this.log.push({
       tick: this.tickCounter.tick,
       message: `Talked to ${npc.name}.`,

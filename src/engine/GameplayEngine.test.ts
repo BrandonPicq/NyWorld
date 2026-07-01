@@ -594,4 +594,52 @@ describe("GameplayEngine", () => {
 
     expect(herbStacks).toEqual([{ itemId: "healing_herb", quantity: 1 }]);
   });
+
+  it("spawns ground items with a shared glyph and category color", () => {
+    const mapWithItems = loadZone({
+      ...zoneData,
+      items: [
+        { itemId: "chalk_piece", x: 2, y: 1, quantity: 1 },
+        { itemId: "old_coin", x: 2, y: 2, quantity: 1 },
+        { itemId: "academy_notebook", x: 1, y: 2, quantity: 1 },
+      ],
+    });
+    const engine = new GameplayEngine(mapWithItems);
+
+    const entities = engine.getSnapshot().entities;
+
+    for (const entity of entities) {
+      expect(entity.glyph).toBe("*");
+    }
+
+    const chalk = entities.find((e) => e.x === 2 && e.y === 1);
+    const coin = entities.find((e) => e.x === 2 && e.y === 2);
+    const notebook = entities.find((e) => e.x === 1 && e.y === 2);
+
+    expect(chalk?.color).toBe("#cdd6f4");
+    expect(coin?.color).toBe("#f9e2af");
+    expect(notebook?.color).toBe("#cba6f7");
+  });
+
+  it("returns an ItemCollected effect when picking up a ground item", () => {
+    const mapWithItem = loadZone({
+      ...zoneData,
+      items: [{ itemId: "chalk_piece", x: 2, y: 1, quantity: 1 }],
+    });
+    const engine = new GameplayEngine(mapWithItem);
+
+    const result = engine.execute({ type: "MoveEast" });
+
+    expect(result.effects).toEqual([
+      { type: "ItemCollected", itemId: "chalk_piece", quantity: 1 },
+    ]);
+  });
+
+  it("returns no pickup effect when moving onto an empty tile", () => {
+    const engine = createEngine();
+
+    const result = engine.execute({ type: "MoveEast" });
+
+    expect(result.effects).toBeUndefined();
+  });
 });

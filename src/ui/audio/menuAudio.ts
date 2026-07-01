@@ -36,6 +36,13 @@ export function playTextBleepSound(pitchFactor: number) {
   });
 }
 
+export function playItemCollectSound() {
+  playMenuToneSequence([
+    { frequency: 520, durationSeconds: 0.045, gain: 0.02 },
+    { frequency: 780, durationSeconds: 0.06, gain: 0.02 },
+  ]);
+}
+
 function playMenuTone({ durationSeconds, frequency, gain }: MenuToneOptions) {
   const context = getAudioContext();
 
@@ -57,6 +64,46 @@ function playMenuTone({ durationSeconds, frequency, gain }: MenuToneOptions) {
     volume.connect(context.destination);
     oscillator.start(now);
     oscillator.stop(now + durationSeconds);
+  };
+
+  if (context.state === "suspended") {
+    void context.resume().then(play).catch(() => undefined);
+    return;
+  }
+
+  play();
+}
+
+function playMenuToneSequence(steps: MenuToneOptions[]) {
+  const context = getAudioContext();
+
+  if (!context) {
+    return;
+  }
+
+  const play = () => {
+    const baseTime = context.currentTime;
+    let cursor = 0;
+
+    for (const step of steps) {
+      const start = baseTime + cursor;
+      const end = start + step.durationSeconds;
+
+      const oscillator = context.createOscillator();
+      const volume = context.createGain();
+
+      oscillator.type = "square";
+      oscillator.frequency.setValueAtTime(step.frequency, start);
+      volume.gain.setValueAtTime(step.gain, start);
+      volume.gain.exponentialRampToValueAtTime(0.0001, end);
+
+      oscillator.connect(volume);
+      volume.connect(context.destination);
+      oscillator.start(start);
+      oscillator.stop(end);
+
+      cursor += step.durationSeconds;
+    }
   };
 
   if (context.state === "suspended") {

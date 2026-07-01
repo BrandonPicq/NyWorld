@@ -4,6 +4,17 @@ This file tracks meaningful project changes by commit-oriented slices.
 
 Keep entries short and practical. When a slice is committed, its changelog section should stay aligned with the commit title so the project history remains easy to read after restores or bisects.
 
+## 2026-07-01 - [UPDATE]: Improve ground item readability and pickup feedback
+
+- Drop per-item glyph and color from the item catalog and resolve map presentation centrally from the item category.
+- Expose getItemMapPresentation(itemId) returning a shared glyph and a per-category color, with a misc fallback for unknown items.
+- Switch spawnItems to use the shared map presentation instead of per-item fields.
+- Extend GameplayEngine.execute to return an effects array, with pickupItem emitting an ItemCollected effect.
+- Keep the engine free of audio dependencies by routing effects through the React bridge.
+- Add playItemCollectSound with a short ascending two-tone Web Audio cue, gated by audio settings.
+- Update the inventory modal to keep working without per-item display fields.
+- Add tests for the shared glyph, category colors, and the new ItemCollected effect.
+
 ## 2026-07-01 - [ADD]: Pick up ground items and grow the item catalog
 
 - Add an Item ECS component (itemId, quantity) for ground entities.

@@ -64,6 +64,7 @@ export function GameScreen({
     isInteractChoiceOpen ||
     isInventoryOpen;
   const { executeCommand, snapshot } = useGameplayEngine({
+    audioSettings,
     initialZoneData: zoneRegistry.test_zone,
     onDialogue: triggerDialogue,
     zoneRegistry,

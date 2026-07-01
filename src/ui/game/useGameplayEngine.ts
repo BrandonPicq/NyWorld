@@ -3,12 +3,16 @@ import {
   GameplayEngine,
   loadZone,
   type DialogueNode,
+  type EngineEffect,
   type GameCommand,
   type GameSnapshot,
   type ZoneData,
 } from "../../engine";
+import type { AudioSettings } from "../audio/audioSettings";
+import { playItemCollectSound } from "../audio/menuAudio";
 
 type UseGameplayEngineInput = {
+  audioSettings: AudioSettings;
   initialZoneData: ZoneData;
   onDialogue: (nodes: DialogueNode[]) => void;
   zoneRegistry: Record<string, ZoneData>;
@@ -18,9 +22,10 @@ type UseGameplayEngineInput = {
  * Owns the React bridge to GameplayEngine for a game screen.
  *
  * The hook keeps the engine instance outside React state, publishes snapshots,
- * and turns engine dialogue results into UI dialogue callbacks.
+ * and turns engine dialogue results and effects into UI callbacks.
  */
 export function useGameplayEngine({
+  audioSettings,
   initialZoneData,
   onDialogue,
   zoneRegistry,
@@ -45,20 +50,38 @@ export function useGameplayEngine({
     };
   }, [initialZoneData, zoneRegistry]);
 
-  const executeCommand = useCallback((command: GameCommand) => {
-    const engine = engineRef.current;
-    if (!engine) return;
+  const executeCommand = useCallback(
+    (command: GameCommand) => {
+      const engine = engineRef.current;
+      if (!engine) return;
 
-    const result = engine.execute(command);
-    setSnapshot(engine.getSnapshot());
+      const result = engine.execute(command);
+      setSnapshot(engine.getSnapshot());
 
-    if (result.dialogue) {
-      onDialogue(result.dialogue);
-    }
-  }, [onDialogue]);
+      if (result.dialogue) {
+        onDialogue(result.dialogue);
+      }
+
+      for (const effect of result.effects ?? []) {
+        playEffect(effect, audioSettings);
+      }
+    },
+    [audioSettings, onDialogue],
+  );
 
   return {
     executeCommand,
     snapshot,
   };
+}
+
+function playEffect(
+  effect: EngineEffect,
+  audioSettings: AudioSettings,
+): void {
+  if (effect.type === "ItemCollected") {
+    if (audioSettings.soundEnabled) {
+      playItemCollectSound();
+    }
+  }
 }

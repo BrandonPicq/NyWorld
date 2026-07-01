@@ -8,8 +8,6 @@ const fallback: ItemDef = {
   description: "An item that is not yet defined.",
   category: "misc",
   defaultQuantity: 1,
-  glyph: "?",
-  color: "#888888",
 };
 
 export function hasItemDef(itemId: string): boolean {

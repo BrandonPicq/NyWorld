@@ -5,8 +5,6 @@ export interface ItemDef {
   description: string;
   category: InventoryItemCategory;
   defaultQuantity: number;
-  glyph: string;
-  color: string;
 }
 
 export type ItemDefMap = Record<string, ItemDef>;

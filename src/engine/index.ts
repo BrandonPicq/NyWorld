@@ -31,6 +31,14 @@ export type { Direction } from "./systems";
 export { TickCounter } from "./tick";
 export { getItemDef, hasItemDef } from "./items/itemRegistry";
 export type { ItemDef, ItemDefMap } from "./items/ItemDef";
+export { getItemMapPresentation } from "./items/itemMapPresentation";
+export type { ItemMapPresentation } from "./items/itemMapPresentation";
 export type { GameCommand } from "./commands";
 export { GameplayEngine } from "./GameplayEngine";
-export type { GameSnapshot, LogEntry, RenderEntity } from "./GameplayEngine";
+export type {
+  EngineEffect,
+  ExecuteResult,
+  GameSnapshot,
+  LogEntry,
+  RenderEntity,
+} from "./GameplayEngine";
