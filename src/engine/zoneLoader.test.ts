@@ -286,6 +286,21 @@ describe("loadZone", () => {
     ).toThrow("npc at index 0 schedule entry 0 has invalid time");
   });
 
+  it("rejects NPC schedules with invalid zoneIds", () => {
+    expect(() =>
+      loadZone(
+        zoneDataWith({
+          npcs: [
+            {
+              ...validNpc,
+              schedule: [{ time: "18:00", zoneId: "", x: 2, y: 1 }],
+            },
+          ],
+        }),
+      ),
+    ).toThrow("npc at index 0 schedule entry 0 has invalid zoneId");
+  });
+
   it("rejects NPC schedules targeting blocked tiles", () => {
     expect(() =>
       loadZone(
@@ -328,6 +343,34 @@ describe("loadZone", () => {
       }),
     );
     expect(map.npcs[0].schedule?.[0].dialogueId).toBe("old_scholar.default");
+  });
+
+  it("accepts NPC schedules targeting another zone", () => {
+    const map = loadZone(
+      zoneDataWith({
+        npcs: [
+          {
+            ...validNpc,
+            schedule: [
+              {
+                time: "18:00",
+                zoneId: "another_zone",
+                x: 10,
+                y: 10,
+                dialogueId: "old_scholar.default",
+              },
+            ],
+          },
+        ],
+      }),
+    );
+
+    expect(map.npcs[0].schedule?.[0]).toMatchObject({
+      time: "18:00",
+      zoneId: "another_zone",
+      x: 10,
+      y: 10,
+    });
   });
 
   it("rejects NPCs on blocked tiles", () => {

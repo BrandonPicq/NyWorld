@@ -368,6 +368,7 @@ function validateNpcSchedule(
   const width = zone.width as number;
   const height = zone.height as number;
   const tiles = zone.tiles as number[][];
+  const currentZoneId = zone.zoneId as string;
 
   for (let i = 0; i < value.length; i++) {
     const entry = value[i];
@@ -388,10 +389,19 @@ function validateNpcSchedule(
     }
 
     if (
+      entry.zoneId !== undefined &&
+      (typeof entry.zoneId !== "string" || !entry.zoneId.trim())
+    ) {
+      throw new ZoneLoadError(
+        `npc at index ${npcIndex} schedule entry ${i} has invalid zoneId`,
+      );
+    }
+
+    if (
       typeof entry.x !== "number" ||
       !Number.isInteger(entry.x) ||
       entry.x < 0 ||
-      entry.x >= width
+      (isLocalScheduleEntry(entry.zoneId, currentZoneId) && entry.x >= width)
     ) {
       throw new ZoneLoadError(
         `npc at index ${npcIndex} schedule entry ${i} has an invalid x coordinate`,
@@ -402,18 +412,20 @@ function validateNpcSchedule(
       typeof entry.y !== "number" ||
       !Number.isInteger(entry.y) ||
       entry.y < 0 ||
-      entry.y >= height
+      (isLocalScheduleEntry(entry.zoneId, currentZoneId) && entry.y >= height)
     ) {
       throw new ZoneLoadError(
         `npc at index ${npcIndex} schedule entry ${i} has an invalid y coordinate`,
       );
     }
 
-    const targetTileId = tiles[entry.y][entry.x];
-    if (!getTileDef(targetTileId).walkable) {
-      throw new ZoneLoadError(
-        `npc at index ${npcIndex} schedule entry ${i} must target a walkable tile`,
-      );
+    if (isLocalScheduleEntry(entry.zoneId, currentZoneId)) {
+      const targetTileId = tiles[entry.y][entry.x];
+      if (!getTileDef(targetTileId).walkable) {
+        throw new ZoneLoadError(
+          `npc at index ${npcIndex} schedule entry ${i} must target a walkable tile`,
+        );
+      }
     }
 
     if (entry.dialogueId !== undefined) {
@@ -424,4 +436,11 @@ function validateNpcSchedule(
       }
     }
   }
+}
+
+function isLocalScheduleEntry(
+  zoneId: unknown,
+  currentZoneId: string,
+): boolean {
+  return zoneId === undefined || zoneId === currentZoneId;
 }

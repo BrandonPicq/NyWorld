@@ -47,12 +47,44 @@ function createScheduledYoungPageMap() {
         x: 2,
         y: 1,
         schedule: [
-          { time: "08:00", x: 2, y: 1 },
-          { time: "18:00", x: 1, y: 2 },
+          { time: "08:00", x: 2, y: 1, dialogueId: "young_page.default" },
+          { time: "18:00", x: 1, y: 2, dialogueId: "young_page.evening" },
         ],
       },
     ],
   });
+}
+
+function createCrossZoneYoungPageMaps() {
+  const schedule = [
+    {
+      time: "08:00",
+      zoneId: "movement_test",
+      x: 2,
+      y: 1,
+      dialogueId: "young_page.default",
+    },
+    {
+      time: "18:00",
+      zoneId: "away_zone",
+      x: 2,
+      y: 1,
+      dialogueId: "young_page.evening",
+    },
+  ];
+
+  return {
+    movementMap: loadZone({
+      ...zoneData,
+      npcs: [{ npcId: "young_page", x: 2, y: 1, schedule }],
+    }),
+    awayMap: loadZone({
+      ...zoneData,
+      zoneId: "away_zone",
+      name: "Away Zone",
+      npcs: [{ npcId: "young_page", x: 2, y: 1, schedule }],
+    }),
+  };
 }
 
 describe("GameplayEngine", () => {
@@ -492,7 +524,7 @@ describe("GameplayEngine", () => {
     const result = engine.execute({ type: "MoveSouth" });
 
     expect(result.success).toBe(false);
-    expect(result.dialogue).toEqual(getDialogue("young_page.default"));
+    expect(result.dialogue).toEqual(getDialogue("young_page.evening"));
     expect(engine.getSnapshot()).toMatchObject({
       playerX: 1,
       playerY: 1,
@@ -500,6 +532,30 @@ describe("GameplayEngine", () => {
     expect(engine.getSnapshot().log.map((entry) => entry.message)).toContain(
       "Talked to Young Page.",
     );
+  });
+
+  it("removes scheduled NPCs from the current zone when their active schedule targets another zone", () => {
+    const { movementMap, awayMap } = createCrossZoneYoungPageMaps();
+    const engine = new GameplayEngine(movementMap);
+
+    expect(
+      engine.getSnapshot().entities.find((entity) => entity.npcId === "young_page"),
+    ).toMatchObject({ x: 2, y: 1 });
+
+    for (let i = 0; i < 10; i++) {
+      engine.execute({ type: "Rest" });
+    }
+
+    expect(engine.getSnapshot().worldTime.timeLabel).toBe("18:00");
+    expect(
+      engine.getSnapshot().entities.find((entity) => entity.npcId === "young_page"),
+    ).toBeUndefined();
+
+    engine.enterZone(awayMap, 1, 1);
+
+    expect(
+      engine.getSnapshot().entities.find((entity) => entity.npcId === "young_page"),
+    ).toMatchObject({ x: 2, y: 1 });
   });
 
   it("logs when interact finds nothing nearby", () => {

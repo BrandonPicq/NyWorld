@@ -66,7 +66,7 @@ La V0 inclura :
 - des dialogues d'entree de zone configures dans les donnees JSON ;
 - des personnages non-joueurs (PNJs) configurés dans des fiches de personnage réutilisables, puis placés par `npcId` dans les zones ;
 - un état mutable sauvegardable par PNJ (`npcId`) pour préparer relations, progression et rôles évolutifs ;
-- des emplois du temps journaliers simples pour déplacer les PNJs selon l'heure du calendrier ;
+- des emplois du temps journaliers simples pour déplacer les PNJs selon l'heure du calendrier et les faire apparaitre dans une autre zone ;
 - des dialogues de PNJ stockes dans un registre reutilisable, relies aux fiches par `defaultDialogueId` et aux apparitions de zone par `dialogueId` ;
 - un défilement de dialogue progressif ("typewriter") couplé à des signaux Web Audio ("bleeps") dont le pitch varie selon la voix du PNJ ;
 - un inventaire consultable en lecture seule, avec catégories, descriptions et état vide, accessible par bouton et raccourci clavier.
@@ -87,7 +87,7 @@ L'ecran sera a texte dominant :
 - fiche de personnage detaillee (modal overlay) accessible avec la touche `C` ou clic, affichant la liste modulaire des attributs (Strength, Intelligence, Charisma) et le detail de la progression academique ;
 - boîte de dialogue superposée (bas de carte) bloquant temporairement les inputs de déplacement lors d'un échange avec un PNJ.
 
-Les sprites, portraits, sons de fond, combats, equipement et schedules ne sont pas inclus dans la V0, mais l'architecture doit eviter de les bloquer.
+Les sprites, portraits, sons de fond, combats, equipement et schedules complexes ne sont pas inclus dans la V0, mais l'architecture doit eviter de les bloquer.
 
 Les themes visuels sont pilotes par des variables CSS. Pour ajouter un theme, etendre la liste des presets cote UI et ajouter les overrides de tokens correspondants dans les styles.
 

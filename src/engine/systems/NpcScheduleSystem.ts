@@ -7,6 +7,7 @@ import { getWorldMinuteOfDay } from "../time/WorldCalendar";
 import { getDialogue } from "../dialogues/dialogueRegistry";
 
 export interface ScheduledNpcPosition {
+  zoneId?: string;
   x: number;
   y: number;
   dialogueId?: string;
@@ -65,6 +66,14 @@ export class NpcScheduleSystem {
         continue;
       }
 
+      if (
+        scheduledPosition.zoneId !== undefined &&
+        scheduledPosition.zoneId !== map.zoneId
+      ) {
+        world.destroyEntity(entityId);
+        continue;
+      }
+
       const targetKey = getPositionKey(
         scheduledPosition.x,
         scheduledPosition.y,
@@ -108,6 +117,7 @@ export class NpcScheduleSystem {
 
     return activeEntry
       ? {
+          zoneId: activeEntry.zoneId,
           x: activeEntry.x,
           y: activeEntry.y,
           dialogueId: activeEntry.dialogueId,

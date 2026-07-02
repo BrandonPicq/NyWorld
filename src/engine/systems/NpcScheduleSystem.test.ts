@@ -60,8 +60,20 @@ describe("NpcScheduleSystem", () => {
 
   it("returns dialogueId if defined in schedule", () => {
     const scheduleWithDialogue = [
-      { time: "08:00", x: 2, y: 1, dialogueId: "young_page.default" },
-      { time: "18:00", x: 1, y: 2, dialogueId: "young_page.evening" },
+      {
+        time: "08:00",
+        zoneId: "test_zone",
+        x: 2,
+        y: 1,
+        dialogueId: "young_page.default",
+      },
+      {
+        time: "18:00",
+        zoneId: "test_zone_2",
+        x: 1,
+        y: 2,
+        dialogueId: "young_page.evening",
+      },
     ];
     const morning = encodeWorldDateTime({
       year: 425,
@@ -81,6 +93,7 @@ describe("NpcScheduleSystem", () => {
     expect(
       NpcScheduleSystem.getActivePosition(scheduleWithDialogue, morning),
     ).toEqual({
+      zoneId: "test_zone",
       x: 2,
       y: 1,
       dialogueId: "young_page.default",
@@ -88,6 +101,7 @@ describe("NpcScheduleSystem", () => {
     expect(
       NpcScheduleSystem.getActivePosition(scheduleWithDialogue, evening),
     ).toEqual({
+      zoneId: "test_zone_2",
       x: 1,
       y: 2,
       dialogueId: "young_page.evening",

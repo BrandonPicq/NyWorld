@@ -31,6 +31,7 @@ export interface NpcSpawnData {
 
 export interface NpcScheduleEntryData {
   time: string;
+  zoneId?: string;
   x: number;
   y: number;
   dialogueId?: string;

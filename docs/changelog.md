@@ -4,6 +4,14 @@ This file tracks meaningful project changes by commit-oriented slices.
 
 Keep entries short and practical. When a slice is committed, its changelog section should stay aligned with the commit title so the project history remains easy to read after restores or bisects.
 
+## 2026-07-02 - [UPDATE]: Move scheduled NPCs across zones
+
+- Allow NPC schedule entries to target a zoneId as well as coordinates.
+- Hide scheduled NPCs from the current map when their active schedule points to another zone.
+- Let scheduled positions override the active NPC dialogue for contextual conversations.
+- Move the Young Page between the test zones in the evening schedule.
+- Add loader, schedule-system, and gameplay tests for cross-zone presence and schedule dialogue.
+
 ## 2026-07-01 - [ADD]: Move NPCs with simple daily schedules
 
 - Add optional NPC schedule entries to zone content.
