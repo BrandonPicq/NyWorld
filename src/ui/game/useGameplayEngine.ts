@@ -18,6 +18,7 @@ type UseGameplayEngineInput = {
   initialZoneData: ZoneData;
   initialSaveData?: GameSaveData;
   onDialogue: (nodes: DialogueNode[], dialogueId?: string) => void;
+  onEffect?: (effect: EngineEffect) => void;
   onLoadError?: (message: string) => void;
   onNotice?: (notice: EngineNotice) => void;
   zoneRegistry: Record<string, ZoneData>;
@@ -35,6 +36,7 @@ export function useGameplayEngine({
   initialZoneData,
   initialSaveData,
   onDialogue,
+  onEffect,
   onLoadError,
   onNotice,
   zoneRegistry,
@@ -99,9 +101,10 @@ export function useGameplayEngine({
         } else {
           playEffect(effect, audioSettings);
         }
+        onEffect?.(effect);
       }
     },
-    [audioSettings, onDialogue, onNotice],
+    [audioSettings, onDialogue, onEffect, onNotice],
   );
 
   return {

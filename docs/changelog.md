@@ -4,6 +4,13 @@ This file tracks meaningful project changes by commit-oriented slices.
 
 Keep entries short and practical. When a slice is committed, its changelog section should stay aligned with the commit title so the project history remains easy to read after restores or bisects.
 
+## 2026-07-02 - [UPDATE]: Show item pickup toast feedback
+
+- Surface collected item effects from the React gameplay bridge.
+- Show a toast naming the item and quantity picked up from the ground.
+- Keep save toasts on the default terminal accent tone.
+- Add an important red toast tone for quest items and future rare pickups.
+
 ## 2026-07-02 - [FIX]: Make zone entry dialogues one-shot events
 
 - Track zone entry dialogue events as seen playthrough state in GameplayEngine.

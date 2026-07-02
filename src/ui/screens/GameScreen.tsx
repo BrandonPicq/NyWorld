@@ -3,7 +3,14 @@ import { createGridRenderSnapshot } from "../../rendering";
 import testZoneData from "../../content/zones/test_zone.json";
 import testZone2Data from "../../content/zones/test_zone_2.json";
 import type { ZoneData } from "../../engine/ZoneTypes";
-import type { DialogueNode, EngineNotice, GameCommand } from "../../engine";
+import {
+  getItemDef,
+  getNpcDef,
+  type DialogueNode,
+  type EngineEffect,
+  type EngineNotice,
+  type GameCommand,
+} from "../../engine";
 import type { GameSaveData } from "../../engine/GameSaveData";
 import { TerminalPanel } from "../components/TerminalPanel";
 import { TerminalButton } from "../components/TerminalButton";
@@ -25,13 +32,17 @@ import { InventoryModal } from "../game/InventoryModal";
 import { QuestsModal } from "../game/QuestsModal";
 import { PauseModal } from "../game/PauseModal";
 import { SaveSlotsModal } from "../save/SaveSlotsModal";
-import { GameToast } from "../toast/GameToast";
+import { GameToast, type GameToastTone } from "../toast/GameToast";
 import { readAllSaves, writeSlot } from "../save/gameSaveStorage";
 import {
   createInteractionCommand,
   getInteractionTargets,
 } from "../game/interactionTargets";
-import { getNpcDef } from "../../engine";
+
+type GameToastState = {
+  message: string;
+  tone: GameToastTone;
+};
 
 type GameScreenProps = {
   audioSettings: AudioSettings;
@@ -66,14 +77,26 @@ export function GameScreen({
   const [gameNotice, setGameNotice] = useState<EngineNotice | null>(null);
   const [isPauseMenuOpen, setIsPauseMenuOpen] = useState(false);
   const [isSaveSlotsOpen, setIsSaveSlotsOpen] = useState(false);
-  const [gameToast, setGameToast] = useState<string | null>(null);
+  const [gameToast, setGameToast] = useState<GameToastState | null>(null);
   const logRef = useRef<HTMLDivElement>(null);
+
+  const handleEngineEffect = useCallback((effect: EngineEffect) => {
+    if (effect.type !== "ItemCollected") {
+      return;
+    }
+
+    setGameToast({
+      message: getCollectedItemToastMessage(effect),
+      tone: getCollectedItemToastTone(effect.itemId),
+    });
+  }, []);
 
   const { createSaveData, executeCommand, snapshot } = useGameplayEngine({
     audioSettings,
     initialSaveData,
     initialZoneData: zoneRegistry.test_zone,
     onDialogue: (nodes, id) => triggerDialogue(nodes, id),
+    onEffect: handleEngineEffect,
     onLoadError,
     onNotice: setGameNotice,
     zoneRegistry,
@@ -119,12 +142,18 @@ export function GameScreen({
 
     const didSave = writeSlot(slotIndex, saveData);
     if (!didSave) {
-      setGameToast(`Could not save to slot ${slotIndex + 1}.`);
+      setGameToast({
+        message: `Could not save to slot ${slotIndex + 1}.`,
+        tone: "default",
+      });
       return;
     }
 
     setIsSaveSlotsOpen(false);
-    setGameToast(`Game saved to slot ${slotIndex + 1}.`);
+    setGameToast({
+      message: `Game saved to slot ${slotIndex + 1}.`,
+      tone: "default",
+    });
   };
 
   const handleExecuteCommand = (command: GameCommand) => {
@@ -382,11 +411,31 @@ export function GameScreen({
 
         {gameToast !== null && (
           <GameToast
-            message={gameToast}
+            message={gameToast.message}
             onDismiss={() => setGameToast(null)}
+            tone={gameToast.tone}
           />
         )}
       </div>
     </main>
   );
+}
+
+function getCollectedItemToastMessage(
+  effect: Extract<EngineEffect, { type: "ItemCollected" }>,
+): string {
+  const itemDef = getItemDef(effect.itemId);
+  const quantitySuffix = effect.quantity > 1 ? ` x${effect.quantity}` : "";
+
+  return `Picked up ${itemDef.name}${quantitySuffix}.`;
+}
+
+function getCollectedItemToastTone(itemId: string): GameToastTone {
+  return isImportantItemCategory(getItemDef(itemId).category)
+    ? "important"
+    : "default";
+}
+
+function isImportantItemCategory(category: string): boolean {
+  return category === "quest" || category === "rare";
 }

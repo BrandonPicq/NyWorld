@@ -595,20 +595,28 @@
 
 /* Game Toast */
 .game-toast {
+  --game-toast-color: var(--color-accent);
+  --game-toast-background: var(--color-panel-background);
+
   position: fixed;
   top: var(--space-4);
   left: 50%;
   transform: translateX(-50%) translateY(-120%);
-  background: var(--color-panel-background);
-  border: 2px solid var(--color-accent);
+  background: var(--game-toast-background);
+  border: 2px solid var(--game-toast-color);
   padding: var(--space-2) var(--space-4);
   font-family: var(--font-mono);
   font-size: 0.95rem;
-  color: var(--color-accent);
+  color: var(--game-toast-color);
   z-index: 2000;
   opacity: 0;
   transition: transform 0.3s ease, opacity 0.3s ease;
   pointer-events: none;
+}
+
+.game-toast[data-tone="important"] {
+  --game-toast-color: #ff5a5f;
+  --game-toast-background: rgba(35, 5, 8, 0.94);
 }
 
 .game-toast[data-visible="true"] {
@@ -842,4 +850,3 @@
 .game-layout__sidebar-right--with-quests .game-screen__log {
   max-height: 14rem;
 }
-
