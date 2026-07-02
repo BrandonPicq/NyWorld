@@ -2,10 +2,13 @@ import { useState } from "react";
 import { formatWorldDateTime } from "../../engine";
 import type { GameSaveData } from "../../engine/GameSaveData";
 import { TerminalPanel } from "../components/TerminalPanel";
-import { TerminalButton } from "../components/TerminalButton";
+import { TerminalMenu, type TerminalMenuItem } from "../components/TerminalMenu";
+import type { AudioSettings } from "../audio/audioSettings";
+import { playMenuConfirmSound, playMenuMoveSound } from "../audio/menuAudio";
 import { SAVE_SLOT_COUNT } from "./gameSaveStorage";
 
 type SaveSlotsModalProps = {
+  audioSettings: AudioSettings;
   onClose: () => void;
   onSave: (slotIndex: number) => void;
   slots: (GameSaveData | null)[];
@@ -20,6 +23,7 @@ function formatSlotSummary(save: GameSaveData | null, index: number): string {
 }
 
 export function SaveSlotsModal({
+  audioSettings,
   onClose,
   onSave,
   slots,
@@ -27,9 +31,37 @@ export function SaveSlotsModal({
   const [pendingOverwriteIndex, setPendingOverwriteIndex] = useState<
     number | null
   >(null);
-  const handleClose = () => onClose();
   const pendingOverwriteSave =
     pendingOverwriteIndex !== null ? slots[pendingOverwriteIndex] : null;
+
+  const playConfirmFeedback = () => {
+    if (audioSettings.soundEnabled) {
+      playMenuConfirmSound();
+    }
+  };
+
+  const menuFeedback = {
+    onActivateItem: playConfirmFeedback,
+    onMoveSelection: () => {
+      if (audioSettings.soundEnabled) {
+        playMenuMoveSound();
+      }
+    },
+  };
+
+  const handleOverlayClose = () => {
+    playConfirmFeedback();
+    onClose();
+  };
+
+  const handleKeyboardBack = () => {
+    if (pendingOverwriteIndex !== null) {
+      setPendingOverwriteIndex(null);
+      return;
+    }
+
+    onClose();
+  };
 
   const handleSelectSlot = (slotIndex: number) => {
     if (slots[slotIndex]) {
@@ -50,16 +82,35 @@ export function SaveSlotsModal({
     onSave(slotIndex);
   };
 
+  const slotMenuItems: TerminalMenuItem[] = [
+    ...Array.from({ length: SAVE_SLOT_COUNT }, (_, i) => ({
+      label: formatSlotSummary(slots[i], i),
+      onSelect: () => handleSelectSlot(i),
+    })),
+    { label: "Cancel", onSelect: onClose },
+  ];
+
+  const overwriteMenuItems: TerminalMenuItem[] = [
+    { label: "Cancel", onSelect: () => setPendingOverwriteIndex(null) },
+    { label: "Overwrite", onSelect: handleConfirmOverwrite },
+  ];
+
   return (
     <div
       className="modal-overlay"
       role="dialog"
       aria-modal="true"
-      onClick={handleClose}
+      onClick={handleOverlayClose}
       onKeyDown={(e) => {
+        if (e.defaultPrevented) {
+          e.stopPropagation();
+          return;
+        }
+
         if (e.key === "Escape") {
           e.preventDefault();
-          handleClose();
+          playConfirmFeedback();
+          handleKeyboardBack();
         }
         e.stopPropagation();
       }}
@@ -80,17 +131,13 @@ export function SaveSlotsModal({
             </h2>
             <p>{formatSlotSummary(pendingOverwriteSave, pendingOverwriteIndex)}</p>
             <p>This will replace the existing save in this slot.</p>
-            <div
-              className="stats-modal__actions"
-              style={{ marginTop: "var(--space-4)" }}
-            >
-              <TerminalButton onClick={() => setPendingOverwriteIndex(null)}>
-                [Cancel]
-              </TerminalButton>
-              <TerminalButton onClick={handleConfirmOverwrite}>
-                [Overwrite]
-              </TerminalButton>
-            </div>
+            <TerminalMenu
+              ariaLabel="Overwrite save confirmation"
+              items={overwriteMenuItems}
+              onBack={handleKeyboardBack}
+              onBackAction={playConfirmFeedback}
+              {...menuFeedback}
+            />
           </>
         ) : (
           <>
@@ -101,26 +148,13 @@ export function SaveSlotsModal({
               Choose a Slot
             </h2>
 
-            <div className="terminal-menu" role="listbox">
-              {Array.from({ length: SAVE_SLOT_COUNT }, (_, i) => (
-                <TerminalButton
-                  key={i}
-                  onClick={() => handleSelectSlot(i)}
-                  style={{ textAlign: "left" }}
-                >
-                  {formatSlotSummary(slots[i], i)}
-                </TerminalButton>
-              ))}
-            </div>
-
-            <div
-              className="stats-modal__actions"
-              style={{ marginTop: "var(--space-4)" }}
-            >
-              <TerminalButton onClick={handleClose}>
-                [Cancel]
-              </TerminalButton>
-            </div>
+            <TerminalMenu
+              ariaLabel="Save slot choices"
+              items={slotMenuItems}
+              onBack={handleKeyboardBack}
+              onBackAction={playConfirmFeedback}
+              {...menuFeedback}
+            />
           </>
         )}
       </TerminalPanel>

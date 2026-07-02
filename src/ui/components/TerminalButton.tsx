@@ -15,6 +15,7 @@ export const TerminalButton = forwardRef<HTMLButtonElement, TerminalButtonProps>
       <button
         aria-current={isSelected ? "true" : undefined}
         className={classes}
+        data-keyboard-blocking-hover="true"
         data-selected={isSelected ? "true" : undefined}
         ref={ref}
         type={type}

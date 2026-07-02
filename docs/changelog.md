@@ -4,6 +4,14 @@ This file tracks meaningful project changes by commit-oriented slices.
 
 Keep entries short and practical. When a slice is committed, its changelog section should stay aligned with the commit title so the project history remains easy to read after restores or bisects.
 
+## 2026-07-02 - [FIX]: Align pointer and keyboard menu controls
+
+- Mark terminal buttons as keyboard-blocking while hovered to avoid mixed pointer and keyboard commands.
+- Ignore menu navigation and activation keys while the pointer rests on a menu entry.
+- Stop handled menu key events from bubbling into modal overlays.
+- Rebuild the save-slot modal with the shared terminal menu component.
+- Add directional-key navigation, Escape back handling, and menu sounds to save-slot and overwrite choices.
+
 ## 2026-07-02 - [FIX]: Harden quest dialogue completion and save restore
 
 - Make Escape during dialogue reveal the current line instead of closing the dialogue.

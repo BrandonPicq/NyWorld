@@ -93,6 +93,22 @@ export function useGameKeyboardControls({
         return;
       }
 
+      const journalKey = keyboardLayout === "azerty" ? "a" : "q";
+      const commandType = getGameCommandForKey(event.key, keyboardLayout);
+
+      if (isPointerOverKeyboardBlockingElement()) {
+        if (
+          keyLower === "c" ||
+          keyLower === "i" ||
+          keyLower === journalKey ||
+          keyLower === "r" ||
+          commandType
+        ) {
+          event.preventDefault();
+        }
+        return;
+      }
+
       if (keyLower === "c" && !isInventoryOpen && !isQuestsOpen) {
         event.preventDefault();
         if (audioSettings.soundEnabled) {
@@ -111,7 +127,6 @@ export function useGameKeyboardControls({
         return;
       }
 
-      const journalKey = keyboardLayout === "azerty" ? "a" : "q";
       if (keyLower === journalKey && !isInventoryOpen && !isCharacterSheetOpen) {
         event.preventDefault();
         if (audioSettings.soundEnabled) {
@@ -130,8 +145,6 @@ export function useGameKeyboardControls({
         executeCommand({ type: "Rest" });
         return;
       }
-
-      const commandType = getGameCommandForKey(event.key, keyboardLayout);
 
       if (commandType) {
         event.preventDefault();
@@ -161,4 +174,16 @@ export function useGameKeyboardControls({
     setIsInventoryOpen,
     setIsQuestsOpen,
   ]);
+}
+
+function isPointerOverKeyboardBlockingElement(): boolean {
+  if (typeof document === "undefined") {
+    return false;
+  }
+
+  return (
+    document.querySelector(
+      '[data-keyboard-blocking-hover="true"]:hover:not(:disabled):not([aria-disabled="true"])',
+    ) !== null
+  );
 }

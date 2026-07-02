@@ -365,6 +365,7 @@ export function GameScreen({
 
         {isSaveSlotsOpen && (
           <SaveSlotsModal
+            audioSettings={audioSettings}
             onClose={() => setIsSaveSlotsOpen(false)}
             onSave={handleSaveToSlot}
             slots={readAllSaves()}

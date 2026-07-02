@@ -32,6 +32,7 @@ export function TerminalMenu({
     () => getFirstEnabledMenuItemIndex(items),
     [items],
   );
+  const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
   const [selectedIndex, setSelectedIndex] = useState(firstEnabledIndex);
   const classes = ["terminal-menu", className].filter(Boolean).join(" ");
 
@@ -40,6 +41,15 @@ export function TerminalMenu({
       setSelectedIndex(firstEnabledIndex);
     }
   }, [firstEnabledIndex, items, selectedIndex]);
+
+  useEffect(() => {
+    if (
+      hoveredIndex !== null &&
+      (hoveredIndex >= items.length || items[hoveredIndex]?.disabled)
+    ) {
+      setHoveredIndex(null);
+    }
+  }, [hoveredIndex, items]);
 
   useEffect(() => {
     if (selectedIndex >= 0) {
@@ -79,30 +89,41 @@ export function TerminalMenu({
     }
 
     event.preventDefault();
+    event.stopPropagation();
     onBackAction?.();
     onBack();
   }
 
   function handleKeyDown(event: React.KeyboardEvent<HTMLElement>) {
+    if (hoveredIndex !== null && isPointerLockedMenuKey(event.key)) {
+      event.preventDefault();
+      event.stopPropagation();
+      return;
+    }
+
     if (event.key === "Tab") {
       event.preventDefault();
+      event.stopPropagation();
       return;
     }
 
     if (event.key === "ArrowDown") {
       event.preventDefault();
+      event.stopPropagation();
       moveSelection(1);
       return;
     }
 
     if (event.key === "ArrowUp") {
       event.preventDefault();
+      event.stopPropagation();
       moveSelection(-1);
       return;
     }
 
     if (event.key === "Enter") {
       event.preventDefault();
+      event.stopPropagation();
       activateSelectedItem();
       return;
     }
@@ -111,6 +132,7 @@ export function TerminalMenu({
       const selectedItem = items[selectedIndex];
       if (selectedItem?.onLeft && !selectedItem.disabled) {
         event.preventDefault();
+        event.stopPropagation();
         selectedItem.onLeft();
         onMoveSelection?.();
       }
@@ -121,6 +143,7 @@ export function TerminalMenu({
       const selectedItem = items[selectedIndex];
       if (selectedItem?.onRight && !selectedItem.disabled) {
         event.preventDefault();
+        event.stopPropagation();
         selectedItem.onRight();
         onMoveSelection?.();
       }
@@ -150,8 +173,14 @@ export function TerminalMenu({
             }}
             onMouseEnter={() => {
               if (!item.disabled) {
+                setHoveredIndex(index);
                 setSelectedIndex(index);
               }
+            }}
+            onMouseLeave={() => {
+              setHoveredIndex((currentIndex) =>
+                currentIndex === index ? null : currentIndex,
+              );
             }}
             ref={(button) => {
               buttonRefs.current[index] = button;
@@ -163,5 +192,17 @@ export function TerminalMenu({
         );
       })}
     </nav>
+  );
+}
+
+function isPointerLockedMenuKey(key: string): boolean {
+  return (
+    key === "ArrowDown" ||
+    key === "ArrowUp" ||
+    key === "ArrowLeft" ||
+    key === "ArrowRight" ||
+    key === "Enter" ||
+    key === " " ||
+    key === "Spacebar"
   );
 }
