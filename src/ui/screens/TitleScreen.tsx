@@ -47,7 +47,7 @@ export function TitleScreen({
   return (
     <main className="app-shell title-screen" aria-labelledby="title-heading">
       <TerminalPanel className="title-panel">
-        <p className="terminal-kicker">NYWARUDO OS // V0 BOOT</p>
+        <p className="terminal-kicker">NYWARUDO // V0.0.1</p>
         <h1 className="terminal-heading" id="title-heading">
           NyWarudo
         </h1>
