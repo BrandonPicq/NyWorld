@@ -25,6 +25,7 @@ export interface SaveSerializationState {
   seenZoneEntryEventIds: Iterable<string>;
   activeQuests: string[];
   completedQuests: string[];
+  completedObjectives: string[];
 }
 
 /**
@@ -61,5 +62,6 @@ export function serializeSaveData(state: SaveSerializationState): GameSaveData {
     seenZoneEntryEventIds: Array.from(state.seenZoneEntryEventIds),
     activeQuests: [...state.activeQuests],
     completedQuests: [...state.completedQuests],
+    completedObjectives: [...state.completedObjectives],
   };
 }

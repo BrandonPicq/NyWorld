@@ -4,6 +4,16 @@ This file tracks meaningful project changes by commit-oriented slices.
 
 Keep entries short and practical. When a slice is committed, its changelog section should stay aligned with the commit title so the project history remains easy to read after restores or bisects.
 
+## 2026-07-02 - [ADD]: Support coordinate and stat threshold quest objectives
+
+- Define VisitCoordinateObjective and StatThresholdObjective schemas.
+- Upgrade local storage save game standard to V0.5 to persist completedObjectives list.
+- Track coordinate target arrivals on movements as sticky objectives.
+- Track attribute and stats thresholds dynamically in real-time.
+- Parse and strictly validate coordinates and stat limits in quest definitions.
+- Project dynamic progress and completion flags to UI snapshots.
+- Add advanced unit tests verifying dynamic status, sticky movement checks, and registry loaders.
+
 ## 2026-07-02 - [UPDATE]: Show item pickup toast feedback
 
 - Surface collected item effects from the React gameplay bridge.

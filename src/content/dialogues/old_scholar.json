@@ -55,5 +55,19 @@
       "text": "Thank you again for returning my notebook. My research can now continue.",
       "pitch": 0.75
     }
+  ],
+  "old_scholar.advanced_quest_start": [
+    {
+      "speaker": "Old Scholar",
+      "text": "Apprentice, I have a more complex task for you.",
+      "pitch": 0.75
+    }
+  ],
+  "old_scholar.advanced_quest_complete": [
+    {
+      "speaker": "Old Scholar",
+      "text": "Excellent! You finished the advanced task.",
+      "pitch": 0.75
+    }
   ]
 }

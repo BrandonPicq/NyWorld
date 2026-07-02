@@ -142,7 +142,9 @@ function isGameSaveData(value: unknown): value is GameSaveData {
     Array.isArray(obj.activeQuests) &&
     obj.activeQuests.every((qId) => typeof qId === "string") &&
     Array.isArray(obj.completedQuests) &&
-    obj.completedQuests.every((qId) => typeof qId === "string")
+    obj.completedQuests.every((qId) => typeof qId === "string") &&
+    Array.isArray(obj.completedObjectives) &&
+    obj.completedObjectives.every((objId) => typeof objId === "string")
   );
 }
 

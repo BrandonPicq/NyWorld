@@ -1,0 +1,37 @@
+{
+  "questId": "advanced_quest",
+  "name": "Advanced Research Task",
+  "description": "Prove your diligence by exploring coordinates and studying scribing.",
+  "targetNpcId": "old_scholar",
+  "triggers": {
+    "start": { "dialogueId": "old_scholar.advanced_quest_start" },
+    "complete": { "dialogueId": "old_scholar.advanced_quest_complete" }
+  },
+  "npcOverrides": {
+    "old_scholar": {
+      "active": "old_scholar.quest_active_reminder",
+      "activeReady": "old_scholar.advanced_quest_complete",
+      "completed": "old_scholar.quest_completed"
+    }
+  },
+  "objectives": [
+    {
+      "id": "visit_ruins",
+      "type": "visit_coordinate",
+      "zoneId": "quest_test_zone",
+      "x": 2,
+      "y": 2,
+      "description": "Investigate the old ruins"
+    },
+    {
+      "id": "study_scribing",
+      "type": "stat_threshold",
+      "statName": "intelligence",
+      "threshold": 12,
+      "description": "Reach 12 Intelligence"
+    }
+  ],
+  "rewards": {
+    "currency": 50
+  }
+}

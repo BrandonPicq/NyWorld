@@ -53,6 +53,7 @@ function stubSave(overrides: Partial<GameSaveData> = {}): GameSaveData {
     seenZoneEntryEventIds: [],
     activeQuests: [],
     completedQuests: [],
+    completedObjectives: [],
     ...overrides,
   };
 }

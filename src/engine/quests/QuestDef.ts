@@ -6,7 +6,27 @@ export interface FetchItemObjective {
   description: string;
 }
 
-export type QuestObjective = FetchItemObjective;
+export interface VisitCoordinateObjective {
+  readonly type: "visit_coordinate";
+  id: string;
+  zoneId: string;
+  x: number;
+  y: number;
+  description: string;
+}
+
+export interface StatThresholdObjective {
+  readonly type: "stat_threshold";
+  id: string;
+  statName: "strength" | "intelligence" | "charisma" | "academicProgress" | "energy";
+  threshold: number;
+  description: string;
+}
+
+export type QuestObjective =
+  | FetchItemObjective
+  | VisitCoordinateObjective
+  | StatThresholdObjective;
 
 export interface QuestRewards {
   currency?: number;

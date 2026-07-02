@@ -220,24 +220,48 @@ function assertObjectives(value: unknown, questId: string): void {
     }
     objIds.add(obj.id);
 
-    if (obj.type !== "fetch_item") {
-      throw new Error(`Quest "${questId}" objective "${obj.id}" has unsupported type "${obj.type}".`);
-    }
-
-    if (typeof obj.itemId !== "string" || !hasItemDef(obj.itemId)) {
-      throw new Error(
-        `Quest "${questId}" objective "${obj.id}" references unknown itemId "${obj.itemId}".`,
-      );
-    }
-
-    if (typeof obj.quantity !== "number" || !Number.isInteger(obj.quantity) || obj.quantity <= 0) {
-      throw new Error(
-        `Quest "${questId}" objective "${obj.id}" has invalid quantity. Must be a positive integer.`,
-      );
-    }
-
     if (typeof obj.description !== "string" || !obj.description.trim()) {
       throw new Error(`Quest "${questId}" objective "${obj.id}" has invalid description.`);
+    }
+
+    if (obj.type === "fetch_item") {
+      if (typeof obj.itemId !== "string" || !hasItemDef(obj.itemId)) {
+        throw new Error(
+          `Quest "${questId}" objective "${obj.id}" references unknown itemId "${obj.itemId}".`,
+        );
+      }
+
+      if (typeof obj.quantity !== "number" || !Number.isInteger(obj.quantity) || obj.quantity <= 0) {
+        throw new Error(
+          `Quest "${questId}" objective "${obj.id}" has invalid quantity. Must be a positive integer.`,
+        );
+      }
+    } else if (obj.type === "visit_coordinate") {
+      if (typeof obj.zoneId !== "string" || !obj.zoneId.trim()) {
+        throw new Error(`Quest "${questId}" objective "${obj.id}" has invalid or missing zoneId.`);
+      }
+
+      if (typeof obj.x !== "number" || !Number.isInteger(obj.x) || obj.x < 0) {
+        throw new Error(`Quest "${questId}" objective "${obj.id}" has invalid x coordinate.`);
+      }
+
+      if (typeof obj.y !== "number" || !Number.isInteger(obj.y) || obj.y < 0) {
+        throw new Error(`Quest "${questId}" objective "${obj.id}" has invalid y coordinate.`);
+      }
+    } else if (obj.type === "stat_threshold") {
+      const statName = obj.statName;
+      const validStats = ["strength", "intelligence", "charisma", "academicProgress", "energy"];
+      if (typeof statName !== "string" || !validStats.includes(statName)) {
+        throw new Error(
+          `Quest "${questId}" objective "${obj.id}" has invalid or missing statName "${statName}".`,
+        );
+      }
+
+      if (typeof obj.threshold !== "number" || !Number.isInteger(obj.threshold) || obj.threshold <= 0) {
+        throw new Error(`Quest "${questId}" objective "${obj.id}" has invalid threshold.`);
+      }
+    } else {
+      throw new Error(`Quest "${questId}" objective "${obj.id}" has unsupported type "${obj.type}".`);
     }
   }
 }

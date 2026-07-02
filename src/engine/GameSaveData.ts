@@ -9,7 +9,7 @@ import type { NpcState } from "./npcs/NpcState";
  * Increment this when older save payloads can no longer be safely interpreted
  * by the loader without migration.
  */
-export const SAVE_VERSION = "0.4";
+export const SAVE_VERSION = "0.5";
 
 /**
  * Versioned payload written to persistent save slots.
@@ -41,4 +41,5 @@ export interface GameSaveData {
   seenZoneEntryEventIds?: string[];
   activeQuests: string[];
   completedQuests: string[];
+  completedObjectives: string[];
 }

@@ -117,7 +117,7 @@ export interface GameSnapshot {
       id: string;
       description: string;
       type: string;
-      itemId: string;
+      itemId?: string;
       requiredQuantity: number;
       currentQuantity: number;
     }>;
@@ -221,6 +221,7 @@ export class GameplayEngine {
       type: "Quests",
       active: [],
       completed: [],
+      completedObjectives: [],
     };
     this.world.addComponent(playerId, quests);
 
@@ -332,6 +333,7 @@ export class GameplayEngine {
       stats.energy = Math.max(0, stats.energy - 1);
       const pos = this.getPlayerPosition();
       this.addLog(`Moved ${direction} to (${pos.x}, ${pos.y}).`);
+      this.checkCoordinateObjectives();
       const itemAtPosition = this.getItemAt(pos.x, pos.y);
       const effects: EngineEffect[] = [];
       if (itemAtPosition) {
@@ -560,6 +562,7 @@ export class GameplayEngine {
 
     this.addLog(`Entered ${map.name}.`);
     this.queueZoneEntryDialogue(map);
+    this.checkCoordinateObjectives();
   }
 
   private queueZoneEntryDialogue(map: GameMap): void {
@@ -603,6 +606,7 @@ export class GameplayEngine {
       seenZoneEntryEventIds: this.seenZoneEntryEventIds,
       activeQuests: this.getPlayerQuests().active,
       completedQuests: this.getPlayerQuests().completed,
+      completedObjectives: this.getPlayerQuests().completedObjectives,
     });
   }
 
@@ -647,6 +651,7 @@ export class GameplayEngine {
     );
     quests.active = restoredQuests.active;
     quests.completed = restoredQuests.completed;
+    quests.completedObjectives = [...(saveData.completedObjectives || [])];
 
     this.tickCounter.restoreTo(saveData.tick);
     this.worldTimeMinutes = saveData.worldTimeMinutes;
@@ -745,25 +750,44 @@ export class GameplayEngine {
     }
 
     const inventory = this.getPlayerInventory();
-
     const quests = this.getPlayerQuests();
+    const zoneId = this.map.zoneId;
+ 
     const activeQuestsSnapshot = quests.active.flatMap((questId) => {
       const questDef = getQuestDef(questId);
       if (!questDef) {
         return [];
       }
-
+ 
       const isReady = this.isQuestReadyToComplete(questId);
       const objectives = questDef.objectives.map((obj) => {
-        const currentQty = inventory.items
-          .filter((item) => item.itemId === obj.itemId)
-          .reduce((sum, item) => sum + item.quantity, 0);
+        let currentQty = 0;
+        let requiredQty = 1;
+        if (obj.type === "fetch_item") {
+          currentQty = inventory.items
+            .filter((item) => item.itemId === obj.itemId)
+            .reduce((sum, item) => sum + item.quantity, 0);
+          requiredQty = obj.quantity;
+        } else if (obj.type === "visit_coordinate") {
+          const visited = quests.completedObjectives.includes(obj.id) ||
+            (obj.zoneId === zoneId && obj.x === pos.x && obj.y === pos.y);
+          currentQty = visited ? 1 : 0;
+          requiredQty = 1;
+        } else if (obj.type === "stat_threshold") {
+          const currentVal =
+            obj.statName === "strength" ||
+            obj.statName === "intelligence" ||
+            obj.statName === "charisma"
+              ? stats.attributes[obj.statName]
+              : stats[obj.statName];
+          currentQty = currentVal;
+          requiredQty = obj.threshold;
+        }
         return {
           id: obj.id,
           description: obj.description,
           type: obj.type,
-          itemId: obj.itemId,
-          requiredQuantity: obj.quantity,
+          requiredQuantity: requiredQty,
           currentQuantity: currentQty,
         };
       });
@@ -845,8 +869,13 @@ export class GameplayEngine {
   isQuestReadyToComplete(questId: string): boolean {
     const questDef = getQuestDef(questId);
     if (!questDef) return false;
-
+ 
     const inventory = this.getPlayerInventory();
+    const quests = this.getPlayerQuests();
+    const stats = this.getPlayerStats();
+    const position = this.getPlayerPosition();
+    const zoneId = this.map.zoneId;
+ 
     for (const obj of questDef.objectives) {
       if (obj.type === "fetch_item") {
         const currentQty = inventory.items
@@ -855,9 +884,25 @@ export class GameplayEngine {
         if (currentQty < obj.quantity) {
           return false;
         }
+      } else if (obj.type === "visit_coordinate") {
+        const visited = quests.completedObjectives.includes(obj.id) ||
+          (obj.zoneId === zoneId && obj.x === position.x && obj.y === position.y);
+        if (!visited) {
+          return false;
+        }
+      } else if (obj.type === "stat_threshold") {
+        const currentVal =
+          obj.statName === "strength" ||
+          obj.statName === "intelligence" ||
+          obj.statName === "charisma"
+            ? stats.attributes[obj.statName]
+            : stats[obj.statName];
+        if (currentVal < obj.threshold) {
+          return false;
+        }
       }
     }
-
+ 
     return true;
   }
 
@@ -927,6 +972,7 @@ export class GameplayEngine {
     quests.active.push(questId);
     const questDef = getQuestDef(questId)!;
     this.addLog(`Started Quest: ${questDef.name}`);
+    this.checkCoordinateObjectives();
   }
 
   private completeQuest(questId: string): void {
@@ -948,15 +994,18 @@ export class GameplayEngine {
         for (let i = inventory.items.length - 1; i >= 0 && remaining > 0; i--) {
           const stack = inventory.items[i];
           if (stack.itemId === obj.itemId) {
-            const toTake = Math.min(stack.quantity, remaining);
-            stack.quantity -= toTake;
-            remaining -= toTake;
-            if (stack.quantity === 0) {
-              inventory.items.splice(i, 1);
-            }
+            const consumed = Math.min(stack.quantity, remaining);
+            stack.quantity -= consumed;
+            remaining -= consumed;
           }
         }
+        inventory.items = inventory.items.filter((stack) => stack.quantity > 0);
       }
+    }
+
+    // Clean up sticky objective records
+    for (const obj of questDef.objectives) {
+      quests.completedObjectives = quests.completedObjectives.filter((id) => id !== obj.id);
     }
 
     // 2. Award rewards
@@ -1020,6 +1069,32 @@ export class GameplayEngine {
     }
 
     return { active, completed };
+  }
+ 
+  private checkCoordinateObjectives(): void {
+    const quests = this.getPlayerQuests();
+    const position = this.getPlayerPosition();
+    const zoneId = this.map.zoneId;
+ 
+    for (const questId of quests.active) {
+      const questDef = getQuestDef(questId);
+      if (!questDef) continue;
+ 
+      for (const obj of questDef.objectives) {
+        if (obj.type === "visit_coordinate") {
+          if (
+            obj.zoneId === zoneId &&
+            obj.x === position.x &&
+            obj.y === position.y
+          ) {
+            if (!quests.completedObjectives.includes(obj.id)) {
+              quests.completedObjectives.push(obj.id);
+              this.addLog(`Reached objective area: ${obj.description}`);
+            }
+          }
+        }
+      }
+    }
   }
 
   private getTargetPosition(

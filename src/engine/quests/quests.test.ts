@@ -169,4 +169,106 @@ describe("Quest System", () => {
     expect(engine.getSnapshot().activeQuests).toHaveLength(0);
     expect(engine.getSnapshot().completedQuests).toHaveLength(0);
   });
+
+  it("tracks coordinate and stat threshold objectives dynamically and stickily", () => {
+    const advancedZoneData = {
+      ...zoneData,
+      npcs: [
+        {
+          npcId: "old_scholar",
+          x: 2,
+          y: 1,
+          dialogueId: "old_scholar.advanced_quest_start",
+        },
+      ],
+    };
+    const engine = new GameplayEngine(loadZone(advancedZoneData));
+ 
+    // Start advanced_quest
+    engine.execute({
+      type: "Interact",
+      targetNpcId: "old_scholar",
+      targetDirection: "east",
+    });
+    engine.execute({ type: "CompleteDialogue" });
+ 
+    let snapshot = engine.getSnapshot();
+    const activeQuest = snapshot.activeQuests.find((q) => q.questId === "advanced_quest")!;
+    expect(activeQuest).toBeDefined();
+    expect(activeQuest.state).toBe("active");
+ 
+    // Objectives check
+    let visitObj = activeQuest.objectives.find((obj) => obj.id === "visit_ruins")!;
+    let statObj = activeQuest.objectives.find((obj) => obj.id === "study_scribing")!;
+    expect(visitObj.currentQuantity).toBe(0);
+    expect(statObj.currentQuantity).toBe(10);
+    expect(engine.isQuestReadyToComplete("advanced_quest")).toBe(false);
+ 
+    // 1. Move player to (2, 2) to trigger coordinate objective
+    // Path: Move South to (1, 2), then East to (2, 2)
+    engine.execute({ type: "MoveSouth" });
+    engine.execute({ type: "MoveEast" });
+ 
+    snapshot = engine.getSnapshot();
+    let activeQuestUpdated = snapshot.activeQuests.find((q) => q.questId === "advanced_quest")!;
+    visitObj = activeQuestUpdated.objectives.find((obj) => obj.id === "visit_ruins")!;
+    expect(visitObj.currentQuantity).toBe(1); // Reached ruins!
+    expect(engine.isQuestReadyToComplete("advanced_quest")).toBe(false);
+ 
+    // Step away and confirm it remains completed (sticky state)
+    engine.execute({ type: "MoveWest" });
+    snapshot = engine.getSnapshot();
+    activeQuestUpdated = snapshot.activeQuests.find((q) => q.questId === "advanced_quest")!;
+    visitObj = activeQuestUpdated.objectives.find((obj) => obj.id === "visit_ruins")!;
+    expect(visitObj.currentQuantity).toBe(1);
+ 
+    // 2. Increase intelligence to 12 using save-load injection
+    const saveData = engine.createSaveData();
+    saveData.stats.attributes.intelligence = 12;
+    
+    let engine2 = GameplayEngine.fromSaveData(saveData, {
+      resolveZone: () => loadZone(advancedZoneData),
+    });
+ 
+    snapshot = engine2.getSnapshot();
+    activeQuestUpdated = snapshot.activeQuests.find((q) => q.questId === "advanced_quest")!;
+    statObj = activeQuestUpdated.objectives.find((obj) => obj.id === "study_scribing")!;
+    expect(statObj.currentQuantity).toBe(12);
+    expect(activeQuestUpdated.state).toBe("readyToComplete");
+    expect(engine2.isQuestReadyToComplete("advanced_quest")).toBe(true);
+ 
+    // Revert intelligence to 11 and confirm it becomes incomplete again (dynamic state)
+    const saveData2 = engine2.createSaveData();
+    saveData2.stats.attributes.intelligence = 11;
+    let engine3 = GameplayEngine.fromSaveData(saveData2, {
+      resolveZone: () => loadZone(advancedZoneData),
+    });
+ 
+    snapshot = engine3.getSnapshot();
+    activeQuestUpdated = snapshot.activeQuests.find((q) => q.questId === "advanced_quest")!;
+    expect(activeQuestUpdated.state).toBe("active");
+    expect(engine3.isQuestReadyToComplete("advanced_quest")).toBe(false);
+ 
+    // Return stats back to 12
+    const saveData3 = engine3.createSaveData();
+    saveData3.stats.attributes.intelligence = 12;
+    let engine4 = GameplayEngine.fromSaveData(saveData3, {
+      resolveZone: () => loadZone(advancedZoneData),
+    });
+ 
+    // Move back to (1, 1) and talk to the scholar
+    engine4.execute({ type: "MoveNorth" });
+    const completionResult = engine4.execute({
+      type: "Interact",
+      targetNpcId: "old_scholar",
+      targetDirection: "east",
+    });
+    expect(completionResult.dialogueId).toBe("old_scholar.advanced_quest_complete");
+ 
+    // Hand in
+    engine4.execute({ type: "CompleteDialogue" });
+    snapshot = engine4.getSnapshot();
+    expect(snapshot.activeQuests.find((q) => q.questId === "advanced_quest")).toBeUndefined();
+    expect(snapshot.completedQuests).toContain("advanced_quest");
+  });
 });
