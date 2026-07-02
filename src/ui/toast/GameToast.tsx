@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 export type GameToastTone = "default" | "important";
 
@@ -16,6 +16,11 @@ export function GameToast({
   tone = "default",
 }: GameToastProps) {
   const [visible, setVisible] = useState(false);
+  const onDismissRef = useRef(onDismiss);
+
+  useEffect(() => {
+    onDismissRef.current = onDismiss;
+  }, [onDismiss]);
 
   useEffect(() => {
     setVisible(false);
@@ -24,7 +29,9 @@ export function GameToast({
 
     const timer = window.setTimeout(() => {
       setVisible(false);
-      dismissTimer = window.setTimeout(onDismiss, 300);
+      dismissTimer = window.setTimeout(() => {
+        onDismissRef.current();
+      }, 300);
     }, durationMs);
 
     return () => {
@@ -34,7 +41,7 @@ export function GameToast({
         clearTimeout(dismissTimer);
       }
     };
-  }, [durationMs, message, onDismiss, tone]);
+  }, [durationMs, message, tone]);
 
   return (
     <div
