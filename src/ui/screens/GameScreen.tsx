@@ -1,9 +1,9 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { createGridRenderSnapshot } from "../../rendering";
 import testZoneData from "../../content/zones/test_zone.json";
 import testZone2Data from "../../content/zones/test_zone_2.json";
 import type { ZoneData } from "../../engine/ZoneTypes";
-import type { EngineNotice, GameCommand } from "../../engine";
+import type { DialogueNode, EngineNotice, GameCommand } from "../../engine";
 import type { GameSaveData } from "../../engine/GameSaveData";
 import { TerminalPanel } from "../components/TerminalPanel";
 import { TerminalButton } from "../components/TerminalButton";
@@ -154,13 +154,21 @@ export function GameScreen({
     executeCommand(command);
   };
 
+  const triggerZoneEntryDialogue = useCallback(
+    (nodes: DialogueNode[]) => {
+      triggerDialogue(nodes);
+      executeCommand({ type: "AcknowledgeZoneEntryDialogue" });
+    },
+    [executeCommand, triggerDialogue],
+  );
+
   useEffect(() => {
     if (logRef.current) {
       logRef.current.scrollTop = logRef.current.scrollHeight;
     }
   }, [snapshot?.log]);
 
-  useZoneEntryDialogue(snapshot, (nodes) => triggerDialogue(nodes));
+  useZoneEntryDialogue(snapshot, triggerZoneEntryDialogue);
   useGameKeyboardControls({
     activeDialogue,
     audioSettings,

@@ -165,6 +165,8 @@ export class GameplayEngine {
   private worldTimeMinutes = START_WORLD_TIME_MINUTES;
   private npcStates: NpcStateMap = createInitialNpcStateMap();
   private pendingDialogueCompletionId?: string;
+  private pendingZoneEntryDialogue: DialogueNode[] = [];
+  private seenZoneEntryEventIds = new Set<string>();
   private notices: EngineNotice[] = [];
 
   constructor(map: GameMap, options: GameplayEngineOptions = {}) {
@@ -226,6 +228,7 @@ export class GameplayEngine {
     this.spawnItems();
 
     this.addLog(`Entered ${map.name}.`);
+    this.queueZoneEntryDialogue(map);
   }
 
   private spawnNpcs(): void {
@@ -285,6 +288,15 @@ export class GameplayEngine {
           this.completeQuest(questDef.questId);
         }
       }
+      return { success: true };
+    }
+
+    if (command.type === "AcknowledgeZoneEntryDialogue") {
+      if (this.pendingZoneEntryDialogue.length === 0) {
+        return { success: false };
+      }
+
+      this.pendingZoneEntryDialogue = [];
       return { success: true };
     }
 
@@ -547,6 +559,25 @@ export class GameplayEngine {
     pos.y = entryY;
 
     this.addLog(`Entered ${map.name}.`);
+    this.queueZoneEntryDialogue(map);
+  }
+
+  private queueZoneEntryDialogue(map: GameMap): void {
+    if (map.entryDialogue.length === 0) {
+      this.pendingZoneEntryDialogue = [];
+      return;
+    }
+
+    const eventId = getZoneEntryEventId(map.zoneId);
+    if (this.seenZoneEntryEventIds.has(eventId)) {
+      this.pendingZoneEntryDialogue = [];
+      return;
+    }
+
+    this.seenZoneEntryEventIds.add(eventId);
+    this.pendingZoneEntryDialogue = map.entryDialogue.map((dialogue) => ({
+      ...dialogue,
+    }));
   }
 
   /**
@@ -569,6 +600,7 @@ export class GameplayEngine {
       npcStates: Object.values(this.npcStates),
       log: this.log,
       pickedUpItemSpawnKeys: this.pickedUpItemSpawnKeys,
+      seenZoneEntryEventIds: this.seenZoneEntryEventIds,
       activeQuests: this.getPlayerQuests().active,
       completedQuests: this.getPlayerQuests().completed,
     });
@@ -622,6 +654,8 @@ export class GameplayEngine {
     this.playerFacing = saveData.playerFacing;
     this.log = saveData.log.map((entry) => ({ ...entry }));
     this.pickedUpItemSpawnKeys = new Set(saveData.pickedUpItemSpawnKeys);
+    this.seenZoneEntryEventIds = new Set(saveData.seenZoneEntryEventIds ?? []);
+    this.pendingZoneEntryDialogue = [];
 
     const pos = this.getPlayerPosition();
     pos.x = saveData.playerX;
@@ -629,6 +663,7 @@ export class GameplayEngine {
 
     this.spawnNpcs();
     this.spawnItems();
+    this.seenZoneEntryEventIds.add(getZoneEntryEventId(this.map.zoneId));
   }
 
   private resolvePendingTransition(): void {
@@ -765,7 +800,7 @@ export class GameplayEngine {
       },
       npcStates: Object.values(this.npcStates).map(cloneNpcState),
       entities,
-      entryDialogue: this.map.entryDialogue.map((dialogue) => ({
+      entryDialogue: this.pendingZoneEntryDialogue.map((dialogue) => ({
         ...dialogue,
       })),
       activeQuests: activeQuestsSnapshot,
@@ -1125,6 +1160,10 @@ function filterKnownQuestIds(
   }
 
   return knownQuestIds;
+}
+
+function getZoneEntryEventId(zoneId: string): string {
+  return `zone_entry:${zoneId}`;
 }
 
 function formatCurrencyReward(bronzeCoins: number): string {

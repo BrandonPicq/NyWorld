@@ -182,7 +182,7 @@ describe("GameplayEngine", () => {
     ]);
   });
 
-  it("exposes current zone entry dialogue in snapshots", () => {
+  it("exposes pending zone entry dialogue until it is acknowledged", () => {
     const engine = new GameplayEngine(
       loadZone({
         ...zoneData,
@@ -195,6 +195,13 @@ describe("GameplayEngine", () => {
     expect(engine.getSnapshot().entryDialogue).toEqual([
       { speaker: "Narrator", text: "The test begins.", pitch: 1 },
     ]);
+    expect(engine.execute({ type: "AcknowledgeZoneEntryDialogue" })).toEqual({
+      success: true,
+    });
+    expect(engine.getSnapshot().entryDialogue).toEqual([]);
+    expect(engine.execute({ type: "AcknowledgeZoneEntryDialogue" })).toEqual({
+      success: false,
+    });
   });
 
   it("detects a pending transition at the player position", () => {
@@ -293,6 +300,38 @@ describe("GameplayEngine", () => {
       "Moved east to (2, 1).",
       "Entered Next Zone.",
     ]);
+  });
+
+  it("does not replay a zone entry dialogue after the zone entry event was seen", () => {
+    const firstMap = loadZone({
+      ...zoneData,
+      entryDialogue: [
+        { speaker: "Narrator", text: "First arrival.", pitch: 1 },
+      ],
+    });
+    const secondMap = loadZone({
+      ...zoneData,
+      entryDialogue: [
+        { speaker: "Narrator", text: "Second arrival.", pitch: 1 },
+      ],
+      name: "Second Zone",
+      zoneId: "second_zone",
+    });
+    const engine = new GameplayEngine(firstMap);
+
+    expect(engine.getSnapshot().entryDialogue).toEqual([
+      { speaker: "Narrator", text: "First arrival.", pitch: 1 },
+    ]);
+    engine.execute({ type: "AcknowledgeZoneEntryDialogue" });
+
+    engine.enterZone(secondMap, 1, 1);
+    expect(engine.getSnapshot().entryDialogue).toEqual([
+      { speaker: "Narrator", text: "Second arrival.", pitch: 1 },
+    ]);
+    engine.execute({ type: "AcknowledgeZoneEntryDialogue" });
+
+    engine.enterZone(firstMap, 1, 1);
+    expect(engine.getSnapshot().entryDialogue).toEqual([]);
   });
 
   it("resolves an edge transition before the next movement command", () => {
@@ -1095,6 +1134,21 @@ describe("GameplayEngine", () => {
       expect(save.pickedUpItemSpawnKeys[0]).toContain("2,1");
     });
 
+    it("createSaveData includes seen zone entry event ids", () => {
+      const engine = new GameplayEngine(
+        loadZone({
+          ...zoneData,
+          entryDialogue: [
+            { speaker: "Narrator", text: "Seen once.", pitch: 1 },
+          ],
+        }),
+      );
+
+      const save = engine.createSaveData();
+
+      expect(save.seenZoneEntryEventIds).toEqual(["zone_entry:movement_test"]);
+    });
+
     it("fromSaveData restores tick, world time, position, facing, stats, inventory, and NPC state", () => {
       const engine = createEngine();
       engine.execute({ type: "MoveEast" });
@@ -1228,6 +1282,28 @@ describe("GameplayEngine", () => {
       const logMessages = restored.getSnapshot().log.map((e) => e.message);
       expect(logMessages).toContain("Entered Movement Test.");
       expect(logMessages).toContain("Moved east to (2, 1).");
+    });
+
+    it("fromSaveData does not treat loading as a fresh zone entry", () => {
+      const mapWithEntryDialogue = loadZone({
+        ...zoneData,
+        entryDialogue: [
+          { speaker: "Narrator", text: "This should not replay.", pitch: 1 },
+        ],
+      });
+      const engine = new GameplayEngine(mapWithEntryDialogue);
+      const save = engine.createSaveData();
+      delete save.seenZoneEntryEventIds;
+
+      const restored = GameplayEngine.fromSaveData(save, {
+        resolveZone: (zoneId) =>
+          zoneId === "movement_test" ? mapWithEntryDialogue : undefined,
+      });
+
+      expect(restored.getSnapshot().entryDialogue).toEqual([]);
+      expect(restored.createSaveData().seenZoneEntryEventIds).toEqual([
+        "zone_entry:movement_test",
+      ]);
     });
 
     it("fromSaveData cancels unavailable saved quests and emits a notice", () => {

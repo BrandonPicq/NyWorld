@@ -22,6 +22,7 @@ export interface SaveSerializationState {
   npcStates: Iterable<NpcState>;
   log: LogEntry[];
   pickedUpItemSpawnKeys: Iterable<string>;
+  seenZoneEntryEventIds: Iterable<string>;
   activeQuests: string[];
   completedQuests: string[];
 }
@@ -57,6 +58,7 @@ export function serializeSaveData(state: SaveSerializationState): GameSaveData {
     npcStates: Array.from(state.npcStates, cloneNpcState),
     log: state.log.map((entry) => ({ ...entry })),
     pickedUpItemSpawnKeys: Array.from(state.pickedUpItemSpawnKeys),
+    seenZoneEntryEventIds: Array.from(state.seenZoneEntryEventIds),
     activeQuests: [...state.activeQuests],
     completedQuests: [...state.completedQuests],
   };

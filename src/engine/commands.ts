@@ -8,4 +8,5 @@ export type GameCommand =
   | { type: "Interact"; targetNpcId?: string; targetDirection?: Direction }
   | { type: "Rest" }
   | { type: "UseItem"; itemId: string }
-  | { type: "CompleteDialogue" };
+  | { type: "CompleteDialogue" }
+  | { type: "AcknowledgeZoneEntryDialogue" };

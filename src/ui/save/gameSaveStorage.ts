@@ -42,6 +42,16 @@ function isOptionalNonEmptyString(value: unknown): boolean {
   );
 }
 
+function isOptionalStringArray(value: unknown): boolean {
+  return (
+    value === undefined ||
+    (Array.isArray(value) &&
+      value.every(
+        (entry) => typeof entry === "string" && entry.trim().length > 0,
+      ))
+  );
+}
+
 function isSaveStats(value: unknown): boolean {
   if (!isRecord(value)) return false;
   if (!isRecord(value.attributes)) return false;
@@ -128,6 +138,7 @@ function isGameSaveData(value: unknown): value is GameSaveData {
     obj.log.every(isSaveLogEntry) &&
     Array.isArray(obj.pickedUpItemSpawnKeys) &&
     obj.pickedUpItemSpawnKeys.every((key) => typeof key === "string") &&
+    isOptionalStringArray(obj.seenZoneEntryEventIds) &&
     Array.isArray(obj.activeQuests) &&
     obj.activeQuests.every((qId) => typeof qId === "string") &&
     Array.isArray(obj.completedQuests) &&

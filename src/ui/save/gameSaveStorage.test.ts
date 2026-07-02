@@ -50,6 +50,7 @@ function stubSave(overrides: Partial<GameSaveData> = {}): GameSaveData {
       },
     ],
     pickedUpItemSpawnKeys: [],
+    seenZoneEntryEventIds: [],
     activeQuests: [],
     completedQuests: [],
     ...overrides,
@@ -107,6 +108,7 @@ describe("gameSaveStorage", () => {
       },
     ]);
     expect(restored!.pickedUpItemSpawnKeys).toEqual([]);
+    expect(restored!.seenZoneEntryEventIds).toEqual([]);
   });
 
   it("writes and reads optional NPC dialogue state", () => {
@@ -184,6 +186,26 @@ describe("gameSaveStorage", () => {
 
     const raw = JSON.parse(localStorage.getItem("nywarudo_save_slot_0")!);
     delete (raw as Record<string, unknown>).zoneId;
+    localStorage.setItem("nywarudo_save_slot_0", JSON.stringify(raw));
+
+    expect(readSlot(0)).toBeNull();
+  });
+
+  it("reads older saves without seen zone entry event ids", () => {
+    writeSlot(0, stubSave());
+
+    const raw = JSON.parse(localStorage.getItem("nywarudo_save_slot_0")!);
+    delete (raw as Record<string, unknown>).seenZoneEntryEventIds;
+    localStorage.setItem("nywarudo_save_slot_0", JSON.stringify(raw));
+
+    expect(readSlot(0)).toMatchObject({ zoneId: "test_zone" });
+  });
+
+  it("returns null for invalid seen zone entry event ids", () => {
+    writeSlot(0, stubSave());
+
+    const raw = JSON.parse(localStorage.getItem("nywarudo_save_slot_0")!);
+    raw.seenZoneEntryEventIds = [42];
     localStorage.setItem("nywarudo_save_slot_0", JSON.stringify(raw));
 
     expect(readSlot(0)).toBeNull();

@@ -32,6 +32,13 @@ export interface GameSaveData {
   npcStates: NpcState[];
   log: LogEntry[];
   pickedUpItemSpawnKeys: string[];
+  /**
+   * One-shot zone entry event ids that already fired in this playthrough.
+   *
+   * Optional for backward compatibility with older 0.4 saves. Missing data is
+   * interpreted by the engine during restore instead of rejecting the save.
+   */
+  seenZoneEntryEventIds?: string[];
   activeQuests: string[];
   completedQuests: string[];
 }

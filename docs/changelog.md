@@ -4,6 +4,15 @@ This file tracks meaningful project changes by commit-oriented slices.
 
 Keep entries short and practical. When a slice is committed, its changelog section should stay aligned with the commit title so the project history remains easy to read after restores or bisects.
 
+## 2026-07-02 - [FIX]: Make zone entry dialogues one-shot events
+
+- Track zone entry dialogue events as seen playthrough state in GameplayEngine.
+- Expose only pending zone entry dialogue through game snapshots.
+- Add an explicit command for acknowledging consumed zone entry dialogue.
+- Persist seen zone entry event ids while keeping older 0.4 saves loadable.
+- Prevent save restoration from replaying the current zone's entry dialogue.
+- Add engine and storage tests for one-shot entry dialogue behavior.
+
 ## 2026-07-02 - [FIX]: Align pointer and keyboard menu controls
 
 - Mark terminal buttons as keyboard-blocking while hovered to avoid mixed pointer and keyboard commands.

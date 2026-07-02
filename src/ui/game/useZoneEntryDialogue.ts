@@ -3,7 +3,7 @@ import type { GameSnapshot } from "../../engine";
 import type { DialogueNode } from "./dialogueTypes";
 
 /**
- * Triggers the current zone's entry dialogue once whenever the zone id changes.
+ * Triggers the pending one-shot zone entry dialogue when the engine exposes it.
  */
 export function useZoneEntryDialogue(
   snapshot: GameSnapshot | null,
