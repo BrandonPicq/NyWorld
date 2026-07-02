@@ -5,11 +5,12 @@ import { TerminalPanel } from "../components/TerminalPanel";
 type ActionLogPanelProps = {
   log: LogEntry[];
   logRef: RefObject<HTMLDivElement | null>;
+  className?: string;
 };
 
-export function ActionLogPanel({ log, logRef }: ActionLogPanelProps) {
+export function ActionLogPanel({ log, logRef, className }: ActionLogPanelProps) {
   return (
-    <TerminalPanel className="game-layout__sidebar-right">
+    <TerminalPanel className={className}>
       <p className="terminal-kicker">CHRONICLE</p>
       <h2 className="terminal-heading-sm">Action Log</h2>
 

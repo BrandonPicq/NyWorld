@@ -7,6 +7,7 @@ import type { DialogueNode } from "./dialogueTypes";
 type UseDialogueSequenceInput = {
   audioSettings: AudioSettings;
   textSpeed: TextSpeed;
+  onDialogueComplete?: (dialogueId: string) => void;
 };
 
 /**
@@ -15,23 +16,27 @@ type UseDialogueSequenceInput = {
 export function useDialogueSequence({
   audioSettings,
   textSpeed,
+  onDialogueComplete,
 }: UseDialogueSequenceInput) {
   const [activeDialogue, setActiveDialogue] = useState<DialogueNode[] | null>(
     null,
   );
+  const [activeDialogueId, setActiveDialogueId] = useState<string | null>(null);
   const [dialogueIndex, setDialogueIndex] = useState(0);
   const [visibleText, setVisibleText] = useState("");
   const [isTyping, setIsTyping] = useState(false);
 
   const closeDialogue = useCallback(() => {
     setActiveDialogue(null);
+    setActiveDialogueId(null);
     setDialogueIndex(0);
     setVisibleText("");
     setIsTyping(false);
   }, []);
 
-  const triggerDialogue = useCallback((nodes: DialogueNode[]) => {
+  const triggerDialogue = useCallback((nodes: DialogueNode[], dialogueId?: string) => {
     setActiveDialogue(nodes);
+    setActiveDialogueId(dialogueId ?? null);
     setDialogueIndex(0);
     setVisibleText("");
     setIsTyping(true);
@@ -57,8 +62,11 @@ export function useDialogueSequence({
       return;
     }
 
+    if (activeDialogueId && onDialogueComplete) {
+      onDialogueComplete(activeDialogueId);
+    }
     closeDialogue();
-  }, [activeDialogue, closeDialogue, dialogueIndex, isTyping]);
+  }, [activeDialogue, activeDialogueId, closeDialogue, dialogueIndex, isTyping, onDialogueComplete]);
 
   useEffect(() => {
     if (!activeDialogue) return;
@@ -103,6 +111,7 @@ export function useDialogueSequence({
 
   return {
     activeDialogue,
+    activeDialogueId,
     closeDialogue,
     dialogueIndex,
     isTyping,

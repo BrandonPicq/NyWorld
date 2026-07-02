@@ -16,7 +16,7 @@ type UseGameplayEngineInput = {
   audioSettings: AudioSettings;
   initialZoneData: ZoneData;
   initialSaveData?: GameSaveData;
-  onDialogue: (nodes: DialogueNode[]) => void;
+  onDialogue: (nodes: DialogueNode[], dialogueId?: string) => void;
   onLoadError?: (message: string) => void;
   onNotice?: (message: string) => void;
   zoneRegistry: Record<string, ZoneData>;
@@ -84,7 +84,7 @@ export function useGameplayEngine({
       setSnapshot(engine.getSnapshot());
 
       if (result.dialogue) {
-        onDialogue(result.dialogue);
+        onDialogue(result.dialogue, result.dialogueId);
       }
 
       for (const effect of result.effects ?? []) {

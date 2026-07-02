@@ -10,10 +10,10 @@ Keep entries short and practical. When a slice is committed, its changelog secti
 - Build quest registry loaded at startup with strict validations (trigger uniqueness, item/dialogue consistency).
 - Create player ECS component Quests to track active and completed quests.
 - Resolve dialogue overrides in real-time based on quest progress (readyToComplete > active > completed).
-- Apply triggers (starting, completing quests) post-dialogue to avoid immediate state overrides.
+- Apply triggers (starting, completing quests) at dialogue completion via CompleteDialogue engine command.
 - Derive item objective progress dynamically from player inventory to prevent desynchronization.
-- Add Quests Journal modal toggled using J key or sidebar buttons.
-- Render active objectives on HUD center panel.
+- Add Quests Journal modal styled in premium TerminalPanel theme, toggled using layout-aware keys (Q in QWERTY, A in AZERTY).
+- Render active objectives stacked neatly in the right sidebar above the chronicle Action Log.
 - Implement save/load serialization for quest progress under version 0.4.
 - Add unit tests verifying registry validation, quest triggers, item consumption, rewards, and save/load cycles.
 

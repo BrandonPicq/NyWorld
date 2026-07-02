@@ -772,63 +772,74 @@
   gap: var(--space-2);
 }
 
-/* Quests HUD styling */
-.game-screen__quests-hud {
-  margin-top: var(--space-3);
-  padding: var(--space-2) var(--space-3);
-  border: 1px dashed var(--color-border-muted);
-  border-radius: 4px;
-  background: rgba(0, 0, 0, 0.3);
-  font-family: var(--font-mono);
-  font-size: 0.85rem;
-  text-align: left;
+/* Sidebar Right layout wrapper */
+.game-layout__sidebar-right {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  width: 100% !important;
+  max-width: 100% !important;
+}
+
+.game-layout__active-quests {
   width: 100%;
-  box-sizing: border-box;
 }
 
-.quests-hud__title {
-  margin: 0 0 var(--space-2) 0 !important;
-  color: var(--color-accent) !important;
-  font-weight: bold;
-  text-transform: uppercase;
-  font-size: 0.85rem;
-  border-bottom: 1px dashed var(--color-border-muted);
-  padding-bottom: var(--space-1);
+.active-quests-sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  margin-top: var(--space-3);
+  text-align: left;
 }
 
-.quests-hud__item {
+.active-quests-sidebar__item {
   display: flex;
   flex-direction: column;
   gap: var(--space-1);
-  margin-bottom: var(--space-2);
 }
 
-.quests-hud__item:last-child {
-  margin-bottom: 0;
-}
-
-.quests-hud__quest-name {
-  color: var(--color-text-strong);
+.active-quests-sidebar__quest-name {
+  margin: 0;
+  font-family: var(--font-mono);
   font-weight: bold;
+  font-size: 0.85rem;
+  color: var(--color-text-strong);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 
-.quests-hud__objective-list {
+.active-quests-sidebar__obj-list {
   list-style: none;
   padding: 0;
-  margin: 0 0 0 var(--space-2);
+  margin: 0 0 0 var(--space-1);
   display: flex;
   flex-direction: column;
   gap: var(--space-1);
 }
 
-.quests-hud__objective-list li {
+.active-quests-sidebar__obj-list li {
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
   color: var(--color-text);
   display: flex;
   gap: var(--space-2);
+  line-height: 1.3;
 }
 
-.quests-hud__objective-list li.met {
+.active-quests-sidebar__obj-list li.met {
   color: var(--color-text-muted);
   text-decoration: line-through;
+}
+
+/* Adjust Action Log max height dynamically if objectives are shown */
+.game-layout__sidebar-right .game-screen__log {
+  max-height: 28rem;
+  border-top: none;
+  transition: max-height 0.25s ease;
+}
+
+.game-layout__sidebar-right--with-quests .game-screen__log {
+  max-height: 14rem;
 }
 

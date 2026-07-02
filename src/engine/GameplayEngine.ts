@@ -60,6 +60,7 @@ export type EngineEffect =
 export interface ExecuteResult {
   success: boolean;
   dialogue?: DialogueNode[];
+  dialogueId?: string;
   effects?: EngineEffect[];
 }
 
@@ -255,6 +256,19 @@ export class GameplayEngine {
 
     if (command.type === "UseItem") {
       return this.useItem(command.itemId);
+    }
+
+    if (command.type === "CompleteDialogue") {
+      const dialogueId = command.dialogueId;
+      for (const questDef of getAllQuestDefs()) {
+        if (questDef.triggers.start.dialogueId === dialogueId) {
+          this.startQuest(questDef.questId);
+        }
+        if (questDef.triggers.complete.dialogueId === dialogueId) {
+          this.completeQuest(questDef.questId);
+        }
+      }
+      return { success: true };
     }
 
     const direction = COMMAND_DIRECTION[command.type];
@@ -487,19 +501,10 @@ export class GameplayEngine {
     this.advanceWorldTime(WORLD_TIME_ACTION_COST.dialogue);
     this.addLog(`Talked to ${npc.name}.`);
 
-    // Apply triggers *after* resolving the active dialogue ID
-    for (const questDef of getAllQuestDefs()) {
-      if (questDef.triggers.start.dialogueId === resolved.dialogueId) {
-        this.startQuest(questDef.questId);
-      }
-      if (questDef.triggers.complete.dialogueId === resolved.dialogueId) {
-        this.completeQuest(questDef.questId);
-      }
-    }
-
     return {
       success,
       dialogue: resolved.nodes,
+      dialogueId: resolved.dialogueId,
     };
   }
 

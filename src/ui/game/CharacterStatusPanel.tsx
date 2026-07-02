@@ -4,6 +4,7 @@ import { TerminalButton } from "../components/TerminalButton";
 import { TerminalPanel } from "../components/TerminalPanel";
 import { formatCurrency } from "../controls/statsFormatter";
 import { WorldClock } from "./WorldClock";
+import type { KeyboardLayout } from "../controls/keyboardLayout";
 
 type CharacterStatusPanelProps = {
   controlsDisabled?: boolean;
@@ -13,6 +14,7 @@ type CharacterStatusPanelProps = {
   onRest: () => void;
   stats: Stats;
   worldTime: WorldTimeSnapshot;
+  keyboardLayout: KeyboardLayout;
 };
 
 export function CharacterStatusPanel({
@@ -23,6 +25,7 @@ export function CharacterStatusPanel({
   onRest,
   stats,
   worldTime,
+  keyboardLayout,
 }: CharacterStatusPanelProps) {
   return (
     <TerminalPanel className="game-layout__sidebar-left">
@@ -66,7 +69,7 @@ export function CharacterStatusPanel({
           [I] Inventory
         </TerminalButton>
         <TerminalButton disabled={controlsDisabled} onClick={onOpenJournal}>
-          [J] Journal
+          [{keyboardLayout === "azerty" ? "A" : "Q"}] Journal
         </TerminalButton>
         <TerminalButton
           disabled={controlsDisabled || stats.energy >= stats.maxEnergy}

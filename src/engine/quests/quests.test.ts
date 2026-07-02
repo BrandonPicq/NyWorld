@@ -55,8 +55,14 @@ describe("Quest System", () => {
       targetDirection: "east",
     });
     expect(result.success).toBe(true);
+    expect(result.dialogueId).toBe("old_scholar.test_fields");
 
-    // This should trigger the start of "lost_notebook" because the dialogue triggered is "old_scholar.test_fields"
+    // Complete the dialogue to trigger the start of "lost_notebook"
+    engine.execute({
+      type: "CompleteDialogue",
+      dialogueId: "old_scholar.test_fields",
+    });
+
     snapshot = engine.getSnapshot();
     expect(snapshot.activeQuests).toHaveLength(1);
     expect(snapshot.activeQuests[0].questId).toBe("lost_notebook");
@@ -91,8 +97,15 @@ describe("Quest System", () => {
     expect(interact3.dialogue?.[0]?.text).toContain(
       "Oh, you found my lost notebook!",
     );
+    expect(interact3.dialogueId).toBe("old_scholar.quest_active_ready");
 
-    // That complete trigger should run. Let's verify item was consumed, rewards granted, and quest marked completed.
+    // Complete the dialogue to trigger completion
+    engine.execute({
+      type: "CompleteDialogue",
+      dialogueId: "old_scholar.quest_active_ready",
+    });
+
+    // Let's verify item was consumed, rewards granted, and quest marked completed.
     snapshot = engine.getSnapshot();
     expect(snapshot.activeQuests).toHaveLength(0);
     expect(snapshot.completedQuests).toContain("lost_notebook");
@@ -125,6 +138,10 @@ describe("Quest System", () => {
       type: "Interact",
       targetNpcId: "old_scholar",
       targetDirection: "east",
+    });
+    engine.execute({
+      type: "CompleteDialogue",
+      dialogueId: "old_scholar.test_fields",
     });
 
     // Save state

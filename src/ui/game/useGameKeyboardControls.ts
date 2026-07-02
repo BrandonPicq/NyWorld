@@ -114,7 +114,8 @@ export function useGameKeyboardControls({
         return;
       }
 
-      if (keyLower === "j" && !isInventoryOpen && !isCharacterSheetOpen) {
+      const journalKey = keyboardLayout === "azerty" ? "a" : "q";
+      if (keyLower === journalKey && !isInventoryOpen && !isCharacterSheetOpen) {
         event.preventDefault();
         if (audioSettings.soundEnabled) {
           playMenuConfirmSound();

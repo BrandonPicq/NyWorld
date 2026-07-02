@@ -31,6 +31,7 @@ import {
   createInteractionCommand,
   getInteractionTargets,
 } from "../game/interactionTargets";
+import { getNpcDef } from "../../engine";
 
 type GameScreenProps = {
   audioSettings: AudioSettings;
@@ -67,15 +68,41 @@ export function GameScreen({
   const [isSaveSlotsOpen, setIsSaveSlotsOpen] = useState(false);
   const [gameToast, setGameToast] = useState<string | null>(null);
   const logRef = useRef<HTMLDivElement>(null);
+
+  const { createSaveData, executeCommand, snapshot } = useGameplayEngine({
+    audioSettings,
+    initialSaveData,
+    initialZoneData: zoneRegistry.test_zone,
+    onDialogue: (nodes, id) => triggerDialogue(nodes, id),
+    onLoadError,
+    onNotice: setInventoryNotice,
+    zoneRegistry,
+  });
+
   const {
     activeDialogue,
+    activeDialogueId,
     closeDialogue,
     dialogueIndex,
     isTyping,
     progressDialogue,
     triggerDialogue,
     visibleText,
-  } = useDialogueSequence({ audioSettings, textSpeed });
+  } = useDialogueSequence({
+    audioSettings,
+    textSpeed,
+    onDialogueComplete: (dialogueId) => {
+      executeCommand({ type: "CompleteDialogue", dialogueId });
+    },
+  });
+
+  const handleCloseDialogue = () => {
+    if (activeDialogueId) {
+      executeCommand({ type: "CompleteDialogue", dialogueId: activeDialogueId });
+    }
+    closeDialogue();
+  };
+
   const controlsDisabled =
     activeDialogue !== null ||
     isCharacterSheetOpen ||
@@ -84,15 +111,6 @@ export function GameScreen({
     isQuestsOpen ||
     isPauseMenuOpen ||
     isSaveSlotsOpen;
-  const { createSaveData, executeCommand, snapshot } = useGameplayEngine({
-    audioSettings,
-    initialSaveData,
-    initialZoneData: zoneRegistry.test_zone,
-    onDialogue: triggerDialogue,
-    onLoadError,
-    onNotice: setInventoryNotice,
-    zoneRegistry,
-  });
 
   const interactionTargets = snapshot
     ? getInteractionTargets(snapshot, gameplaySettings)
@@ -150,11 +168,11 @@ export function GameScreen({
     }
   }, [snapshot?.log]);
 
-  useZoneEntryDialogue(snapshot, triggerDialogue);
+  useZoneEntryDialogue(snapshot, (nodes) => triggerDialogue(nodes));
   useGameKeyboardControls({
     activeDialogue,
     audioSettings,
-    closeDialogue,
+    closeDialogue: handleCloseDialogue,
     executeCommand: handleExecuteCommand,
     isCharacterSheetOpen,
     isInteractChoiceOpen,
@@ -199,6 +217,7 @@ export function GameScreen({
           onRest={() => handleExecuteCommand({ type: "Rest" })}
           stats={snapshot.stats}
           worldTime={snapshot.worldTime}
+          keyboardLayout={keyboardLayout}
         />
 
         <GameCenterPanel
@@ -221,7 +240,43 @@ export function GameScreen({
           )}
         </GameCenterPanel>
 
-        <ActionLogPanel log={snapshot.log} logRef={logRef} />
+        <div className={`game-layout__sidebar-right ${snapshot.activeQuests && snapshot.activeQuests.length > 0 ? "game-layout__sidebar-right--with-quests" : ""}`}>
+          {snapshot.activeQuests && snapshot.activeQuests.length > 0 && (
+            <TerminalPanel className="game-layout__active-quests">
+              <p className="terminal-kicker">OBJECTIVES</p>
+              <h2 className="terminal-heading-sm" style={{ marginBottom: "var(--space-2)" }}>Active Quests</h2>
+              <div className="active-quests-sidebar">
+                {snapshot.activeQuests.map((quest) => {
+                  const targetNpcName = getNpcDef(quest.targetNpcId)?.name ?? quest.targetNpcId;
+                  return (
+                    <div key={quest.questId} className="active-quests-sidebar__item">
+                      <p className="active-quests-sidebar__quest-name">{quest.name}</p>
+                      <ul className="active-quests-sidebar__obj-list">
+                        {quest.objectives.map((obj) => {
+                          const met = obj.currentQuantity >= obj.requiredQuantity;
+                          return (
+                            <li key={obj.id} className={met ? "met" : ""}>
+                              <span>{met ? "[x]" : "[ ]"}</span>
+                              <span>{obj.description} ({obj.currentQuantity}/{obj.requiredQuantity})</span>
+                            </li>
+                          );
+                        })}
+                        {quest.state === "readyToComplete" && (
+                          <li>
+                            <span>[ ]</span>
+                            <span>Return to {targetNpcName}</span>
+                          </li>
+                        )}
+                      </ul>
+                    </div>
+                  );
+                })}
+              </div>
+            </TerminalPanel>
+          )}
+
+          <ActionLogPanel log={snapshot.log} logRef={logRef} className="game-screen__action-log-panel" />
+        </div>
 
         {isCharacterSheetOpen && (
           <CharacterSheetModal
@@ -244,6 +299,7 @@ export function GameScreen({
 
         {isQuestsOpen && (
           <QuestsModal
+            audioSettings={audioSettings}
             isOpen={isQuestsOpen}
             snapshot={snapshot}
             onClose={() => setIsQuestsOpen(false)}
