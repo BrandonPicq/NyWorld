@@ -1230,6 +1230,31 @@ describe("GameplayEngine", () => {
       expect(logMessages).toContain("Moved east to (2, 1).");
     });
 
+    it("fromSaveData cancels unavailable saved quests and emits a notice", () => {
+      const engine = createEngine();
+      const save = engine.createSaveData();
+      save.activeQuests = ["lost_notebook", "missing_active_quest"];
+      save.completedQuests = ["missing_completed_quest"];
+
+      const restored = GameplayEngine.fromSaveData(save, {
+        resolveZone: (zoneId) =>
+          zoneId === "movement_test" ? loadZone(zoneData) : undefined,
+      });
+
+      const snapshot = restored.getSnapshot();
+      expect(snapshot.activeQuests.map((quest) => quest.questId)).toEqual([
+        "lost_notebook",
+      ]);
+      expect(snapshot.completedQuests).toEqual([]);
+      expect(restored.consumeNotices()).toEqual([
+        {
+          title: "Quest Cancelled",
+          message:
+            "The saved quest data referenced unavailable quest ids and they were cancelled: missing_active_quest, missing_completed_quest.",
+        },
+      ]);
+    });
+
     it("save roundtrip through fromSaveData produces equivalent snapshot data", () => {
       const engine = createEngine();
       engine.execute({ type: "MoveEast" });

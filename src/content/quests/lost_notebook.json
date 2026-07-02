@@ -4,7 +4,7 @@
   "description": "Find the Old Scholar's lost notebook in the fields.",
   "targetNpcId": "old_scholar",
   "triggers": {
-    "start": { "dialogueId": "old_scholar.test_fields" },
+    "start": { "dialogueId": "old_scholar.quest_start" },
     "complete": { "dialogueId": "old_scholar.quest_active_ready" }
   },
   "npcOverrides": {

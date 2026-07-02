@@ -4,6 +4,17 @@ This file tracks meaningful project changes by commit-oriented slices.
 
 Keep entries short and practical. When a slice is committed, its changelog section should stay aligned with the commit title so the project history remains easy to read after restores or bisects.
 
+## 2026-07-02 - [FIX]: Harden quest dialogue completion and save restore
+
+- Make Escape during dialogue reveal the current line instead of closing the dialogue.
+- Trigger quest start and completion only from an engine-tracked pending NPC dialogue.
+- Remove dialogueId from the public CompleteDialogue command payload.
+- Add an explicit quest-start dialogue for the first notebook quest.
+- Log currency and item rewards when a quest is completed.
+- Filter unavailable saved quest ids during load and show a cancellation notice.
+- Keep snapshots resilient when saved quest ids no longer exist in content.
+- Add engine tests for guarded dialogue completion and unavailable quest restore.
+
 ## 2026-07-02 - [ADD]: Implement V1 Quest System with Registry, Journal, and Overrides
 
 - Declare quests in static JSON content files under content/quests.

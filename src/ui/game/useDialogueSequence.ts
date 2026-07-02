@@ -7,7 +7,7 @@ import type { DialogueNode } from "./dialogueTypes";
 type UseDialogueSequenceInput = {
   audioSettings: AudioSettings;
   textSpeed: TextSpeed;
-  onDialogueComplete?: (dialogueId: string) => void;
+  onDialogueComplete?: () => void;
 };
 
 /**
@@ -42,6 +42,16 @@ export function useDialogueSequence({
     setIsTyping(true);
   }, []);
 
+  const skipDialogueLine = useCallback(() => {
+    if (!activeDialogue) return;
+
+    const node = activeDialogue[dialogueIndex];
+    if (!node) return;
+
+    setVisibleText(node.text);
+    setIsTyping(false);
+  }, [activeDialogue, dialogueIndex]);
+
   const progressDialogue = useCallback(() => {
     if (!activeDialogue) return;
 
@@ -49,8 +59,7 @@ export function useDialogueSequence({
     if (!node) return;
 
     if (isTyping) {
-      setVisibleText(node.text);
-      setIsTyping(false);
+      skipDialogueLine();
       return;
     }
 
@@ -63,10 +72,18 @@ export function useDialogueSequence({
     }
 
     if (activeDialogueId && onDialogueComplete) {
-      onDialogueComplete(activeDialogueId);
+      onDialogueComplete();
     }
     closeDialogue();
-  }, [activeDialogue, activeDialogueId, closeDialogue, dialogueIndex, isTyping, onDialogueComplete]);
+  }, [
+    activeDialogue,
+    activeDialogueId,
+    closeDialogue,
+    dialogueIndex,
+    isTyping,
+    onDialogueComplete,
+    skipDialogueLine,
+  ]);
 
   useEffect(() => {
     if (!activeDialogue) return;
@@ -116,6 +133,7 @@ export function useDialogueSequence({
     dialogueIndex,
     isTyping,
     progressDialogue,
+    skipDialogueLine,
     triggerDialogue,
     visibleText,
   };

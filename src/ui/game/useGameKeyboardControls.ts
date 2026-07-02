@@ -9,11 +9,10 @@ import type { DialogueNode } from "./dialogueTypes";
 type UseGameKeyboardControlsInput = {
   activeDialogue: DialogueNode[] | null;
   audioSettings: AudioSettings;
-  closeDialogue: () => void;
   executeCommand: (command: GameCommand) => void;
   isCharacterSheetOpen: boolean;
   isInteractChoiceOpen?: boolean;
-  isInventoryNoticeOpen: boolean;
+  isNoticeOpen: boolean;
   isInventoryOpen: boolean;
   isPauseMenuOpen: boolean;
   isQuestsOpen: boolean;
@@ -21,8 +20,9 @@ type UseGameKeyboardControlsInput = {
   keyboardLayout: KeyboardLayout;
   onOpenPauseMenu: () => void;
   progressDialogue: () => void;
+  skipDialogueLine: () => void;
   setIsCharacterSheetOpen: Dispatch<SetStateAction<boolean>>;
-  setIsInventoryNoticeOpen: Dispatch<SetStateAction<boolean>>;
+  setIsNoticeOpen: Dispatch<SetStateAction<boolean>>;
   setIsInventoryOpen: Dispatch<SetStateAction<boolean>>;
   setIsQuestsOpen: Dispatch<SetStateAction<boolean>>;
   setIsSaveSlotsOpen?: Dispatch<SetStateAction<boolean>>;
@@ -37,11 +37,10 @@ type UseGameKeyboardControlsInput = {
 export function useGameKeyboardControls({
   activeDialogue,
   audioSettings,
-  closeDialogue,
   executeCommand,
   isCharacterSheetOpen,
   isInteractChoiceOpen = false,
-  isInventoryNoticeOpen,
+  isNoticeOpen,
   isInventoryOpen,
   isPauseMenuOpen,
   isQuestsOpen,
@@ -49,8 +48,9 @@ export function useGameKeyboardControls({
   keyboardLayout,
   onOpenPauseMenu,
   progressDialogue,
+  skipDialogueLine,
   setIsCharacterSheetOpen,
-  setIsInventoryNoticeOpen,
+  setIsNoticeOpen,
   setIsInventoryOpen,
   setIsQuestsOpen,
   setIsSaveSlotsOpen,
@@ -69,10 +69,7 @@ export function useGameKeyboardControls({
           progressDialogue();
         } else if (event.key === "Escape") {
           event.preventDefault();
-          if (audioSettings.soundEnabled) {
-            playMenuConfirmSound();
-          }
-          closeDialogue();
+          skipDialogueLine();
         }
         return;
       }
@@ -82,8 +79,8 @@ export function useGameKeyboardControls({
         if (audioSettings.soundEnabled) {
           playMenuConfirmSound();
         }
-        if (isInventoryNoticeOpen) {
-          setIsInventoryNoticeOpen(false);
+        if (isNoticeOpen) {
+          setIsNoticeOpen(false);
         } else if (isCharacterSheetOpen) {
           setIsCharacterSheetOpen(false);
         } else if (isInventoryOpen) {
@@ -147,11 +144,10 @@ export function useGameKeyboardControls({
   }, [
     activeDialogue,
     audioSettings,
-    closeDialogue,
     executeCommand,
     isCharacterSheetOpen,
     isInteractChoiceOpen,
-    isInventoryNoticeOpen,
+    isNoticeOpen,
     isInventoryOpen,
     isPauseMenuOpen,
     isQuestsOpen,
@@ -159,8 +155,9 @@ export function useGameKeyboardControls({
     keyboardLayout,
     onOpenPauseMenu,
     progressDialogue,
+    skipDialogueLine,
     setIsCharacterSheetOpen,
-    setIsInventoryNoticeOpen,
+    setIsNoticeOpen,
     setIsInventoryOpen,
     setIsQuestsOpen,
   ]);

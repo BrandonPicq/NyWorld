@@ -3,6 +3,7 @@ import {
   GameplayEngine,
   loadZone,
   type DialogueNode,
+  type EngineNotice,
   type EngineEffect,
   type GameCommand,
   type GameSaveData,
@@ -18,7 +19,7 @@ type UseGameplayEngineInput = {
   initialSaveData?: GameSaveData;
   onDialogue: (nodes: DialogueNode[], dialogueId?: string) => void;
   onLoadError?: (message: string) => void;
-  onNotice?: (message: string) => void;
+  onNotice?: (notice: EngineNotice) => void;
   zoneRegistry: Record<string, ZoneData>;
 };
 
@@ -42,11 +43,13 @@ export function useGameplayEngine({
   const engineRef = useRef<GameplayEngine | null>(null);
   const initialSaveDataRef = useRef(initialSaveData);
   const onLoadErrorRef = useRef(onLoadError);
+  const onNoticeRef = useRef(onNotice);
 
   if (initialSaveDataRef.current !== initialSaveData) {
     initialSaveDataRef.current = initialSaveData;
   }
   onLoadErrorRef.current = onLoadError;
+  onNoticeRef.current = onNotice;
 
   useEffect(() => {
     const resolveZone = (zoneId: string) => {
@@ -62,6 +65,9 @@ export function useGameplayEngine({
 
       engineRef.current = engine;
       setSnapshot(engine.getSnapshot());
+      for (const notice of engine.consumeNotices()) {
+        onNoticeRef.current?.(notice);
+      }
     } catch (error) {
       engineRef.current = null;
       setSnapshot(null);
@@ -89,7 +95,7 @@ export function useGameplayEngine({
 
       for (const effect of result.effects ?? []) {
         if (effect.type === "ItemUseRejected") {
-          onNotice?.(effect.message);
+          onNotice?.({ title: "Cannot Use Item", message: effect.message });
         } else {
           playEffect(effect, audioSettings);
         }

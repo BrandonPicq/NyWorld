@@ -18,6 +18,18 @@
       "pitch": 0.75
     }
   ],
+  "old_scholar.quest_start": [
+    {
+      "speaker": "Old Scholar",
+      "text": "Ah, apprentice. I am relieved to see a capable pair of hands in these fields.",
+      "pitch": 0.75
+    },
+    {
+      "speaker": "Old Scholar",
+      "text": "I misplaced my research notebook somewhere nearby. Could you find it and bring it back to me?",
+      "pitch": 0.75
+    }
+  ],
   "old_scholar.quest_active_reminder": [
     {
       "speaker": "Old Scholar",

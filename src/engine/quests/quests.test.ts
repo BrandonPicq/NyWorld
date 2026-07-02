@@ -22,7 +22,7 @@ const zoneData = {
       npcId: "old_scholar",
       x: 2,
       y: 1,
-      dialogueId: "old_scholar.test_fields",
+      dialogueId: "old_scholar.quest_start",
     },
   ],
 };
@@ -55,12 +55,14 @@ describe("Quest System", () => {
       targetDirection: "east",
     });
     expect(result.success).toBe(true);
-    expect(result.dialogueId).toBe("old_scholar.test_fields");
+    expect(result.dialogueId).toBe("old_scholar.quest_start");
+    expect(result.dialogue?.[1]?.text).toContain(
+      "Could you find it and bring it back to me?",
+    );
 
     // Complete the dialogue to trigger the start of "lost_notebook"
     engine.execute({
       type: "CompleteDialogue",
-      dialogueId: "old_scholar.test_fields",
     });
 
     snapshot = engine.getSnapshot();
@@ -102,7 +104,6 @@ describe("Quest System", () => {
     // Complete the dialogue to trigger completion
     engine.execute({
       type: "CompleteDialogue",
-      dialogueId: "old_scholar.quest_active_ready",
     });
 
     // Let's verify item was consumed, rewards granted, and quest marked completed.
@@ -128,6 +129,9 @@ describe("Quest System", () => {
       (item) => item.itemId === "travel_ration",
     );
     expect(rations?.quantity).toBe(5); // 3 (start) + 2 (reward)
+    expect(snapshot.log.map((entry) => entry.message)).toContain(
+      "Quest Rewards: 1s 50b, Travel Ration x2.",
+    );
   });
 
   it("preserves quests state across saving and loading", () => {
@@ -141,7 +145,6 @@ describe("Quest System", () => {
     });
     engine.execute({
       type: "CompleteDialogue",
-      dialogueId: "old_scholar.test_fields",
     });
 
     // Save state
@@ -155,5 +158,15 @@ describe("Quest System", () => {
     const snapshot2 = engine2.getSnapshot();
     expect(snapshot2.activeQuests).toHaveLength(1);
     expect(snapshot2.activeQuests[0].questId).toBe("lost_notebook");
+  });
+
+  it("does not trigger quest transitions without a pending NPC dialogue", () => {
+    const engine = createQuestEngine();
+
+    const result = engine.execute({ type: "CompleteDialogue" });
+
+    expect(result.success).toBe(false);
+    expect(engine.getSnapshot().activeQuests).toHaveLength(0);
+    expect(engine.getSnapshot().completedQuests).toHaveLength(0);
   });
 });

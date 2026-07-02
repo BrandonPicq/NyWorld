@@ -87,6 +87,7 @@ export type { NpcState, NpcStateMap } from "./npcs/NpcState";
 export type { GameCommand } from "./commands";
 export { GameplayEngine } from "./GameplayEngine";
 export type {
+  EngineNotice,
   EngineEffect,
   ExecuteResult,
   GameSnapshot,

@@ -9,7 +9,11 @@ import type {
   Stats,
   Quests,
 } from "./components";
-import { getQuestDef, getAllQuestDefs } from "./quests/questRegistry";
+import {
+  getQuestDef,
+  getAllQuestDefs,
+  hasQuestDef,
+} from "./quests/questRegistry";
 import { getDialogue } from "./dialogues/dialogueRegistry";
 import { getItemDef } from "./items/itemRegistry";
 import { getAllNpcPresenceDefs } from "./npcs/npcPresenceRegistry";
@@ -53,6 +57,11 @@ export type EngineEffect =
       reason: "energy_full" | "no_effect";
       message: string;
     };
+
+export interface EngineNotice {
+  title: string;
+  message: string;
+}
 
 /**
  * Result of applying one explicit player command to the simulation.
@@ -155,6 +164,8 @@ export class GameplayEngine {
   private resolveZone?: ZoneResolver;
   private worldTimeMinutes = START_WORLD_TIME_MINUTES;
   private npcStates: NpcStateMap = createInitialNpcStateMap();
+  private pendingDialogueCompletionId?: string;
+  private notices: EngineNotice[] = [];
 
   constructor(map: GameMap, options: GameplayEngineOptions = {}) {
     this.map = map;
@@ -259,7 +270,13 @@ export class GameplayEngine {
     }
 
     if (command.type === "CompleteDialogue") {
-      const dialogueId = command.dialogueId;
+      const dialogueId = this.pendingDialogueCompletionId;
+      this.pendingDialogueCompletionId = undefined;
+
+      if (!dialogueId) {
+        return { success: false };
+      }
+
       for (const questDef of getAllQuestDefs()) {
         if (questDef.triggers.start.dialogueId === dialogueId) {
           this.startQuest(questDef.questId);
@@ -497,6 +514,7 @@ export class GameplayEngine {
     success: boolean,
   ): ExecuteResult {
     const resolved = this.resolveNpcDialogue(npc.npcId, npc.dialogueId);
+    this.pendingDialogueCompletionId = resolved.dialogueId;
 
     this.advanceWorldTime(WORLD_TIME_ACTION_COST.dialogue);
     this.addLog(`Talked to ${npc.name}.`);
@@ -591,8 +609,12 @@ export class GameplayEngine {
     inventory.items = saveData.inventory.items.map((stack) => ({ ...stack }));
 
     const quests = this.world.getComponent<Quests>(playerId, "Quests")!;
-    quests.active = [...(saveData.activeQuests || [])];
-    quests.completed = [...(saveData.completedQuests || [])];
+    const restoredQuests = this.restoreQuestIds(
+      saveData.activeQuests,
+      saveData.completedQuests,
+    );
+    quests.active = restoredQuests.active;
+    quests.completed = restoredQuests.completed;
 
     this.tickCounter.restoreTo(saveData.tick);
     this.worldTimeMinutes = saveData.worldTimeMinutes;
@@ -690,8 +712,12 @@ export class GameplayEngine {
     const inventory = this.getPlayerInventory();
 
     const quests = this.getPlayerQuests();
-    const activeQuestsSnapshot = quests.active.map((questId) => {
-      const questDef = getQuestDef(questId)!;
+    const activeQuestsSnapshot = quests.active.flatMap((questId) => {
+      const questDef = getQuestDef(questId);
+      if (!questDef) {
+        return [];
+      }
+
       const isReady = this.isQuestReadyToComplete(questId);
       const objectives = questDef.objectives.map((obj) => {
         const currentQty = inventory.items
@@ -706,7 +732,7 @@ export class GameplayEngine {
           currentQuantity: currentQty,
         };
       });
-      return {
+      return [{
         questId: questDef.questId,
         name: questDef.name,
         description: questDef.description,
@@ -714,7 +740,7 @@ export class GameplayEngine {
         objectives,
         targetNpcId: questDef.targetNpcId,
         rewards: questDef.rewards,
-      };
+      }];
     });
 
     return {
@@ -762,6 +788,12 @@ export class GameplayEngine {
     return state ? cloneNpcState(state) : undefined;
   }
 
+  consumeNotices(): EngineNotice[] {
+    const notices = this.notices;
+    this.notices = [];
+    return notices.map((notice) => ({ ...notice }));
+  }
+
   private getPlayerPosition(): Position {
     const [playerId] = this.world.entitiesWith("Position", "PlayerControlled");
     return (
@@ -794,9 +826,16 @@ export class GameplayEngine {
     return true;
   }
 
-  private resolveNpcDialogue(npcId: string, baseDialogueId: string): { dialogueId: string; nodes: DialogueNode[] } {
+  private resolveNpcDialogue(
+    npcId: string,
+    baseDialogueId: string,
+  ): { dialogueId: string; nodes: DialogueNode[] } {
     const quests = this.getPlayerQuests();
-    const overrides: Array<{ questId: string; priority: number; dialogueId: string }> = [];
+    const overrides: Array<{
+      questId: string;
+      priority: number;
+      dialogueId: string;
+    }> = [];
 
     for (const questDef of getAllQuestDefs()) {
       const override = questDef.npcOverrides[npcId];
@@ -805,16 +844,28 @@ export class GameplayEngine {
       if (quests.active.includes(questDef.questId)) {
         if (this.isQuestReadyToComplete(questDef.questId)) {
           if (override.activeReady) {
-            overrides.push({ questId: questDef.questId, priority: 3, dialogueId: override.activeReady });
+            overrides.push({
+              questId: questDef.questId,
+              priority: 3,
+              dialogueId: override.activeReady,
+            });
           }
         } else {
           if (override.active) {
-            overrides.push({ questId: questDef.questId, priority: 2, dialogueId: override.active });
+            overrides.push({
+              questId: questDef.questId,
+              priority: 2,
+              dialogueId: override.active,
+            });
           }
         }
       } else if (quests.completed.includes(questDef.questId)) {
         if (override.completed) {
-          overrides.push({ questId: questDef.questId, priority: 1, dialogueId: override.completed });
+          overrides.push({
+            questId: questDef.questId,
+            priority: 1,
+            dialogueId: override.completed,
+          });
         }
       }
     }
@@ -875,17 +926,29 @@ export class GameplayEngine {
 
     // 2. Award rewards
     const stats = this.getPlayerStats();
+    const rewardLogParts: string[] = [];
     if (questDef.rewards.currency) {
       stats.currency += questDef.rewards.currency;
+      rewardLogParts.push(formatCurrencyReward(questDef.rewards.currency));
     }
     if (questDef.rewards.items) {
       for (const rewardItem of questDef.rewards.items) {
-        const existing = inventory.items.find((item) => item.itemId === rewardItem.itemId);
+        const existing = inventory.items.find(
+          (item) => item.itemId === rewardItem.itemId,
+        );
         if (existing) {
           existing.quantity += rewardItem.quantity;
         } else {
-          inventory.items.push({ itemId: rewardItem.itemId, quantity: rewardItem.quantity });
+          inventory.items.push({
+            itemId: rewardItem.itemId,
+            quantity: rewardItem.quantity,
+          });
         }
+
+        const itemDef = getItemDef(rewardItem.itemId);
+        rewardLogParts.push(
+          `${itemDef.name}${rewardItem.quantity > 1 ? ` x${rewardItem.quantity}` : ""}`,
+        );
       }
     }
 
@@ -894,6 +957,34 @@ export class GameplayEngine {
     quests.completed.push(questId);
 
     this.addLog(`Completed Quest: ${questDef.name}`);
+    if (rewardLogParts.length > 0) {
+      this.addLog(`Quest Rewards: ${rewardLogParts.join(", ")}.`);
+    }
+  }
+
+  private restoreQuestIds(
+    activeQuestIds: string[],
+    completedQuestIds: string[],
+  ): { active: string[]; completed: string[] } {
+    const unknownQuestIds = new Set<string>();
+    const active = filterKnownQuestIds(activeQuestIds, unknownQuestIds);
+    const completed = filterKnownQuestIds(completedQuestIds, unknownQuestIds);
+
+    if (unknownQuestIds.size > 0) {
+      const questList = Array.from(unknownQuestIds)
+        .sort()
+        .map((questId) => questId || "(empty quest id)")
+        .join(", ");
+      const message =
+        `The saved quest data referenced unavailable quest ids and they were cancelled: ${questList}.`;
+      this.notices.push({
+        title: "Quest Cancelled",
+        message,
+      });
+      this.addLog(message);
+    }
+
+    return { active, completed };
   }
 
   private getTargetPosition(
@@ -1010,4 +1101,43 @@ function cloneNpcSpawnData(npcData: NpcSpawnData): NpcSpawnData {
  */
 function cloneNpcScheduleEntry(entry: NpcScheduleEntryData): NpcScheduleEntryData {
   return { ...entry };
+}
+
+function filterKnownQuestIds(
+  questIds: string[],
+  unknownQuestIds: Set<string>,
+): string[] {
+  const knownQuestIds: string[] = [];
+  const seenQuestIds = new Set<string>();
+
+  for (const questId of questIds) {
+    if (!hasQuestDef(questId)) {
+      unknownQuestIds.add(questId);
+      continue;
+    }
+
+    if (seenQuestIds.has(questId)) {
+      continue;
+    }
+
+    knownQuestIds.push(questId);
+    seenQuestIds.add(questId);
+  }
+
+  return knownQuestIds;
+}
+
+function formatCurrencyReward(bronzeCoins: number): string {
+  const platinum = Math.floor(bronzeCoins / 1_000_000);
+  const gold = Math.floor((bronzeCoins % 1_000_000) / 10_000);
+  const silver = Math.floor((bronzeCoins % 10_000) / 100);
+  const bronze = bronzeCoins % 100;
+
+  const parts: string[] = [];
+  if (platinum > 0) parts.push(`${platinum}p`);
+  if (gold > 0) parts.push(`${gold}g`);
+  if (silver > 0) parts.push(`${silver}s`);
+  if (bronze > 0 || parts.length === 0) parts.push(`${bronze}b`);
+
+  return parts.join(" ");
 }

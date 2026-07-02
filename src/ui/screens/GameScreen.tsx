@@ -3,7 +3,7 @@ import { createGridRenderSnapshot } from "../../rendering";
 import testZoneData from "../../content/zones/test_zone.json";
 import testZone2Data from "../../content/zones/test_zone_2.json";
 import type { ZoneData } from "../../engine/ZoneTypes";
-import type { GameCommand } from "../../engine";
+import type { EngineNotice, GameCommand } from "../../engine";
 import type { GameSaveData } from "../../engine/GameSaveData";
 import { TerminalPanel } from "../components/TerminalPanel";
 import { TerminalButton } from "../components/TerminalButton";
@@ -63,7 +63,7 @@ export function GameScreen({
   const [isInteractChoiceOpen, setIsInteractChoiceOpen] = useState(false);
   const [isInventoryOpen, setIsInventoryOpen] = useState(false);
   const [isQuestsOpen, setIsQuestsOpen] = useState(false);
-  const [inventoryNotice, setInventoryNotice] = useState<string | null>(null);
+  const [gameNotice, setGameNotice] = useState<EngineNotice | null>(null);
   const [isPauseMenuOpen, setIsPauseMenuOpen] = useState(false);
   const [isSaveSlotsOpen, setIsSaveSlotsOpen] = useState(false);
   const [gameToast, setGameToast] = useState<string | null>(null);
@@ -75,33 +75,25 @@ export function GameScreen({
     initialZoneData: zoneRegistry.test_zone,
     onDialogue: (nodes, id) => triggerDialogue(nodes, id),
     onLoadError,
-    onNotice: setInventoryNotice,
+    onNotice: setGameNotice,
     zoneRegistry,
   });
 
   const {
     activeDialogue,
-    activeDialogueId,
-    closeDialogue,
     dialogueIndex,
     isTyping,
     progressDialogue,
+    skipDialogueLine,
     triggerDialogue,
     visibleText,
   } = useDialogueSequence({
     audioSettings,
     textSpeed,
-    onDialogueComplete: (dialogueId) => {
-      executeCommand({ type: "CompleteDialogue", dialogueId });
+    onDialogueComplete: () => {
+      executeCommand({ type: "CompleteDialogue" });
     },
   });
-
-  const handleCloseDialogue = () => {
-    if (activeDialogueId) {
-      executeCommand({ type: "CompleteDialogue", dialogueId: activeDialogueId });
-    }
-    closeDialogue();
-  };
 
   const controlsDisabled =
     activeDialogue !== null ||
@@ -172,11 +164,10 @@ export function GameScreen({
   useGameKeyboardControls({
     activeDialogue,
     audioSettings,
-    closeDialogue: handleCloseDialogue,
     executeCommand: handleExecuteCommand,
     isCharacterSheetOpen,
     isInteractChoiceOpen,
-    isInventoryNoticeOpen: inventoryNotice !== null,
+    isNoticeOpen: gameNotice !== null,
     isInventoryOpen,
     isPauseMenuOpen,
     isQuestsOpen,
@@ -184,10 +175,13 @@ export function GameScreen({
     keyboardLayout,
     onOpenPauseMenu: () => setIsPauseMenuOpen(true),
     progressDialogue,
+    skipDialogueLine,
     setIsCharacterSheetOpen,
-    setIsInventoryNoticeOpen: (open) => {
-      const next = typeof open === "function" ? open(inventoryNotice !== null) : open;
-      setInventoryNotice(next ? "" : null);
+    setIsNoticeOpen: (open) => {
+      const next = typeof open === "function" ? open(gameNotice !== null) : open;
+      if (!next) {
+        setGameNotice(null);
+      }
     },
     setIsInventoryOpen,
     setIsQuestsOpen,
@@ -306,14 +300,14 @@ export function GameScreen({
           />
         )}
 
-        {inventoryNotice !== null && (
+        {gameNotice !== null && (
           <div
             className="modal-overlay"
-            onClick={() => setInventoryNotice(null)}
+            onClick={() => setGameNotice(null)}
             onKeyDown={(e) => {
               if (e.key === "Escape") {
                 e.preventDefault();
-                setInventoryNotice(null);
+                setGameNotice(null);
               }
               e.stopPropagation();
             }}
@@ -325,14 +319,14 @@ export function GameScreen({
             >
               <p className="terminal-kicker">NOTICE</p>
               <h2 className="terminal-heading-md" style={{ marginBottom: "var(--space-4)" }}>
-                Cannot Use Item
+                {gameNotice.title}
               </h2>
-              <p>{inventoryNotice}</p>
+              <p>{gameNotice.message}</p>
               <div
                 className="stats-modal__actions"
                 style={{ marginTop: "var(--space-4)" }}
               >
-                <TerminalButton onClick={() => setInventoryNotice(null)}>
+                <TerminalButton onClick={() => setGameNotice(null)}>
                   [OK]
                 </TerminalButton>
               </div>
