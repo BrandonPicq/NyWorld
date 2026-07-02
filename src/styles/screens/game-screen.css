@@ -615,3 +615,220 @@
   transform: translateX(-50%) translateY(0);
   opacity: 1;
 }
+
+/* Quests Modal styles */
+.quests-modal {
+  max-width: 600px;
+}
+
+.quests-modal__body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  max-height: 60vh;
+  overflow-y: auto;
+}
+
+.quests-modal__section {
+  border: 1px solid var(--color-border-muted);
+  border-radius: 4px;
+  background: rgba(0, 0, 0, 0.2);
+  padding: var(--space-3);
+  margin-bottom: var(--space-3);
+}
+
+.quests-modal__section:last-child {
+  margin-bottom: 0;
+}
+
+.quests-modal__section h3 {
+  margin: 0 0 var(--space-3) 0;
+  font-family: var(--font-mono);
+  font-size: 1.1rem;
+  color: var(--color-accent);
+  border-bottom: 1px dashed var(--color-border-muted);
+  padding-bottom: var(--space-2);
+}
+
+.quests-modal__empty {
+  font-family: var(--font-mono);
+  font-size: 0.9rem;
+  color: var(--color-text-muted);
+  margin: 0;
+}
+
+.quests-modal__item {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin-bottom: var(--space-4);
+  padding-bottom: var(--space-3);
+  border-bottom: 1px dashed var(--color-border-muted);
+}
+
+.quests-modal__item:last-child {
+  margin-bottom: 0;
+  padding-bottom: 0;
+  border-bottom: none;
+}
+
+.quests-modal__item-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.quests-modal__quest-name {
+  font-family: var(--font-mono);
+  font-weight: bold;
+  font-size: 1rem;
+  color: var(--color-text-strong);
+}
+
+.quests-modal__quest-status {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  padding: 2px var(--space-2);
+  border-radius: 3px;
+  font-weight: bold;
+}
+
+.quests-modal__quest-status.ongoing {
+  border: 1px solid var(--color-accent-amber);
+  color: var(--color-accent-amber);
+}
+
+.quests-modal__quest-status.ready {
+  border: 1px solid var(--color-accent-green);
+  color: var(--color-accent-green);
+}
+
+.quests-modal__quest-desc {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--color-text);
+  line-height: var(--line-height-copy);
+}
+
+.quests-modal__objectives h4,
+.quests-modal__rewards h4 {
+  margin: 0 0 var(--space-1) 0;
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+}
+
+.quests-modal__objective-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.quests-modal__objective-list li {
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  display: flex;
+  gap: var(--space-2);
+}
+
+.objective--completed {
+  color: var(--color-text-muted);
+  text-decoration: line-through;
+}
+
+.objective--ongoing {
+  color: var(--color-text-strong);
+}
+
+.objective__checkbox {
+  color: var(--color-accent);
+}
+
+.quests-modal__rewards-text {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  color: var(--color-accent-green);
+}
+
+.quests-modal__completed-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.quests-modal__completed-item {
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+  display: flex;
+  gap: var(--space-2);
+}
+
+/* Quests HUD styling */
+.game-screen__quests-hud {
+  margin-top: var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  border: 1px dashed var(--color-border-muted);
+  border-radius: 4px;
+  background: rgba(0, 0, 0, 0.3);
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  text-align: left;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.quests-hud__title {
+  margin: 0 0 var(--space-2) 0 !important;
+  color: var(--color-accent) !important;
+  font-weight: bold;
+  text-transform: uppercase;
+  font-size: 0.85rem;
+  border-bottom: 1px dashed var(--color-border-muted);
+  padding-bottom: var(--space-1);
+}
+
+.quests-hud__item {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  margin-bottom: var(--space-2);
+}
+
+.quests-hud__item:last-child {
+  margin-bottom: 0;
+}
+
+.quests-hud__quest-name {
+  color: var(--color-text-strong);
+  font-weight: bold;
+}
+
+.quests-hud__objective-list {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 0 var(--space-2);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.quests-hud__objective-list li {
+  color: var(--color-text);
+  display: flex;
+  gap: var(--space-2);
+}
+
+.quests-hud__objective-list li.met {
+  color: var(--color-text-muted);
+  text-decoration: line-through;
+}
+

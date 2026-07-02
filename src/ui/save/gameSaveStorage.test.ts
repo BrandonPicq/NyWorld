@@ -50,6 +50,8 @@ function stubSave(overrides: Partial<GameSaveData> = {}): GameSaveData {
       },
     ],
     pickedUpItemSpawnKeys: [],
+    activeQuests: [],
+    completedQuests: [],
     ...overrides,
   };
 }

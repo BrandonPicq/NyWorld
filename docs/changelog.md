@@ -4,6 +4,19 @@ This file tracks meaningful project changes by commit-oriented slices.
 
 Keep entries short and practical. When a slice is committed, its changelog section should stay aligned with the commit title so the project history remains easy to read after restores or bisects.
 
+## 2026-07-02 - [ADD]: Implement V1 Quest System with Registry, Journal, and Overrides
+
+- Declare quests in static JSON content files under content/quests.
+- Build quest registry loaded at startup with strict validations (trigger uniqueness, item/dialogue consistency).
+- Create player ECS component Quests to track active and completed quests.
+- Resolve dialogue overrides in real-time based on quest progress (readyToComplete > active > completed).
+- Apply triggers (starting, completing quests) post-dialogue to avoid immediate state overrides.
+- Derive item objective progress dynamically from player inventory to prevent desynchronization.
+- Add Quests Journal modal toggled using J key or sidebar buttons.
+- Render active objectives on HUD center panel.
+- Implement save/load serialization for quest progress under version 0.4.
+- Add unit tests verifying registry validation, quest triggers, item consumption, rewards, and save/load cycles.
+
 ## 2026-07-02 - [REFACTOR]: Decouple saves and document content contracts
 
 - Move the shared log entry type out of GameplayEngine.

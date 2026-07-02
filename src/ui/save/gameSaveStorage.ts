@@ -127,7 +127,11 @@ function isGameSaveData(value: unknown): value is GameSaveData {
     Array.isArray(obj.log) &&
     obj.log.every(isSaveLogEntry) &&
     Array.isArray(obj.pickedUpItemSpawnKeys) &&
-    obj.pickedUpItemSpawnKeys.every((key) => typeof key === "string")
+    obj.pickedUpItemSpawnKeys.every((key) => typeof key === "string") &&
+    Array.isArray(obj.activeQuests) &&
+    obj.activeQuests.every((qId) => typeof qId === "string") &&
+    Array.isArray(obj.completedQuests) &&
+    obj.completedQuests.every((qId) => typeof qId === "string")
   );
 }
 

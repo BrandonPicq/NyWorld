@@ -66,6 +66,8 @@ const baseSnapshot: GameSnapshot = {
     items: [],
   },
   npcStates: [],
+  activeQuests: [],
+  completedQuests: [],
 };
 
 describe("interactionTargets", () => {

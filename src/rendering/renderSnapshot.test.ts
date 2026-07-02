@@ -37,6 +37,8 @@ const gameSnapshot: GameSnapshot = {
     items: [],
   },
   npcStates: [],
+  activeQuests: [],
+  completedQuests: [],
 };
 
 describe("createGridRenderSnapshot", () => {

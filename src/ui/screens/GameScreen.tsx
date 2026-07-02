@@ -22,6 +22,7 @@ import { useGameplayEngine } from "../game/useGameplayEngine";
 import { useZoneEntryDialogue } from "../game/useZoneEntryDialogue";
 import { InteractionChoiceModal } from "../game/InteractionChoiceModal";
 import { InventoryModal } from "../game/InventoryModal";
+import { QuestsModal } from "../game/QuestsModal";
 import { PauseModal } from "../game/PauseModal";
 import { SaveSlotsModal } from "../save/SaveSlotsModal";
 import { GameToast } from "../toast/GameToast";
@@ -60,6 +61,7 @@ export function GameScreen({
   const [isCharacterSheetOpen, setIsCharacterSheetOpen] = useState(false);
   const [isInteractChoiceOpen, setIsInteractChoiceOpen] = useState(false);
   const [isInventoryOpen, setIsInventoryOpen] = useState(false);
+  const [isQuestsOpen, setIsQuestsOpen] = useState(false);
   const [inventoryNotice, setInventoryNotice] = useState<string | null>(null);
   const [isPauseMenuOpen, setIsPauseMenuOpen] = useState(false);
   const [isSaveSlotsOpen, setIsSaveSlotsOpen] = useState(false);
@@ -79,6 +81,7 @@ export function GameScreen({
     isCharacterSheetOpen ||
     isInteractChoiceOpen ||
     isInventoryOpen ||
+    isQuestsOpen ||
     isPauseMenuOpen ||
     isSaveSlotsOpen;
   const { createSaveData, executeCommand, snapshot } = useGameplayEngine({
@@ -158,6 +161,7 @@ export function GameScreen({
     isInventoryNoticeOpen: inventoryNotice !== null,
     isInventoryOpen,
     isPauseMenuOpen,
+    isQuestsOpen,
     isSaveSlotsOpen,
     keyboardLayout,
     onOpenPauseMenu: () => setIsPauseMenuOpen(true),
@@ -168,6 +172,7 @@ export function GameScreen({
       setInventoryNotice(next ? "" : null);
     },
     setIsInventoryOpen,
+    setIsQuestsOpen,
     setIsSaveSlotsOpen,
   });
 
@@ -190,6 +195,7 @@ export function GameScreen({
           controlsDisabled={controlsDisabled}
           onOpenInventory={() => setIsInventoryOpen(true)}
           onOpenSheet={() => setIsCharacterSheetOpen(true)}
+          onOpenJournal={() => setIsQuestsOpen(true)}
           onRest={() => handleExecuteCommand({ type: "Rest" })}
           stats={snapshot.stats}
           worldTime={snapshot.worldTime}
@@ -233,6 +239,14 @@ export function GameScreen({
             onUseItem={(itemId) =>
               handleExecuteCommand({ type: "UseItem", itemId })
             }
+          />
+        )}
+
+        {isQuestsOpen && (
+          <QuestsModal
+            isOpen={isQuestsOpen}
+            snapshot={snapshot}
+            onClose={() => setIsQuestsOpen(false)}
           />
         )}
 

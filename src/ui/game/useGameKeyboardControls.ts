@@ -16,6 +16,7 @@ type UseGameKeyboardControlsInput = {
   isInventoryNoticeOpen: boolean;
   isInventoryOpen: boolean;
   isPauseMenuOpen: boolean;
+  isQuestsOpen: boolean;
   isSaveSlotsOpen?: boolean;
   keyboardLayout: KeyboardLayout;
   onOpenPauseMenu: () => void;
@@ -23,6 +24,7 @@ type UseGameKeyboardControlsInput = {
   setIsCharacterSheetOpen: Dispatch<SetStateAction<boolean>>;
   setIsInventoryNoticeOpen: Dispatch<SetStateAction<boolean>>;
   setIsInventoryOpen: Dispatch<SetStateAction<boolean>>;
+  setIsQuestsOpen: Dispatch<SetStateAction<boolean>>;
   setIsSaveSlotsOpen?: Dispatch<SetStateAction<boolean>>;
 };
 
@@ -42,6 +44,7 @@ export function useGameKeyboardControls({
   isInventoryNoticeOpen,
   isInventoryOpen,
   isPauseMenuOpen,
+  isQuestsOpen,
   isSaveSlotsOpen = false,
   keyboardLayout,
   onOpenPauseMenu,
@@ -49,6 +52,7 @@ export function useGameKeyboardControls({
   setIsCharacterSheetOpen,
   setIsInventoryNoticeOpen,
   setIsInventoryOpen,
+  setIsQuestsOpen,
   setIsSaveSlotsOpen,
 }: UseGameKeyboardControlsInput): void {
   useEffect(() => {
@@ -84,13 +88,15 @@ export function useGameKeyboardControls({
           setIsCharacterSheetOpen(false);
         } else if (isInventoryOpen) {
           setIsInventoryOpen(false);
+        } else if (isQuestsOpen) {
+          setIsQuestsOpen(false);
         } else {
           onOpenPauseMenu();
         }
         return;
       }
 
-      if (keyLower === "c" && !isInventoryOpen) {
+      if (keyLower === "c" && !isInventoryOpen && !isQuestsOpen) {
         event.preventDefault();
         if (audioSettings.soundEnabled) {
           playMenuConfirmSound();
@@ -99,7 +105,7 @@ export function useGameKeyboardControls({
         return;
       }
 
-      if (keyLower === "i" && !isCharacterSheetOpen) {
+      if (keyLower === "i" && !isCharacterSheetOpen && !isQuestsOpen) {
         event.preventDefault();
         if (audioSettings.soundEnabled) {
           playMenuConfirmSound();
@@ -108,7 +114,16 @@ export function useGameKeyboardControls({
         return;
       }
 
-      if (isCharacterSheetOpen || isInventoryOpen) {
+      if (keyLower === "j" && !isInventoryOpen && !isCharacterSheetOpen) {
+        event.preventDefault();
+        if (audioSettings.soundEnabled) {
+          playMenuConfirmSound();
+        }
+        setIsQuestsOpen((prev) => !prev);
+        return;
+      }
+
+      if (isCharacterSheetOpen || isInventoryOpen || isQuestsOpen) {
         return;
       }
 
@@ -138,6 +153,7 @@ export function useGameKeyboardControls({
     isInventoryNoticeOpen,
     isInventoryOpen,
     isPauseMenuOpen,
+    isQuestsOpen,
     isSaveSlotsOpen,
     keyboardLayout,
     onOpenPauseMenu,
@@ -145,5 +161,6 @@ export function useGameKeyboardControls({
     setIsCharacterSheetOpen,
     setIsInventoryNoticeOpen,
     setIsInventoryOpen,
+    setIsQuestsOpen,
   ]);
 }

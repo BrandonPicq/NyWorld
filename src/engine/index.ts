@@ -95,3 +95,5 @@ export type {
 export type { LogEntry } from "./LogEntry";
 export type { GameSaveData } from "./GameSaveData";
 export { SAVE_VERSION } from "./GameSaveData";
+export { getQuestDef, getAllQuestDefs, hasQuestDef } from "./quests/questRegistry";
+export type { QuestDef, QuestObjective, QuestRewards, QuestTriggers, QuestNpcOverride } from "./quests/QuestDef";

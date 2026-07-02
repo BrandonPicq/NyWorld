@@ -28,5 +28,11 @@
     "description": "A tarnished coin from a forgotten era. Worth a few bronze to a collector.",
     "category": "misc",
     "defaultQuantity": 1
+  },
+  "lost_notebook": {
+    "name": "Scholar's Lost Notebook",
+    "description": "A leather-bound notebook lost in the fields.",
+    "category": "quest",
+    "defaultQuantity": 1
   }
 }

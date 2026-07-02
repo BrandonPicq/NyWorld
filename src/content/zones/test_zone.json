@@ -36,7 +36,7 @@
     }
   ],
   "items": [
-    { "itemId": "healing_herb", "x": 2, "y": 5, "quantity": 1 },
+    { "itemId": "lost_notebook", "x": 2, "y": 5, "quantity": 1 },
     { "itemId": "old_coin", "x": 7, "y": 3, "quantity": 1 }
   ]
 }

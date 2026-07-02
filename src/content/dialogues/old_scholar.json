@@ -17,5 +17,31 @@
       "text": "They say that to the East, beyond the threshold, lies a colder land.",
       "pitch": 0.75
     }
+  ],
+  "old_scholar.quest_active_reminder": [
+    {
+      "speaker": "Old Scholar",
+      "text": "Please find my lost notebook in the fields. It has critical historical research inside.",
+      "pitch": 0.75
+    }
+  ],
+  "old_scholar.quest_active_ready": [
+    {
+      "speaker": "Old Scholar",
+      "text": "Oh, you found my lost notebook! This is marvelous!",
+      "pitch": 0.75
+    },
+    {
+      "speaker": "Old Scholar",
+      "text": "Thank you, apprentice. Here is a small stipend and some travel rations for your diligence.",
+      "pitch": 0.75
+    }
+  ],
+  "old_scholar.quest_completed": [
+    {
+      "speaker": "Old Scholar",
+      "text": "Thank you again for returning my notebook. My research can now continue.",
+      "pitch": 0.75
+    }
   ]
 }

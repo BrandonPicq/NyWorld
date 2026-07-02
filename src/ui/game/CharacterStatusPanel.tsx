@@ -9,6 +9,7 @@ type CharacterStatusPanelProps = {
   controlsDisabled?: boolean;
   onOpenInventory: () => void;
   onOpenSheet: () => void;
+  onOpenJournal: () => void;
   onRest: () => void;
   stats: Stats;
   worldTime: WorldTimeSnapshot;
@@ -18,6 +19,7 @@ export function CharacterStatusPanel({
   controlsDisabled = false,
   onOpenInventory,
   onOpenSheet,
+  onOpenJournal,
   onRest,
   stats,
   worldTime,
@@ -62,6 +64,9 @@ export function CharacterStatusPanel({
         </TerminalButton>
         <TerminalButton disabled={controlsDisabled} onClick={onOpenInventory}>
           [I] Inventory
+        </TerminalButton>
+        <TerminalButton disabled={controlsDisabled} onClick={onOpenJournal}>
+          [J] Journal
         </TerminalButton>
         <TerminalButton
           disabled={controlsDisabled || stats.energy >= stats.maxEnergy}

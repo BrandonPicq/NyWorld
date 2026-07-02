@@ -79,6 +79,7 @@ export class NpcScheduleSystem {
       );
 
       const targetDialogueId = scheduledPosition?.dialogueId ?? npc.baseDialogueId;
+      npc.dialogueId = targetDialogueId;
       npc.dialogue = getDialogue(targetDialogueId);
 
       if (!scheduledPosition) {

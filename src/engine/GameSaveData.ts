@@ -9,7 +9,7 @@ import type { NpcState } from "./npcs/NpcState";
  * Increment this when older save payloads can no longer be safely interpreted
  * by the loader without migration.
  */
-export const SAVE_VERSION = "0.3";
+export const SAVE_VERSION = "0.4";
 
 /**
  * Versioned payload written to persistent save slots.
@@ -32,4 +32,6 @@ export interface GameSaveData {
   npcStates: NpcState[];
   log: LogEntry[];
   pickedUpItemSpawnKeys: string[];
+  activeQuests: string[];
+  completedQuests: string[];
 }

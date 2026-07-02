@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import type { GameCommand, GameSnapshot } from "../../engine";
+import { getNpcDef } from "../../engine";
 import type { GridRenderSnapshot } from "../../rendering";
 import { GameCanvas } from "../components/GameCanvas";
 import { TerminalButton } from "../components/TerminalButton";
@@ -46,6 +47,39 @@ export function GameCenterPanel({
         <p>Zone: {snapshot.zoneId}</p>
         <p>Facing: {snapshot.playerFacing}</p>
       </div>
+
+      {snapshot.activeQuests && snapshot.activeQuests.length > 0 && (
+        <div className="game-screen__quests-hud">
+          <p className="quests-hud__title">Active Objectives</p>
+          {snapshot.activeQuests.map((quest) => {
+            const targetNpcName = getNpcDef(quest.targetNpcId)?.name ?? quest.targetNpcId;
+            return (
+              <div key={quest.questId} className="quests-hud__item">
+                <span className="quests-hud__quest-name">{quest.name}</span>
+                <ul className="quests-hud__objective-list">
+                  {quest.objectives.map((obj) => {
+                    const met = obj.currentQuantity >= obj.requiredQuantity;
+                    return (
+                      <li key={obj.id} className={met ? "met" : ""}>
+                        <span>{met ? "[x]" : "[ ]"}</span>
+                        <span>
+                          {obj.description} ({obj.currentQuantity}/{obj.requiredQuantity})
+                        </span>
+                      </li>
+                    );
+                  })}
+                  {quest.state === "readyToComplete" && (
+                    <li>
+                      <span>[ ]</span>
+                      <span>Return to {targetNpcName}</span>
+                    </li>
+                  )}
+                </ul>
+              </div>
+            );
+          })}
+        </div>
+      )}
 
       <div
         className="game-screen__controls"

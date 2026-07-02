@@ -1,0 +1,32 @@
+{
+  "questId": "lost_notebook",
+  "name": "The Scholar's Notebook",
+  "description": "Find the Old Scholar's lost notebook in the fields.",
+  "targetNpcId": "old_scholar",
+  "triggers": {
+    "start": { "dialogueId": "old_scholar.test_fields" },
+    "complete": { "dialogueId": "old_scholar.quest_active_ready" }
+  },
+  "npcOverrides": {
+    "old_scholar": {
+      "active": "old_scholar.quest_active_reminder",
+      "activeReady": "old_scholar.quest_active_ready",
+      "completed": "old_scholar.quest_completed"
+    }
+  },
+  "objectives": [
+    {
+      "id": "find_notebook",
+      "type": "fetch_item",
+      "itemId": "lost_notebook",
+      "quantity": 1,
+      "description": "Find the Scholar's Lost Notebook"
+    }
+  ],
+  "rewards": {
+    "currency": 150,
+    "items": [
+      { "itemId": "travel_ration", "quantity": 2 }
+    ]
+  }
+}

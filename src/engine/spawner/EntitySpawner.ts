@@ -54,6 +54,7 @@ export function spawnNpcsInWorld(
       race: npcDef.race,
       importance: npcDef.importance ?? "common",
       baseDialogueId: dialogueId,
+      dialogueId: dialogueId,
       dialogue,
     } as Npc);
   }
