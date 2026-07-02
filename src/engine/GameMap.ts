@@ -56,10 +56,16 @@ export class GameMap {
     }
   }
 
+  /**
+   * Returns whether a grid coordinate is inside this map's rectangle.
+   */
   isInBounds(x: number, y: number): boolean {
     return x >= 0 && x < this.width && y >= 0 && y < this.height;
   }
 
+  /**
+   * Returns whether a coordinate can be occupied by moving entities.
+   */
   isWalkable(x: number, y: number): boolean {
     if (!this.isInBounds(x, y)) {
       return false;
@@ -67,10 +73,18 @@ export class GameMap {
     return getTileDef(this.tiles[y][x]).walkable;
   }
 
+  /**
+   * Returns the tile id at a valid coordinate.
+   *
+   * Callers are expected to validate bounds before using arbitrary coordinates.
+   */
   getTileId(x: number, y: number): TileId {
     return this.tiles[y][x];
   }
 
+  /**
+   * Returns the zone transition bound to a coordinate, if any.
+   */
   getTransitionAt(x: number, y: number): ZoneTransitionData | undefined {
     return this.transitions.get(`${x},${y}`);
   }

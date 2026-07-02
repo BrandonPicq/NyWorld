@@ -1,3 +1,6 @@
+/**
+ * Ordered month names for the fictional world calendar.
+ */
 export const WORLD_MONTH_NAMES = [
   "Aubeclat",
   "Briseterre",
@@ -15,6 +18,9 @@ export const WORLD_MONTH_NAMES = [
 
 export type WorldMonthName = (typeof WORLD_MONTH_NAMES)[number];
 
+/**
+ * Calendar date expressed in world time units.
+ */
 export interface WorldDateTime {
   year: number;
   month: number;
@@ -23,6 +29,9 @@ export interface WorldDateTime {
   minute: number;
 }
 
+/**
+ * UI-ready world time projection derived from total world minutes.
+ */
 export interface WorldTimeSnapshot extends WorldDateTime {
   totalMinutes: number;
   monthName: WorldMonthName;
@@ -30,6 +39,12 @@ export interface WorldTimeSnapshot extends WorldDateTime {
   timeLabel: string;
 }
 
+/**
+ * Fixed calendar rules used by the simulation.
+ *
+ * The calendar intentionally uses twelve equal months so date math stays
+ * simple while retaining familiar clock and month structure.
+ */
 export const WORLD_CALENDAR = {
   daysPerMonth: 30,
   hoursPerDay: 24,
@@ -44,6 +59,9 @@ export const WORLD_CALENDAR = {
   },
 } as const;
 
+/**
+ * Narrative time advanced by common player actions, measured in minutes.
+ */
 export const WORLD_TIME_ACTION_COST = {
   dialogue: 10,
   movement: 10,
@@ -60,11 +78,17 @@ export const START_WORLD_TIME_MINUTES = encodeWorldDateTime(
   WORLD_CALENDAR.start,
 );
 
+/**
+ * Returns the minute inside the current world day.
+ */
 export function getWorldMinuteOfDay(totalMinutes: number): number {
   const clampedMinutes = Math.max(0, Math.floor(totalMinutes));
   return clampedMinutes % MINUTES_PER_DAY;
 }
 
+/**
+ * Converts a world calendar date into the engine's absolute minute count.
+ */
 export function encodeWorldDateTime(dateTime: WorldDateTime): number {
   validateWorldDateTime(dateTime);
 
@@ -77,6 +101,9 @@ export function encodeWorldDateTime(dateTime: WorldDateTime): number {
   );
 }
 
+/**
+ * Converts total world minutes into date fields and display labels.
+ */
 export function createWorldTimeSnapshot(
   totalMinutes: number,
 ): WorldTimeSnapshot {
@@ -113,6 +140,9 @@ export function createWorldTimeSnapshot(
   };
 }
 
+/**
+ * Formats total world minutes as a compact date/time string for UI summaries.
+ */
 export function formatWorldDateTime(totalMinutes: number): string {
   const worldTime = createWorldTimeSnapshot(totalMinutes);
   return `${worldTime.dateLabel}, ${worldTime.timeLabel}`;

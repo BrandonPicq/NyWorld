@@ -6,6 +6,12 @@ import type { NpcScheduleEntryData, NpcSpawnData } from "../ZoneTypes";
 import { getWorldMinuteOfDay } from "../time/WorldCalendar";
 import { getDialogue } from "../dialogues/dialogueRegistry";
 
+/**
+ * Resolved NPC location for the current world day.
+ *
+ * zoneId is optional so zone-local schedules can omit it and keep targeting the
+ * active map.
+ */
 export interface ScheduledNpcPosition {
   zoneId?: string;
   x: number;
@@ -13,7 +19,20 @@ export interface ScheduledNpcPosition {
   dialogueId?: string;
 }
 
+/**
+ * Applies simple daily NPC schedule entries to currently spawned NPC entities.
+ *
+ * The system only moves or removes entities already present in the ECS world;
+ * it does not decide which NPCs should be spawned for a zone.
+ */
 export class NpcScheduleSystem {
+  /**
+   * Updates scheduled NPC positions and active dialogue for the current time.
+   *
+   * A scheduled NPC whose active entry points to another zone is removed from
+   * the current world. Occupied tiles are respected so two NPCs do not collapse
+   * onto the same coordinate.
+   */
   static apply(
     world: World,
     map: GameMap,
@@ -127,6 +146,12 @@ export class NpcScheduleSystem {
   }
 }
 
+/**
+ * Parses a schedule clock label into minutes after midnight.
+ *
+ * Valid input is HH:mm using 24-hour time. Invalid labels return undefined so
+ * content validation can produce contextual error messages.
+ */
 export function parseScheduleTime(time: string): number | undefined {
   const match = /^(\d{2}):(\d{2})$/.exec(time);
   if (!match) {

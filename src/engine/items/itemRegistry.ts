@@ -10,10 +10,21 @@ const fallback: ItemDef = {
   defaultQuantity: 1,
 };
 
+/**
+ * Returns true when an item id is defined in the item catalog.
+ *
+ * Loaders use this to reject broken content references before gameplay starts.
+ */
 export function hasItemDef(itemId: string): boolean {
   return Object.prototype.hasOwnProperty.call(registry, itemId);
 }
 
+/**
+ * Returns catalog metadata for an item id.
+ *
+ * Unknown ids resolve to a safe fallback for display code, but content loaders
+ * should still validate ids with hasItemDef before accepting authored data.
+ */
 export function getItemDef(itemId: string): ItemDef {
   return registry[itemId] ?? fallback;
 }

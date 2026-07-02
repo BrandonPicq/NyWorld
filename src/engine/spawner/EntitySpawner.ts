@@ -8,6 +8,13 @@ import { getDialogue } from "../dialogues/dialogueRegistry";
 import { getItemDef } from "../items/itemRegistry";
 import { getItemMapPresentation } from "../items/itemMapPresentation";
 
+/**
+ * Rebuilds NPC entities for the active map from spawn data and character state.
+ *
+ * Existing NPC entities are removed first because zone entry, save restore, and
+ * schedule changes all treat the active map as the source of truth for current
+ * NPC presence.
+ */
 export function spawnNpcsInWorld(
   world: World,
   npcSpawns: NpcSpawnData[],
@@ -52,6 +59,13 @@ export function spawnNpcsInWorld(
   }
 }
 
+/**
+ * Rebuilds uncollected ground item entities for the active map.
+ *
+ * pickedUpKeys stores collected spawn ids, allowing content files to stay
+ * unchanged while the engine remembers which placed stacks are gone in this
+ * playthrough.
+ */
 export function spawnItemsInWorld(
   world: World,
   items: ItemSpawnData[],

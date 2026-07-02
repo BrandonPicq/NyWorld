@@ -21,10 +21,19 @@ const dialogueMaps = [
 
 const registry = buildRegistry(dialogueMaps);
 
+/**
+ * Returns true when a dialogue id is available in the dialogue registry.
+ */
 export function hasDialogue(dialogueId: string): boolean {
   return Object.prototype.hasOwnProperty.call(registry, dialogueId);
 }
 
+/**
+ * Returns a detached dialogue sequence for an id.
+ *
+ * Unknown ids resolve to a fallback line for runtime resilience. Content
+ * validation should still reject unknown dialogue ids.
+ */
 export function getDialogue(dialogueId: string): DialogueNodeData[] {
   const dialogue = registry[dialogueId] ?? fallback;
   return dialogue.map((node) => ({ ...node }));

@@ -12,15 +12,24 @@ const presenceDefs = getSortedContentModules(
 
 const registry = buildRegistry(presenceDefs);
 
+/**
+ * Returns true when an NPC has a global presence definition.
+ */
 export function hasNpcPresenceDef(npcId: string): boolean {
   return Object.prototype.hasOwnProperty.call(registry, npcId);
 }
 
+/**
+ * Returns a detached global presence definition for one NPC, if registered.
+ */
 export function getNpcPresenceDef(npcId: string): NpcPresenceDef | undefined {
   const def = registry[npcId];
   return def ? cloneNpcPresenceDef(def) : undefined;
 }
 
+/**
+ * Returns detached copies of all global presence definitions.
+ */
 export function getAllNpcPresenceDefs(): NpcPresenceDef[] {
   return Object.values(registry).map(cloneNpcPresenceDef);
 }
@@ -47,6 +56,12 @@ function getSortedContentModules(modules: Record<string, unknown>): unknown[] {
     .map(([, module]) => module);
 }
 
+/**
+ * Copies a presence definition and each schedule entry before returning it.
+ *
+ * Schedule entries are mutable during validation and future tooling, so registry
+ * callers get copies instead of references to imported JSON.
+ */
 function cloneNpcPresenceDef(def: NpcPresenceDef): NpcPresenceDef {
   return {
     ...def,

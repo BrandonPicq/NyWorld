@@ -17,14 +17,26 @@ const fallback: NpcDef = {
 
 const registry = buildRegistry(npcDefs);
 
+/**
+ * Returns true when an NPC id has a registered character definition.
+ */
 export function hasNpcDef(npcId: string): boolean {
   return Object.prototype.hasOwnProperty.call(registry, npcId);
 }
 
+/**
+ * Returns a detached character definition for an NPC id.
+ *
+ * Unknown ids resolve to a fallback so display code can stay resilient. Content
+ * loaders should still reject unknown ids with hasNpcDef.
+ */
 export function getNpcDef(npcId: string): NpcDef {
   return cloneNpcDef(registry[npcId] ?? fallback);
 }
 
+/**
+ * Returns detached copies of every registered NPC definition.
+ */
 export function getAllNpcDefs(): NpcDef[] {
   return Object.values(registry).map(cloneNpcDef);
 }
@@ -54,6 +66,12 @@ function getSortedContentModules(modules: Record<string, unknown>): unknown[] {
     .map(([, module]) => module);
 }
 
+/**
+ * Copies a registry definition before returning it to callers.
+ *
+ * Registries own content data; callers should never mutate imported JSON by
+ * editing a returned object.
+ */
 function cloneNpcDef(def: NpcDef): NpcDef {
   return {
     ...def,

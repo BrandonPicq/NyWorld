@@ -90,8 +90,8 @@ export type {
   EngineEffect,
   ExecuteResult,
   GameSnapshot,
-  LogEntry,
   RenderEntity,
 } from "./GameplayEngine";
+export type { LogEntry } from "./LogEntry";
 export type { GameSaveData } from "./GameSaveData";
 export { SAVE_VERSION } from "./GameSaveData";

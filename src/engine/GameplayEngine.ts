@@ -8,24 +8,22 @@ import type {
   Renderable,
   Stats,
 } from "./components";
-import { getDialogue } from "./dialogues/dialogueRegistry";
 import { getItemDef } from "./items/itemRegistry";
-import { getItemMapPresentation } from "./items/itemMapPresentation";
-import { getNpcMapPresentation } from "./npcs/npcMapPresentation";
 import { getAllNpcPresenceDefs } from "./npcs/npcPresenceRegistry";
-import { getAllNpcDefs, getNpcDef } from "./npcs/npcRegistry";
 import {
   cloneNpcState,
+  createNpcStateMapFromSave,
   createInitialNpcState,
   createInitialNpcStateMap,
   type NpcState,
   type NpcStateMap,
 } from "./npcs/NpcState";
 import { spawnNpcsInWorld, spawnItemsInWorld } from "./spawner/EntitySpawner";
-import { serializeSaveData, deserializeSaveData } from "./save/gameSaveSerializer";
+import { serializeSaveData } from "./save/gameSaveSerializer";
 import { World } from "./ecs/World";
 import type { EntityId } from "./ecs/types";
 import { GameMap } from "./GameMap";
+import type { LogEntry } from "./LogEntry";
 import { DIRECTION_DELTA, MovementSystem } from "./systems/MovementSystem";
 import type { Direction } from "./systems/MovementSystem";
 import { NpcScheduleSystem } from "./systems/NpcScheduleSystem";
@@ -36,19 +34,12 @@ import type {
   ZoneTransitionData,
 } from "./ZoneTypes";
 import type { GameSaveData } from "./GameSaveData";
-import { SAVE_VERSION } from "./GameSaveData";
 import {
   START_WORLD_TIME_MINUTES,
   WORLD_TIME_ACTION_COST,
   createWorldTimeSnapshot,
   type WorldTimeSnapshot,
 } from "./time/WorldCalendar";
-
-export interface LogEntry {
-  tick: number;
-  worldTimeMinutes: number;
-  message: string;
-}
 
 export type EngineEffect =
   | { type: "ItemCollected"; itemId: string; quantity: number }
@@ -60,12 +51,18 @@ export type EngineEffect =
       message: string;
     };
 
+/**
+ * Result of applying one explicit player command to the simulation.
+ */
 export interface ExecuteResult {
   success: boolean;
   dialogue?: DialogueNode[];
   effects?: EngineEffect[];
 }
 
+/**
+ * Render-ready entity projection exposed through a game snapshot.
+ */
 export interface RenderEntity {
   x: number;
   y: number;
@@ -75,6 +72,12 @@ export interface RenderEntity {
   name?: string;
 }
 
+/**
+ * Immutable UI-facing view of the current game state.
+ *
+ * React and rendering code consume snapshots instead of mutating ECS state
+ * directly.
+ */
 export interface GameSnapshot {
   tick: number;
   worldTime: WorldTimeSnapshot;
@@ -121,16 +124,16 @@ type GameplayEngineOptions = {
  * snapshots so gameplay rules stay independent from rendering and UI state.
  */
 export class GameplayEngine {
-  readonly world = new World();
-  readonly tickCounter = new TickCounter();
-  map: GameMap;
+  private readonly world = new World();
+  private readonly tickCounter = new TickCounter();
+  private map: GameMap;
 
-  log: LogEntry[] = [];
-  playerFacing: Direction = "south";
-  pickedUpItemSpawnKeys = new Set<string>();
-  resolveZone?: ZoneResolver;
-  worldTimeMinutes = START_WORLD_TIME_MINUTES;
-  npcStates: NpcStateMap = createInitialNpcStateMap();
+  private log: LogEntry[] = [];
+  private playerFacing: Direction = "south";
+  private pickedUpItemSpawnKeys = new Set<string>();
+  private resolveZone?: ZoneResolver;
+  private worldTimeMinutes = START_WORLD_TIME_MINUTES;
+  private npcStates: NpcStateMap = createInitialNpcStateMap();
 
   constructor(map: GameMap, options: GameplayEngineOptions = {}) {
     this.map = map;
@@ -186,7 +189,7 @@ export class GameplayEngine {
     this.addLog(`Entered ${map.name}.`);
   }
 
-  spawnNpcs(): void {
+  private spawnNpcs(): void {
     spawnNpcsInWorld(this.world, this.getCurrentZoneNpcSpawns(), this.npcStates);
 
     NpcScheduleSystem.apply(
@@ -197,7 +200,7 @@ export class GameplayEngine {
     );
   }
 
-  spawnItems(): void {
+  private spawnItems(): void {
     spawnItemsInWorld(
       this.world,
       this.map.items,
@@ -493,14 +496,67 @@ export class GameplayEngine {
    * restored.
    */
   createSaveData(): GameSaveData {
-    return serializeSaveData(this);
+    return serializeSaveData({
+      zoneId: this.map.zoneId,
+      tick: this.tickCounter.tick,
+      worldTimeMinutes: this.worldTimeMinutes,
+      playerPosition: this.getPlayerPosition(),
+      playerFacing: this.playerFacing,
+      stats: this.getPlayerStats(),
+      inventory: this.getPlayerInventory(),
+      npcStates: Object.values(this.npcStates),
+      log: this.log,
+      pickedUpItemSpawnKeys: this.pickedUpItemSpawnKeys,
+    });
   }
 
   static fromSaveData(
     saveData: GameSaveData,
     options: { resolveZone: ZoneResolver },
   ): GameplayEngine {
-    return deserializeSaveData(saveData, options);
+    const map = options.resolveZone(saveData.zoneId);
+
+    if (!map) {
+      throw new Error(
+        `Cannot load save: zone "${saveData.zoneId}" is not available.`,
+      );
+    }
+
+    const engine = new GameplayEngine(map, options);
+    engine.restoreSaveData(saveData);
+    return engine;
+  }
+
+  private restoreSaveData(saveData: GameSaveData): void {
+    const [playerId] = this.world.entitiesWith("PlayerControlled");
+
+    const stats = this.world.getComponent<Stats>(playerId, "Stats")!;
+    stats.energy = saveData.stats.energy;
+    stats.maxEnergy = saveData.stats.maxEnergy;
+    stats.currency = saveData.stats.currency;
+    stats.attributes = { ...saveData.stats.attributes };
+    stats.academicTitle = saveData.stats.academicTitle;
+    stats.academicProgress = saveData.stats.academicProgress;
+
+    const inventory = this.world.getComponent<Inventory>(
+      playerId,
+      "Inventory",
+    )!;
+    inventory.items = saveData.inventory.items.map((stack) => ({ ...stack }));
+
+    this.tickCounter.restoreTo(saveData.tick);
+    this.worldTimeMinutes = saveData.worldTimeMinutes;
+    this.npcStates = createNpcStateMapFromSave(saveData.npcStates);
+    this.playerFacing = saveData.playerFacing;
+    this.log = saveData.log.map((entry) => ({ ...entry }));
+    this.pickedUpItemSpawnKeys = new Set(saveData.pickedUpItemSpawnKeys);
+
+    const pos = this.getPlayerPosition();
+    pos.x = saveData.playerX;
+    pos.y = saveData.playerY;
+
+    this.spawnNpcs();
+    this.spawnItems();
   }
 
   private resolvePendingTransition(): void {
@@ -611,12 +667,12 @@ export class GameplayEngine {
     };
   }
 
-  getPlayerInventory(): Inventory {
+  private getPlayerInventory(): Inventory {
     const [playerId] = this.world.entitiesWith("Inventory", "PlayerControlled");
     return this.world.getComponent<Inventory>(playerId, "Inventory")!;
   }
 
-  getPlayerStats(): Stats {
+  private getPlayerStats(): Stats {
     const [playerId] = this.world.entitiesWith("Stats", "PlayerControlled");
     return this.world.getComponent<Stats>(playerId, "Stats")!;
   }
@@ -626,7 +682,7 @@ export class GameplayEngine {
     return state ? cloneNpcState(state) : undefined;
   }
 
-  getPlayerPosition(): Position {
+  private getPlayerPosition(): Position {
     const [playerId] = this.world.entitiesWith("Position", "PlayerControlled");
     return (
       this.world.getComponent<Position>(playerId, "Position") ??
@@ -641,15 +697,6 @@ export class GameplayEngine {
     const { dx, dy } = DIRECTION_DELTA[direction];
 
     return { x: pos.x + dx, y: pos.y + dy };
-  }
-
-  private getItemSpawnKey(
-    zoneId: string,
-    itemId: string,
-    x: number,
-    y: number,
-  ): string {
-    return `${zoneId}:${itemId}:${x},${y}`;
   }
 
   private getCurrentZoneNpcSpawns(): NpcSpawnData[] {
@@ -739,6 +786,9 @@ export class GameplayEngine {
   }
 }
 
+/**
+ * Copies an authored NPC spawn before schedule resolution mutates or filters it.
+ */
 function cloneNpcSpawnData(npcData: NpcSpawnData): NpcSpawnData {
   return {
     ...npcData,
@@ -748,8 +798,10 @@ function cloneNpcSpawnData(npcData: NpcSpawnData): NpcSpawnData {
   };
 }
 
+/**
+ * Copies one schedule entry so registries and maps keep ownership of content
+ * data while gameplay systems work with disposable values.
+ */
 function cloneNpcScheduleEntry(entry: NpcScheduleEntryData): NpcScheduleEntryData {
   return { ...entry };
 }
-
-

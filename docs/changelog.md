@@ -4,6 +4,18 @@ This file tracks meaningful project changes by commit-oriented slices.
 
 Keep entries short and practical. When a slice is committed, its changelog section should stay aligned with the commit title so the project history remains easy to read after restores or bisects.
 
+## 2026-07-02 - [REFACTOR]: Decouple saves and document content contracts
+
+- Move the shared log entry type out of GameplayEngine.
+- Make save serialization consume explicit engine state instead of the engine instance.
+- Keep save restoration inside GameplayEngine through a private restore helper.
+- Re-private mutable engine state, spawn helpers, and player component lookup helpers.
+- Remove unused GameplayEngine imports and dead item spawn key helper.
+- Add content authoring notes for future data and mod support.
+- Document zone, item, NPC, dialogue, presence, save, and runtime component contracts.
+- Clarify registry fallback behavior and defensive cloning of content data.
+- Document world calendar, NPC schedule, and entity spawning helpers.
+
 ## 2026-07-02 - [UPDATE]: Move NPC schedules into global presence data
 
 - Add a global NPC presence registry with auto-discovered JSON content.

@@ -1,5 +1,12 @@
 import { getAllNpcDefs } from "./npcRegistry";
 
+/**
+ * Mutable, saveable progress for a character.
+ *
+ * Static identity lives in NpcDef. This state is keyed by npcId and is where
+ * long-term simulation can store relationships, role changes, progression, and
+ * dialogue overrides.
+ */
 export interface NpcState {
   npcId: string;
   relationship: number;
@@ -9,8 +16,14 @@ export interface NpcState {
   knownFlags: string[];
 }
 
+/**
+ * Save/runtime lookup of mutable NPC state by stable npcId.
+ */
 export type NpcStateMap = Record<string, NpcState>;
 
+/**
+ * Creates the default mutable state for a known character id.
+ */
 export function createInitialNpcState(npcId: string): NpcState {
   return {
     npcId,
@@ -21,6 +34,10 @@ export function createInitialNpcState(npcId: string): NpcState {
   };
 }
 
+/**
+ * Returns a detached copy so callers cannot mutate engine-owned state by
+ * editing snapshots or save payloads.
+ */
 export function cloneNpcState(state: NpcState): NpcState {
   return {
     ...state,
@@ -28,6 +45,9 @@ export function cloneNpcState(state: NpcState): NpcState {
   };
 }
 
+/**
+ * Deep-clones an NPC state map while preserving each npcId key.
+ */
 export function cloneNpcStateMap(states: NpcStateMap): NpcStateMap {
   return Object.fromEntries(
     Object.entries(states).map(([npcId, state]) => [
@@ -37,6 +57,9 @@ export function cloneNpcStateMap(states: NpcStateMap): NpcStateMap {
   );
 }
 
+/**
+ * Builds default state for every currently registered NPC definition.
+ */
 export function createInitialNpcStateMap(): NpcStateMap {
   return Object.fromEntries(
     getAllNpcDefs().map((npcDef) => [
@@ -46,6 +69,12 @@ export function createInitialNpcStateMap(): NpcStateMap {
   );
 }
 
+/**
+ * Restores saved NPC state on top of the current registry defaults.
+ *
+ * This lets new NPC definitions gain default state after an older save is
+ * loaded, while saved characters keep their persisted progress.
+ */
 export function createNpcStateMapFromSave(savedStates: NpcState[]): NpcStateMap {
   const nextStateMap = createInitialNpcStateMap();
 
