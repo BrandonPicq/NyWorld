@@ -12,13 +12,17 @@ import { getDialogue } from "./dialogues/dialogueRegistry";
 import { getItemDef } from "./items/itemRegistry";
 import { getItemMapPresentation } from "./items/itemMapPresentation";
 import { getNpcMapPresentation } from "./npcs/npcMapPresentation";
+import { getAllNpcPresenceDefs } from "./npcs/npcPresenceRegistry";
 import { getAllNpcDefs, getNpcDef } from "./npcs/npcRegistry";
 import {
   cloneNpcState,
   createInitialNpcState,
+  createInitialNpcStateMap,
   type NpcState,
   type NpcStateMap,
 } from "./npcs/NpcState";
+import { spawnNpcsInWorld, spawnItemsInWorld } from "./spawner/EntitySpawner";
+import { serializeSaveData, deserializeSaveData } from "./save/gameSaveSerializer";
 import { World } from "./ecs/World";
 import type { EntityId } from "./ecs/types";
 import { GameMap } from "./GameMap";
@@ -26,7 +30,11 @@ import { DIRECTION_DELTA, MovementSystem } from "./systems/MovementSystem";
 import type { Direction } from "./systems/MovementSystem";
 import { NpcScheduleSystem } from "./systems/NpcScheduleSystem";
 import { TickCounter } from "./tick";
-import type { ZoneTransitionData } from "./ZoneTypes";
+import type {
+  NpcScheduleEntryData,
+  NpcSpawnData,
+  ZoneTransitionData,
+} from "./ZoneTypes";
 import type { GameSaveData } from "./GameSaveData";
 import { SAVE_VERSION } from "./GameSaveData";
 import {
@@ -117,12 +125,12 @@ export class GameplayEngine {
   readonly tickCounter = new TickCounter();
   map: GameMap;
 
-  private log: LogEntry[] = [];
-  private playerFacing: Direction = "south";
-  private pickedUpItemSpawnKeys = new Set<string>();
-  private resolveZone?: ZoneResolver;
-  private worldTimeMinutes = START_WORLD_TIME_MINUTES;
-  private npcStates: NpcStateMap = createInitialNpcStateMap();
+  log: LogEntry[] = [];
+  playerFacing: Direction = "south";
+  pickedUpItemSpawnKeys = new Set<string>();
+  resolveZone?: ZoneResolver;
+  worldTimeMinutes = START_WORLD_TIME_MINUTES;
+  npcStates: NpcStateMap = createInitialNpcStateMap();
 
   constructor(map: GameMap, options: GameplayEngineOptions = {}) {
     this.map = map;
@@ -178,87 +186,24 @@ export class GameplayEngine {
     this.addLog(`Entered ${map.name}.`);
   }
 
-  private spawnNpcs(): void {
-    const existingNpcs = this.world.entitiesWith("Npc");
-    for (const npcId of existingNpcs) {
-      this.world.destroyEntity(npcId);
-    }
+  spawnNpcs(): void {
+    spawnNpcsInWorld(this.world, this.getCurrentZoneNpcSpawns(), this.npcStates);
 
-    for (const npcData of this.map.npcs) {
-      const npcDef = getNpcDef(npcData.npcId);
-      const presentation = getNpcMapPresentation(npcDef);
-      const dialogueId =
-        npcData.dialogueId ??
-        this.npcStates[npcDef.npcId]?.currentDialogueId ??
-        npcDef.defaultDialogueId;
-      const dialogue = getDialogue(dialogueId);
-      const entityId = this.world.createEntity();
-
-      this.world.addComponent(entityId, {
-        type: "Position" as const,
-        x: npcData.x,
-        y: npcData.y,
-      } as Position);
-
-      this.world.addComponent(entityId, {
-        type: "Renderable" as const,
-        glyph: presentation.glyph,
-        color: presentation.color,
-      } as Renderable);
-
-      this.world.addComponent(entityId, {
-        type: "Npc" as const,
-        npcId: npcDef.npcId,
-        name: npcDef.name,
-        race: npcDef.race,
-        importance: npcDef.importance ?? "common",
-        baseDialogueId: dialogueId,
-        dialogue,
-      } as Npc);
-    }
-
-    NpcScheduleSystem.apply(this.world, this.map, this.worldTimeMinutes);
+    NpcScheduleSystem.apply(
+      this.world,
+      this.map,
+      this.getScheduledNpcSpawns(),
+      this.worldTimeMinutes,
+    );
   }
 
-  private spawnItems(): void {
-    const existingItems = this.world.entitiesWith("Item");
-    for (const itemId of existingItems) {
-      this.world.destroyEntity(itemId);
-    }
-
-    for (const itemData of this.map.items) {
-      const spawnKey = this.getItemSpawnKey(
-        this.map.zoneId,
-        itemData.itemId,
-        itemData.x,
-        itemData.y,
-      );
-      if (this.pickedUpItemSpawnKeys.has(spawnKey)) {
-        continue;
-      }
-
-      const presentation = getItemMapPresentation(itemData.itemId);
-      const entityId = this.world.createEntity();
-
-      this.world.addComponent(entityId, {
-        type: "Position" as const,
-        x: itemData.x,
-        y: itemData.y,
-      } as Position);
-
-      this.world.addComponent(entityId, {
-        type: "Renderable" as const,
-        glyph: presentation.glyph,
-        color: presentation.color,
-      } as Renderable);
-
-      this.world.addComponent(entityId, {
-        type: "Item" as const,
-        itemId: itemData.itemId,
-        quantity: itemData.quantity,
-        spawnKey,
-      } as Item);
-    }
+  spawnItems(): void {
+    spawnItemsInWorld(
+      this.world,
+      this.map.items,
+      this.pickedUpItemSpawnKeys,
+      this.map.zoneId,
+    );
   }
 
   /**
@@ -548,91 +493,14 @@ export class GameplayEngine {
    * restored.
    */
   createSaveData(): GameSaveData {
-    const pos = this.getPlayerPosition();
-    const stats = this.getPlayerStats();
-    const inventory = this.getPlayerInventory();
-
-    return {
-      version: SAVE_VERSION,
-      savedAt: new Date().toISOString(),
-      zoneId: this.map.zoneId,
-      tick: this.tickCounter.tick,
-      worldTimeMinutes: this.worldTimeMinutes,
-      playerX: pos.x,
-      playerY: pos.y,
-      playerFacing: this.playerFacing,
-      stats: {
-        type: "Stats",
-        energy: stats.energy,
-        maxEnergy: stats.maxEnergy,
-        currency: stats.currency,
-        attributes: { ...stats.attributes },
-        academicTitle: stats.academicTitle,
-        academicProgress: stats.academicProgress,
-      },
-      inventory: {
-        type: "Inventory",
-        items: inventory.items.map((stack) => ({ ...stack })),
-      },
-      npcStates: Object.values(this.npcStates).map(cloneNpcState),
-      log: this.log.map((entry) => ({ ...entry })),
-      pickedUpItemSpawnKeys: Array.from(this.pickedUpItemSpawnKeys),
-    };
+    return serializeSaveData(this);
   }
 
-  /**
-   * Creates a GameplayEngine from a previously persisted save.
-   *
-   * The engine is constructed with the saved zone, then all dynamic state
-   * (position, stats, inventory, log, tick, world time, facing, and collected
-   * item keys) is restored. The zone's NPCs and uncollected items are
-   * respawned via enterZone to respect the saved pickedUpItemSpawnKeys.
-   */
   static fromSaveData(
     saveData: GameSaveData,
     options: { resolveZone: ZoneResolver },
   ): GameplayEngine {
-    const map = options.resolveZone(saveData.zoneId);
-
-    if (!map) {
-      throw new Error(
-        `Cannot load save: zone "${saveData.zoneId}" is not available.`,
-      );
-    }
-
-    const engine = new GameplayEngine(map, options);
-
-    const [playerId] = engine.world.entitiesWith("PlayerControlled");
-
-    const stats = engine.world.getComponent<Stats>(playerId, "Stats")!;
-    stats.energy = saveData.stats.energy;
-    stats.maxEnergy = saveData.stats.maxEnergy;
-    stats.currency = saveData.stats.currency;
-    stats.attributes = { ...saveData.stats.attributes };
-    stats.academicTitle = saveData.stats.academicTitle;
-    stats.academicProgress = saveData.stats.academicProgress;
-
-    const inventory = engine.world.getComponent<Inventory>(
-      playerId,
-      "Inventory",
-    )!;
-    inventory.items = saveData.inventory.items.map((stack) => ({ ...stack }));
-
-    engine.tickCounter.restoreTo(saveData.tick);
-    engine.worldTimeMinutes = saveData.worldTimeMinutes;
-    engine.npcStates = createNpcStateMapFromSave(saveData.npcStates);
-    engine.playerFacing = saveData.playerFacing;
-    engine.log = saveData.log.map((entry) => ({ ...entry }));
-    engine.pickedUpItemSpawnKeys = new Set(saveData.pickedUpItemSpawnKeys);
-
-    const pos = engine.getPlayerPosition();
-    pos.x = saveData.playerX;
-    pos.y = saveData.playerY;
-
-    engine.spawnNpcs();
-    engine.spawnItems();
-
-    return engine;
+    return deserializeSaveData(saveData, options);
   }
 
   private resolvePendingTransition(): void {
@@ -662,7 +530,12 @@ export class GameplayEngine {
 
   private advanceWorldTime(minutes: number): void {
     this.worldTimeMinutes += minutes;
-    NpcScheduleSystem.apply(this.world, this.map, this.worldTimeMinutes);
+    NpcScheduleSystem.apply(
+      this.world,
+      this.map,
+      this.getScheduledNpcSpawns(),
+      this.worldTimeMinutes,
+    );
   }
 
   private addLog(message: string): void {
@@ -738,12 +611,12 @@ export class GameplayEngine {
     };
   }
 
-  private getPlayerInventory(): Inventory {
+  getPlayerInventory(): Inventory {
     const [playerId] = this.world.entitiesWith("Inventory", "PlayerControlled");
     return this.world.getComponent<Inventory>(playerId, "Inventory")!;
   }
 
-  private getPlayerStats(): Stats {
+  getPlayerStats(): Stats {
     const [playerId] = this.world.entitiesWith("Stats", "PlayerControlled");
     return this.world.getComponent<Stats>(playerId, "Stats")!;
   }
@@ -753,7 +626,7 @@ export class GameplayEngine {
     return state ? cloneNpcState(state) : undefined;
   }
 
-  private getPlayerPosition(): Position {
+  getPlayerPosition(): Position {
     const [playerId] = this.world.entitiesWith("Position", "PlayerControlled");
     return (
       this.world.getComponent<Position>(playerId, "Position") ??
@@ -778,23 +651,105 @@ export class GameplayEngine {
   ): string {
     return `${zoneId}:${itemId}:${x},${y}`;
   }
-}
 
-function createInitialNpcStateMap(): NpcStateMap {
-  return Object.fromEntries(
-    getAllNpcDefs().map((npcDef) => [
-      npcDef.npcId,
-      createInitialNpcState(npcDef.npcId),
-    ]),
-  );
-}
+  private getCurrentZoneNpcSpawns(): NpcSpawnData[] {
+    const spawns = this.map.npcs.map((npcData) => ({
+      ...npcData,
+      schedule: npcData.schedule
+        ? npcData.schedule.map((entry) => ({ ...entry }))
+        : undefined,
+    }));
+    const existingNpcIds = new Set(spawns.map((npcData) => npcData.npcId));
 
-function createNpcStateMapFromSave(savedStates: NpcState[]): NpcStateMap {
-  const nextStateMap = createInitialNpcStateMap();
+    for (const presenceDef of getAllNpcPresenceDefs()) {
+      if (existingNpcIds.has(presenceDef.npcId)) {
+        continue;
+      }
 
-  for (const state of savedStates) {
-    nextStateMap[state.npcId] = cloneNpcState(state);
+      const activePosition = NpcScheduleSystem.getActivePosition(
+        presenceDef.schedule,
+        this.worldTimeMinutes,
+      );
+
+      if (!activePosition || activePosition.zoneId !== this.map.zoneId) {
+        continue;
+      }
+
+      if (!this.map.isWalkable(activePosition.x, activePosition.y)) {
+        continue;
+      }
+
+      if (
+        !this.isNpcSpawnPositionAvailable(
+          spawns,
+          activePosition.x,
+          activePosition.y,
+        )
+      ) {
+        continue;
+      }
+
+      spawns.push({
+        npcId: presenceDef.npcId,
+        dialogueId: activePosition.dialogueId,
+        x: activePosition.x,
+        y: activePosition.y,
+        schedule: presenceDef.schedule.map(cloneNpcScheduleEntry),
+      });
+      existingNpcIds.add(presenceDef.npcId);
+    }
+
+    return spawns;
   }
 
-  return nextStateMap;
+  private isNpcSpawnPositionAvailable(
+    spawns: NpcSpawnData[],
+    x: number,
+    y: number,
+  ): boolean {
+    const playerPosition = this.getPlayerPosition();
+    if (playerPosition.x === x && playerPosition.y === y) {
+      return false;
+    }
+
+    return !spawns.some((npcData) => npcData.x === x && npcData.y === y);
+  }
+
+  private getScheduledNpcSpawns(): NpcSpawnData[] {
+    const spawns = this.map.npcs.map(cloneNpcSpawnData);
+    const existingNpcIds = new Set(spawns.map((npcData) => npcData.npcId));
+
+    for (const presenceDef of getAllNpcPresenceDefs()) {
+      if (existingNpcIds.has(presenceDef.npcId)) {
+        continue;
+      }
+
+      const firstEntry = presenceDef.schedule[0];
+      spawns.push({
+        npcId: presenceDef.npcId,
+        dialogueId: firstEntry.dialogueId,
+        x: firstEntry.x,
+        y: firstEntry.y,
+        schedule: presenceDef.schedule.map(cloneNpcScheduleEntry),
+      });
+      existingNpcIds.add(presenceDef.npcId);
+    }
+
+    return spawns;
+  }
 }
+
+function cloneNpcSpawnData(npcData: NpcSpawnData): NpcSpawnData {
+  return {
+    ...npcData,
+    schedule: npcData.schedule
+      ? npcData.schedule.map(cloneNpcScheduleEntry)
+      : undefined,
+  };
+}
+
+function cloneNpcScheduleEntry(entry: NpcScheduleEntryData): NpcScheduleEntryData {
+  return { ...entry };
+}
+
+

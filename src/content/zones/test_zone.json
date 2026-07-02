@@ -33,15 +33,6 @@
       "npcId": "old_wizard",
       "x": 7,
       "y": 6
-    },
-    {
-      "npcId": "young_page",
-      "x": 6,
-      "y": 3,
-      "schedule": [
-        { "time": "08:00", "zoneId": "test_zone", "x": 6, "y": 3, "dialogueId": "young_page.default" },
-        { "time": "18:00", "zoneId": "test_zone_2", "x": 2, "y": 6, "dialogueId": "young_page.evening" }
-      ]
     }
   ],
   "items": [

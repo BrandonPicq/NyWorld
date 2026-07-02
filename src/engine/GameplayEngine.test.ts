@@ -414,6 +414,33 @@ describe("GameplayEngine", () => {
     ]);
   });
 
+  it("spawns globally scheduled NPC presence in the active content zone", () => {
+    const testZone = loadZone(testZoneData);
+    const testZone2 = loadZone(testZone2Data);
+    const engine = new GameplayEngine(testZone);
+
+    expect(testZone.npcs.some((npc) => npc.npcId === "young_page")).toBe(false);
+    expect(
+      engine.getSnapshot().entities.find((entity) => entity.npcId === "young_page"),
+    ).toMatchObject({ x: 6, y: 3 });
+
+    for (let i = 0; i < 10; i++) {
+      engine.execute({ type: "Rest" });
+    }
+
+    expect(engine.getSnapshot().worldTime.timeLabel).toBe("18:00");
+    expect(
+      engine.getSnapshot().entities.find((entity) => entity.npcId === "young_page"),
+    ).toBeUndefined();
+
+    engine.enterZone(testZone2, 1, 1);
+
+    expect(testZone2.npcs.some((npc) => npc.npcId === "young_page")).toBe(false);
+    expect(
+      engine.getSnapshot().entities.find((entity) => entity.npcId === "young_page"),
+    ).toMatchObject({ x: 2, y: 6 });
+  });
+
   it("interacts with NPCs when player collides with their tile", () => {
     const mapWithNpc = loadZone({
       ...zoneData,

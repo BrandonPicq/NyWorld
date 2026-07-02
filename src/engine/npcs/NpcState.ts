@@ -1,3 +1,5 @@
+import { getAllNpcDefs } from "./npcRegistry";
+
 export interface NpcState {
   npcId: string;
   relationship: number;
@@ -33,4 +35,23 @@ export function cloneNpcStateMap(states: NpcStateMap): NpcStateMap {
       cloneNpcState(state),
     ]),
   );
+}
+
+export function createInitialNpcStateMap(): NpcStateMap {
+  return Object.fromEntries(
+    getAllNpcDefs().map((npcDef) => [
+      npcDef.npcId,
+      createInitialNpcState(npcDef.npcId),
+    ]),
+  );
+}
+
+export function createNpcStateMapFromSave(savedStates: NpcState[]): NpcStateMap {
+  const nextStateMap = createInitialNpcStateMap();
+
+  for (const state of savedStates) {
+    nextStateMap[state.npcId] = cloneNpcState(state);
+  }
+
+  return nextStateMap;
 }

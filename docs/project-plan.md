@@ -64,7 +64,7 @@ La V0 inclura :
 - un journal textuel minimal des actions ;
 - une commande d'interaction contextuelle pour parler aux PNJs proches, avec ciblage autour du joueur ou seulement dans la direction regardee ;
 - des dialogues d'entree de zone configures dans les donnees JSON ;
-- des personnages non-joueurs (PNJs) configurés dans des fiches de personnage réutilisables, puis placés par `npcId` dans les zones ;
+- des personnages non-joueurs (PNJs) configurés dans des fiches de personnage réutilisables, puis placés par `npcId` dans les zones ou par un registre global de presence ;
 - un état mutable sauvegardable par PNJ (`npcId`) pour préparer relations, progression et rôles évolutifs ;
 - des emplois du temps journaliers simples pour déplacer les PNJs selon l'heure du calendrier et les faire apparaitre dans une autre zone ;
 - des dialogues de PNJ stockes dans un registre reutilisable, relies aux fiches par `defaultDialogueId` et aux apparitions de zone par `dialogueId` ;

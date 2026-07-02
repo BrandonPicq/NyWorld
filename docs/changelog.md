@@ -4,13 +4,14 @@ This file tracks meaningful project changes by commit-oriented slices.
 
 Keep entries short and practical. When a slice is committed, its changelog section should stay aligned with the commit title so the project history remains easy to read after restores or bisects.
 
-## 2026-07-02 - [UPDATE]: Move scheduled NPCs across zones
+## 2026-07-02 - [UPDATE]: Move NPC schedules into global presence data
 
-- Allow NPC schedule entries to target a zoneId as well as coordinates.
+- Add a global NPC presence registry with auto-discovered JSON content.
+- Move the Young Page schedule out of zone files and into npc-presence content.
+- Spawn globally scheduled NPCs in the active zone based on world time.
 - Hide scheduled NPCs from the current map when their active schedule points to another zone.
 - Let scheduled positions override the active NPC dialogue for contextual conversations.
-- Move the Young Page between the test zones in the evening schedule.
-- Add loader, schedule-system, and gameplay tests for cross-zone presence and schedule dialogue.
+- Add registry, loader, schedule-system, and gameplay tests for global NPC presence.
 
 ## 2026-07-01 - [ADD]: Move NPCs with simple daily schedules
 

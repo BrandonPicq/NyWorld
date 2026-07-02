@@ -62,6 +62,11 @@ export {
 } from "./npcs/npcMapPresentation";
 export type { NpcMapPresentation } from "./npcs/npcMapPresentation";
 export { getAllNpcDefs, getNpcDef, hasNpcDef } from "./npcs/npcRegistry";
+export {
+  getAllNpcPresenceDefs,
+  getNpcPresenceDef,
+  hasNpcPresenceDef,
+} from "./npcs/npcPresenceRegistry";
 export type {
   NpcDef,
   NpcDefMap,
@@ -69,6 +74,10 @@ export type {
   NpcPresentationOverride,
   NpcRace,
 } from "./npcs/NpcDef";
+export type {
+  NpcPresenceDef,
+  NpcPresenceDefMap,
+} from "./npcs/NpcPresenceDef";
 export {
   cloneNpcState,
   cloneNpcStateMap,

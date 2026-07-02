@@ -2,7 +2,7 @@ import type { Npc, Position } from "../components";
 import type { EntityId } from "../ecs/types";
 import type { World } from "../ecs/World";
 import type { GameMap } from "../GameMap";
-import type { NpcScheduleEntryData } from "../ZoneTypes";
+import type { NpcScheduleEntryData, NpcSpawnData } from "../ZoneTypes";
 import { getWorldMinuteOfDay } from "../time/WorldCalendar";
 import { getDialogue } from "../dialogues/dialogueRegistry";
 
@@ -17,10 +17,11 @@ export class NpcScheduleSystem {
   static apply(
     world: World,
     map: GameMap,
+    npcSpawns: NpcSpawnData[],
     totalWorldMinutes: number,
   ): void {
     const scheduledNpcIds = new Set(
-      map.npcs
+      npcSpawns
         .filter((npcData) => npcData.schedule && npcData.schedule.length > 0)
         .map((npcData) => npcData.npcId),
     );
@@ -45,7 +46,7 @@ export class NpcScheduleSystem {
       occupied.add(getPositionKey(position.x, position.y));
     }
 
-    for (const npcData of map.npcs) {
+    for (const npcData of npcSpawns) {
       const entityId = npcEntitiesById.get(npcData.npcId);
       if (entityId === undefined) {
         continue;
