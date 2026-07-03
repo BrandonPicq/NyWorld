@@ -266,6 +266,7 @@ export function GameScreen({
           onOpenJournal={() => setIsQuestsOpen(true)}
           onRest={() => handleExecuteCommand({ type: "Rest" })}
           onStudy={() => handleExecuteCommand({ type: "Study" })}
+          isCombatActive={snapshot.combatState !== undefined}
           stats={snapshot.stats}
           worldTime={snapshot.worldTime}
           keyboardLayout={keyboardLayout}

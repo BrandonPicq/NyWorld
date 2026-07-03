@@ -4,6 +4,12 @@ This file tracks meaningful project changes by commit-oriented slices.
 
 Keep entries short and practical. When a slice is committed, its changelog section should stay aligned with the commit title so the project history remains easy to read after restores or bisects.
 
+## 2026-07-03 - [UPDATE]: Show player combat stats in battle UI
+
+- Replace unavailable sidebar commands with player MP, SP, and combat stats during combat.
+- Show player ATK, DEF, AGI, and SPI beside the opponent combat summary.
+- Keep combat resources visible without duplicating MP and SP in the center combat panel.
+
 ## 2026-07-03 - [UPDATE]: Rename smallest currency unit to copper
 
 - Rename the smallest currency denomination to Copper in UI formatting and content text.

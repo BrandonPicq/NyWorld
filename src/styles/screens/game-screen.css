@@ -338,6 +338,58 @@
   color: var(--color-disabled-text);
 }
 
+.sidebar-combat {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.sidebar-combat__resources {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.sidebar-combat__resource-row {
+  display: grid;
+  grid-template-columns: 2.25rem 1fr;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.sidebar-combat__resource-label,
+.sidebar-combat__stat-label,
+.sidebar-combat__stat-value {
+  font-family: var(--font-mono);
+}
+
+.sidebar-combat__resource-label,
+.sidebar-combat__stat-label {
+  color: var(--color-text-muted);
+}
+
+.sidebar-combat__stats-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-2);
+}
+
+.sidebar-combat__stat {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  min-width: 0;
+  padding: var(--space-2);
+  border: 1px solid var(--color-border-muted);
+  background: rgba(0, 0, 0, 0.18);
+}
+
+.sidebar-combat__stat-value {
+  flex: 0 0 auto;
+  color: var(--color-accent);
+  font-weight: bold;
+}
+
 /* Modal Overlay & Stats Modal */
 .modal-overlay {
   position: fixed;
@@ -1073,14 +1125,19 @@
 
 .combat-bar-row {
   display: grid;
-  grid-template-columns: 3rem 1fr;
+  grid-template-columns: 2rem minmax(0, 1fr);
   align-items: center;
   gap: var(--space-2);
   margin-bottom: var(--space-2);
 }
 
+.combat-bar-row > span:first-child {
+  white-space: nowrap;
+}
+
 .combat-bar-container {
   position: relative;
+  min-width: 0;
   height: 1.25rem;
   background: #11111b;
   border: 1px solid var(--color-border-muted);
@@ -1118,18 +1175,25 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  font-size: 0.8rem;
+  font-size: 0.78rem;
   font-weight: bold;
   color: #cdd6f4;
   text-shadow: 1px 1px 2px #000;
+  white-space: nowrap;
 }
 
 .combat-stats-details {
-  display: flex;
-  justify-content: space-between;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-1) var(--space-2);
   font-size: 0.85rem;
   color: var(--color-text-soft);
   margin-top: var(--space-2);
+}
+
+.combat-stats-details span {
+  min-width: 0;
+  white-space: nowrap;
 }
 
 .combat-phase-area {

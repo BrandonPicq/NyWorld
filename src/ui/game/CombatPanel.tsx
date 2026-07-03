@@ -280,29 +280,11 @@ export function CombatPanel({
                 </span>
               </div>
             </div>
-            <div className="combat-bar-row">
-              <span>MP</span>
-              <div className="combat-bar-container">
-                <div
-                  className="combat-bar-fill combat-bar-fill--mp"
-                  style={{ width: `${(playerStats.resources.mp / playerStats.resources.maxMp) * 100}%` }}
-                />
-                <span className="combat-bar-text">
-                  {playerStats.resources.mp} / {playerStats.resources.maxMp}
-                </span>
-              </div>
-            </div>
-            <div className="combat-bar-row">
-              <span>SP</span>
-              <div className="combat-bar-container">
-                <div
-                  className="combat-bar-fill combat-bar-fill--sp"
-                  style={{ width: `${(playerStats.resources.sp / playerStats.resources.maxSp) * 100}%` }}
-                />
-                <span className="combat-bar-text">
-                  {playerStats.resources.sp} / {playerStats.resources.maxSp}
-                </span>
-              </div>
+            <div className="combat-stats-details">
+              <span>ATK: {playerStats.combat.attack}</span>
+              <span>DEF: {playerStats.combat.defense}</span>
+              <span>AGI: {playerStats.attributes.agility}</span>
+              <span>SPI: {playerStats.attributes.spirit}</span>
             </div>
           </div>
 

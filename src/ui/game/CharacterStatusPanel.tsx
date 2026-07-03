@@ -23,10 +23,12 @@ type CharacterStatusPanelProps = {
   stats: Stats;
   worldTime: WorldTimeSnapshot;
   keyboardLayout: KeyboardLayout;
+  isCombatActive?: boolean;
 };
 
 export function CharacterStatusPanel({
   controlsDisabled = false,
+  isCombatActive = false,
   onOpenInventory,
   onOpenSheet,
   onOpenJournal,
@@ -74,46 +76,126 @@ export function CharacterStatusPanel({
         </div>
       </div>
 
-      <div className="sidebar-actions">
-        <div className="sidebar-actions__group">
-          <p className="sidebar-actions__label">Menus</p>
-          <SidebarActionButton
-            disabled={controlsDisabled}
-            keyLabel="C"
-            label="Sheet"
-            onClick={onOpenSheet}
-          />
-          <SidebarActionButton
-            disabled={controlsDisabled}
-            keyLabel="I"
-            label="Inventory"
-            onClick={onOpenInventory}
-          />
-          <SidebarActionButton
-            disabled={controlsDisabled}
-            keyLabel={keyboardLayout === "azerty" ? "A" : "Q"}
-            label="Journal"
-            onClick={onOpenJournal}
-          />
-        </div>
+      {isCombatActive ? (
+        <CombatSidebarStats stats={stats} />
+      ) : (
+        <div className="sidebar-actions">
+          <div className="sidebar-actions__group">
+            <p className="sidebar-actions__label">Menus</p>
+            <SidebarActionButton
+              disabled={controlsDisabled}
+              keyLabel="C"
+              label="Sheet"
+              onClick={onOpenSheet}
+            />
+            <SidebarActionButton
+              disabled={controlsDisabled}
+              keyLabel="I"
+              label="Inventory"
+              onClick={onOpenInventory}
+            />
+            <SidebarActionButton
+              disabled={controlsDisabled}
+              keyLabel={keyboardLayout === "azerty" ? "A" : "Q"}
+              label="Journal"
+              onClick={onOpenJournal}
+            />
+          </div>
 
-        <div className="sidebar-actions__group sidebar-actions__group--compact">
-          <p className="sidebar-actions__label">Actions</p>
-          <SidebarActionButton
-            disabled={controlsDisabled || energy <= 0}
-            keyLabel="T"
-            label="Study"
-            onClick={onStudy}
-          />
-          <SidebarActionButton
-            disabled={controlsDisabled || energy >= maxEnergy}
-            keyLabel="R"
-            label="Rest"
-            onClick={onRest}
-          />
+          <div className="sidebar-actions__group sidebar-actions__group--compact">
+            <p className="sidebar-actions__label">Actions</p>
+            <SidebarActionButton
+              disabled={controlsDisabled || energy <= 0}
+              keyLabel="T"
+              label="Study"
+              onClick={onStudy}
+            />
+            <SidebarActionButton
+              disabled={controlsDisabled || energy >= maxEnergy}
+              keyLabel="R"
+              label="Rest"
+              onClick={onRest}
+            />
+          </div>
         </div>
-      </div>
+      )}
     </TerminalPanel>
+  );
+}
+
+function CombatSidebarStats({ stats }: { stats: Stats }) {
+  return (
+    <div className="sidebar-combat">
+      <p className="sidebar-actions__label">Combat</p>
+
+      <div className="sidebar-combat__resources">
+        <SidebarCombatResource
+          label="MP"
+          tone="mp"
+          value={stats.resources.mp}
+          max={stats.resources.maxMp}
+        />
+        <SidebarCombatResource
+          label="SP"
+          tone="sp"
+          value={stats.resources.sp}
+          max={stats.resources.maxSp}
+        />
+      </div>
+
+      <div className="sidebar-combat__stats-grid" aria-label="Player combat stats">
+        <SidebarCombatStat label="ATK" value={stats.combat.attack} />
+        <SidebarCombatStat label="MAG" value={stats.combat.magicAttack} />
+        <SidebarCombatStat label="DEF" value={stats.combat.defense} />
+        <SidebarCombatStat label="MDF" value={stats.combat.magicDefense} />
+        <SidebarCombatStat label="AGI" value={stats.attributes.agility} />
+        <SidebarCombatStat label="SPI" value={stats.attributes.spirit} />
+      </div>
+    </div>
+  );
+}
+
+function SidebarCombatResource({
+  label,
+  max,
+  tone,
+  value,
+}: {
+  label: string;
+  max: number;
+  tone: "mp" | "sp";
+  value: number;
+}) {
+  const width = max > 0 ? (value / max) * 100 : 0;
+
+  return (
+    <div className="sidebar-combat__resource-row">
+      <span className="sidebar-combat__resource-label">{label}</span>
+      <div className="combat-bar-container">
+        <div
+          className={`combat-bar-fill combat-bar-fill--${tone}`}
+          style={{ width: `${width}%` }}
+        />
+        <span className="combat-bar-text">
+          {value} / {max}
+        </span>
+      </div>
+    </div>
+  );
+}
+
+function SidebarCombatStat({
+  label,
+  value,
+}: {
+  label: string;
+  value: number;
+}) {
+  return (
+    <div className="sidebar-combat__stat">
+      <span className="sidebar-combat__stat-label">{label}</span>
+      <span className="sidebar-combat__stat-value">{value}</span>
+    </div>
   );
 }
 
