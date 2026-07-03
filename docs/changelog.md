@@ -4,6 +4,23 @@ This file tracks meaningful project changes by commit-oriented slices.
 
 Keep entries short and practical. When a slice is committed, its changelog section should stay aligned with the commit title so the project history remains easy to read after restores or bisects.
 
+## 2026-07-03 - [UPDATE]: Stack item feedback toasts
+
+- Show toast feedback when items are used or handed in for quest completion.
+- Keep item reward and pickup feedback in the same toast flow.
+- Allow several recent toasts to remain visible in a scrollable stack.
+- Pause toast dismissal while the player is hovering or focusing the toast stack.
+- Add quest completion tests for item loss and reward item effects.
+
+## 2026-07-03 - [ADD]: Add a first study activity
+
+- Add a Study command that spends energy and advances world time.
+- Increase intelligence and academic progress from studying.
+- Expose Study through the left sidebar and the T keyboard shortcut.
+- Split sidebar controls into Menus and Actions with compact keycap buttons.
+- Reject studying when the player lacks enough energy.
+- Add engine tests covering study progress and exhaustion.
+
 ## 2026-07-03 - [FIX]: Prevent bracket wrapping for quest objectives checkboxes
 
 - Apply white-space nowrap and flex-shrink rules to prevent quest checkbox brackets from line-splitting on narrow screens.

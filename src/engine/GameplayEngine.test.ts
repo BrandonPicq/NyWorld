@@ -933,6 +933,60 @@ describe("GameplayEngine", () => {
     expect(result.effects).toBeUndefined();
   });
 
+  describe("Study", () => {
+    it("spends time and energy to improve academic stats", () => {
+      const engine = createEngine();
+
+      const result = engine.execute({ type: "Study" });
+
+      expect(result.success).toBe(true);
+      expect(engine.getSnapshot()).toMatchObject({
+        tick: 1,
+        worldTime: {
+          totalMinutes: START_WORLD_TIME_MINUTES + WORLD_TIME_ACTION_COST.study,
+          timeLabel: "09:30",
+        },
+        stats: {
+          energy: 90,
+          academicProgress: 15,
+        },
+      });
+      expect(engine.getSnapshot().stats.attributes.intelligence).toBe(11);
+      expect(engine.getSnapshot().log.map((entry) => entry.message)).toContain(
+        "Studied old notes. Intelligence +1, academic progress +15%.",
+      );
+    });
+
+    it("rejects study without enough energy", () => {
+      const engine = createEngine();
+      const save = engine.createSaveData();
+      save.stats.energy = 9;
+
+      const restored = GameplayEngine.fromSaveData(save, {
+        resolveZone: (zoneId) =>
+          zoneId === "movement_test" ? loadZone(zoneData) : undefined,
+      });
+
+      const result = restored.execute({ type: "Study" });
+
+      expect(result.success).toBe(false);
+      expect(restored.getSnapshot()).toMatchObject({
+        tick: 0,
+        worldTime: {
+          totalMinutes: START_WORLD_TIME_MINUTES,
+        },
+        stats: {
+          energy: 9,
+          academicProgress: 0,
+        },
+      });
+      expect(restored.getSnapshot().stats.attributes.intelligence).toBe(10);
+      expect(restored.getSnapshot().log.map((entry) => entry.message)).toContain(
+        "You are too exhausted to study. Rest [R] to recover energy.",
+      );
+    });
+  });
+
   describe("UseItem", () => {
     it("restores energy when using a consumable", () => {
       const engine = createEngine();

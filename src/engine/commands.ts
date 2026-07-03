@@ -7,6 +7,7 @@ export type GameCommand =
   | { type: "MoveEast" }
   | { type: "Interact"; targetNpcId?: string; targetDirection?: Direction }
   | { type: "Rest" }
+  | { type: "Study" }
   | { type: "UseItem"; itemId: string }
   | { type: "CompleteDialogue" }
   | { type: "AcknowledgeZoneEntryDialogue" };

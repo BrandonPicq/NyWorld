@@ -102,6 +102,7 @@ export function useGameKeyboardControls({
           keyLower === "i" ||
           keyLower === journalKey ||
           keyLower === "r" ||
+          keyLower === "t" ||
           commandType
         ) {
           event.preventDefault();
@@ -143,6 +144,12 @@ export function useGameKeyboardControls({
       if (keyLower === "r") {
         event.preventDefault();
         executeCommand({ type: "Rest" });
+        return;
+      }
+
+      if (keyLower === "t") {
+        event.preventDefault();
+        executeCommand({ type: "Study" });
         return;
       }
 

@@ -49,7 +49,18 @@ import {
 } from "./time/WorldCalendar";
 
 export type EngineEffect =
-  | { type: "ItemCollected"; itemId: string; quantity: number }
+  | {
+      type: "ItemCollected";
+      itemId: string;
+      quantity: number;
+      source?: "ground" | "reward";
+    }
+  | {
+      type: "ItemLost";
+      itemId: string;
+      quantity: number;
+      source?: "quest_turn_in";
+    }
   | { type: "ItemUsed"; itemId: string; energyRestored: number }
   | {
       type: "ItemUseRejected";
@@ -140,6 +151,10 @@ const CONSUMABLE_ENERGY: Record<string, number> = {
   travel_ration: 10,
   healing_herb: 20,
 };
+
+const STUDY_ENERGY_COST = 10;
+const STUDY_ACADEMIC_PROGRESS_GAIN = 15;
+const STUDY_INTELLIGENCE_GAIN = 1;
 
 type ZoneResolver = (zoneId: string) => GameMap | undefined;
 
@@ -265,6 +280,10 @@ export class GameplayEngine {
       return { success: true };
     }
 
+    if (command.type === "Study") {
+      return this.studyPlayer();
+    }
+
     if (command.type === "Interact") {
       return this.interact(command.targetNpcId, command.targetDirection);
     }
@@ -281,15 +300,18 @@ export class GameplayEngine {
         return { success: false };
       }
 
+      const effects: EngineEffect[] = [];
       for (const questDef of getAllQuestDefs()) {
         if (questDef.triggers.start.dialogueId === dialogueId) {
           this.startQuest(questDef.questId);
         }
         if (questDef.triggers.complete.dialogueId === dialogueId) {
-          this.completeQuest(questDef.questId);
+          effects.push(...this.completeQuest(questDef.questId));
         }
       }
-      return { success: true };
+      return effects.length > 0
+        ? { success: true, effects }
+        : { success: true };
     }
 
     if (command.type === "AcknowledgeZoneEntryDialogue") {
@@ -699,6 +721,31 @@ export class GameplayEngine {
     this.addLog("Rested and recovered 15 energy.");
   }
 
+  private studyPlayer(): ExecuteResult {
+    const stats = this.getPlayerStats();
+
+    if (stats.energy < STUDY_ENERGY_COST) {
+      this.addLog("You are too exhausted to study. Rest [R] to recover energy.");
+      return { success: false };
+    }
+
+    stats.energy = Math.max(0, stats.energy - STUDY_ENERGY_COST);
+    stats.academicProgress = Math.min(
+      100,
+      stats.academicProgress + STUDY_ACADEMIC_PROGRESS_GAIN,
+    );
+    stats.attributes.intelligence =
+      (stats.attributes.intelligence ?? 0) + STUDY_INTELLIGENCE_GAIN;
+
+    this.tickCounter.advance();
+    this.advanceWorldTime(WORLD_TIME_ACTION_COST.study);
+    this.addLog(
+      `Studied old notes. Intelligence +${STUDY_INTELLIGENCE_GAIN}, academic progress +${STUDY_ACADEMIC_PROGRESS_GAIN}%.`,
+    );
+
+    return { success: true };
+  }
+
   private advanceWorldTime(minutes: number): void {
     this.worldTimeMinutes += minutes;
     NpcScheduleSystem.apply(
@@ -980,19 +1027,21 @@ export class GameplayEngine {
     this.checkCoordinateObjectives();
   }
 
-  private completeQuest(questId: string): void {
+  private completeQuest(questId: string): EngineEffect[] {
     const quests = this.getPlayerQuests();
     if (!quests.active.includes(questId)) {
-      return;
+      return [];
     }
     if (!this.isQuestReadyToComplete(questId)) {
-      return;
+      return [];
     }
 
     const questDef = getQuestDef(questId)!;
+    const effects: EngineEffect[] = [];
 
     // 1. Consume items
     const inventory = this.getPlayerInventory();
+    const consumedItems = new Map<string, number>();
     for (const obj of questDef.objectives) {
       if (obj.type === "fetch_item") {
         let remaining = obj.quantity;
@@ -1002,10 +1051,23 @@ export class GameplayEngine {
             const consumed = Math.min(stack.quantity, remaining);
             stack.quantity -= consumed;
             remaining -= consumed;
+            consumedItems.set(
+              obj.itemId,
+              (consumedItems.get(obj.itemId) ?? 0) + consumed,
+            );
           }
         }
         inventory.items = inventory.items.filter((stack) => stack.quantity > 0);
       }
+    }
+
+    for (const [itemId, quantity] of consumedItems) {
+      effects.push({
+        type: "ItemLost",
+        itemId,
+        quantity,
+        source: "quest_turn_in",
+      });
     }
 
     const completedObjectiveKeys = new Set(
@@ -1040,6 +1102,12 @@ export class GameplayEngine {
         rewardLogParts.push(
           `${itemDef.name}${rewardItem.quantity > 1 ? ` x${rewardItem.quantity}` : ""}`,
         );
+        effects.push({
+          type: "ItemCollected",
+          itemId: rewardItem.itemId,
+          quantity: rewardItem.quantity,
+          source: "reward",
+        });
       }
     }
 
@@ -1051,6 +1119,8 @@ export class GameplayEngine {
     if (rewardLogParts.length > 0) {
       this.addLog(`Quest Rewards: ${rewardLogParts.join(", ")}.`);
     }
+
+    return effects;
   }
 
   private restoreQuestIds(

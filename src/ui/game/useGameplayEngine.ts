@@ -124,6 +124,12 @@ function playEffect(
     }
   }
 
+  if (effect.type === "ItemLost") {
+    if (audioSettings.soundEnabled) {
+      playMenuConfirmSound();
+    }
+  }
+
   if (effect.type === "ItemUsed") {
     if (audioSettings.soundEnabled) {
       playMenuConfirmSound();

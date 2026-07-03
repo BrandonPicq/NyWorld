@@ -66,6 +66,7 @@ export const WORLD_TIME_ACTION_COST = {
   dialogue: 10,
   movement: 10,
   rest: 60,
+  study: 90,
   useItem: 5,
 } as const;
 

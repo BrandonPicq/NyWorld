@@ -32,17 +32,16 @@ import { InventoryModal } from "../game/InventoryModal";
 import { QuestsModal } from "../game/QuestsModal";
 import { PauseModal } from "../game/PauseModal";
 import { SaveSlotsModal } from "../save/SaveSlotsModal";
-import { GameToast, type GameToastTone } from "../toast/GameToast";
+import {
+  GameToastStack,
+  type GameToastEntry,
+  type GameToastTone,
+} from "../toast/GameToast";
 import { readAllSaves, writeSlot } from "../save/gameSaveStorage";
 import {
   createInteractionCommand,
   getInteractionTargets,
 } from "../game/interactionTargets";
-
-type GameToastState = {
-  message: string;
-  tone: GameToastTone;
-};
 
 type GameScreenProps = {
   audioSettings: AudioSettings;
@@ -59,6 +58,8 @@ const zoneRegistry: Record<string, ZoneData> = {
   test_zone: testZoneData as ZoneData,
   test_zone_2: testZone2Data as ZoneData,
 };
+
+const MAX_RETAINED_GAME_TOASTS = 6;
 
 export function GameScreen({
   audioSettings,
@@ -77,19 +78,35 @@ export function GameScreen({
   const [gameNotice, setGameNotice] = useState<EngineNotice | null>(null);
   const [isPauseMenuOpen, setIsPauseMenuOpen] = useState(false);
   const [isSaveSlotsOpen, setIsSaveSlotsOpen] = useState(false);
-  const [gameToast, setGameToast] = useState<GameToastState | null>(null);
+  const [gameToasts, setGameToasts] = useState<GameToastEntry[]>([]);
   const logRef = useRef<HTMLDivElement>(null);
+  const nextToastIdRef = useRef(1);
 
-  const handleEngineEffect = useCallback((effect: EngineEffect) => {
-    if (effect.type !== "ItemCollected") {
-      return;
-    }
+  const pushGameToast = useCallback((toast: Omit<GameToastEntry, "id">) => {
+    const nextToast = {
+      ...toast,
+      id: nextToastIdRef.current,
+    };
+    nextToastIdRef.current += 1;
 
-    setGameToast({
-      message: getCollectedItemToastMessage(effect),
-      tone: getCollectedItemToastTone(effect.itemId),
-    });
+    setGameToasts((current) =>
+      [nextToast, ...current].slice(0, MAX_RETAINED_GAME_TOASTS),
+    );
   }, []);
+
+  const dismissGameToast = useCallback((id: number) => {
+    setGameToasts((current) => current.filter((toast) => toast.id !== id));
+  }, []);
+
+  const handleEngineEffect = useCallback(
+    (effect: EngineEffect) => {
+      const toast = getEffectToast(effect);
+      if (toast) {
+        pushGameToast(toast);
+      }
+    },
+    [pushGameToast],
+  );
 
   const { createSaveData, executeCommand, snapshot } = useGameplayEngine({
     audioSettings,
@@ -142,7 +159,7 @@ export function GameScreen({
 
     const didSave = writeSlot(slotIndex, saveData);
     if (!didSave) {
-      setGameToast({
+      pushGameToast({
         message: `Could not save to slot ${slotIndex + 1}.`,
         tone: "default",
       });
@@ -150,7 +167,7 @@ export function GameScreen({
     }
 
     setIsSaveSlotsOpen(false);
-    setGameToast({
+    pushGameToast({
       message: `Game saved to slot ${slotIndex + 1}.`,
       tone: "default",
     });
@@ -246,6 +263,7 @@ export function GameScreen({
           onOpenSheet={() => setIsCharacterSheetOpen(true)}
           onOpenJournal={() => setIsQuestsOpen(true)}
           onRest={() => handleExecuteCommand({ type: "Rest" })}
+          onStudy={() => handleExecuteCommand({ type: "Study" })}
           stats={snapshot.stats}
           worldTime={snapshot.worldTime}
           keyboardLayout={keyboardLayout}
@@ -409,16 +427,40 @@ export function GameScreen({
           />
         )}
 
-        {gameToast !== null && (
-          <GameToast
-            message={gameToast.message}
-            onDismiss={() => setGameToast(null)}
-            tone={gameToast.tone}
-          />
-        )}
+        <GameToastStack
+          onDismiss={dismissGameToast}
+          toasts={gameToasts}
+        />
       </div>
     </main>
   );
+}
+
+function getEffectToast(
+  effect: EngineEffect,
+): Omit<GameToastEntry, "id"> | null {
+  if (effect.type === "ItemCollected") {
+    return {
+      message: getCollectedItemToastMessage(effect),
+      tone: getItemToastTone(effect.itemId),
+    };
+  }
+
+  if (effect.type === "ItemLost") {
+    return {
+      message: getLostItemToastMessage(effect),
+      tone: getItemToastTone(effect.itemId),
+    };
+  }
+
+  if (effect.type === "ItemUsed") {
+    return {
+      message: getUsedItemToastMessage(effect),
+      tone: getItemToastTone(effect.itemId),
+    };
+  }
+
+  return null;
 }
 
 function getCollectedItemToastMessage(
@@ -426,11 +468,30 @@ function getCollectedItemToastMessage(
 ): string {
   const itemDef = getItemDef(effect.itemId);
   const quantitySuffix = effect.quantity > 1 ? ` x${effect.quantity}` : "";
+  const verb = effect.source === "reward" ? "Received" : "Picked up";
 
-  return `Picked up ${itemDef.name}${quantitySuffix}.`;
+  return `${verb} ${itemDef.name}${quantitySuffix}.`;
 }
 
-function getCollectedItemToastTone(itemId: string): GameToastTone {
+function getLostItemToastMessage(
+  effect: Extract<EngineEffect, { type: "ItemLost" }>,
+): string {
+  const itemDef = getItemDef(effect.itemId);
+  const quantitySuffix = effect.quantity > 1 ? ` x${effect.quantity}` : "";
+  const verb = effect.source === "quest_turn_in" ? "Gave" : "Lost";
+
+  return `${verb} ${itemDef.name}${quantitySuffix}.`;
+}
+
+function getUsedItemToastMessage(
+  effect: Extract<EngineEffect, { type: "ItemUsed" }>,
+): string {
+  const itemDef = getItemDef(effect.itemId);
+
+  return `Used ${itemDef.name}. Recovered ${effect.energyRestored} energy.`;
+}
+
+function getItemToastTone(itemId: string): GameToastTone {
   return isImportantItemCategory(getItemDef(itemId).category)
     ? "important"
     : "default";

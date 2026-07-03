@@ -102,7 +102,7 @@ describe("Quest System", () => {
     expect(interact3.dialogueId).toBe("old_scholar.quest_active_ready");
 
     // Complete the dialogue to trigger completion
-    engine.execute({
+    const completionResult = engine.execute({
       type: "CompleteDialogue",
     });
 
@@ -129,6 +129,20 @@ describe("Quest System", () => {
       (item) => item.itemId === "travel_ration",
     );
     expect(rations?.quantity).toBe(5); // 3 (start) + 2 (reward)
+    expect(completionResult.effects).toEqual([
+      {
+        type: "ItemLost",
+        itemId: "lost_notebook",
+        quantity: 1,
+        source: "quest_turn_in",
+      },
+      {
+        type: "ItemCollected",
+        itemId: "travel_ration",
+        quantity: 2,
+        source: "reward",
+      },
+    ]);
     expect(snapshot.log.map((entry) => entry.message)).toContain(
       "Quest Rewards: 1s 50b, Travel Ration x2.",
     );
