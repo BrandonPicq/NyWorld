@@ -10,6 +10,7 @@ Keep entries short and practical. When a slice is committed, its changelog secti
 - Broaden QTE sequence length limits to clamp between 3 and 10 inputs.
 - Reduce slime agility from 8 to 4, decreasing its QTE speed.
 - Adjust opponent simulated keypress delay formula to base 1000ms and multiplier 40ms, raising minimum delay to 400ms.
+- Calculate QTE sequence length and time limit relative to the player's speed advantage in both attack and defense.
 
 ## 2026-07-03 - [UPDATE]: Display enemy Spirit and implement stats-based fleeing
 

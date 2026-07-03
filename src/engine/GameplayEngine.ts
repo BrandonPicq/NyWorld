@@ -1395,6 +1395,7 @@ export class GameplayEngine {
       actor: playerStats,
       opponent: opponentStats,
       kind: actionKind,
+      isPlayerActor: true,
     });
 
     this.combatState.qteChallenge = challenge;
@@ -1525,6 +1526,7 @@ export class GameplayEngine {
       actor: opponentStats,
       opponent: playerStats,
       kind: "physical",
+      isPlayerActor: false,
     });
     this.combatState.qteChallenge = challenge;
     this.combatState.qteSequence = generateQteSequence(challenge.sequenceLength);

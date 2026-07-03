@@ -14,6 +14,7 @@ export interface QteChallengeInput {
   actor: Stats;
   opponent: Stats;
   kind: CombatActionKind;
+  isPlayerActor?: boolean;
   baseSequenceLength?: number;
   baseTimeLimitMs?: number;
 }
@@ -38,12 +39,15 @@ export function createQteChallenge({
   actor,
   opponent,
   kind,
+  isPlayerActor = true,
   baseSequenceLength = 5,
   baseTimeLimitMs = 5000,
 }: QteChallengeInput): QteChallenge {
   const actorSpeed = getQteSpeed(actor, kind);
   const opponentSpeed = getQteSpeed(opponent, kind);
-  const speedAdvantage = actorSpeed - opponentSpeed;
+  const playerSpeed = isPlayerActor ? actorSpeed : opponentSpeed;
+  const enemySpeed = isPlayerActor ? opponentSpeed : actorSpeed;
+  const speedAdvantage = playerSpeed - enemySpeed;
   const sequenceDelta = Math.trunc(speedAdvantage / 5);
 
   return {
