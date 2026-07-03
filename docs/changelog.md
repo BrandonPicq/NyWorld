@@ -4,6 +4,22 @@ This file tracks meaningful project changes by commit-oriented slices.
 
 Keep entries short and practical. When a slice is committed, its changelog section should stay aligned with the commit title so the project history remains easy to read after restores or bisects.
 
+## 2026-07-03 - [UPDATE]: Redesign Quest Journal with list buttons and details popup
+
+- Display active and completed quests as a list of interactive buttons in the journal.
+- Implement an overlay pop-up for showing detailed quest description, objectives, and rewards.
+- Close the details view independently of the main journal using the Escape key.
+- Style quest list items with interactive hover and focus outline cues in dark-neon theme.
+
+## 2026-07-02 - [FIX]: Harden quest objective persistence and save migration
+
+- Migrate 0.4 save data to the current save shape when reading save slots.
+- Qualify sticky completed objective records by quest id to avoid cross-quest collisions.
+- Preserve unambiguous legacy objective progress during save restoration.
+- Validate coordinate quest objectives against existing walkable zone tiles.
+- Point the advanced quest coordinate objective at authored zone content.
+- Add regression tests for save migration and objective progress persistence.
+
 ## 2026-07-02 - [ADD]: Support coordinate and stat threshold quest objectives
 
 - Define VisitCoordinateObjective and StatThresholdObjective schemas.
