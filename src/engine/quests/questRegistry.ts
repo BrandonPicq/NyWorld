@@ -303,6 +303,18 @@ function assertObjectives(value: unknown, questId: string): void {
       if (typeof obj.threshold !== "number" || !Number.isInteger(obj.threshold) || obj.threshold <= 0) {
         throw new Error(`Quest "${questId}" objective "${obj.id}" has invalid threshold.`);
       }
+    } else if (obj.type === "defeat_npc") {
+      if (typeof obj.npcId !== "string" || !hasNpcDef(obj.npcId)) {
+        throw new Error(
+          `Quest "${questId}" objective "${obj.id}" references unknown npcId "${obj.npcId}".`,
+        );
+      }
+
+      if (typeof obj.quantity !== "number" || !Number.isInteger(obj.quantity) || obj.quantity !== 1) {
+        throw new Error(
+          `Quest "${questId}" objective "${obj.id}" has invalid quantity. Defeat objectives currently support quantity 1.`,
+        );
+      }
     } else {
       throw new Error(`Quest "${questId}" objective "${obj.id}" has unsupported type "${obj.type}".`);
     }

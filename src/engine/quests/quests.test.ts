@@ -27,6 +27,28 @@ const zoneData = {
   ],
 };
 
+const combatQuestZoneData = {
+  version: "0.1",
+  zoneId: "combat_quest_zone",
+  name: "Combat Quest Zone",
+  width: 4,
+  height: 4,
+  playerStart: { x: 1, y: 1 },
+  tiles: [
+    [1, 1, 1, 1],
+    [1, 0, 0, 1],
+    [1, 0, 0, 1],
+    [1, 1, 1, 1],
+  ],
+  npcs: [
+    {
+      npcId: "slime",
+      x: 2,
+      y: 1,
+    },
+  ],
+};
+
 function createQuestEngine() {
   return new GameplayEngine(loadZone(zoneData));
 }
@@ -330,6 +352,63 @@ describe("Quest System", () => {
     ]);
   });
 
+  it("tracks defeat_npc objectives when a quest target is defeated", () => {
+    const engine = new GameplayEngine(loadZone(combatQuestZoneData));
+    const saveData = engine.createSaveData();
+    saveData.activeQuests = ["slay_the_slime"];
+
+    const restored = GameplayEngine.fromSaveData(saveData, {
+      resolveZone: () => loadZone(combatQuestZoneData),
+    });
+
+    restored.execute({ type: "MoveEast" });
+    restored.execute({ type: "SelectCombatAction", actionKind: "physical" });
+    restored.execute({
+      type: "SubmitCombatQte",
+      completed: true,
+      inputAdvantage: 6,
+      mistakes: 0,
+    });
+    restored.execute({ type: "StartOpponentTurn" });
+    restored.execute({
+      type: "SubmitCombatQte",
+      completed: true,
+      inputAdvantage: 5,
+      mistakes: 0,
+    });
+    restored.execute({ type: "SelectCombatAction", actionKind: "physical" });
+    restored.execute({
+      type: "SubmitCombatQte",
+      completed: true,
+      inputAdvantage: 6,
+      mistakes: 0,
+    });
+
+    const snapshot = restored.getSnapshot();
+    const activeQuest = snapshot.activeQuests.find(
+      (quest) => quest.questId === "slay_the_slime",
+    )!;
+    const objective = activeQuest.objectives.find(
+      (obj) => obj.id === "defeat_slime",
+    )!;
+
+    expect(snapshot.combatState?.phase).toBe("victory");
+    expect(activeQuest.state).toBe("readyToComplete");
+    expect(objective).toMatchObject({
+      type: "defeat_npc",
+      npcId: "slime",
+      currentQuantity: 1,
+      requiredQuantity: 1,
+    });
+    expect(restored.createSaveData().completedObjectives).toEqual([
+      "slay_the_slime:defeat_slime",
+    ]);
+    expect(snapshot.inventory.items.some((item) => item.itemId === "slime_remains")).toBe(false);
+    expect(snapshot.log.map((entry) => entry.message)).toContain(
+      "Completed objective: Defeat the slime",
+    );
+  });
+
   it("loads defeat_the_kobold quest successfully", () => {
     expect(hasQuestDef("defeat_the_kobold")).toBe(true);
     const def = getQuestDef("defeat_the_kobold");
@@ -338,10 +417,11 @@ describe("Quest System", () => {
     expect(def?.targetNpcId).toBe("old_wizard");
     const objective = def?.objectives[0];
     expect(objective).toBeDefined();
-    if (objective?.type === "fetch_item") {
-      expect(objective.itemId).toBe("kobold_remains");
+    if (objective?.type === "defeat_npc") {
+      expect(objective.npcId).toBe("kobold");
+      expect(objective.quantity).toBe(1);
     } else {
-      throw new Error("Objective is not a fetch_item type");
+      throw new Error("Objective is not a defeat_npc type");
     }
   });
 });

@@ -53,13 +53,13 @@ import {
   getStatValue,
   refreshDerivedStats,
 } from "./stats/characterStats";
-import { createNpcStats } from "./stats/npcStats";
 import {
-  createQteChallenge,
-  resolveQteContest,
-  type CombatActionKind,
-  type QteChallenge,
-} from "./combat/qteCombat";
+  CombatSystem,
+  isCombatNpc,
+  type CombatState,
+} from "./combat/CombatSystem";
+
+export type { CombatState } from "./combat/CombatSystem";
 
 export type EngineEffect =
   | {
@@ -109,17 +109,6 @@ export interface RenderEntity {
   name?: string;
 }
 
-export interface CombatState {
-  opponentId: EntityId;
-  opponentNpcId: string;
-  opponentName: string;
-  opponentStats: Stats;
-  phase: "action_selection" | "player_qte" | "opponent_turn_transition" | "enemy_qte" | "victory" | "defeat";
-  actionKind?: CombatActionKind;
-  qteChallenge?: QteChallenge;
-  qteSequence?: string[];
-}
-
 /**
  * Immutable UI-facing view of the current game state.
  *
@@ -153,6 +142,7 @@ export interface GameSnapshot {
       description: string;
       type: string;
       itemId?: string;
+      npcId?: string;
       requiredQuantity: number;
       currentQuantity: number;
     }>;
@@ -175,13 +165,6 @@ const INTERACTION_DIRECTIONS: Direction[] = ["north", "east", "south", "west"];
 const CONSUMABLE_ENERGY: Record<string, number> = {
   travel_ration: 10,
   healing_herb: 20,
-};
-
-const COMBAT_NPC_IDS = new Set(["slime", "kobold"]);
-
-const COMBAT_LOOT_BY_NPC_ID: Record<string, string> = {
-  slime: "slime_remains",
-  kobold: "kobold_remains",
 };
 
 const STUDY_ENERGY_COST = 10;
@@ -215,11 +198,19 @@ export class GameplayEngine {
   private pendingZoneEntryDialogue: DialogueNode[] = [];
   private seenZoneEntryEventIds = new Set<string>();
   private notices: EngineNotice[] = [];
-  private combatState?: CombatState;
+  private readonly combat: CombatSystem;
 
   constructor(map: GameMap, options: GameplayEngineOptions = {}) {
     this.map = map;
     this.resolveZone = options.resolveZone;
+    this.combat = new CombatSystem({
+      world: this.world,
+      getPlayerStats: () => this.getPlayerStats(),
+      getPlayerInventory: () => this.getPlayerInventory(),
+      addLog: (message) => this.addLog(message),
+      recordNpcDefeat: (npcId) => this.recordNpcDefeat(npcId),
+      recoverPlayerFromDefeat: () => this.recoverPlayerFromCombatDefeat(),
+    });
 
     const playerId = this.world.createEntity();
 
@@ -295,20 +286,8 @@ export class GameplayEngine {
    * nearby or direction-limited tiles for contextual actions without moving.
    */
   execute(command: GameCommand): ExecuteResult {
-    if (this.combatState) {
-      if (command.type === "SelectCombatAction") {
-        return this.handleSelectCombatAction(command.actionKind);
-      }
-      if (command.type === "SubmitCombatQte") {
-        return this.handleSubmitCombatQte(command.completed, command.inputAdvantage, command.mistakes);
-      }
-      if (command.type === "StartOpponentTurn") {
-        return this.handleStartOpponentTurn();
-      }
-      if (command.type === "ConcludeCombat") {
-        return this.handleConcludeCombat();
-      }
-      return { success: false };
+    if (this.combat.hasActiveCombat()) {
+      return this.combat.execute(command);
     }
 
     if (command.type === "Rest") {
@@ -381,7 +360,7 @@ export class GameplayEngine {
     const blockingNpc = this.getNpcAt(target.x, target.y);
     if (blockingNpc) {
       if (isCombatNpc(blockingNpc.npcId)) {
-        return this.startCombat(blockingNpc);
+        return this.combat.startCombat(blockingNpc);
       }
       return this.talkToNpc(blockingNpc, false);
     }
@@ -447,7 +426,7 @@ export class GameplayEngine {
       const targetNpc = adjacentNpcs.find((n) => n.npcId === targetNpcId);
       if (targetNpc) {
         if (isCombatNpc(targetNpc.npcId)) {
-          return this.startCombat(targetNpc);
+          return this.combat.startCombat(targetNpc);
         }
         return this.talkToNpc(targetNpc, true);
       }
@@ -458,7 +437,7 @@ export class GameplayEngine {
 
     const firstNpc = adjacentNpcs[0];
     if (isCombatNpc(firstNpc.npcId)) {
-      return this.startCombat(firstNpc);
+      return this.combat.startCombat(firstNpc);
     }
     return this.talkToNpc(firstNpc, true);
   }
@@ -886,11 +865,16 @@ export class GameplayEngine {
         } else if (obj.type === "stat_threshold") {
           currentQty = getStatValue(stats, obj.statName) ?? 0;
           requiredQty = obj.threshold;
+        } else if (obj.type === "defeat_npc") {
+          const defeated = hasCompletedQuestObjective(quests, questId, obj.id);
+          currentQty = defeated ? obj.quantity : 0;
+          requiredQty = obj.quantity;
         }
         return {
           id: obj.id,
           description: obj.description,
           type: obj.type,
+          npcId: obj.type === "defeat_npc" ? obj.npcId : undefined,
           requiredQuantity: requiredQty,
           currentQuantity: currentQty,
         };
@@ -934,18 +918,7 @@ export class GameplayEngine {
       })),
       activeQuests: activeQuestsSnapshot,
       completedQuests: [...quests.completed],
-      combatState: this.combatState
-        ? {
-            ...this.combatState,
-            opponentStats: cloneStats(this.combatState.opponentStats),
-            qteSequence: this.combatState.qteSequence
-              ? [...this.combatState.qteSequence]
-              : undefined,
-            qteChallenge: this.combatState.qteChallenge
-              ? { ...this.combatState.qteChallenge }
-              : undefined,
-          }
-        : undefined,
+      combatState: this.combat.getSnapshot(),
     };
   }
 
@@ -1011,6 +984,10 @@ export class GameplayEngine {
       } else if (obj.type === "stat_threshold") {
         const currentVal = getStatValue(stats, obj.statName) ?? 0;
         if (currentVal < obj.threshold) {
+          return false;
+        }
+      } else if (obj.type === "defeat_npc") {
+        if (!hasCompletedQuestObjective(quests, questId, obj.id)) {
           return false;
         }
       }
@@ -1236,6 +1213,27 @@ export class GameplayEngine {
     }
   }
 
+  private recordNpcDefeat(npcId: string): void {
+    const quests = this.getPlayerQuests();
+
+    for (const questId of quests.active) {
+      const questDef = getQuestDef(questId);
+      if (!questDef) continue;
+
+      for (const obj of questDef.objectives) {
+        if (obj.type !== "defeat_npc" || obj.npcId !== npcId) {
+          continue;
+        }
+
+        const objectiveKey = getQuestObjectiveKey(questId, obj.id);
+        if (!quests.completedObjectives.includes(objectiveKey)) {
+          quests.completedObjectives.push(objectiveKey);
+          this.addLog(`Completed objective: ${obj.description}`);
+        }
+      }
+    }
+  }
+
   private getTargetPosition(
     pos: Position,
     direction: Direction,
@@ -1363,295 +1361,27 @@ export class GameplayEngine {
     }
   }
 
-  private startCombat(npc: Npc): ExecuteResult {
-    const opponentEntities = this.world.entitiesWith("Npc");
-    let opponentEntityId: EntityId | undefined;
-    for (const id of opponentEntities) {
-      const component = this.world.getComponent<Npc>(id, "Npc")!;
-      if (component.npcId === npc.npcId) {
-        opponentEntityId = id;
-        break;
-      }
-    }
-
-    if (!opponentEntityId) {
-      return { success: false };
-    }
-
-    const opponentStats = createNpcStats(npc.npcId);
-
-    this.combatState = {
-      opponentId: opponentEntityId,
-      opponentNpcId: npc.npcId,
-      opponentName: npc.name,
-      opponentStats,
-      phase: "action_selection",
-    };
-
-    this.addLog(`Combat started with ${npc.name}!`);
-
-    return {
-      success: true,
-    };
-  }
-
-  private handleSelectCombatAction(
-    actionKind: "physical" | "magical" | "flee",
-  ): ExecuteResult {
-    if (!this.combatState || this.combatState.phase !== "action_selection") {
-      return { success: false };
-    }
+  private recoverPlayerFromCombatDefeat(): void {
+    const pos = this.getPlayerPosition();
+    pos.x = 5;
+    pos.y = 4;
 
     const playerStats = this.getPlayerStats();
-    const opponentStats = this.combatState.opponentStats;
+    playerStats.resources.hp = Math.floor(playerStats.resources.maxHp / 2);
+    playerStats.resources.energy = Math.floor(playerStats.resources.maxEnergy / 2);
+    refreshDerivedStats(playerStats);
 
-    if (actionKind === "flee") {
-      const fleeChance = Math.max(
-        0.1,
-        Math.min(
-          0.9,
-          0.5 + (playerStats.attributes.agility - opponentStats.attributes.agility) * 0.05,
-        ),
-      );
-      const success = Math.random() < fleeChance;
-      if (success) {
-        this.addLog("You successfully fled from the combat!");
-        this.combatState = undefined;
-        return { success: true };
-      } else {
-        this.addLog("Flee attempt failed! The enemy attacks!");
-        this.combatState.phase = "opponent_turn_transition";
-        this.combatState.qteChallenge = undefined;
-        this.combatState.qteSequence = undefined;
-        return { success: true };
+    if (this.map.zoneId !== "test_zone" && this.resolveZone) {
+      const firstMap = this.resolveZone("test_zone");
+      if (firstMap) {
+        this.map = firstMap;
+        this.spawnNpcs();
+        this.spawnItems();
       }
     }
 
-    this.combatState.actionKind = actionKind;
-    this.combatState.phase = "player_qte";
-
-    const challenge = createQteChallenge({
-      actor: playerStats,
-      opponent: opponentStats,
-      kind: actionKind,
-      isPlayerActor: true,
-    });
-
-    this.combatState.qteChallenge = challenge;
-    this.combatState.qteSequence = generateQteSequence(challenge.sequenceLength);
-
-    return { success: true };
+    this.addLog("Teleported back to safety. HP and Energy partially restored.");
   }
-
-  private handleSubmitCombatQte(
-    completed: boolean,
-    inputAdvantage: number,
-    mistakes: number,
-  ): ExecuteResult {
-    if (!this.combatState) {
-      return { success: false };
-    }
-
-    const playerStats = this.getPlayerStats();
-    const opponentStats = this.combatState.opponentStats;
-    const actionKind = this.combatState.actionKind ?? "physical";
-
-    if (this.combatState.phase === "player_qte") {
-      let finalDamage = 0;
-      let outcomeLabel = "";
-
-      if (mistakes >= 2) {
-        finalDamage = 0;
-        outcomeLabel = "MISS (input failure)";
-        this.addLog(`You used ${actionKind} attack! Outcome: ${outcomeLabel} (0 damage to ${this.combatState.opponentName}).`);
-      } else {
-        const result = resolveQteContest({
-          attacker: playerStats,
-          defender: opponentStats,
-          kind: actionKind,
-          attackerCompleted: completed,
-          inputAdvantage,
-        });
-
-        finalDamage = result.damage;
-        outcomeLabel = result.outcome.toUpperCase();
-
-        if (mistakes === 1) {
-          finalDamage = Math.floor(finalDamage * 0.8);
-          this.addLog(`You used ${actionKind} attack (1 mistake)! Outcome: ${outcomeLabel} (${finalDamage} damage to ${this.combatState.opponentName}).`);
-        } else {
-          this.addLog(`You used ${actionKind} attack! Outcome: ${outcomeLabel} (${finalDamage} damage to ${this.combatState.opponentName}).`);
-        }
-      }
-
-      opponentStats.resources.hp = Math.max(0, opponentStats.resources.hp - finalDamage);
-
-      if (opponentStats.resources.hp <= 0) {
-        this.combatState.phase = "victory";
-        this.addLog(`You defeated the ${this.combatState.opponentName}!`);
-      } else {
-        this.combatState.phase = "opponent_turn_transition";
-        this.combatState.qteChallenge = undefined;
-        this.combatState.qteSequence = undefined;
-      }
-
-      return { success: true };
-    }
-
-    if (this.combatState.phase === "enemy_qte") {
-      let finalDamage = 0;
-      let outcomeLabel = "";
-
-      if (mistakes >= 2) {
-        // Force critical hit (inputAdvantage 5) + 20% penalty
-        const result = resolveQteContest({
-          attacker: opponentStats,
-          defender: playerStats,
-          kind: "physical",
-          attackerCompleted: true,
-          inputAdvantage: 5,
-        });
-        finalDamage = Math.floor(result.damage * 1.2);
-        outcomeLabel = "CRITICAL (input failure)";
-        this.addLog(`${this.combatState.opponentName} landed a crushing blow due to your input failure! Outcome: ${outcomeLabel} (${finalDamage} damage to you).`);
-      } else {
-        const result = resolveQteContest({
-          attacker: opponentStats,
-          defender: playerStats,
-          kind: "physical",
-          attackerCompleted: !completed,
-          inputAdvantage: -inputAdvantage,
-        });
-
-        finalDamage = result.damage;
-        outcomeLabel = result.outcome.toUpperCase();
-
-        if (mistakes === 1) {
-          finalDamage = Math.floor(finalDamage * 1.2);
-          this.addLog(`${this.combatState.opponentName} attacks (1 mistake)! Outcome: ${outcomeLabel} (${finalDamage} damage to you).`);
-        } else {
-          this.addLog(`${this.combatState.opponentName} attacks! Outcome: ${outcomeLabel} (${finalDamage} damage to you).`);
-        }
-      }
-
-      playerStats.resources.hp = Math.max(0, playerStats.resources.hp - finalDamage);
-
-      if (playerStats.resources.hp <= 0) {
-        this.combatState.phase = "defeat";
-        this.addLog(`You were defeated by the ${this.combatState.opponentName}!`);
-      } else {
-        this.combatState.phase = "action_selection";
-        this.combatState.actionKind = undefined;
-        this.combatState.qteChallenge = undefined;
-        this.combatState.qteSequence = undefined;
-      }
-
-      return { success: true };
-    }
-
-    return { success: false };
-  }
-
-  private handleStartOpponentTurn(): ExecuteResult {
-    if (!this.combatState || this.combatState.phase !== "opponent_turn_transition") {
-      return { success: false };
-    }
-
-    const playerStats = this.getPlayerStats();
-    const opponentStats = this.combatState.opponentStats;
-
-    this.combatState.phase = "enemy_qte";
-    const challenge = createQteChallenge({
-      actor: opponentStats,
-      opponent: playerStats,
-      kind: "physical",
-      isPlayerActor: false,
-    });
-    this.combatState.qteChallenge = challenge;
-    this.combatState.qteSequence = generateQteSequence(challenge.sequenceLength);
-
-    return { success: true };
-  }
-
-  private handleConcludeCombat(): ExecuteResult {
-    if (!this.combatState) {
-      return { success: false };
-    }
-
-    const effects: EngineEffect[] = [];
-
-    if (this.combatState.phase === "victory") {
-      this.world.destroyEntity(this.combatState.opponentId);
-
-      const lootItemId = COMBAT_LOOT_BY_NPC_ID[this.combatState.opponentNpcId];
-      if (lootItemId) {
-        effects.push(this.collectCombatLoot(lootItemId));
-      }
-
-      this.combatState = undefined;
-      return { success: true, effects };
-    }
-
-    if (this.combatState.phase === "defeat") {
-      const pos = this.getPlayerPosition();
-      pos.x = 5;
-      pos.y = 4;
-
-      const playerStats = this.getPlayerStats();
-      playerStats.resources.hp = Math.floor(playerStats.resources.maxHp / 2);
-      playerStats.resources.energy = Math.floor(playerStats.resources.maxEnergy / 2);
-      refreshDerivedStats(playerStats);
-
-      if (this.map.zoneId !== "test_zone" && this.resolveZone) {
-        const firstMap = this.resolveZone("test_zone");
-        if (firstMap) {
-          this.map = firstMap;
-          this.spawnNpcs();
-          this.spawnItems();
-        }
-      }
-
-      this.addLog("Teleported back to safety. HP and Energy partially restored.");
-      this.combatState = undefined;
-      return { success: true };
-    }
-
-    return { success: false };
-  }
-
-  private collectCombatLoot(itemId: string): EngineEffect {
-    const inventory = this.getPlayerInventory();
-    const existing = inventory.items.find((item) => item.itemId === itemId);
-    if (existing) {
-      existing.quantity += 1;
-    } else {
-      inventory.items.push({ itemId, quantity: 1 });
-    }
-
-    const itemDef = getItemDef(itemId);
-    this.addLog(`Collected ${itemDef.name}.`);
-
-    return {
-      type: "ItemCollected",
-      itemId,
-      quantity: 1,
-      source: "reward",
-    };
-  }
-}
-
-function generateQteSequence(length: number): string[] {
-  const directions = ["up", "down", "left", "right"];
-  const sequence: string[] = [];
-  for (let i = 0; i < length; i++) {
-    const index = Math.floor(Math.random() * directions.length);
-    sequence.push(directions[index]);
-  }
-  return sequence;
-}
-
-function isCombatNpc(npcId: string): boolean {
-  return COMBAT_NPC_IDS.has(npcId);
 }
 
 /**

@@ -36,6 +36,26 @@ export type {
   QteContestOutcome,
   QteContestResult,
 } from "./combat/qteCombat";
+export { CombatSystem, isCombatNpc } from "./combat/CombatSystem";
+export type {
+  CombatEffect,
+  CombatExecuteResult,
+  CombatPhase,
+  CombatState,
+  CombatSystemContext,
+} from "./combat/CombatSystem";
+export {
+  getAllEnemyDefs,
+  getEnemyDef,
+  hasEnemyDef,
+  isCombatEnemy,
+} from "./enemies/enemyRegistry";
+export type {
+  EnemyDef,
+  EnemyDefMap,
+  EnemyLootEntry,
+  EnemyStatsData,
+} from "./enemies/EnemyDef";
 export { World } from "./ecs";
 export type { Component, EntityId } from "./ecs";
 export { GameMap } from "./GameMap";

@@ -16,11 +16,11 @@
   },
   "objectives": [
     {
-      "id": "collect_slime_remains",
-      "type": "fetch_item",
-      "itemId": "slime_remains",
+      "id": "defeat_slime",
+      "type": "defeat_npc",
+      "npcId": "slime",
       "quantity": 1,
-      "description": "Slay the slime and collect its remains"
+      "description": "Defeat the slime"
     }
   ],
   "rewards": {

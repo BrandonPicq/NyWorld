@@ -23,10 +23,19 @@ export interface StatThresholdObjective {
   description: string;
 }
 
+export interface DefeatNpcObjective {
+  readonly type: "defeat_npc";
+  id: string;
+  npcId: string;
+  quantity: number;
+  description: string;
+}
+
 export type QuestObjective =
   | FetchItemObjective
   | VisitCoordinateObjective
-  | StatThresholdObjective;
+  | StatThresholdObjective
+  | DefeatNpcObjective;
 
 export interface QuestRewards {
   currency?: number;

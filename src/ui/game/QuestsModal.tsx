@@ -98,6 +98,8 @@ export function QuestsModal({ audioSettings, isOpen, snapshot, onClose }: Quests
           let required = 1;
           if (obj.type === "fetch_item") {
             required = obj.quantity;
+          } else if (obj.type === "defeat_npc") {
+            required = obj.quantity;
           } else if (obj.type === "stat_threshold") {
             required = obj.threshold;
           }

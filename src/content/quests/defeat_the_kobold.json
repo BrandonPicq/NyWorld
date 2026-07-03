@@ -16,11 +16,11 @@
   },
   "objectives": [
     {
-      "id": "collect_kobold_remains",
-      "type": "fetch_item",
-      "itemId": "kobold_remains",
+      "id": "defeat_kobold",
+      "type": "defeat_npc",
+      "npcId": "kobold",
       "quantity": 1,
-      "description": "Slay the Kobold and collect its remains"
+      "description": "Defeat the Kobold"
     }
   ],
   "rewards": {

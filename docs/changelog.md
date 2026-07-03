@@ -4,6 +4,17 @@ This file tracks meaningful project changes by commit-oriented slices.
 
 Keep entries short and practical. When a slice is committed, its changelog section should stay aligned with the commit title so the project history remains easy to read after restores or bisects.
 
+## 2026-07-03 - [REFACTOR]: Extract combat systems and data-drive enemy quests
+
+- Move active combat state and combat command handling out of GameplayEngine.
+- Keep GameplayEngine responsible for world recovery when combat defeat changes zones.
+- Add enemy content files and registry validation for combat stats and loot.
+- Resolve combat eligibility, NPC combat stats, and victory loot from enemy content.
+- Add a defeat_npc quest objective type and mark it from combat victories.
+- Update Slime and Kobold quests to require defeating targets instead of collecting remains.
+- Keep monster remains as regular combat loot rather than quest-proof requirements.
+- Add registry and quest tests for enemy loading, cloning, loot, and defeat objectives.
+
 ## 2026-07-03 - [FIX]: Repair kobold quest start and equal-stat combat damage
 
 - Apply global NPC presence schedules to matching zone-local NPC spawns.
