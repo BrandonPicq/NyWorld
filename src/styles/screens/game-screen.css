@@ -754,6 +754,8 @@
 
 .objective__checkbox {
   color: var(--color-accent);
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .quests-modal__rewards-text {
@@ -862,6 +864,11 @@
   line-height: 1.3;
 }
 
+.active-quests-sidebar__obj-list li span:first-child {
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+ 
 .active-quests-sidebar__obj-list li.met {
   color: var(--color-text-muted);
   text-decoration: line-through;

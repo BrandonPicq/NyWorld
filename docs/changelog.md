@@ -4,6 +4,10 @@ This file tracks meaningful project changes by commit-oriented slices.
 
 Keep entries short and practical. When a slice is committed, its changelog section should stay aligned with the commit title so the project history remains easy to read after restores or bisects.
 
+## 2026-07-03 - [FIX]: Prevent bracket wrapping for quest objectives checkboxes
+
+- Apply white-space nowrap and flex-shrink rules to prevent quest checkbox brackets from line-splitting on narrow screens.
+
 ## 2026-07-03 - [UPDATE]: Redesign Quest Journal with list buttons and details popup
 
 - Display active and completed quests as a list of interactive buttons in the journal.
