@@ -6,7 +6,7 @@ import type { Inventory } from "../components";
 
 const zoneData = {
   version: "0.1",
-  zoneId: "quest_test_zone",
+  zoneId: "test_zone",
   name: "Quest Test Zone",
   width: 4,
   height: 4,
@@ -213,6 +213,9 @@ describe("Quest System", () => {
     let activeQuestUpdated = snapshot.activeQuests.find((q) => q.questId === "advanced_quest")!;
     visitObj = activeQuestUpdated.objectives.find((obj) => obj.id === "visit_ruins")!;
     expect(visitObj.currentQuantity).toBe(1); // Reached ruins!
+    expect(engine.createSaveData().completedObjectives).toEqual([
+      "advanced_quest:visit_ruins",
+    ]);
     expect(engine.isQuestReadyToComplete("advanced_quest")).toBe(false);
  
     // Step away and confirm it remains completed (sticky state)
@@ -270,5 +273,46 @@ describe("Quest System", () => {
     snapshot = engine4.getSnapshot();
     expect(snapshot.activeQuests.find((q) => q.questId === "advanced_quest")).toBeUndefined();
     expect(snapshot.completedQuests).toContain("advanced_quest");
+    expect(engine4.createSaveData().completedObjectives).toEqual([]);
+  });
+
+  it("migrates legacy unqualified completed objective ids on load", () => {
+    const advancedZoneData = {
+      ...zoneData,
+      npcs: [
+        {
+          npcId: "old_scholar",
+          x: 2,
+          y: 1,
+          dialogueId: "old_scholar.advanced_quest_start",
+        },
+      ],
+    };
+    const engine = new GameplayEngine(loadZone(advancedZoneData));
+
+    engine.execute({
+      type: "Interact",
+      targetNpcId: "old_scholar",
+      targetDirection: "east",
+    });
+    engine.execute({ type: "CompleteDialogue" });
+
+    const saveData = engine.createSaveData();
+    saveData.completedObjectives = ["visit_ruins"];
+
+    const restored = GameplayEngine.fromSaveData(saveData, {
+      resolveZone: () => loadZone(advancedZoneData),
+    });
+    const activeQuest = restored
+      .getSnapshot()
+      .activeQuests.find((quest) => quest.questId === "advanced_quest")!;
+    const visitObjective = activeQuest.objectives.find(
+      (objective) => objective.id === "visit_ruins",
+    )!;
+
+    expect(visitObjective.currentQuantity).toBe(1);
+    expect(restored.createSaveData().completedObjectives).toEqual([
+      "advanced_quest:visit_ruins",
+    ]);
   });
 });

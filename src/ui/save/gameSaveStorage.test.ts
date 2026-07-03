@@ -182,6 +182,32 @@ describe("gameSaveStorage", () => {
     expect(readSlot(0)).toBeNull();
   });
 
+  it("migrates 0.4 saves without completed objective state", () => {
+    writeSlot(0, stubSave());
+
+    const raw = JSON.parse(localStorage.getItem("nywarudo_save_slot_0")!);
+    raw.version = "0.4";
+    delete (raw as Record<string, unknown>).completedObjectives;
+    localStorage.setItem("nywarudo_save_slot_0", JSON.stringify(raw));
+
+    expect(readSlot(0)).toMatchObject({
+      version: SAVE_VERSION,
+      completedObjectives: [],
+      zoneId: "test_zone",
+    });
+  });
+
+  it("returns null for a 0.4 save with invalid completed objective state", () => {
+    writeSlot(0, stubSave());
+
+    const raw = JSON.parse(localStorage.getItem("nywarudo_save_slot_0")!);
+    raw.version = "0.4";
+    raw.completedObjectives = [42];
+    localStorage.setItem("nywarudo_save_slot_0", JSON.stringify(raw));
+
+    expect(readSlot(0)).toBeNull();
+  });
+
   it("returns null for a save with missing fields", () => {
     writeSlot(0, stubSave());
 

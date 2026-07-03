@@ -1,6 +1,8 @@
 import { hasItemDef } from "../items/itemRegistry";
 import { hasNpcDef } from "../npcs/npcRegistry";
 import { hasDialogue } from "../dialogues/dialogueRegistry";
+import { loadZone } from "../zoneLoader";
+import type { GameMap } from "../GameMap";
 import type { QuestDef, QuestDefMap } from "./QuestDef";
 
 const questDefs = getSortedContentModules(
@@ -10,6 +12,14 @@ const questDefs = getSortedContentModules(
   }),
 );
 
+const zoneDefs = getSortedContentModules(
+  import.meta.glob<unknown>("../../content/zones/*.json", {
+    eager: true,
+    import: "default",
+  }),
+);
+
+const zoneRegistry = buildZoneRegistry(zoneDefs);
 const registry = buildRegistry(questDefs);
 
 export function hasQuestDef(questId: string): boolean {
@@ -75,6 +85,20 @@ function buildRegistry(defs: unknown[]): QuestDefMap {
   }
 
   return nextRegistry;
+}
+
+function buildZoneRegistry(defs: unknown[]): Map<string, GameMap> {
+  const zones = new Map<string, GameMap>();
+
+  for (const def of defs) {
+    const zone = loadZone(def);
+    if (zones.has(zone.zoneId)) {
+      throw new Error(`Duplicate zone definition "${zone.zoneId}".`);
+    }
+    zones.set(zone.zoneId, zone);
+  }
+
+  return zones;
 }
 
 function getSortedContentModules(modules: Record<string, unknown>): unknown[] {
@@ -247,6 +271,25 @@ function assertObjectives(value: unknown, questId: string): void {
 
       if (typeof obj.y !== "number" || !Number.isInteger(obj.y) || obj.y < 0) {
         throw new Error(`Quest "${questId}" objective "${obj.id}" has invalid y coordinate.`);
+      }
+
+      const zone = zoneRegistry.get(obj.zoneId);
+      if (!zone) {
+        throw new Error(
+          `Quest "${questId}" objective "${obj.id}" references unknown zoneId "${obj.zoneId}".`,
+        );
+      }
+
+      if (!zone.isInBounds(obj.x, obj.y)) {
+        throw new Error(
+          `Quest "${questId}" objective "${obj.id}" points outside zone "${obj.zoneId}".`,
+        );
+      }
+
+      if (!zone.isWalkable(obj.x, obj.y)) {
+        throw new Error(
+          `Quest "${questId}" objective "${obj.id}" must target a walkable coordinate in zone "${obj.zoneId}".`,
+        );
       }
     } else if (obj.type === "stat_threshold") {
       const statName = obj.statName;

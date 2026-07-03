@@ -72,6 +72,17 @@ The item catalog owns item names, descriptions, categories, and default
 quantities. Inventories and ground spawns store only `itemId` and quantity.
 Ground item presentation is resolved from item category so maps stay readable.
 
+## Quests
+
+Quest files define stable quest ids, objective lists, dialogue triggers, NPC
+dialogue overrides, and rewards. Objective ids only need to be unique inside
+their quest; runtime progress qualifies them with the quest id before saving.
+
+Coordinate objectives must point to an authored zone and a walkable tile. This
+keeps quests from becoming impossible because of a typo or blocked map square.
+Stat threshold objectives are evaluated dynamically from the current player
+state, while item fetch objectives are derived from inventory stacks.
+
 ## Saves
 
 Saves serialize the current mutable state: active zone, player position, facing,

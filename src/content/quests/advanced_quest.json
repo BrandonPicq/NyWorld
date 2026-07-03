@@ -18,7 +18,7 @@
     {
       "id": "visit_ruins",
       "type": "visit_coordinate",
-      "zoneId": "quest_test_zone",
+      "zoneId": "test_zone",
       "x": 2,
       "y": 2,
       "description": "Investigate the old ruins"

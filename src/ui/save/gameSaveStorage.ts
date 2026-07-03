@@ -2,6 +2,7 @@ import type { GameSaveData } from "../../engine/GameSaveData";
 import { SAVE_VERSION } from "../../engine/GameSaveData";
 
 export const SAVE_SLOT_COUNT = 3;
+const LEGACY_SAVE_VERSION_WITHOUT_COMPLETED_OBJECTIVES = "0.4";
 
 type GameSaveStorage = Pick<Storage, "getItem" | "setItem" | "removeItem">;
 type UnknownRecord = Record<string, unknown>;
@@ -148,6 +149,36 @@ function isGameSaveData(value: unknown): value is GameSaveData {
   );
 }
 
+function normalizeGameSaveData(value: unknown): GameSaveData | null {
+  if (isGameSaveData(value)) {
+    return value;
+  }
+
+  if (!isRecord(value)) return null;
+
+  if (value.version !== LEGACY_SAVE_VERSION_WITHOUT_COMPLETED_OBJECTIVES) {
+    return null;
+  }
+
+  const completedObjectives =
+    value.completedObjectives === undefined ? [] : value.completedObjectives;
+
+  if (
+    !Array.isArray(completedObjectives) ||
+    !completedObjectives.every((objectiveId) => typeof objectiveId === "string")
+  ) {
+    return null;
+  }
+
+  const migrated = {
+    ...value,
+    version: SAVE_VERSION,
+    completedObjectives,
+  };
+
+  return isGameSaveData(migrated) ? migrated : null;
+}
+
 function isValidSlotIndex(index: number): boolean {
   return Number.isInteger(index) && index >= 0 && index < SAVE_SLOT_COUNT;
 }
@@ -179,9 +210,7 @@ export function readSlot(index: number): GameSaveData | null {
     if (!raw) return null;
 
     const parsed: unknown = JSON.parse(raw);
-    if (!isGameSaveData(parsed)) return null;
-
-    return parsed;
+    return normalizeGameSaveData(parsed);
   } catch {
     return null;
   }
