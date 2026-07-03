@@ -10,6 +10,8 @@ Keep entries short and practical. When a slice is committed, its changelog secti
 - Spawn Kobold at (8, 2) in Test Zone 2.
 - Implement "Defeat the Kobold" quest given by the Old Wizard in Test Zone.
 - Create old_wizard scheduled presence at (7, 6) in Test Zone to trigger quest start dialogue.
+- Schedule Old Wizard's presence to start from 00:00 so he is present all day.
+- Enable combat initiation for the Kobold NPC.
 - Add kobold_remains item definition and grant it as loot upon Kobold defeat.
 - Update CombatPanel and GameplayEngine to manage Kobold remains collection.
 - Add unit test validating defeat_the_kobold quest loading.

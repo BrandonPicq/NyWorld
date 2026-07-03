@@ -373,7 +373,7 @@ export class GameplayEngine {
 
     const blockingNpc = this.getNpcAt(target.x, target.y);
     if (blockingNpc) {
-      if (blockingNpc.npcId === "slime") {
+      if (blockingNpc.npcId === "slime" || blockingNpc.npcId === "kobold") {
         return this.startCombat(blockingNpc);
       }
       return this.talkToNpc(blockingNpc, false);
@@ -439,7 +439,7 @@ export class GameplayEngine {
     if (targetNpcId) {
       const targetNpc = adjacentNpcs.find((n) => n.npcId === targetNpcId);
       if (targetNpc) {
-        if (targetNpc.npcId === "slime") {
+        if (targetNpc.npcId === "slime" || targetNpc.npcId === "kobold") {
           return this.startCombat(targetNpc);
         }
         return this.talkToNpc(targetNpc, true);
@@ -450,7 +450,7 @@ export class GameplayEngine {
     }
 
     const firstNpc = adjacentNpcs[0];
-    if (firstNpc.npcId === "slime") {
+    if (firstNpc.npcId === "slime" || firstNpc.npcId === "kobold") {
       return this.startCombat(firstNpc);
     }
     return this.talkToNpc(firstNpc, true);
