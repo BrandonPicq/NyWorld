@@ -624,6 +624,32 @@ describe("GameplayEngine", () => {
     ).toMatchObject({ x: 2, y: 1 });
   });
 
+  it("applies global presence dialogue to matching zone-local NPC spawns", () => {
+    const engine = new GameplayEngine(loadZone(testZoneData));
+
+    engine.execute({ type: "MoveEast" });
+    engine.execute({ type: "MoveEast" });
+    engine.execute({ type: "MoveSouth" });
+
+    const result = engine.execute({
+      type: "Interact",
+      targetNpcId: "old_wizard",
+      targetDirection: "south",
+    });
+
+    expect(result.success).toBe(true);
+    expect(result.dialogueId).toBe("old_wizard.quest_start");
+    expect(result.dialogue).toEqual(getDialogue("old_wizard.quest_start"));
+
+    engine.execute({ type: "CompleteDialogue" });
+
+    expect(
+      engine
+        .getSnapshot()
+        .activeQuests.some((quest) => quest.questId === "defeat_the_kobold"),
+    ).toBe(true);
+  });
+
   it("logs when interact finds nothing nearby", () => {
     const engine = createEngine();
 

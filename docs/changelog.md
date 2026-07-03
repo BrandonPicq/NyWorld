@@ -4,6 +4,15 @@ This file tracks meaningful project changes by commit-oriented slices.
 
 Keep entries short and practical. When a slice is committed, its changelog section should stay aligned with the commit title so the project history remains easy to read after restores or bisects.
 
+## 2026-07-03 - [FIX]: Repair kobold quest start and equal-stat combat damage
+
+- Apply global NPC presence schedules to matching zone-local NPC spawns.
+- Ensure the Old Wizard can offer the Kobold quest through his scheduled dialogue.
+- Replace subtraction-only combat mitigation with a smoother defense curve.
+- Reduce Kobold HP to 40 so the first monster duel resolves faster.
+- Centralize combat NPC and victory loot lookups.
+- Add regression tests for equal-stat damage and scheduled quest dialogue.
+
 ## 2026-07-03 - [ADD]: Create Kobold monster, quest line, and loot mechanics
 
 - Define Kobold NPC data matching initial player attributes and stats.

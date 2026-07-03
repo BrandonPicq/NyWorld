@@ -47,8 +47,8 @@ const ENEMY_BASE_STATS: Record<string, Partial<Stats>> = {
   },
   kobold: {
     resources: {
-      hp: 100,
-      maxHp: 100,
+      hp: 40,
+      maxHp: 40,
       mp: 70,
       maxMp: 70,
       sp: 100,

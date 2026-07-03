@@ -76,6 +76,21 @@ describe("qteCombat", () => {
     expect(criticalHit).toMatchObject({ outcome: "critical", damage: 6 });
   });
 
+  it("keeps equal combat stats from collapsing into minimum damage", () => {
+    const attacker = createStatsWith({ combat: { attack: 10 } });
+    const defender = createStatsWith({ combat: { defense: 10 } });
+
+    expect(
+      resolveQteContest({
+        attacker,
+        defender,
+        kind: "physical",
+        attackerCompleted: true,
+        inputAdvantage: 1,
+      }),
+    ).toMatchObject({ outcome: "hit", damage: 5 });
+  });
+
   it("lets a strong defensive lead evade all damage", () => {
     const attacker = createStatsWith({ combat: { attack: 4 } });
     const defender = createStatsWith({ combat: { defense: 2 } });

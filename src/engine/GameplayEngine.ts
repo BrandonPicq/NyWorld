@@ -177,6 +177,13 @@ const CONSUMABLE_ENERGY: Record<string, number> = {
   healing_herb: 20,
 };
 
+const COMBAT_NPC_IDS = new Set(["slime", "kobold"]);
+
+const COMBAT_LOOT_BY_NPC_ID: Record<string, string> = {
+  slime: "slime_remains",
+  kobold: "kobold_remains",
+};
+
 const STUDY_ENERGY_COST = 10;
 const STUDY_ACADEMIC_PROGRESS_GAIN = 15;
 const STUDY_INTELLIGENCE_GAIN = 1;
@@ -373,7 +380,7 @@ export class GameplayEngine {
 
     const blockingNpc = this.getNpcAt(target.x, target.y);
     if (blockingNpc) {
-      if (blockingNpc.npcId === "slime" || blockingNpc.npcId === "kobold") {
+      if (isCombatNpc(blockingNpc.npcId)) {
         return this.startCombat(blockingNpc);
       }
       return this.talkToNpc(blockingNpc, false);
@@ -439,7 +446,7 @@ export class GameplayEngine {
     if (targetNpcId) {
       const targetNpc = adjacentNpcs.find((n) => n.npcId === targetNpcId);
       if (targetNpc) {
-        if (targetNpc.npcId === "slime" || targetNpc.npcId === "kobold") {
+        if (isCombatNpc(targetNpc.npcId)) {
           return this.startCombat(targetNpc);
         }
         return this.talkToNpc(targetNpc, true);
@@ -450,7 +457,7 @@ export class GameplayEngine {
     }
 
     const firstNpc = adjacentNpcs[0];
-    if (firstNpc.npcId === "slime" || firstNpc.npcId === "kobold") {
+    if (isCombatNpc(firstNpc.npcId)) {
       return this.startCombat(firstNpc);
     }
     return this.talkToNpc(firstNpc, true);
@@ -1239,15 +1246,13 @@ export class GameplayEngine {
   }
 
   private getCurrentZoneNpcSpawns(): NpcSpawnData[] {
-    const spawns = this.map.npcs.map((npcData) => ({
-      ...npcData,
-      schedule: npcData.schedule
-        ? npcData.schedule.map((entry) => ({ ...entry }))
-        : undefined,
-    }));
+    const spawns = this.map.npcs.map(cloneNpcSpawnData);
+    const presenceDefs = getAllNpcPresenceDefs();
+    this.attachGlobalPresenceSchedules(spawns, presenceDefs);
+
     const existingNpcIds = new Set(spawns.map((npcData) => npcData.npcId));
 
-    for (const presenceDef of getAllNpcPresenceDefs()) {
+    for (const presenceDef of presenceDefs) {
       if (existingNpcIds.has(presenceDef.npcId)) {
         continue;
       }
@@ -1303,9 +1308,12 @@ export class GameplayEngine {
 
   private getScheduledNpcSpawns(): NpcSpawnData[] {
     const spawns = this.map.npcs.map(cloneNpcSpawnData);
+    const presenceDefs = getAllNpcPresenceDefs();
+    this.attachGlobalPresenceSchedules(spawns, presenceDefs);
+
     const existingNpcIds = new Set(spawns.map((npcData) => npcData.npcId));
 
-    for (const presenceDef of getAllNpcPresenceDefs()) {
+    for (const presenceDef of presenceDefs) {
       if (existingNpcIds.has(presenceDef.npcId)) {
         continue;
       }
@@ -1322,6 +1330,37 @@ export class GameplayEngine {
     }
 
     return spawns;
+  }
+
+  private attachGlobalPresenceSchedules(
+    spawns: NpcSpawnData[],
+    presenceDefs: ReturnType<typeof getAllNpcPresenceDefs>,
+  ): void {
+    const presenceByNpcId = new Map(
+      presenceDefs.map((presenceDef) => [presenceDef.npcId, presenceDef]),
+    );
+
+    for (const spawn of spawns) {
+      const presenceDef = presenceByNpcId.get(spawn.npcId);
+      if (!presenceDef) {
+        continue;
+      }
+      if (
+        !presenceDef.schedule.some((entry) => entry.zoneId === this.map.zoneId)
+      ) {
+        continue;
+      }
+
+      spawn.schedule = presenceDef.schedule.map(cloneNpcScheduleEntry);
+
+      const activePosition = NpcScheduleSystem.getActivePosition(
+        spawn.schedule,
+        this.worldTimeMinutes,
+      );
+      if (activePosition?.dialogueId) {
+        spawn.dialogueId = activePosition.dialogueId;
+      }
+    }
   }
 
   private startCombat(npc: Npc): ExecuteResult {
@@ -1544,38 +1583,9 @@ export class GameplayEngine {
     if (this.combatState.phase === "victory") {
       this.world.destroyEntity(this.combatState.opponentId);
 
-      if (this.combatState.opponentNpcId === "slime") {
-        const inventory = this.getPlayerInventory();
-        const existing = inventory.items.find((i) => i.itemId === "slime_remains");
-        if (existing) {
-          existing.quantity += 1;
-        } else {
-          inventory.items.push({ itemId: "slime_remains", quantity: 1 });
-        }
-        effects.push({
-          type: "ItemCollected",
-          itemId: "slime_remains",
-          quantity: 1,
-          source: "reward",
-        });
-        this.addLog("Collected Slime Remains.");
-      }
-
-      if (this.combatState.opponentNpcId === "kobold") {
-        const inventory = this.getPlayerInventory();
-        const existing = inventory.items.find((i) => i.itemId === "kobold_remains");
-        if (existing) {
-          existing.quantity += 1;
-        } else {
-          inventory.items.push({ itemId: "kobold_remains", quantity: 1 });
-        }
-        effects.push({
-          type: "ItemCollected",
-          itemId: "kobold_remains",
-          quantity: 1,
-          source: "reward",
-        });
-        this.addLog("Collected Kobold Remains.");
+      const lootItemId = COMBAT_LOOT_BY_NPC_ID[this.combatState.opponentNpcId];
+      if (lootItemId) {
+        effects.push(this.collectCombatLoot(lootItemId));
       }
 
       this.combatState = undefined;
@@ -1608,6 +1618,26 @@ export class GameplayEngine {
 
     return { success: false };
   }
+
+  private collectCombatLoot(itemId: string): EngineEffect {
+    const inventory = this.getPlayerInventory();
+    const existing = inventory.items.find((item) => item.itemId === itemId);
+    if (existing) {
+      existing.quantity += 1;
+    } else {
+      inventory.items.push({ itemId, quantity: 1 });
+    }
+
+    const itemDef = getItemDef(itemId);
+    this.addLog(`Collected ${itemDef.name}.`);
+
+    return {
+      type: "ItemCollected",
+      itemId,
+      quantity: 1,
+      source: "reward",
+    };
+  }
 }
 
 function generateQteSequence(length: number): string[] {
@@ -1618,6 +1648,10 @@ function generateQteSequence(length: number): string[] {
     sequence.push(directions[index]);
   }
   return sequence;
+}
+
+function isCombatNpc(npcId: string): boolean {
+  return COMBAT_NPC_IDS.has(npcId);
 }
 
 /**

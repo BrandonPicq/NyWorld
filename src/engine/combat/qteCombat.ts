@@ -88,7 +88,7 @@ export function resolveQteContest({
 
   const defenseReduction = Math.floor(inputAdvantage / 2);
   const effectiveDefense = Math.max(0, defensePower - defenseReduction);
-  const baseDamage = Math.max(1, attackPower - effectiveDefense);
+  const baseDamage = calculateMitigatedDamage(attackPower, effectiveDefense);
 
   if (inputAdvantage >= 5) {
     return {
@@ -122,6 +122,14 @@ function getAttackPower(stats: Stats, kind: CombatActionKind): number {
 
 function getDefensePower(stats: Stats, kind: CombatActionKind): number {
   return kind === "physical" ? stats.combat.defense : stats.combat.magicDefense;
+}
+
+function calculateMitigatedDamage(
+  attackPower: number,
+  effectiveDefense: number,
+): number {
+  const denominator = Math.max(1, attackPower + effectiveDefense);
+  return Math.max(1, Math.floor((attackPower * attackPower) / denominator));
 }
 
 function clamp(value: number, min: number, max: number): number {
