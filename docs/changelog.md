@@ -4,6 +4,24 @@ This file tracks meaningful project changes by commit-oriented slices.
 
 Keep entries short and practical. When a slice is committed, its changelog section should stay aligned with the commit title so the project history remains easy to read after restores or bisects.
 
+## 2026-07-03 - [ADD]: Expand combat action choices
+
+- Replace raw physical and magical choices with Strike, Cast, Guard, Focus, Use Item, and Flee actions.
+- Add MP cost for casting, SP gains for core actions, guard mitigation, and focus damage boost.
+- Allow consumable items to heal HP during combat and consume the player turn.
+- Move combat item selection into a dedicated popup opened from the Use Item action.
+- Control combat menus with arrow-key selection while keeping arrows reserved for active QTE prompts.
+- Load combat action help from one JSON definition per action.
+- Show concise combat action tooltips and an I-key details popup for the selected action.
+- Add engine tests for combat costs, modifiers, item use, and invalid actions.
+
+## 2026-07-03 - [UPDATE]: Add combat damage variance
+
+- Apply final combat damage variance between 75% and 125% after QTE and mistake modifiers.
+- Add deterministic combat tests for low and high damage rolls.
+- Add explicit Goblin enemy registry and balance guardrail coverage.
+- Update combat balance notes for the Slime, Goblin, and Kobold ladder.
+
 ## 2026-07-03 - [ADD]: Create Goblin monster between Slime and Kobold on test zone 2
 
 - Define Goblin NPC with orange "g" glyph and a threatening dialogue line.

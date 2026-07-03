@@ -1,4 +1,4 @@
-import type { GameCommand } from "../commands";
+import type { CombatActionCommand, GameCommand } from "../commands";
 import type { Inventory, Npc, Stats } from "../components";
 import type { World } from "../ecs/World";
 import type { EntityId } from "../ecs/types";
@@ -6,6 +6,7 @@ import { getEnemyDef, isCombatEnemy } from "../enemies/enemyRegistry";
 import { getItemDef } from "../items/itemRegistry";
 import { createNpcStats } from "../stats/npcStats";
 import { cloneStats } from "../stats/characterStats";
+import { getCombatActionDef } from "./combatActionRegistry";
 import {
   createQteChallenge,
   resolveQteContest,
@@ -28,16 +29,32 @@ export interface CombatState {
   opponentStats: Stats;
   phase: CombatPhase;
   actionKind?: CombatActionKind;
+  actionLabel?: string;
+  isGuarding?: boolean;
+  damageBoostMultiplier?: number;
   qteChallenge?: QteChallenge;
   qteSequence?: string[];
 }
 
-export type CombatEffect = {
-  type: "ItemCollected";
-  itemId: string;
-  quantity: number;
-  source?: "reward";
-};
+export type CombatEffect =
+  | {
+      type: "ItemCollected";
+      itemId: string;
+      quantity: number;
+      source?: "reward";
+    }
+  | {
+      type: "ItemUsed";
+      itemId: string;
+      hpRestored?: number;
+      energyRestored?: number;
+    }
+  | {
+      type: "ItemUseRejected";
+      itemId: string;
+      reason: "energy_full" | "no_effect";
+      message: string;
+    };
 
 export interface CombatExecuteResult {
   success: boolean;
@@ -51,7 +68,20 @@ export interface CombatSystemContext {
   addLog: (message: string) => void;
   recordNpcDefeat: (npcId: string) => void;
   recoverPlayerFromDefeat: () => void;
+  random?: () => number;
 }
+
+const STRIKE_SP_GAIN = 5;
+const GUARD_SP_GAIN = 10;
+const FOCUS_SP_GAIN = 5;
+const CAST_MP_COST = 10;
+const FOCUS_DAMAGE_MULTIPLIER = 1.5;
+const GUARD_DAMAGE_MULTIPLIER = 0.5;
+
+const COMBAT_CONSUMABLE_HP: Record<string, number> = {
+  travel_ration: 10,
+  healing_herb: 20,
+};
 
 /**
  * Owns the current combat encounter state and resolves combat-only commands.
@@ -94,6 +124,9 @@ export class CombatSystem {
     if (command.type === "SelectCombatAction") {
       return this.handleSelectCombatAction(command.actionKind);
     }
+    if (command.type === "UseItem") {
+      return this.handleUseItem(command.itemId);
+    }
     if (command.type === "SubmitCombatQte") {
       return this.handleSubmitCombatQte(
         command.completed,
@@ -131,9 +164,14 @@ export class CombatSystem {
   }
 
   private handleSelectCombatAction(
-    actionKind: "physical" | "magical" | "flee",
+    actionKind: CombatActionCommand,
   ): CombatExecuteResult {
     if (!this.state || this.state.phase !== "action_selection") {
+      return { success: false };
+    }
+
+    if (!isCombatActionCommand(actionKind)) {
+      this.context.addLog("Unknown combat action.");
       return { success: false };
     }
 
@@ -144,18 +182,65 @@ export class CombatSystem {
       return this.handleFleeAttempt(playerStats, opponentStats);
     }
 
-    this.state.actionKind = actionKind;
+    if (actionKind === "guard") {
+      const spGained = gainSp(playerStats, GUARD_SP_GAIN);
+      this.state.isGuarding = true;
+      this.state.phase = "opponent_turn_transition";
+      this.state.actionKind = undefined;
+      this.state.actionLabel = undefined;
+      this.state.qteChallenge = undefined;
+      this.state.qteSequence = undefined;
+      this.context.addLog(
+        `You guard and brace for the next attack${formatSpGain(spGained)}.`,
+      );
+      return { success: true };
+    }
+
+    if (actionKind === "focus") {
+      const spGained = gainSp(playerStats, FOCUS_SP_GAIN);
+      this.state.damageBoostMultiplier = FOCUS_DAMAGE_MULTIPLIER;
+      this.state.phase = "opponent_turn_transition";
+      this.state.actionKind = undefined;
+      this.state.actionLabel = undefined;
+      this.state.qteChallenge = undefined;
+      this.state.qteSequence = undefined;
+      this.context.addLog(
+        `You focus your next attack${formatSpGain(spGained)}.`,
+      );
+      return { success: true };
+    }
+
+    if (actionKind === "cast" && playerStats.resources.mp < CAST_MP_COST) {
+      this.context.addLog("Not enough MP to cast.");
+      return { success: false };
+    }
+
+    if (actionKind === "strike") {
+      gainSp(playerStats, STRIKE_SP_GAIN);
+    } else {
+      playerStats.resources.mp = Math.max(
+        0,
+        playerStats.resources.mp - CAST_MP_COST,
+      );
+    }
+
+    const qteActionKind = getQteActionKind(actionKind);
+    this.state.actionKind = qteActionKind;
+    this.state.actionLabel = getCombatActionLabel(actionKind);
     this.state.phase = "player_qte";
 
     const challenge = createQteChallenge({
       actor: playerStats,
       opponent: opponentStats,
-      kind: actionKind,
+      kind: qteActionKind,
       isPlayerActor: true,
     });
 
     this.state.qteChallenge = challenge;
-    this.state.qteSequence = generateQteSequence(challenge.sequenceLength);
+    this.state.qteSequence = generateQteSequence(
+      challenge.sequenceLength,
+      () => this.random(),
+    );
 
     return { success: true };
   }
@@ -178,7 +263,7 @@ export class CombatSystem {
             0.05,
       ),
     );
-    const success = Math.random() < fleeChance;
+    const success = this.random() < fleeChance;
     if (success) {
       this.context.addLog("You successfully fled from the combat!");
       this.state = undefined;
@@ -190,6 +275,76 @@ export class CombatSystem {
     this.state.qteChallenge = undefined;
     this.state.qteSequence = undefined;
     return { success: true };
+  }
+
+  private handleUseItem(itemId: string): CombatExecuteResult {
+    if (!this.state || this.state.phase !== "action_selection") {
+      return { success: false };
+    }
+
+    const inventory = this.context.getPlayerInventory();
+    const stackIndex = inventory.items.findIndex(
+      (stack) => stack.itemId === itemId,
+    );
+    if (stackIndex === -1) {
+      this.context.addLog("You don't have that item.");
+      return { success: false };
+    }
+
+    const itemDef = getItemDef(itemId);
+    if (itemDef.category !== "consumable") {
+      this.context.addLog(`${itemDef.name} cannot be used in combat.`);
+      return { success: false };
+    }
+
+    const hpRestored = COMBAT_CONSUMABLE_HP[itemId];
+    if (hpRestored === undefined) {
+      const message = `${itemDef.name} has no combat effect yet.`;
+      this.context.addLog(message);
+      return {
+        success: false,
+        effects: [
+          { type: "ItemUseRejected", itemId, reason: "no_effect", message },
+        ],
+      };
+    }
+
+    const playerStats = this.context.getPlayerStats();
+    if (playerStats.resources.hp >= playerStats.resources.maxHp) {
+      const message = `${itemDef.name} would have no effect right now.`;
+      this.context.addLog(message);
+      return {
+        success: false,
+        effects: [
+          { type: "ItemUseRejected", itemId, reason: "no_effect", message },
+        ],
+      };
+    }
+
+    const nextHp = Math.min(
+      playerStats.resources.maxHp,
+      playerStats.resources.hp + hpRestored,
+    );
+    const actualHpRestored = nextHp - playerStats.resources.hp;
+    playerStats.resources.hp = nextHp;
+
+    const stack = inventory.items[stackIndex];
+    stack.quantity -= 1;
+    if (stack.quantity <= 0) {
+      inventory.items.splice(stackIndex, 1);
+    }
+
+    this.state.phase = "opponent_turn_transition";
+    this.state.actionKind = undefined;
+    this.state.actionLabel = undefined;
+    this.state.qteChallenge = undefined;
+    this.state.qteSequence = undefined;
+    this.context.addLog(`Used ${itemDef.name}. Recovered ${actualHpRestored} HP.`);
+
+    return {
+      success: true,
+      effects: [{ type: "ItemUsed", itemId, hpRestored: actualHpRestored }],
+    };
   }
 
   private handleSubmitCombatQte(
@@ -224,14 +379,14 @@ export class CombatSystem {
     const playerStats = this.context.getPlayerStats();
     const opponentStats = this.state.opponentStats;
     const actionKind = this.state.actionKind ?? "physical";
+    const actionLabel = this.state.actionLabel ?? getCombatActionLabel(actionKind);
+    const damageBoostMultiplier = this.state.damageBoostMultiplier;
     let finalDamage = 0;
     let outcomeLabel = "";
+    const mistakeLabel = mistakes === 1 ? " (1 mistake)" : "";
 
     if (mistakes >= 2) {
       outcomeLabel = "MISS (input failure)";
-      this.context.addLog(
-        `You used ${actionKind} attack! Outcome: ${outcomeLabel} (0 damage to ${this.state.opponentName}).`,
-      );
     } else {
       const result = resolveQteContest({
         attacker: playerStats,
@@ -246,15 +401,18 @@ export class CombatSystem {
 
       if (mistakes === 1) {
         finalDamage = Math.floor(finalDamage * 0.8);
-        this.context.addLog(
-          `You used ${actionKind} attack (1 mistake)! Outcome: ${outcomeLabel} (${finalDamage} damage to ${this.state.opponentName}).`,
-        );
-      } else {
-        this.context.addLog(
-          `You used ${actionKind} attack! Outcome: ${outcomeLabel} (${finalDamage} damage to ${this.state.opponentName}).`,
-        );
       }
     }
+
+    if (damageBoostMultiplier !== undefined && finalDamage > 0) {
+      finalDamage = Math.floor(finalDamage * damageBoostMultiplier);
+    }
+    this.state.damageBoostMultiplier = undefined;
+
+    finalDamage = applyDamageVariance(finalDamage, () => this.random());
+    this.context.addLog(
+      `You used ${actionLabel}${mistakeLabel}! Outcome: ${outcomeLabel} (${finalDamage} damage to ${this.state.opponentName}).`,
+    );
 
     opponentStats.resources.hp = Math.max(
       0,
@@ -285,6 +443,7 @@ export class CombatSystem {
 
     const playerStats = this.context.getPlayerStats();
     const opponentStats = this.state.opponentStats;
+    const wasGuarding = this.state.isGuarding;
     let finalDamage = 0;
     let outcomeLabel = "";
 
@@ -298,9 +457,6 @@ export class CombatSystem {
       });
       finalDamage = Math.floor(result.damage * 1.2);
       outcomeLabel = "CRITICAL (input failure)";
-      this.context.addLog(
-        `${this.state.opponentName} landed a crushing blow due to your input failure! Outcome: ${outcomeLabel} (${finalDamage} damage to you).`,
-      );
     } else {
       const result = resolveQteContest({
         attacker: opponentStats,
@@ -315,14 +471,28 @@ export class CombatSystem {
 
       if (mistakes === 1) {
         finalDamage = Math.floor(finalDamage * 1.2);
-        this.context.addLog(
-          `${this.state.opponentName} attacks (1 mistake)! Outcome: ${outcomeLabel} (${finalDamage} damage to you).`,
-        );
-      } else {
-        this.context.addLog(
-          `${this.state.opponentName} attacks! Outcome: ${outcomeLabel} (${finalDamage} damage to you).`,
-        );
       }
+    }
+
+    finalDamage = applyDamageVariance(finalDamage, () => this.random());
+    if (wasGuarding) {
+      finalDamage =
+        finalDamage > 0
+          ? Math.max(1, Math.floor(finalDamage * GUARD_DAMAGE_MULTIPLIER))
+          : 0;
+      this.state.isGuarding = false;
+    }
+    const guardLabel = wasGuarding ? " (guarded)" : "";
+
+    if (mistakes >= 2) {
+      this.context.addLog(
+        `${this.state.opponentName} landed a crushing blow due to your input failure! Outcome: ${outcomeLabel} (${finalDamage} damage to you${guardLabel}).`,
+      );
+    } else {
+      const mistakeLabel = mistakes === 1 ? " (1 mistake)" : "";
+      this.context.addLog(
+        `${this.state.opponentName} attacks${mistakeLabel}! Outcome: ${outcomeLabel} (${finalDamage} damage to you${guardLabel}).`,
+      );
     }
 
     playerStats.resources.hp = Math.max(
@@ -336,6 +506,7 @@ export class CombatSystem {
     } else {
       this.state.phase = "action_selection";
       this.state.actionKind = undefined;
+      this.state.actionLabel = undefined;
       this.state.qteChallenge = undefined;
       this.state.qteSequence = undefined;
     }
@@ -359,7 +530,10 @@ export class CombatSystem {
       isPlayerActor: false,
     });
     this.state.qteChallenge = challenge;
-    this.state.qteSequence = generateQteSequence(challenge.sequenceLength);
+    this.state.qteSequence = generateQteSequence(
+      challenge.sequenceLength,
+      () => this.random(),
+    );
 
     return { success: true };
   }
@@ -425,18 +599,88 @@ export class CombatSystem {
 
     return undefined;
   }
+
+  private random(): number {
+    return this.context.random?.() ?? Math.random();
+  }
 }
 
 export function isCombatNpc(npcId: string): boolean {
   return isCombatEnemy(npcId);
 }
 
-function generateQteSequence(length: number): string[] {
+function generateQteSequence(
+  length: number,
+  random: () => number = Math.random,
+): string[] {
   const directions = ["up", "down", "left", "right"];
   const sequence: string[] = [];
   for (let i = 0; i < length; i++) {
-    const index = Math.floor(Math.random() * directions.length);
+    const index = Math.floor(clampRandomRoll(random()) * directions.length);
     sequence.push(directions[index]);
   }
   return sequence;
+}
+
+function applyDamageVariance(damage: number, random: () => number): number {
+  if (damage <= 0) {
+    return 0;
+  }
+
+  const minimumDamage = Math.max(1, Math.ceil(damage * 0.75));
+  const maximumDamage = Math.max(minimumDamage, Math.floor(damage * 1.25));
+  const span = maximumDamage - minimumDamage + 1;
+
+  return minimumDamage + Math.floor(clampRandomRoll(random()) * span);
+}
+
+function clampRandomRoll(value: number): number {
+  if (!Number.isFinite(value)) {
+    return 0;
+  }
+
+  return Math.min(0.999999999, Math.max(0, value));
+}
+
+function isCombatActionCommand(value: string): value is CombatActionCommand {
+  return (
+    value === "strike" ||
+    value === "cast" ||
+    value === "guard" ||
+    value === "focus" ||
+    value === "flee"
+  );
+}
+
+function getQteActionKind(actionKind: CombatActionCommand): CombatActionKind {
+  return actionKind === "cast" ? "magical" : "physical";
+}
+
+function getCombatActionLabel(
+  actionKind: CombatActionCommand | CombatActionKind,
+): string {
+  if (actionKind !== "physical" && actionKind !== "magical") {
+    return getCombatActionDef(actionKind).name;
+  }
+
+  switch (actionKind) {
+    case "magical":
+      return "magical attack";
+    case "physical":
+    default:
+      return "physical attack";
+  }
+}
+
+function gainSp(stats: Stats, amount: number): number {
+  const previousSp = stats.resources.sp;
+  stats.resources.sp = Math.min(
+    stats.resources.maxSp,
+    stats.resources.sp + amount,
+  );
+  return stats.resources.sp - previousSp;
+}
+
+function formatSpGain(amount: number): string {
+  return amount > 0 ? ` and gain ${amount} SP` : "";
 }

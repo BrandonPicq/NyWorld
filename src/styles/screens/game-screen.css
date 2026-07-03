@@ -1077,7 +1077,7 @@
 .combat-panel {
   width: 100%;
   box-sizing: border-box;
-  padding: var(--space-4);
+  padding: var(--space-3);
   background: var(--color-panel-background);
   border: 2px solid var(--color-border);
   color: var(--color-text);
@@ -1087,7 +1087,7 @@
 .combat-layout {
   display: flex;
   flex-direction: column;
-  gap: var(--space-4);
+  gap: var(--space-3);
 }
 
 .combat-header {
@@ -1098,11 +1098,11 @@
 .combat-stats-row {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: var(--space-4);
+  gap: var(--space-3);
 }
 
 .combat-stats-box {
-  padding: var(--space-3);
+  padding: var(--space-2);
   border: 1px solid var(--color-border-muted);
   background: rgba(0, 0, 0, 0.2);
   border-radius: 4px;
@@ -1117,7 +1117,7 @@
 }
 
 .combat-stats-title {
-  margin: 0 0 var(--space-3) 0;
+  margin: 0 0 var(--space-2) 0;
   font-size: 1.1rem;
   font-weight: bold;
   letter-spacing: 0.05em;
@@ -1197,14 +1197,14 @@
 }
 
 .combat-phase-area {
-  min-height: 12rem;
+  min-height: 0;
   display: flex;
   justify-content: center;
-  align-items: center;
+  align-items: stretch;
   background: rgba(0, 0, 0, 0.3);
   border: 1px solid var(--color-border-muted);
   border-radius: 4px;
-  padding: var(--space-4);
+  padding: var(--space-3);
 }
 
 .combat-actions-menu {
@@ -1222,11 +1222,96 @@
 }
 
 .combat-actions-buttons {
-  display: flex;
-  gap: var(--space-3);
-  justify-content: center;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-2);
   width: 100%;
-  flex-wrap: wrap;
+}
+
+.combat-actions-buttons .terminal-button {
+  position: relative;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 3.25rem;
+  padding: 0.55rem var(--space-2);
+  text-align: center;
+}
+
+.combat-action-button__label {
+  color: var(--color-text-strong);
+  font-weight: bold;
+}
+
+.combat-action-tooltip {
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + var(--space-2));
+  z-index: 20;
+  width: min(22rem, 82vw);
+  padding: var(--space-3);
+  border: 1px solid var(--color-border);
+  background: var(--color-panel-background);
+  box-shadow: var(--shadow-terminal-panel);
+  color: var(--color-text);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  font-size: 0.78rem;
+  line-height: var(--line-height-copy);
+  opacity: 0;
+  pointer-events: none;
+  text-align: left;
+  transform: translate(-50%, 0.35rem);
+  transition:
+    opacity 120ms ease,
+    transform 120ms ease;
+  visibility: hidden;
+}
+
+.combat-action-tooltip::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: -0.45rem;
+  width: 0.7rem;
+  height: 0.7rem;
+  border-right: 1px solid var(--color-border);
+  border-bottom: 1px solid var(--color-border);
+  background: var(--color-panel-background);
+  transform: translateX(-50%) rotate(45deg);
+}
+
+.combat-action-button:hover .combat-action-tooltip,
+.combat-action-button:focus-visible .combat-action-tooltip {
+  opacity: 1;
+  transform: translate(-50%, 0);
+  visibility: visible;
+}
+
+.combat-action-tooltip__summary {
+  color: var(--color-text-strong);
+  font-weight: bold;
+}
+
+.combat-action-tooltip__line {
+  color: var(--color-text-soft);
+}
+
+.combat-action-tooltip__warning {
+  color: #f38ba8;
+}
+
+.combat-action-tooltip__hint {
+  border-top: 1px dashed var(--color-border-muted);
+  padding-top: var(--space-2);
+  color: var(--color-accent);
+}
+
+.combat-actions-buttons .terminal-button:disabled .combat-action-button__label {
+  color: var(--color-disabled-text);
 }
 
 .combat-qte-section {
@@ -1368,9 +1453,116 @@
   margin-top: var(--space-3);
 }
 
+.stats-modal--combat-items {
+  width: min(90vw, 520px) !important;
+}
+
+.stats-modal--combat-action {
+  width: min(90vw, 680px) !important;
+}
+
+.combat-action-details {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  margin-top: var(--space-4);
+  max-height: min(58vh, 34rem);
+  overflow-y: auto;
+  padding-right: 0.25rem;
+}
+
+.combat-action-details__summary {
+  margin: 0;
+  color: var(--color-text-strong);
+  font-weight: bold;
+  line-height: var(--line-height-copy);
+}
+
+.combat-action-details__section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.combat-action-details__section p {
+  margin: 0;
+  color: var(--color-text-soft);
+  line-height: var(--line-height-copy);
+}
+
+.combat-action-details__list {
+  margin: 0;
+  padding-left: 1.25rem;
+  color: var(--color-text-soft);
+  line-height: var(--line-height-copy);
+}
+
+.combat-item-modal__content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin: var(--space-4) 0;
+  max-height: min(46vh, 22rem);
+  overflow-y: auto;
+  padding-right: 0.25rem;
+}
+
+.combat-item-modal__row {
+  width: 100%;
+  border: 1px solid var(--color-border-muted);
+  border-radius: 0;
+  padding: var(--space-3);
+  color: var(--color-text);
+  background: var(--color-button-background);
+  cursor: pointer;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: var(--space-3);
+  align-items: center;
+  text-align: left;
+}
+
+.combat-item-modal__row:hover,
+.combat-item-modal__row--selected {
+  border-color: var(--color-accent);
+  background: var(--color-button-background-hover);
+}
+
+.combat-item-modal__main {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.combat-item-modal__name,
+.combat-item-modal__quantity {
+  font-family: var(--font-mono);
+  font-weight: bold;
+}
+
+.combat-item-modal__description {
+  color: var(--color-text-soft);
+  font-size: 0.85rem;
+  line-height: var(--line-height-copy);
+}
+
+.combat-item-modal__quantity {
+  color: var(--color-accent);
+}
+
 @media (max-width: 480px) {
   .combat-stats-row {
     grid-template-columns: 1fr;
     gap: var(--space-3);
+  }
+
+  .combat-actions-buttons {
+    grid-template-columns: 1fr;
+  }
+
+  .combat-item-modal__row {
+    grid-template-columns: 1fr;
+    gap: var(--space-2);
   }
 }

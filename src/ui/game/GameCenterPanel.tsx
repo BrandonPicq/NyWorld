@@ -37,6 +37,7 @@ export function GameCenterPanel({
         <CombatPanel
           combatState={snapshot.combatState}
           playerStats={snapshot.stats}
+          inventory={snapshot.inventory}
           executeCommand={onExecuteCommand}
           keyboardLayout={keyboardLayout}
           audioSettings={audioSettings}

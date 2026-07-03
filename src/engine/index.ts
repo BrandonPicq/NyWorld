@@ -36,6 +36,17 @@ export type {
   QteContestOutcome,
   QteContestResult,
 } from "./combat/qteCombat";
+export {
+  getAllCombatActionDefs,
+  getCombatActionDef,
+  hasCombatActionDef,
+} from "./combat/combatActionRegistry";
+export type {
+  CombatActionCategory,
+  CombatActionDef,
+  CombatActionDefMap,
+  CombatActionId,
+} from "./combat/CombatActionDef";
 export { CombatSystem, isCombatNpc } from "./combat/CombatSystem";
 export type {
   CombatEffect,
@@ -130,7 +141,7 @@ export {
   createInitialNpcState,
 } from "./npcs/NpcState";
 export type { NpcState, NpcStateMap } from "./npcs/NpcState";
-export type { GameCommand } from "./commands";
+export type { CombatActionCommand, GameCommand } from "./commands";
 export { createNpcStats } from "./stats/npcStats";
 export { GameplayEngine } from "./GameplayEngine";
 export type {

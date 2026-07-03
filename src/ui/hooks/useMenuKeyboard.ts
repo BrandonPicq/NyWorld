@@ -5,6 +5,7 @@ import { playMenuConfirmSound, playMenuMoveSound } from "../audio/menuAudio";
 type UseMenuKeyboardOptions = {
   itemCount: number;
   audioSettings: AudioSettings;
+  enableDirectionalLetterKeys?: boolean;
   onConfirm?: (selectedIndex: number) => void;
   onCancel?: () => void;
   extraKeys?: Record<string, (selectedIndex: number) => void>;
@@ -12,12 +13,13 @@ type UseMenuKeyboardOptions = {
 
 /**
  * A universal hook to manage keyboard navigation for menus and selection lists.
- * Handles ArrowUp/ArrowDown, Z/S, W/S movement keys, Enter confirmation,
- * Escape cancellation, and menu sound cues.
+ * Handles ArrowUp/ArrowDown, optional Z/S/W/S movement keys, Enter
+ * confirmation, Escape cancellation, and menu sound cues.
  */
 export function useMenuKeyboard({
   itemCount,
   audioSettings,
+  enableDirectionalLetterKeys = true,
   onConfirm,
   onCancel,
   extraKeys,
@@ -60,13 +62,15 @@ export function useMenuKeyboard({
 
     const keyLower = key.toLowerCase();
 
-    if (key === "ArrowDown" || keyLower === "s") {
+    if (
+      key === "ArrowDown" ||
+      (enableDirectionalLetterKeys && keyLower === "s")
+    ) {
       e.preventDefault();
       moveSelection(1);
     } else if (
       key === "ArrowUp" ||
-      keyLower === "z" ||
-      keyLower === "w"
+      (enableDirectionalLetterKeys && (keyLower === "z" || keyLower === "w"))
     ) {
       e.preventDefault();
       moveSelection(-1);

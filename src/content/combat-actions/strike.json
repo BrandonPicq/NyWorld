@@ -1,0 +1,18 @@
+{
+  "actionId": "strike",
+  "name": "Strike",
+  "category": "offense",
+  "order": 1,
+  "summary": "Make a direct physical attack.",
+  "formula": "Physical QTE + ATK vs DEF, then final damage rolls between 75% and 125%.",
+  "effects": [
+    "Gain 5 SP.",
+    "Uses Agility for QTE pressure.",
+    "Benefits from the next Focus damage boost."
+  ],
+  "details": [
+    "Strike is the baseline physical attack. It compares your attack value and QTE performance against the enemy's defense.",
+    "A strong QTE lead can push through a tougher defense, while a poor QTE can be guarded or evaded.",
+    "Strike is reliable when you want to build SP without spending MP."
+  ]
+}

@@ -11,9 +11,25 @@ describe("enemyRegistry", () => {
   it("loads combat enemy definitions from content", () => {
     expect(hasEnemyDef("slime")).toBe(true);
     expect(isCombatEnemy("slime")).toBe(true);
+    expect(hasEnemyDef("goblin")).toBe(true);
+    expect(isCombatEnemy("goblin")).toBe(true);
     expect(hasEnemyDef("kobold")).toBe(true);
     expect(isCombatEnemy("kobold")).toBe(true);
     expect(isCombatEnemy("old_wizard")).toBe(false);
+  });
+
+  it("exposes goblin stats and loot between slime and kobold content", () => {
+    const goblin = getEnemyDef("goblin");
+
+    expect(goblin).toMatchObject({
+      npcId: "goblin",
+      combatable: true,
+      stats: {
+        resources: { hp: 27, maxHp: 27 },
+        combat: { attack: 7, defense: 4 },
+      },
+      loot: [{ itemId: "goblin_ear", quantity: 1 }],
+    });
   });
 
   it("exposes kobold stats and loot from content", () => {

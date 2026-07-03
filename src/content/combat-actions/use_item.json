@@ -1,0 +1,18 @@
+{
+  "actionId": "use_item",
+  "name": "Use Item",
+  "category": "utility",
+  "order": 6,
+  "summary": "Open your usable combat items.",
+  "formula": "No damage formula. The selected item defines its own effect.",
+  "effects": [
+    "Opens the combat item picker.",
+    "Consumes one selected item when the effect succeeds.",
+    "Using an item consumes the current turn."
+  ],
+  "details": [
+    "Use Item opens a separate list of consumables that can be used during combat.",
+    "Items that would have no effect are rejected by the engine and are not consumed.",
+    "This keeps the action menu compact even when the inventory eventually contains many usable items."
+  ]
+}

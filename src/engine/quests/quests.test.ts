@@ -353,16 +353,19 @@ describe("Quest System", () => {
   });
 
   it("tracks defeat_npc objectives when a quest target is defeated", () => {
-    const engine = new GameplayEngine(loadZone(combatQuestZoneData));
+    const engine = new GameplayEngine(loadZone(combatQuestZoneData), {
+      random: () => 0.5,
+    });
     const saveData = engine.createSaveData();
     saveData.activeQuests = ["slay_the_slime"];
 
     const restored = GameplayEngine.fromSaveData(saveData, {
+      random: () => 0.5,
       resolveZone: () => loadZone(combatQuestZoneData),
     });
 
     restored.execute({ type: "MoveEast" });
-    restored.execute({ type: "SelectCombatAction", actionKind: "physical" });
+    restored.execute({ type: "SelectCombatAction", actionKind: "strike" });
     restored.execute({
       type: "SubmitCombatQte",
       completed: true,
@@ -376,7 +379,7 @@ describe("Quest System", () => {
       inputAdvantage: 5,
       mistakes: 0,
     });
-    restored.execute({ type: "SelectCombatAction", actionKind: "physical" });
+    restored.execute({ type: "SelectCombatAction", actionKind: "strike" });
     restored.execute({
       type: "SubmitCombatQte",
       completed: true,

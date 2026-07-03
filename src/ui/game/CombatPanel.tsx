@@ -1,16 +1,38 @@
-import { useEffect, useState, useRef } from "react";
-import type { Stats } from "../../engine/components";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import type { Inventory, Stats } from "../../engine/components";
 import type { CombatState } from "../../engine/GameplayEngine";
-import type { GameCommand } from "../../engine";
+import type {
+  CombatActionCommand,
+  CombatActionDef,
+  CombatActionId,
+  GameCommand,
+} from "../../engine";
+import { getAllCombatActionDefs, getItemDef } from "../../engine";
 import type { KeyboardLayout } from "../controls/keyboardLayout";
 import type { AudioSettings } from "../audio/audioSettings";
-import { playQteKeySound, playQteErrorSound } from "../audio/menuAudio";
+import {
+  playMenuConfirmSound,
+  playMenuMoveSound,
+  playQteKeySound,
+  playQteErrorSound,
+} from "../audio/menuAudio";
 import { TerminalPanel } from "../components/TerminalPanel";
 import { TerminalButton } from "../components/TerminalButton";
+import { CombatActionDetailsModal } from "./CombatActionDetailsModal";
+import { CombatItemPickerModal } from "./CombatItemPickerModal";
+
+type CombatMenuAction = {
+  id: CombatActionId;
+  def: CombatActionDef;
+  commandKind?: CombatActionCommand;
+  disabled: boolean;
+  availabilityNote?: string;
+};
 
 type CombatPanelProps = {
   combatState: CombatState;
   playerStats: Stats;
+  inventory: Inventory;
   executeCommand: (command: GameCommand) => void;
   keyboardLayout: KeyboardLayout;
   audioSettings: AudioSettings;
@@ -23,19 +45,33 @@ const ARROW_GLYPHS: Record<string, string> = {
   right: "→",
 };
 
+const COMBAT_ACTION_COLUMNS = 3;
+
 export function CombatPanel({
   combatState,
   playerStats,
+  inventory,
   executeCommand,
   keyboardLayout,
   audioSettings,
 }: CombatPanelProps) {
   const { phase, opponentName, opponentStats, qteSequence, qteChallenge } = combatState;
+  const combatActionDefs = useMemo(() => getAllCombatActionDefs(), []);
+  const combatItems = useMemo(
+    () =>
+      inventory.items.filter(
+        (stack) => getItemDef(stack.itemId).category === "consumable",
+      ),
+    [inventory.items],
+  );
 
   // QTE player progress & mistakes
   const [playerInputIndex, setPlayerInputIndex] = useState(0);
   const [timeElapsed, setTimeElapsed] = useState(0);
   const [mistakes, setMistakes] = useState(0);
+  const [isItemPickerOpen, setIsItemPickerOpen] = useState(false);
+  const [isActionDetailsOpen, setIsActionDetailsOpen] = useState(false);
+  const [selectedActionIndex, setSelectedActionIndex] = useState(0);
 
   // Real-time loop refs to avoid stale closures
   const playerInputIndexRef = useRef(0);
@@ -50,6 +86,33 @@ export function CombatPanel({
   const playerSequenceLength = qteChallenge?.playerSequenceLength ?? qteSequence?.length ?? 5;
   const opponentSequenceLength = qteChallenge?.opponentSequenceLength ?? 5;
   const timeLimitMs = qteChallenge?.timeLimitMs ?? 5000;
+  const combatActions = useMemo<CombatMenuAction[]>(
+    () =>
+      combatActionDefs.map((def) => {
+        if (def.actionId === "use_item") {
+          return {
+            id: def.actionId,
+            def,
+            disabled: combatItems.length === 0,
+            availabilityNote:
+              combatItems.length === 0 ? "No usable combat item." : undefined,
+          };
+        }
+
+        return {
+          id: def.actionId,
+          def,
+          commandKind: def.actionId,
+          disabled: def.actionId === "cast" && playerStats.resources.mp < 10,
+          availabilityNote:
+            def.actionId === "cast" && playerStats.resources.mp < 10
+              ? "Not enough MP."
+              : undefined,
+        };
+      }),
+    [combatActionDefs, combatItems.length, playerStats.resources.mp],
+  );
+  const selectedAction = combatActions[selectedActionIndex];
 
   // Reset states on phase changes
   useEffect(() => {
@@ -65,29 +128,119 @@ export function CombatPanel({
       cancelAnimationFrame(requestRef.current);
       requestRef.current = null;
     }
+
+    if (phase !== "action_selection") {
+      setIsItemPickerOpen(false);
+      setIsActionDetailsOpen(false);
+    }
   }, [phase]);
 
-  // Action selection shortcuts
   useEffect(() => {
     if (phase !== "action_selection") return;
+    const selectedAction = combatActions[selectedActionIndex];
+    if (!selectedAction || selectedAction.disabled) {
+      setSelectedActionIndex(findFirstEnabledActionIndex(combatActions));
+    }
+  }, [
+    combatActions,
+    combatItems.length,
+    phase,
+    playerStats.resources.mp,
+    selectedActionIndex,
+  ]);
+
+  const moveCombatActionSelection = useCallback((step: number) => {
+    setSelectedActionIndex((currentIndex) => {
+      const nextIndex = findNextEnabledActionIndex(
+        combatActions,
+        currentIndex,
+        step,
+      );
+
+      if (nextIndex !== currentIndex && audioSettings.soundEnabled) {
+        playMenuMoveSound();
+      }
+
+      return nextIndex;
+    });
+  }, [audioSettings.soundEnabled, combatActions]);
+
+  const activateCombatAction = useCallback((action: CombatMenuAction) => {
+    if (action.disabled) return;
+
+    if (audioSettings.soundEnabled) {
+      playMenuConfirmSound();
+    }
+
+    if (action.id === "use_item") {
+      setIsItemPickerOpen(true);
+      return;
+    }
+
+    if (action.commandKind) {
+      executeCommand({
+        type: "SelectCombatAction",
+        actionKind: action.commandKind,
+      });
+    }
+  }, [audioSettings.soundEnabled, executeCommand]);
+
+  const openSelectedActionDetails = useCallback(() => {
+    if (!selectedAction) return;
+
+    if (audioSettings.soundEnabled) {
+      playMenuConfirmSound();
+    }
+    setIsActionDetailsOpen(true);
+  }, [audioSettings.soundEnabled, selectedAction]);
+
+  // Action selection menu controls
+  useEffect(() => {
+    if (
+      phase !== "action_selection" ||
+      isItemPickerOpen ||
+      isActionDetailsOpen
+    ) {
+      return;
+    }
 
     function handleSelectionKeys(e: KeyboardEvent) {
-      const key = e.key.toLowerCase();
-      if (key === "p") {
+      if (e.key === "ArrowLeft") {
         e.preventDefault();
-        executeCommand({ type: "SelectCombatAction", actionKind: "physical" });
-      } else if (key === "m") {
+        moveCombatActionSelection(-1);
+      } else if (e.key === "ArrowRight") {
         e.preventDefault();
-        executeCommand({ type: "SelectCombatAction", actionKind: "magical" });
-      } else if (key === "f") {
+        moveCombatActionSelection(1);
+      } else if (e.key === "ArrowUp") {
         e.preventDefault();
-        executeCommand({ type: "SelectCombatAction", actionKind: "flee" });
+        moveCombatActionSelection(-COMBAT_ACTION_COLUMNS);
+      } else if (e.key === "ArrowDown") {
+        e.preventDefault();
+        moveCombatActionSelection(COMBAT_ACTION_COLUMNS);
+      } else if (e.key === "Enter") {
+        e.preventDefault();
+        const selectedAction = combatActions[selectedActionIndex];
+        if (selectedAction) {
+          activateCombatAction(selectedAction);
+        }
+      } else if (e.key.toLowerCase() === "i") {
+        e.preventDefault();
+        openSelectedActionDetails();
       }
     }
 
     window.addEventListener("keydown", handleSelectionKeys);
     return () => window.removeEventListener("keydown", handleSelectionKeys);
-  }, [phase, executeCommand]);
+  }, [
+    combatActions,
+    isActionDetailsOpen,
+    isItemPickerOpen,
+    moveCombatActionSelection,
+    openSelectedActionDetails,
+    phase,
+    selectedActionIndex,
+    activateCombatAction,
+  ]);
 
   // Victory / Defeat space/enter keys to conclude
   useEffect(() => {
@@ -318,21 +471,45 @@ export function CombatPanel({
             <div className="combat-actions-menu">
               <p className="combat-phase-instruction">Choose your combat action:</p>
               <div className="combat-actions-buttons">
-                <TerminalButton
-                  onClick={() => executeCommand({ type: "SelectCombatAction", actionKind: "physical" })}
-                >
-                  [P] Physical Attack
-                </TerminalButton>
-                <TerminalButton
-                  onClick={() => executeCommand({ type: "SelectCombatAction", actionKind: "magical" })}
-                >
-                  [M] Magical Attack
-                </TerminalButton>
-                <TerminalButton
-                  onClick={() => executeCommand({ type: "SelectCombatAction", actionKind: "flee" })}
-                >
-                  [F] Flee
-                </TerminalButton>
+                {combatActions.map((action, index) => (
+                  <TerminalButton
+                    aria-label={`${action.def.name}. ${action.def.summary} Press I for details.`}
+                    className="combat-action-button"
+                    disabled={action.disabled}
+                    isSelected={index === selectedActionIndex}
+                    key={action.id}
+                    onClick={() => activateCombatAction(action)}
+                    onMouseEnter={() => {
+                      if (!action.disabled) {
+                        setSelectedActionIndex(index);
+                      }
+                    }}
+                  >
+                    <span className="combat-action-button__label">
+                      {action.def.name}
+                    </span>
+                    <span className="combat-action-tooltip" role="tooltip">
+                      <span className="combat-action-tooltip__summary">
+                        {action.def.summary}
+                      </span>
+                      <span className="combat-action-tooltip__line">
+                        <strong>Formula:</strong> {action.def.formula}
+                      </span>
+                      <span className="combat-action-tooltip__line">
+                        <strong>Effects:</strong>{" "}
+                        {formatConciseEffects(action.def.effects)}
+                      </span>
+                      {action.availabilityNote && (
+                        <span className="combat-action-tooltip__warning">
+                          {action.availabilityNote}
+                        </span>
+                      )}
+                      <span className="combat-action-tooltip__hint">
+                        Press I for details
+                      </span>
+                    </span>
+                  </TerminalButton>
+                ))}
               </div>
             </div>
           )}
@@ -439,6 +616,52 @@ export function CombatPanel({
           )}
         </div>
       </div>
+
+      {isItemPickerOpen && (
+        <CombatItemPickerModal
+          audioSettings={audioSettings}
+          items={combatItems}
+          onClose={() => setIsItemPickerOpen(false)}
+          onUseItem={(itemId) => {
+            setIsItemPickerOpen(false);
+            executeCommand({ type: "UseItem", itemId });
+          }}
+        />
+      )}
+
+      {isActionDetailsOpen && selectedAction && (
+        <CombatActionDetailsModal
+          action={selectedAction.def}
+          audioSettings={audioSettings}
+          onClose={() => setIsActionDetailsOpen(false)}
+        />
+      )}
     </TerminalPanel>
   );
+}
+
+function formatConciseEffects(effects: string[]): string {
+  return effects.slice(0, 2).join(" ");
+}
+
+function findFirstEnabledActionIndex(actions: CombatMenuAction[]): number {
+  const index = actions.findIndex((action) => !action.disabled);
+  return index >= 0 ? index : 0;
+}
+
+function findNextEnabledActionIndex(
+  actions: CombatMenuAction[],
+  currentIndex: number,
+  step: number,
+): number {
+  let nextIndex = currentIndex + step;
+
+  while (nextIndex >= 0 && nextIndex < actions.length) {
+    if (!actions[nextIndex].disabled) {
+      return nextIndex;
+    }
+    nextIndex += step;
+  }
+
+  return currentIndex;
 }

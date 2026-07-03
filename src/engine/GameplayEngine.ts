@@ -74,7 +74,12 @@ export type EngineEffect =
       quantity: number;
       source?: "quest_turn_in";
     }
-  | { type: "ItemUsed"; itemId: string; energyRestored: number }
+  | {
+      type: "ItemUsed";
+      itemId: string;
+      energyRestored?: number;
+      hpRestored?: number;
+    }
   | {
       type: "ItemUseRejected";
       itemId: string;
@@ -175,6 +180,7 @@ type ZoneResolver = (zoneId: string) => GameMap | undefined;
 
 type GameplayEngineOptions = {
   resolveZone?: ZoneResolver;
+  random?: () => number;
 };
 
 /**
@@ -210,6 +216,7 @@ export class GameplayEngine {
       addLog: (message) => this.addLog(message),
       recordNpcDefeat: (npcId) => this.recordNpcDefeat(npcId),
       recoverPlayerFromDefeat: () => this.recoverPlayerFromCombatDefeat(),
+      random: options.random,
     });
 
     const playerId = this.world.createEntity();
@@ -662,7 +669,7 @@ export class GameplayEngine {
 
   static fromSaveData(
     saveData: GameSaveData,
-    options: { resolveZone: ZoneResolver },
+    options: GameplayEngineOptions & { resolveZone: ZoneResolver },
   ): GameplayEngine {
     const map = options.resolveZone(saveData.zoneId);
 

@@ -492,7 +492,15 @@ function getUsedItemToastMessage(
 ): string {
   const itemDef = getItemDef(effect.itemId);
 
-  return `Used ${itemDef.name}. Recovered ${effect.energyRestored} energy.`;
+  if (effect.hpRestored !== undefined) {
+    return `Used ${itemDef.name}. Recovered ${effect.hpRestored} HP.`;
+  }
+
+  if (effect.energyRestored !== undefined) {
+    return `Used ${itemDef.name}. Recovered ${effect.energyRestored} energy.`;
+  }
+
+  return `Used ${itemDef.name}.`;
 }
 
 function getItemToastTone(itemId: string): GameToastTone {

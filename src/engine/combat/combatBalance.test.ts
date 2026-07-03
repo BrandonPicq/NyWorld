@@ -65,6 +65,31 @@ describe("combat balance guardrails", () => {
     expect(hitCount).toBeLessThanOrEqual(5);
   });
 
+  it("keeps the goblin between the slime tutorial and kobold duel targets", () => {
+    const player = createInitialStats();
+    const slimeHits = countSuccessfulHitsToDefeat({
+      attacker: player,
+      defender: createNpcStats("slime"),
+      kind: "physical",
+      inputAdvantage: 2,
+    });
+    const goblinHits = countSuccessfulHitsToDefeat({
+      attacker: player,
+      defender: createNpcStats("goblin"),
+      kind: "physical",
+      inputAdvantage: 2,
+    });
+    const koboldHits = countSuccessfulHitsToDefeat({
+      attacker: player,
+      defender: createNpcStats("kobold"),
+      kind: "physical",
+      inputAdvantage: 2,
+    });
+
+    expect(goblinHits).toBeGreaterThan(slimeHits);
+    expect(goblinHits).toBeLessThan(koboldHits);
+  });
+
   it("keeps the kobold feasible but slower for an average QTE lead", () => {
     const hitCount = countSuccessfulHitsToDefeat({
       attacker: createInitialStats(),

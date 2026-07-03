@@ -1,0 +1,17 @@
+{
+  "actionId": "flee",
+  "name": "Flee",
+  "category": "utility",
+  "order": 5,
+  "summary": "Attempt to leave combat before the enemy can finish you.",
+  "formula": "Success chance is based on your Agility versus the enemy's Agility.",
+  "effects": [
+    "Ends combat immediately on success.",
+    "Fails into the enemy turn.",
+    "Chance is clamped between 10% and 90%."
+  ],
+  "details": [
+    "Flee is the emergency exit. Faster characters have better odds, but escape is never guaranteed and never impossible.",
+    "A failed attempt gives the opponent an opening, so fleeing is safest when you cannot survive another exchange."
+  ]
+}

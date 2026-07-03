@@ -39,9 +39,26 @@ checking QTE combat changes. These are design targets, not final formulas.
 - Later dangerous enemy: usually 6 to 10 strong player attacks unless the fight
   has a special mechanic.
 
-For current content, Slime is the tutorial enemy and Kobold is the first real
-threat. The Kobold is a fast physical duelist: lower HP and defense than a
-defender, but enough attack and Agility to punish weak defense QTEs.
+For current content, Slime is the tutorial enemy, Goblin is the intermediate
+step, and Kobold is the first real threat. The Goblin should last longer than
+the Slime without becoming a duel, while the Kobold is a fast physical duelist:
+lower HP and defense than a defender, but enough attack and Agility to punish
+weak defense QTEs.
+
+Real combat applies a final damage variance after QTE and mistake modifiers.
+Rolled damage should stay between 75% and 125% of the calculated damage, rounded
+to a valid integer damage value.
+
+## Combat Actions
+
+- Strike is the basic physical action and grants 5 SP when selected.
+- Cast is the basic magical action and costs 10 MP before the QTE starts.
+- Guard consumes the player action, grants 10 SP, and reduces the next enemy
+  attack.
+- Focus consumes the player action, grants 5 SP, and boosts the next damaging
+  player action by 1.5x.
+- Combat item use consumes the player action when the item has an effect.
+- Flee remains an agility-based escape attempt.
 
 ## Authoring Notes
 

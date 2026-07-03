@@ -1,0 +1,18 @@
+{
+  "actionId": "cast",
+  "name": "Cast",
+  "category": "offense",
+  "order": 2,
+  "summary": "Spend MP to launch a magical attack.",
+  "formula": "Magic QTE + MAG vs MDF, then final damage rolls between 75% and 125%.",
+  "effects": [
+    "Costs 10 MP.",
+    "Uses Spirit for QTE pressure.",
+    "Benefits from the next Focus damage boost."
+  ],
+  "details": [
+    "Cast is the basic magical attack. It compares your magical attack value and QTE performance against the enemy's magical defense.",
+    "The QTE uses Spirit instead of Agility, so magically gifted characters can apply pressure even when they are not physically fast.",
+    "If your MP is below the casting cost, the action is unavailable and does not consume your turn."
+  ]
+}

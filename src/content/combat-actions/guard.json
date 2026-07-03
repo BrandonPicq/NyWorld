@@ -1,0 +1,18 @@
+{
+  "actionId": "guard",
+  "name": "Guard",
+  "category": "defense",
+  "order": 3,
+  "summary": "Brace for the enemy response and reduce incoming damage.",
+  "formula": "The next enemy damage is halved after variance, with minimum 1 damage if the hit lands.",
+  "effects": [
+    "Gain 10 SP.",
+    "Reduces the next enemy hit.",
+    "Consumes the current turn."
+  ],
+  "details": [
+    "Guard is the defensive tempo action. It does not require an attack QTE, but the enemy still gets their turn.",
+    "The mitigation applies to the next incoming enemy hit only. Strong defense can still be beaten by a very good enemy result.",
+    "Guard is useful when you need SP, expect a dangerous enemy action, or want to stabilize before using another option."
+  ]
+}
