@@ -4,6 +4,14 @@ This file tracks meaningful project changes by commit-oriented slices.
 
 Keep entries short and practical. When a slice is committed, its changelog section should stay aligned with the commit title so the project history remains easy to read after restores or bisects.
 
+## 2026-07-03 - [ADD]: Create Goblin monster between Slime and Kobold on test zone 2
+
+- Define Goblin NPC with orange "g" glyph and a threatening dialogue line.
+- Add Goblin enemy definition with combat stats between Slime and Kobold (HP 27, ATK 7, DEF 4).
+- Grant goblin_ear as quest loot on defeat.
+- Spawn Goblin at (8, 3) in Test Zone 2, between the Slime and Kobold columns.
+- Update enemy registry and gameplay engine test snapshots for the new content.
+
 ## 2026-07-03 - [UPDATE]: Show player combat stats in battle UI
 
 - Replace unavailable sidebar commands with player MP, SP, and combat stats during combat.

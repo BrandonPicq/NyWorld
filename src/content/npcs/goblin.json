@@ -1,0 +1,11 @@
+{
+  "npcId": "goblin",
+  "name": "Goblin",
+  "race": "unknown",
+  "importance": "common",
+  "presentation": {
+    "glyph": "g",
+    "color": "#f59e0b"
+  },
+  "defaultDialogueId": "goblin.default"
+}

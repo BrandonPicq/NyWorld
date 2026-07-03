@@ -29,6 +29,11 @@
       "y": 5
     },
     {
+      "npcId": "goblin",
+      "x": 8,
+      "y": 3
+    },
+    {
       "npcId": "kobold",
       "x": 8,
       "y": 2

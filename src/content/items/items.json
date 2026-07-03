@@ -41,6 +41,12 @@
     "category": "quest",
     "defaultQuantity": 1
   },
+  "goblin_ear": {
+    "name": "Goblin Ear",
+    "description": "A sharp, pointed green ear, cut from a defeated goblin.",
+    "category": "quest",
+    "defaultQuantity": 1
+  },
   "kobold_remains": {
     "name": "Kobold Remains",
     "description": "Evidence of a defeated Kobold, requested by the Old Wizard.",

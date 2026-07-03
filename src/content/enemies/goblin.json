@@ -1,0 +1,51 @@
+{
+  "npcId": "goblin",
+  "combatable": true,
+  "stats": {
+    "resources": {
+      "hp": 27,
+      "maxHp": 27,
+      "mp": 15,
+      "maxMp": 15,
+      "sp": 50,
+      "maxSp": 100,
+      "energy": 100,
+      "maxEnergy": 100
+    },
+    "attributes": {
+      "strength": 10,
+      "vitality": 7,
+      "agility": 10,
+      "intelligence": 4,
+      "spirit": 5,
+      "willpower": 6,
+      "perception": 7,
+      "charisma": 3
+    },
+    "combat": {
+      "attack": 7,
+      "magicAttack": 4,
+      "defense": 4,
+      "magicDefense": 4
+    },
+    "skills": {
+      "melee": 1,
+      "ranged": 1,
+      "guard": 1,
+      "evasion": 1,
+      "spellcasting": 1,
+      "focus": 1,
+      "athletics": 1,
+      "scholarship": 1,
+      "speech": 1
+    },
+    "progression": {
+      "academicTitle": "Cunning Goblin",
+      "academicProgress": 0
+    },
+    "conditions": []
+  },
+  "loot": [
+    { "itemId": "goblin_ear", "quantity": 1 }
+  ]
+}

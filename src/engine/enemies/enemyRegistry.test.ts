@@ -65,6 +65,6 @@ describe("enemyRegistry", () => {
     const defs = getAllEnemyDefs();
     const ids = defs.map((def) => def.npcId);
 
-    expect(ids).toEqual(["kobold", "slime"]);
+    expect(ids).toEqual(["goblin", "kobold", "slime"]);
   });
 });
