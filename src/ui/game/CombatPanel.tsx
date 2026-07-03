@@ -46,7 +46,7 @@ export function CombatPanel({
 
   const opponentSpeed = qteChallenge?.opponentSpeed ?? 10;
   // Calculate opponent key delay: faster speed = shorter delay
-  const opponentKeyDelayMs = Math.max(400, 800 - opponentSpeed * 30);
+  const opponentKeyDelayMs = Math.max(400, 1000 - opponentSpeed * 40);
   const sequenceLength = qteSequence?.length ?? 5;
   const timeLimitMs = qteChallenge?.timeLimitMs ?? 5000;
 

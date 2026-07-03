@@ -15,7 +15,7 @@ const ENEMY_BASE_STATS: Record<string, Partial<Stats>> = {
     attributes: {
       strength: 8,
       vitality: 6,
-      agility: 8,
+      agility: 4,
       intelligence: 2,
       spirit: 2,
       willpower: 4,

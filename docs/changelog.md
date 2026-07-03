@@ -8,7 +8,8 @@ Keep entries short and practical. When a slice is committed, its changelog secti
 
 - Increase default QTE base time limit to 5 seconds.
 - Broaden QTE sequence length limits to clamp between 3 and 10 inputs.
-- Raise minimum opponent simulated keypress delay to 400ms.
+- Reduce slime agility from 8 to 4, decreasing its QTE speed.
+- Adjust opponent simulated keypress delay formula to base 1000ms and multiplier 40ms, raising minimum delay to 400ms.
 
 ## 2026-07-03 - [UPDATE]: Display enemy Spirit and implement stats-based fleeing
 
