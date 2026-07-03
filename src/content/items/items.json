@@ -25,7 +25,7 @@
   },
   "old_coin": {
     "name": "Old Coin",
-    "description": "A tarnished coin from a forgotten era. Worth a few bronze to a collector.",
+    "description": "A tarnished coin from a forgotten era. Worth a few copper to a collector.",
     "category": "misc",
     "defaultQuantity": 1
   },

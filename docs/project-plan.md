@@ -82,7 +82,7 @@ L'ecran sera a texte dominant :
 - carte Canvas compacte mais visible affichant le joueur et les PNJs (glyph commun pour les PNJs ordinaires, couleur par race) ;
 - boutons de deplacement en forme de croix directionnelle (D-pad) avec le bouton d'interaction contextuel `Interact [E]` au centre ;
 - informations de debug : zone active, position et direction regardee ;
-- tableau de bord lateral (gauche) affichant les ressources vitales : jauge d'energie (decroissance par pas), monnaie decomposee (Platinum, Gold, Silver, Bronze), titre academique, avec boutons de repos et fiche de personnage ;
+- tableau de bord lateral (gauche) affichant les ressources vitales : jauge d'energie (decroissance par pas), monnaie decomposee (Platinum, Gold, Silver, Copper), titre academique, avec boutons de repos et fiche de personnage ;
 - horloge et date de monde affichees dans le tableau de bord lateral ;
 - fiche de personnage detaillee (modal overlay) accessible avec la touche `C` ou clic, affichant la liste modulaire des attributs (Strength, Intelligence, Charisma) et le detail de la progression academique ;
 - boîte de dialogue superposée (bas de carte) bloquant temporairement les inputs de déplacement lors d'un échange avec un PNJ.

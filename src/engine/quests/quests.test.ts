@@ -166,7 +166,7 @@ describe("Quest System", () => {
       },
     ]);
     expect(snapshot.log.map((entry) => entry.message)).toContain(
-      "Quest Rewards: 1s 50b, Travel Ration x2.",
+      "Quest Rewards: 1s 50c, Travel Ration x2.",
     );
   });
 

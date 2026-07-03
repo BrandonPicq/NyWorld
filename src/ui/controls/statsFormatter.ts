@@ -1,17 +1,17 @@
 /**
  * Formats the smallest currency unit into medieval coin denominations.
  */
-export function formatCurrency(bronzeCoins: number): string {
-  const platinum = Math.floor(bronzeCoins / 1000000);
-  const gold = Math.floor((bronzeCoins % 1000000) / 10000);
-  const silver = Math.floor((bronzeCoins % 10000) / 100);
-  const bronze = bronzeCoins % 100;
+export function formatCurrency(copperCoins: number): string {
+  const platinum = Math.floor(copperCoins / 1000000);
+  const gold = Math.floor((copperCoins % 1000000) / 10000);
+  const silver = Math.floor((copperCoins % 10000) / 100);
+  const copper = copperCoins % 100;
 
   const parts: string[] = [];
   if (platinum > 0) parts.push(`${platinum}p`);
   if (gold > 0) parts.push(`${gold}g`);
   if (silver > 0) parts.push(`${silver}s`);
-  if (bronze > 0 || parts.length === 0) parts.push(`${bronze}b`);
+  if (copper > 0 || parts.length === 0) parts.push(`${copper}c`);
 
   return parts.join(" ");
 }

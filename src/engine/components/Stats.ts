@@ -61,7 +61,7 @@ export interface CharacterCondition {
  */
 export interface Stats extends Component {
   readonly type: "Stats";
-  /** Total value stored in bronze coins; UI can format it into larger units. */
+  /** Total value stored in copper coins; UI can format it into larger units. */
   currency: number;
   resources: StatResources;
   attributes: CoreAttributes;

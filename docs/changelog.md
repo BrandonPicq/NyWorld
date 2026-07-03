@@ -4,6 +4,12 @@ This file tracks meaningful project changes by commit-oriented slices.
 
 Keep entries short and practical. When a slice is committed, its changelog section should stay aligned with the commit title so the project history remains easy to read after restores or bisects.
 
+## 2026-07-03 - [UPDATE]: Rename smallest currency unit to copper
+
+- Rename the smallest currency denomination to Copper in UI formatting and content text.
+- Update currency display from `b` to `c`.
+- Keep stored currency values unchanged as the same smallest-unit integer.
+
 ## 2026-07-03 - [UPDATE]: Balance early combat targets and guardrails
 
 - Add first combat balance notes for stat roles, QTE profiles, and early enemy targets.
@@ -473,7 +479,7 @@ Keep entries short and practical. When a slice is committed, its changelog secti
 
 - Introduce a modular ECS Stats component supporting energy, currency, attributes, and academic rank.
 - Implement energy decay (1 energy per valid movement step) and Rest command (recovers 15 energy, costs 1 tick).
-- Add currency conversion formatting to partition total bronze coins into Platinum (p), Gold (g), Silver (s), and Bronze (b) divisions.
+- Add currency conversion formatting to partition total copper coins into Platinum (p), Gold (g), Silver (s), and Copper (c) divisions.
 - Restructure the Game Screen layout on wide screens to display three columns: stats panel (left), map grid (center), and actions log (right).
 - Add detailed Character Sheet overlay (toggled with `C` or Esc) displaying attributes dynamically.
 
