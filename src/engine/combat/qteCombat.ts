@@ -5,6 +5,8 @@ export type QteContestOutcome = "critical" | "hit" | "guarded" | "evaded";
 
 export interface QteChallenge {
   sequenceLength: number;
+  playerSequenceLength: number;
+  opponentSequenceLength: number;
   timeLimitMs: number;
   actorSpeed: number;
   opponentSpeed: number;
@@ -48,12 +50,16 @@ export function createQteChallenge({
   const playerSpeed = isPlayerActor ? actorSpeed : opponentSpeed;
   const enemySpeed = isPlayerActor ? opponentSpeed : actorSpeed;
   const speedAdvantage = playerSpeed - enemySpeed;
-  const sequenceDelta = Math.trunc(speedAdvantage / 5);
+
+  const playerSequenceLength = clamp(baseSequenceLength - Math.trunc(speedAdvantage / 5), 3, 10);
+  const opponentSequenceLength = clamp(baseSequenceLength - Math.trunc(-speedAdvantage / 5), 3, 10);
 
   return {
     actorSpeed,
     opponentSpeed,
-    sequenceLength: clamp(baseSequenceLength - sequenceDelta, 3, 10),
+    sequenceLength: playerSequenceLength,
+    playerSequenceLength,
+    opponentSequenceLength,
     timeLimitMs: clamp(baseTimeLimitMs + speedAdvantage * 100, 3000, 8000),
   };
 }

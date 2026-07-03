@@ -47,7 +47,8 @@ export function CombatPanel({
   const opponentSpeed = qteChallenge?.opponentSpeed ?? 10;
   // Calculate opponent key delay: faster speed = shorter delay
   const opponentKeyDelayMs = Math.max(400, 1000 - opponentSpeed * 40);
-  const sequenceLength = qteSequence?.length ?? 5;
+  const playerSequenceLength = qteChallenge?.playerSequenceLength ?? qteSequence?.length ?? 5;
+  const opponentSequenceLength = qteChallenge?.opponentSequenceLength ?? 5;
   const timeLimitMs = qteChallenge?.timeLimitMs ?? 5000;
 
   // Reset states on phase changes
@@ -128,12 +129,12 @@ export function CombatPanel({
       const oppProgress = Math.floor(elapsed / opponentKeyDelayMs);
 
       // Check if opponent finished first
-      if (oppProgress >= sequenceLength && !submittedRef.current) {
+      if (oppProgress >= opponentSequenceLength && !submittedRef.current) {
         submittedRef.current = true;
         if (requestRef.current) cancelAnimationFrame(requestRef.current);
 
         const currentIdx = playerInputIndexRef.current;
-        const advantage = -(sequenceLength - currentIdx);
+        const advantage = -(playerSequenceLength - currentIdx);
 
         executeCommand({
           type: "SubmitCombatQte",
@@ -150,7 +151,7 @@ export function CombatPanel({
         if (requestRef.current) cancelAnimationFrame(requestRef.current);
 
         const currentIdx = playerInputIndexRef.current;
-        const advantage = -(sequenceLength - currentIdx);
+        const advantage = -(playerSequenceLength - currentIdx);
 
         executeCommand({
           type: "SubmitCombatQte",
@@ -171,7 +172,7 @@ export function CombatPanel({
         cancelAnimationFrame(requestRef.current);
       }
     };
-  }, [phase, opponentKeyDelayMs, sequenceLength, timeLimitMs, executeCommand]);
+  }, [phase, opponentKeyDelayMs, playerSequenceLength, opponentSequenceLength, timeLimitMs, executeCommand]);
 
   // Player QTE keyboard input matching
   useEffect(() => {
@@ -208,12 +209,12 @@ export function CombatPanel({
         playerInputIndexRef.current = nextIndex;
 
         // Check if player completed the sequence
-        if (nextIndex >= sequenceLength && !submittedRef.current) {
+        if (nextIndex >= playerSequenceLength && !submittedRef.current) {
           submittedRef.current = true;
           if (requestRef.current) cancelAnimationFrame(requestRef.current);
 
           const oppProgress = Math.floor(timeElapsed / opponentKeyDelayMs);
-          const advantage = sequenceLength - oppProgress;
+          const advantage = opponentSequenceLength - oppProgress;
 
           executeCommand({
             type: "SubmitCombatQte",
@@ -236,7 +237,7 @@ export function CombatPanel({
           if (requestRef.current) cancelAnimationFrame(requestRef.current);
 
           // Failed immediately due to 2 mistakes
-          const advantage = -(sequenceLength - currentIdx);
+          const advantage = -(playerSequenceLength - currentIdx);
           executeCommand({
             type: "SubmitCombatQte",
             completed: false,
@@ -249,9 +250,9 @@ export function CombatPanel({
 
     window.addEventListener("keydown", handleQteKeys);
     return () => window.removeEventListener("keydown", handleQteKeys);
-  }, [phase, qteSequence, sequenceLength, timeElapsed, opponentKeyDelayMs, executeCommand, keyboardLayout, audioSettings.soundEnabled]);
+  }, [phase, qteSequence, playerSequenceLength, opponentSequenceLength, timeElapsed, opponentKeyDelayMs, executeCommand, keyboardLayout, audioSettings.soundEnabled]);
 
-  const opponentCompleted = Math.min(sequenceLength, Math.floor(timeElapsed / opponentKeyDelayMs));
+  const opponentCompleted = Math.min(opponentSequenceLength, Math.floor(timeElapsed / opponentKeyDelayMs));
 
   return (
     <TerminalPanel className="combat-panel">
@@ -387,7 +388,7 @@ export function CombatPanel({
                   <div className="combat-race-bar">
                     <div
                       className="combat-race-fill combat-race-fill--player"
-                      style={{ width: `${(playerInputIndex / sequenceLength) * 100}%` }}
+                      style={{ width: `${(playerInputIndex / playerSequenceLength) * 100}%` }}
                     />
                   </div>
                 </div>
@@ -397,7 +398,7 @@ export function CombatPanel({
                   <div className="combat-race-bar">
                     <div
                       className="combat-race-fill combat-race-fill--opponent"
-                      style={{ width: `${(opponentCompleted / sequenceLength) * 100}%` }}
+                      style={{ width: `${(opponentCompleted / opponentSequenceLength) * 100}%` }}
                     />
                   </div>
                 </div>
