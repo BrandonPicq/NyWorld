@@ -4,6 +4,16 @@ This file tracks meaningful project changes by commit-oriented slices.
 
 Keep entries short and practical. When a slice is committed, its changelog section should stay aligned with the commit title so the project history remains easy to read after restores or bisects.
 
+## 2026-07-03 - [ADD]: Create Kobold monster, quest line, and loot mechanics
+
+- Define Kobold NPC data matching initial player attributes and stats.
+- Spawn Kobold at (8, 2) in Test Zone 2.
+- Implement "Defeat the Kobold" quest given by the Old Wizard in Test Zone.
+- Create old_wizard scheduled presence at (7, 6) in Test Zone to trigger quest start dialogue.
+- Add kobold_remains item definition and grant it as loot upon Kobold defeat.
+- Update CombatPanel and GameplayEngine to manage Kobold remains collection.
+- Add unit test validating defeat_the_kobold quest loading.
+
 ## 2026-07-03 - [UPDATE]: Balance QTE difficulty constraints and adjust minimum key delay
 
 - Increase default QTE base time limit to 5 seconds.

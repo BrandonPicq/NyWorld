@@ -5,5 +5,38 @@
       "text": "Hocus Pocus! I am an adjacent Wizard.",
       "pitch": 1.2
     }
+  ],
+  "old_wizard.quest_start": [
+    {
+      "speaker": "Old Wizard",
+      "text": "Ah, traveler! A fierce Kobold has occupied the Eastern Ruins.",
+      "pitch": 1.2
+    },
+    {
+      "speaker": "Old Wizard",
+      "text": "It is extremely agile and matches your stats. Could you defeat it and bring back its remains?",
+      "pitch": 1.2
+    }
+  ],
+  "old_wizard.quest_active": [
+    {
+      "speaker": "Old Wizard",
+      "text": "Have you defeated the Kobold yet? Be careful, its agility is equal to yours!",
+      "pitch": 1.2
+    }
+  ],
+  "old_wizard.quest_active_ready": [
+    {
+      "speaker": "Old Wizard",
+      "text": "Marvelous! You have vanquished the Kobold. Here is your reward!",
+      "pitch": 1.2
+    }
+  ],
+  "old_wizard.quest_completed": [
+    {
+      "speaker": "Old Wizard",
+      "text": "Thank you again, brave traveler. The ruins are safer now.",
+      "pitch": 1.2
+    }
   ]
 }

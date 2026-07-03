@@ -1,0 +1,12 @@
+{
+  "npcId": "old_wizard",
+  "schedule": [
+    {
+      "time": "08:00",
+      "zoneId": "test_zone",
+      "x": 7,
+      "y": 6,
+      "dialogueId": "old_wizard.quest_start"
+    }
+  ]
+}

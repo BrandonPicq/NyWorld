@@ -40,5 +40,11 @@
     "description": "A gelatinous blob left behind by a defeated slime. Still faintly warm.",
     "category": "quest",
     "defaultQuantity": 1
+  },
+  "kobold_remains": {
+    "name": "Kobold Remains",
+    "description": "Evidence of a defeated Kobold, requested by the Old Wizard.",
+    "category": "quest",
+    "defaultQuantity": 1
   }
 }

@@ -329,4 +329,19 @@ describe("Quest System", () => {
       "advanced_quest:visit_ruins",
     ]);
   });
+
+  it("loads defeat_the_kobold quest successfully", () => {
+    expect(hasQuestDef("defeat_the_kobold")).toBe(true);
+    const def = getQuestDef("defeat_the_kobold");
+    expect(def).toBeDefined();
+    expect(def?.questId).toBe("defeat_the_kobold");
+    expect(def?.targetNpcId).toBe("old_wizard");
+    const objective = def?.objectives[0];
+    expect(objective).toBeDefined();
+    if (objective?.type === "fetch_item") {
+      expect(objective.itemId).toBe("kobold_remains");
+    } else {
+      throw new Error("Objective is not a fetch_item type");
+    }
+  });
 });

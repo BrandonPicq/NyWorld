@@ -1,0 +1,9 @@
+{
+  "kobold.default": [
+    {
+      "speaker": "Kobold",
+      "text": "Grrr... You trespass on Kobold territory! Prepare to fight!",
+      "pitch": 1.2
+    }
+  ]
+}

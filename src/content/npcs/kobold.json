@@ -1,0 +1,11 @@
+{
+  "npcId": "kobold",
+  "name": "Kobold",
+  "race": "unknown",
+  "importance": "common",
+  "presentation": {
+    "glyph": "k",
+    "color": "#f38ba8"
+  },
+  "defaultDialogueId": "kobold.default"
+}

@@ -1,0 +1,32 @@
+{
+  "questId": "defeat_the_kobold",
+  "name": "Defeat the Kobold",
+  "description": "The Old Wizard asks you to defeat the Kobold that has taken up residence in the Eastern Ruins.",
+  "targetNpcId": "old_wizard",
+  "triggers": {
+    "start": { "dialogueId": "old_wizard.quest_start" },
+    "complete": { "dialogueId": "old_wizard.quest_active_ready" }
+  },
+  "npcOverrides": {
+    "old_wizard": {
+      "active": "old_wizard.quest_active",
+      "activeReady": "old_wizard.quest_active_ready",
+      "completed": "old_wizard.quest_completed"
+    }
+  },
+  "objectives": [
+    {
+      "id": "collect_kobold_remains",
+      "type": "fetch_item",
+      "itemId": "kobold_remains",
+      "quantity": 1,
+      "description": "Slay the Kobold and collect its remains"
+    }
+  ],
+  "rewards": {
+    "currency": 250,
+    "items": [
+      { "itemId": "travel_ration", "quantity": 2 }
+    ]
+  }
+}

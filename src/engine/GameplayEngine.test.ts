@@ -774,6 +774,7 @@ describe("GameplayEngine", () => {
       knownFlags: [],
     });
     expect(engine.getSnapshot().npcStates.map((state) => state.npcId)).toEqual([
+      "kobold",
       "old_scholar",
       "old_wizard",
       "slime",

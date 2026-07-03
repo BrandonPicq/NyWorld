@@ -1561,6 +1561,23 @@ export class GameplayEngine {
         this.addLog("Collected Slime Remains.");
       }
 
+      if (this.combatState.opponentNpcId === "kobold") {
+        const inventory = this.getPlayerInventory();
+        const existing = inventory.items.find((i) => i.itemId === "kobold_remains");
+        if (existing) {
+          existing.quantity += 1;
+        } else {
+          inventory.items.push({ itemId: "kobold_remains", quantity: 1 });
+        }
+        effects.push({
+          type: "ItemCollected",
+          itemId: "kobold_remains",
+          quantity: 1,
+          source: "reward",
+        });
+        this.addLog("Collected Kobold Remains.");
+      }
+
       this.combatState = undefined;
       return { success: true, effects };
     }

@@ -27,6 +27,11 @@
       "npcId": "slime",
       "x": 8,
       "y": 5
+    },
+    {
+      "npcId": "kobold",
+      "x": 8,
+      "y": 2
     }
   ],
   "items": [

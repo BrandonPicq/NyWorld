@@ -432,6 +432,9 @@ export function CombatPanel({
               {opponentName.toLowerCase() === "slime" && (
                 <p className="combat-loot-text">Loot found: 1x [Slime Remains]</p>
               )}
+              {opponentName.toLowerCase() === "kobold" && (
+                <p className="combat-loot-text">Loot found: 1x [Kobold Remains]</p>
+              )}
               <div className="combat-result-actions">
                 <TerminalButton onClick={() => executeCommand({ type: "ConcludeCombat" })}>
                   Conclude Combat [Space]
