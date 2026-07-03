@@ -1,0 +1,11 @@
+{
+  "npcId": "slime",
+  "name": "Slime",
+  "race": "unknown",
+  "importance": "common",
+  "presentation": {
+    "glyph": "s",
+    "color": "#4ade80"
+  },
+  "defaultDialogueId": "slime.default"
+}

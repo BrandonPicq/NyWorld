@@ -16,7 +16,7 @@ describe("npcPresenceRegistry", () => {
           zoneId: "test_zone",
           x: 6,
           y: 3,
-          dialogueId: "young_page.default",
+          dialogueId: "young_page.quest_start",
         },
         {
           time: "18:00",

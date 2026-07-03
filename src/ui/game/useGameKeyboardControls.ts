@@ -17,6 +17,7 @@ type UseGameKeyboardControlsInput = {
   isPauseMenuOpen: boolean;
   isQuestsOpen: boolean;
   isSaveSlotsOpen?: boolean;
+  isCombatActive?: boolean;
   keyboardLayout: KeyboardLayout;
   onOpenPauseMenu: () => void;
   progressDialogue: () => void;
@@ -54,10 +55,11 @@ export function useGameKeyboardControls({
   setIsInventoryOpen,
   setIsQuestsOpen,
   setIsSaveSlotsOpen,
+  isCombatActive = false,
 }: UseGameKeyboardControlsInput): void {
   useEffect(() => {
     function handleKeyDown(event: KeyboardEvent) {
-      if (isInteractChoiceOpen || isPauseMenuOpen || isSaveSlotsOpen) {
+      if (isInteractChoiceOpen || isPauseMenuOpen || isSaveSlotsOpen || isCombatActive) {
         return;
       }
 

@@ -53,6 +53,13 @@ import {
   getStatValue,
   refreshDerivedStats,
 } from "./stats/characterStats";
+import { createNpcStats } from "./stats/npcStats";
+import {
+  createQteChallenge,
+  resolveQteContest,
+  type CombatActionKind,
+  type QteChallenge,
+} from "./combat/qteCombat";
 
 export type EngineEffect =
   | {
@@ -102,6 +109,17 @@ export interface RenderEntity {
   name?: string;
 }
 
+export interface CombatState {
+  opponentId: EntityId;
+  opponentNpcId: string;
+  opponentName: string;
+  opponentStats: Stats;
+  phase: "action_selection" | "player_qte" | "enemy_qte" | "victory" | "defeat";
+  actionKind?: CombatActionKind;
+  qteChallenge?: QteChallenge;
+  qteSequence?: string[];
+}
+
 /**
  * Immutable UI-facing view of the current game state.
  *
@@ -142,6 +160,7 @@ export interface GameSnapshot {
     rewards: { currency?: number; items?: Array<{ itemId: string; quantity: number }> };
   }>;
   completedQuests: string[];
+  combatState?: CombatState;
 }
 
 const COMMAND_DIRECTION: Record<string, Direction> = {
@@ -189,6 +208,7 @@ export class GameplayEngine {
   private pendingZoneEntryDialogue: DialogueNode[] = [];
   private seenZoneEntryEventIds = new Set<string>();
   private notices: EngineNotice[] = [];
+  private combatState?: CombatState;
 
   constructor(map: GameMap, options: GameplayEngineOptions = {}) {
     this.map = map;
@@ -268,6 +288,19 @@ export class GameplayEngine {
    * nearby or direction-limited tiles for contextual actions without moving.
    */
   execute(command: GameCommand): ExecuteResult {
+    if (this.combatState) {
+      if (command.type === "SelectCombatAction") {
+        return this.handleSelectCombatAction(command.actionKind);
+      }
+      if (command.type === "SubmitCombatQte") {
+        return this.handleSubmitCombatQte(command.completed, command.inputAdvantage);
+      }
+      if (command.type === "ConcludeCombat") {
+        return this.handleConcludeCombat();
+      }
+      return { success: false };
+    }
+
     if (command.type === "Rest") {
       this.restPlayer();
       return { success: true };
@@ -337,6 +370,9 @@ export class GameplayEngine {
 
     const blockingNpc = this.getNpcAt(target.x, target.y);
     if (blockingNpc) {
+      if (blockingNpc.npcId === "slime") {
+        return this.startCombat(blockingNpc);
+      }
       return this.talkToNpc(blockingNpc, false);
     }
 
@@ -400,6 +436,9 @@ export class GameplayEngine {
     if (targetNpcId) {
       const targetNpc = adjacentNpcs.find((n) => n.npcId === targetNpcId);
       if (targetNpc) {
+        if (targetNpc.npcId === "slime") {
+          return this.startCombat(targetNpc);
+        }
         return this.talkToNpc(targetNpc, true);
       }
 
@@ -407,7 +446,11 @@ export class GameplayEngine {
       return { success: false };
     }
 
-    return this.talkToNpc(adjacentNpcs[0], true);
+    const firstNpc = adjacentNpcs[0];
+    if (firstNpc.npcId === "slime") {
+      return this.startCombat(firstNpc);
+    }
+    return this.talkToNpc(firstNpc, true);
   }
 
   private getNpcAt(x: number, y: number): Npc | undefined {
@@ -881,6 +924,18 @@ export class GameplayEngine {
       })),
       activeQuests: activeQuestsSnapshot,
       completedQuests: [...quests.completed],
+      combatState: this.combatState
+        ? {
+            ...this.combatState,
+            opponentStats: cloneStats(this.combatState.opponentStats),
+            qteSequence: this.combatState.qteSequence
+              ? [...this.combatState.qteSequence]
+              : undefined,
+            qteChallenge: this.combatState.qteChallenge
+              ? { ...this.combatState.qteChallenge }
+              : undefined,
+          }
+        : undefined,
     };
   }
 
@@ -1265,6 +1320,224 @@ export class GameplayEngine {
 
     return spawns;
   }
+
+  private startCombat(npc: Npc): ExecuteResult {
+    const opponentEntities = this.world.entitiesWith("Npc");
+    let opponentEntityId: EntityId | undefined;
+    for (const id of opponentEntities) {
+      const component = this.world.getComponent<Npc>(id, "Npc")!;
+      if (component.npcId === npc.npcId) {
+        opponentEntityId = id;
+        break;
+      }
+    }
+
+    if (!opponentEntityId) {
+      return { success: false };
+    }
+
+    const opponentStats = createNpcStats(npc.npcId);
+
+    this.combatState = {
+      opponentId: opponentEntityId,
+      opponentNpcId: npc.npcId,
+      opponentName: npc.name,
+      opponentStats,
+      phase: "action_selection",
+    };
+
+    this.addLog(`Combat started with ${npc.name}!`);
+
+    return {
+      success: true,
+    };
+  }
+
+  private handleSelectCombatAction(
+    actionKind: "physical" | "magical" | "flee",
+  ): ExecuteResult {
+    if (!this.combatState || this.combatState.phase !== "action_selection") {
+      return { success: false };
+    }
+
+    const playerStats = this.getPlayerStats();
+    const opponentStats = this.combatState.opponentStats;
+
+    if (actionKind === "flee") {
+      const success = Math.random() < 0.5;
+      if (success) {
+        this.addLog("You successfully fled from the combat!");
+        this.combatState = undefined;
+        return { success: true };
+      } else {
+        this.addLog("Flee attempt failed! The enemy attacks!");
+        this.combatState.phase = "enemy_qte";
+        const challenge = createQteChallenge({
+          actor: opponentStats,
+          opponent: playerStats,
+          kind: "physical",
+        });
+        this.combatState.qteChallenge = challenge;
+        this.combatState.qteSequence = generateQteSequence(challenge.sequenceLength);
+        return { success: true };
+      }
+    }
+
+    this.combatState.actionKind = actionKind;
+    this.combatState.phase = "player_qte";
+
+    const challenge = createQteChallenge({
+      actor: playerStats,
+      opponent: opponentStats,
+      kind: actionKind,
+    });
+
+    this.combatState.qteChallenge = challenge;
+    this.combatState.qteSequence = generateQteSequence(challenge.sequenceLength);
+
+    return { success: true };
+  }
+
+  private handleSubmitCombatQte(
+    completed: boolean,
+    inputAdvantage: number,
+  ): ExecuteResult {
+    if (!this.combatState) {
+      return { success: false };
+    }
+
+    const playerStats = this.getPlayerStats();
+    const opponentStats = this.combatState.opponentStats;
+    const actionKind = this.combatState.actionKind ?? "physical";
+
+    if (this.combatState.phase === "player_qte") {
+      const result = resolveQteContest({
+        attacker: playerStats,
+        defender: opponentStats,
+        kind: actionKind,
+        attackerCompleted: completed,
+        inputAdvantage,
+      });
+
+      opponentStats.resources.hp = Math.max(0, opponentStats.resources.hp - result.damage);
+      this.addLog(
+        `You used ${actionKind} attack! Outcome: ${result.outcome.toUpperCase()} (${result.damage} damage to ${this.combatState.opponentName}).`
+      );
+
+      if (opponentStats.resources.hp <= 0) {
+        this.combatState.phase = "victory";
+        this.addLog(`You defeated the ${this.combatState.opponentName}!`);
+      } else {
+        this.combatState.phase = "enemy_qte";
+        const challenge = createQteChallenge({
+          actor: opponentStats,
+          opponent: playerStats,
+          kind: "physical",
+        });
+        this.combatState.qteChallenge = challenge;
+        this.combatState.qteSequence = generateQteSequence(challenge.sequenceLength);
+      }
+
+      return { success: true };
+    }
+
+    if (this.combatState.phase === "enemy_qte") {
+      const result = resolveQteContest({
+        attacker: opponentStats,
+        defender: playerStats,
+        kind: "physical",
+        attackerCompleted: !completed,
+        inputAdvantage: -inputAdvantage,
+      });
+
+      playerStats.resources.hp = Math.max(0, playerStats.resources.hp - result.damage);
+      this.addLog(
+        `${this.combatState.opponentName} attacks! Outcome: ${result.outcome.toUpperCase()} (${result.damage} damage to you).`
+      );
+
+      if (playerStats.resources.hp <= 0) {
+        this.combatState.phase = "defeat";
+        this.addLog(`You were defeated by the ${this.combatState.opponentName}!`);
+      } else {
+        this.combatState.phase = "action_selection";
+        this.combatState.actionKind = undefined;
+        this.combatState.qteChallenge = undefined;
+        this.combatState.qteSequence = undefined;
+      }
+
+      return { success: true };
+    }
+
+    return { success: false };
+  }
+
+  private handleConcludeCombat(): ExecuteResult {
+    if (!this.combatState) {
+      return { success: false };
+    }
+
+    const effects: EngineEffect[] = [];
+
+    if (this.combatState.phase === "victory") {
+      this.world.destroyEntity(this.combatState.opponentId);
+
+      if (this.combatState.opponentNpcId === "slime") {
+        const inventory = this.getPlayerInventory();
+        const existing = inventory.items.find((i) => i.itemId === "slime_remains");
+        if (existing) {
+          existing.quantity += 1;
+        } else {
+          inventory.items.push({ itemId: "slime_remains", quantity: 1 });
+        }
+        effects.push({
+          type: "ItemCollected",
+          itemId: "slime_remains",
+          quantity: 1,
+          source: "reward",
+        });
+        this.addLog("Collected Slime Remains.");
+      }
+
+      this.combatState = undefined;
+      return { success: true, effects };
+    }
+
+    if (this.combatState.phase === "defeat") {
+      const pos = this.getPlayerPosition();
+      pos.x = 5;
+      pos.y = 4;
+
+      const playerStats = this.getPlayerStats();
+      playerStats.resources.hp = Math.floor(playerStats.resources.maxHp / 2);
+      playerStats.resources.energy = Math.floor(playerStats.resources.maxEnergy / 2);
+      refreshDerivedStats(playerStats);
+
+      if (this.map.zoneId !== "test_zone" && this.resolveZone) {
+        const firstMap = this.resolveZone("test_zone");
+        if (firstMap) {
+          this.map = firstMap;
+          this.spawnNpcs();
+          this.spawnItems();
+        }
+      }
+
+      this.addLog("Teleported back to safety. HP and Energy partially restored.");
+      this.combatState = undefined;
+      return { success: true };
+    }
+
+    return { success: false };
+  }
+}
+
+function generateQteSequence(length: number): string[] {
+  const directions = ["up", "down", "left", "right"];
+  const sequence: string[] = [];
+  for (let i = 0; i < length; i++) {
+    const index = Math.floor(Math.random() * directions.length);
+    sequence.push(directions[index]);
+  }
+  return sequence;
 }
 
 /**

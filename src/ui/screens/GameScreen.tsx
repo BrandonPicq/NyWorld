@@ -142,7 +142,8 @@ export function GameScreen({
     isInventoryOpen ||
     isQuestsOpen ||
     isPauseMenuOpen ||
-    isSaveSlotsOpen;
+    isSaveSlotsOpen ||
+    snapshot?.combatState !== undefined;
 
   const interactionTargets = snapshot
     ? getInteractionTargets(snapshot, gameplaySettings)
@@ -226,6 +227,7 @@ export function GameScreen({
     isPauseMenuOpen,
     isQuestsOpen,
     isSaveSlotsOpen,
+    isCombatActive: snapshot?.combatState !== undefined,
     keyboardLayout,
     onOpenPauseMenu: () => setIsPauseMenuOpen(true),
     progressDialogue,

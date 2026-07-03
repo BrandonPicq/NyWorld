@@ -4,6 +4,15 @@ This file tracks meaningful project changes by commit-oriented slices.
 
 Keep entries short and practical. When a slice is committed, its changelog section should stay aligned with the commit title so the project history remains easy to read after restores or bisects.
 
+## 2026-07-03 - [ADD]: Implement turn-based QTE combat system
+
+- Define enemy base statistics and createNpcStats builder.
+- Add SelectCombatAction, SubmitCombatQte, and ConcludeCombat commands.
+- Implement real-time typing QTE contest racing loop inside React.
+- Create CombatPanel UI dashboard with HP/MP/SP meters, keycap indicator, and speed race tracks.
+- Intercept grid movement and keyboard controls when combat is active.
+- Add unit tests verifying QTE damage calculations, loot acquisition, and defeat teleportation.
+
 ## 2026-07-03 - [UPDATE]: Improve conditions structure and critical hit scaling
 
 - Define CharacterCondition type with id, name, and optional durationInTicks.

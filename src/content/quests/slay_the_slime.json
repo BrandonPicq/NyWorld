@@ -1,0 +1,32 @@
+{
+  "questId": "slay_the_slime",
+  "name": "Slay the Slime",
+  "description": "The Young Page asks you to prove your worth by slaying a slime lurking in the Eastern Ruins.",
+  "targetNpcId": "young_page",
+  "triggers": {
+    "start": { "dialogueId": "young_page.quest_start" },
+    "complete": { "dialogueId": "young_page.quest_active_ready" }
+  },
+  "npcOverrides": {
+    "young_page": {
+      "active": "young_page.quest_active",
+      "activeReady": "young_page.quest_active_ready",
+      "completed": "young_page.quest_completed"
+    }
+  },
+  "objectives": [
+    {
+      "id": "collect_slime_remains",
+      "type": "fetch_item",
+      "itemId": "slime_remains",
+      "quantity": 1,
+      "description": "Slay the slime and collect its remains"
+    }
+  ],
+  "rewards": {
+    "currency": 100,
+    "items": [
+      { "itemId": "healing_herb", "quantity": 1 }
+    ]
+  }
+}

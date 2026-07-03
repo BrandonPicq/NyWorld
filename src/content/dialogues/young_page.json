@@ -12,5 +12,33 @@
       "text": "It is getting late, I should go home and rest.",
       "pitch": 1.5
     }
+  ],
+  "young_page.quest_start": [
+    {
+      "speaker": "Young Page",
+      "text": "You there! A slime has been spotted lurking in the Eastern Ruins beyond the field's edge. Prove your mettle — go slay it and bring me proof!",
+      "pitch": 1.5
+    }
+  ],
+  "young_page.quest_active": [
+    {
+      "speaker": "Young Page",
+      "text": "The slime won't slay itself. Head east to the ruins and bring back its remains!",
+      "pitch": 1.5
+    }
+  ],
+  "young_page.quest_active_ready": [
+    {
+      "speaker": "Young Page",
+      "text": "You actually did it! Those slime remains are unmistakable. Well fought — here is your reward.",
+      "pitch": 1.5
+    }
+  ],
+  "young_page.quest_completed": [
+    {
+      "speaker": "Young Page",
+      "text": "You have proven yourself a capable fighter. Keep training and greater challenges will follow.",
+      "pitch": 1.5
+    }
   ]
 }

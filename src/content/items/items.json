@@ -34,5 +34,11 @@
     "description": "A leather-bound notebook lost in the fields.",
     "category": "quest",
     "defaultQuantity": 1
+  },
+  "slime_remains": {
+    "name": "Slime Remains",
+    "description": "A gelatinous blob left behind by a defeated slime. Still faintly warm.",
+    "category": "quest",
+    "defaultQuantity": 1
   }
 }

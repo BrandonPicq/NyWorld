@@ -776,6 +776,7 @@ describe("GameplayEngine", () => {
     expect(engine.getSnapshot().npcStates.map((state) => state.npcId)).toEqual([
       "old_scholar",
       "old_wizard",
+      "slime",
       "young_page",
     ]);
   });

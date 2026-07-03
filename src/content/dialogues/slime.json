@@ -1,0 +1,9 @@
+{
+  "slime.default": [
+    {
+      "speaker": "Slime",
+      "text": "*Gloop* The slime wobbles aggressively!",
+      "pitch": 0.8
+    }
+  ]
+}

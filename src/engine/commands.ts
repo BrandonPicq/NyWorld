@@ -10,4 +10,7 @@ export type GameCommand =
   | { type: "Study" }
   | { type: "UseItem"; itemId: string }
   | { type: "CompleteDialogue" }
-  | { type: "AcknowledgeZoneEntryDialogue" };
+  | { type: "AcknowledgeZoneEntryDialogue" }
+  | { type: "SelectCombatAction"; actionKind: "physical" | "magical" | "flee" }
+  | { type: "SubmitCombatQte"; completed: boolean; inputAdvantage: number }
+  | { type: "ConcludeCombat" };
