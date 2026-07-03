@@ -36,6 +36,8 @@ export function CharacterStatusPanel({
   worldTime,
   keyboardLayout,
 }: CharacterStatusPanelProps) {
+  const { energy, maxEnergy } = stats.resources;
+
   return (
     <TerminalPanel className="game-layout__sidebar-left">
       <p className="terminal-kicker">CHARACTER</p>
@@ -49,10 +51,10 @@ export function CharacterStatusPanel({
           <div className="energy-bar-container">
             <div
               className="energy-bar-fill"
-              style={{ width: `${stats.energy}%` }}
+              style={{ width: `${(energy / maxEnergy) * 100}%` }}
             />
             <span className="energy-bar-text">
-              {stats.energy} / {stats.maxEnergy}
+              {energy} / {maxEnergy}
             </span>
           </div>
         </div>
@@ -66,7 +68,9 @@ export function CharacterStatusPanel({
 
         <div className="sidebar-stats__section">
           <p className="sidebar-stats__label">Standing</p>
-          <p className="sidebar-stats__value">{stats.academicTitle}</p>
+          <p className="sidebar-stats__value">
+            {stats.progression.academicTitle}
+          </p>
         </div>
       </div>
 
@@ -96,13 +100,13 @@ export function CharacterStatusPanel({
         <div className="sidebar-actions__group sidebar-actions__group--compact">
           <p className="sidebar-actions__label">Actions</p>
           <SidebarActionButton
-            disabled={controlsDisabled || stats.energy <= 0}
+            disabled={controlsDisabled || energy <= 0}
             keyLabel="T"
             label="Study"
             onClick={onStudy}
           />
           <SidebarActionButton
-            disabled={controlsDisabled || stats.energy >= stats.maxEnergy}
+            disabled={controlsDisabled || energy >= maxEnergy}
             keyLabel="R"
             label="Rest"
             onClick={onRest}

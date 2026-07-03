@@ -4,6 +4,7 @@ import type { Inventory, Position, Stats } from "../components";
 import type { LogEntry } from "../LogEntry";
 import { cloneNpcState, type NpcState } from "../npcs/NpcState";
 import type { Direction } from "../systems/MovementSystem";
+import { cloneStats } from "../stats/characterStats";
 
 /**
  * Minimal state required to build a save payload.
@@ -43,15 +44,7 @@ export function serializeSaveData(state: SaveSerializationState): GameSaveData {
     playerX: playerPosition.x,
     playerY: playerPosition.y,
     playerFacing: state.playerFacing,
-    stats: {
-      type: "Stats",
-      energy: stats.energy,
-      maxEnergy: stats.maxEnergy,
-      currency: stats.currency,
-      attributes: { ...stats.attributes },
-      academicTitle: stats.academicTitle,
-      academicProgress: stats.academicProgress,
-    },
+    stats: cloneStats(stats),
     inventory: {
       type: "Inventory",
       items: inventory.items.map((stack) => ({ ...stack })),

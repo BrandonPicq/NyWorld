@@ -18,7 +18,7 @@ export interface VisitCoordinateObjective {
 export interface StatThresholdObjective {
   readonly type: "stat_threshold";
   id: string;
-  statName: "strength" | "intelligence" | "charisma" | "academicProgress" | "energy";
+  statName: string;
   threshold: number;
   description: string;
 }

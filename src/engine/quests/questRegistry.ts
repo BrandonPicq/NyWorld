@@ -3,6 +3,7 @@ import { hasNpcDef } from "../npcs/npcRegistry";
 import { hasDialogue } from "../dialogues/dialogueRegistry";
 import { loadZone } from "../zoneLoader";
 import type { GameMap } from "../GameMap";
+import { isStatPath } from "../stats/characterStats";
 import type { QuestDef, QuestDefMap } from "./QuestDef";
 
 const questDefs = getSortedContentModules(
@@ -293,8 +294,7 @@ function assertObjectives(value: unknown, questId: string): void {
       }
     } else if (obj.type === "stat_threshold") {
       const statName = obj.statName;
-      const validStats = ["strength", "intelligence", "charisma", "academicProgress", "energy"];
-      if (typeof statName !== "string" || !validStats.includes(statName)) {
+      if (typeof statName !== "string" || !isStatPath(statName)) {
         throw new Error(
           `Quest "${questId}" objective "${obj.id}" has invalid or missing statName "${statName}".`,
         );

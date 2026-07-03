@@ -8,8 +8,33 @@ export type {
   PlayerControlled,
   Position,
   Renderable,
+  StatResources,
   Stats,
 } from "./components";
+export {
+  cloneStats,
+  createInitialStats,
+  deriveCombatStats,
+  deriveMaxHp,
+  deriveMaxMp,
+  deriveMaxSp,
+  getStatValue,
+  isStatPath,
+  refreshDerivedStats,
+} from "./stats/characterStats";
+export type { StatPath, StatSection } from "./stats/characterStats";
+export {
+  createQteChallenge,
+  resolveQteContest,
+} from "./combat/qteCombat";
+export type {
+  CombatActionKind,
+  QteChallenge,
+  QteChallengeInput,
+  QteContestInput,
+  QteContestOutcome,
+  QteContestResult,
+} from "./combat/qteCombat";
 export { World } from "./ecs";
 export type { Component, EntityId } from "./ecs";
 export { GameMap } from "./GameMap";

@@ -47,6 +47,12 @@ import {
   createWorldTimeSnapshot,
   type WorldTimeSnapshot,
 } from "./time/WorldCalendar";
+import {
+  cloneStats,
+  createInitialStats,
+  getStatValue,
+  refreshDerivedStats,
+} from "./stats/characterStats";
 
 export type EngineEffect =
   | {
@@ -207,20 +213,7 @@ export class GameplayEngine {
     };
     this.world.addComponent(playerId, renderable);
 
-    const stats = {
-      type: "Stats" as const,
-      energy: 100,
-      maxEnergy: 100,
-      currency: 1550,
-      attributes: {
-        strength: 10,
-        intelligence: 10,
-        charisma: 10,
-      },
-      academicTitle: "Novice Scribe",
-      academicProgress: 0,
-    };
-    this.world.addComponent(playerId, stats);
+    this.world.addComponent(playerId, createInitialStats());
 
     const inventory: Inventory = {
       type: "Inventory",
@@ -332,7 +325,7 @@ export class GameplayEngine {
     this.playerFacing = direction;
 
     const stats = this.getPlayerStats();
-    if (stats.energy <= 0) {
+    if (stats.resources.energy <= 0) {
       this.addLog(
         "You are too exhausted to move! Rest [R] to recover energy.",
       );
@@ -352,7 +345,7 @@ export class GameplayEngine {
     if (moved) {
       this.tickCounter.advance();
       this.advanceWorldTime(WORLD_TIME_ACTION_COST.movement);
-      stats.energy = Math.max(0, stats.energy - 1);
+      stats.resources.energy = Math.max(0, stats.resources.energy - 1);
       const pos = this.getPlayerPosition();
       this.addLog(`Moved ${direction} to (${pos.x}, ${pos.y}).`);
       this.checkCoordinateObjectives();
@@ -511,7 +504,7 @@ export class GameplayEngine {
     }
 
     const stats = this.getPlayerStats();
-    if (stats.energy >= stats.maxEnergy) {
+    if (stats.resources.energy >= stats.resources.maxEnergy) {
       const message = `${def.name} would have no effect right now.`;
       this.addLog(message);
       return {
@@ -522,9 +515,12 @@ export class GameplayEngine {
       };
     }
 
-    const nextEnergy = Math.min(stats.maxEnergy, stats.energy + energyRestored);
-    const actualEnergyRestored = nextEnergy - stats.energy;
-    stats.energy = nextEnergy;
+    const nextEnergy = Math.min(
+      stats.resources.maxEnergy,
+      stats.resources.energy + energyRestored,
+    );
+    const actualEnergyRestored = nextEnergy - stats.resources.energy;
+    stats.resources.energy = nextEnergy;
 
     const stack = inventory.items[stackIndex];
     stack.quantity -= 1;
@@ -653,12 +649,14 @@ export class GameplayEngine {
     const [playerId] = this.world.entitiesWith("PlayerControlled");
 
     const stats = this.world.getComponent<Stats>(playerId, "Stats")!;
-    stats.energy = saveData.stats.energy;
-    stats.maxEnergy = saveData.stats.maxEnergy;
+    stats.resources = { ...saveData.stats.resources };
     stats.currency = saveData.stats.currency;
     stats.attributes = { ...saveData.stats.attributes };
-    stats.academicTitle = saveData.stats.academicTitle;
-    stats.academicProgress = saveData.stats.academicProgress;
+    stats.combat = { ...saveData.stats.combat };
+    stats.skills = { ...saveData.stats.skills };
+    stats.progression = { ...saveData.stats.progression };
+    stats.conditions = [...saveData.stats.conditions];
+    refreshDerivedStats(stats);
 
     const inventory = this.world.getComponent<Inventory>(
       playerId,
@@ -715,7 +713,10 @@ export class GameplayEngine {
 
   private restPlayer(): void {
     const stats = this.getPlayerStats();
-    stats.energy = Math.min(stats.maxEnergy, stats.energy + 15);
+    stats.resources.energy = Math.min(
+      stats.resources.maxEnergy,
+      stats.resources.energy + 15,
+    );
     this.tickCounter.advance();
     this.advanceWorldTime(WORLD_TIME_ACTION_COST.rest);
     this.addLog("Rested and recovered 15 energy.");
@@ -724,23 +725,28 @@ export class GameplayEngine {
   private studyPlayer(): ExecuteResult {
     const stats = this.getPlayerStats();
 
-    if (stats.energy < STUDY_ENERGY_COST) {
+    if (stats.resources.energy < STUDY_ENERGY_COST) {
       this.addLog("You are too exhausted to study. Rest [R] to recover energy.");
       return { success: false };
     }
 
-    stats.energy = Math.max(0, stats.energy - STUDY_ENERGY_COST);
-    stats.academicProgress = Math.min(
+    stats.resources.energy = Math.max(
+      0,
+      stats.resources.energy - STUDY_ENERGY_COST,
+    );
+    stats.progression.academicProgress = Math.min(
       100,
-      stats.academicProgress + STUDY_ACADEMIC_PROGRESS_GAIN,
+      stats.progression.academicProgress + STUDY_ACADEMIC_PROGRESS_GAIN,
     );
     stats.attributes.intelligence =
       (stats.attributes.intelligence ?? 0) + STUDY_INTELLIGENCE_GAIN;
+    stats.skills.scholarship += STUDY_ACADEMIC_PROGRESS_GAIN;
+    refreshDerivedStats(stats);
 
     this.tickCounter.advance();
     this.advanceWorldTime(WORLD_TIME_ACTION_COST.study);
     this.addLog(
-      `Studied old notes. Intelligence +${STUDY_INTELLIGENCE_GAIN}, academic progress +${STUDY_ACADEMIC_PROGRESS_GAIN}%.`,
+      `Studied old notes. Intelligence +${STUDY_INTELLIGENCE_GAIN}, scholarship +${STUDY_ACADEMIC_PROGRESS_GAIN}, academic progress +${STUDY_ACADEMIC_PROGRESS_GAIN}%.`,
     );
 
     return { success: true };
@@ -825,13 +831,7 @@ export class GameplayEngine {
           currentQty = visited ? 1 : 0;
           requiredQty = 1;
         } else if (obj.type === "stat_threshold") {
-          const currentVal =
-            obj.statName === "strength" ||
-            obj.statName === "intelligence" ||
-            obj.statName === "charisma"
-              ? stats.attributes[obj.statName]
-              : stats[obj.statName];
-          currentQty = currentVal;
+          currentQty = getStatValue(stats, obj.statName) ?? 0;
           requiredQty = obj.threshold;
         }
         return {
@@ -842,15 +842,19 @@ export class GameplayEngine {
           currentQuantity: currentQty,
         };
       });
-      return [{
-        questId: questDef.questId,
-        name: questDef.name,
-        description: questDef.description,
-        state: (isReady ? "readyToComplete" : "active") as "active" | "readyToComplete",
-        objectives,
-        targetNpcId: questDef.targetNpcId,
-        rewards: questDef.rewards,
-      }];
+      return [
+        {
+          questId: questDef.questId,
+          name: questDef.name,
+          description: questDef.description,
+          state: (isReady ? "readyToComplete" : "active") as
+            | "active"
+            | "readyToComplete",
+          objectives,
+          targetNpcId: questDef.targetNpcId,
+          rewards: questDef.rewards,
+        },
+      ];
     });
 
     return {
@@ -865,10 +869,7 @@ export class GameplayEngine {
       playerFacing: this.playerFacing,
       tiles,
       log: [...this.log],
-      stats: {
-        ...stats,
-        attributes: { ...stats.attributes },
-      },
+      stats: cloneStats(stats),
       inventory: {
         ...inventory,
         items: inventory.items.map((stack) => ({ ...stack })),
@@ -943,12 +944,7 @@ export class GameplayEngine {
           return false;
         }
       } else if (obj.type === "stat_threshold") {
-        const currentVal =
-          obj.statName === "strength" ||
-          obj.statName === "intelligence" ||
-          obj.statName === "charisma"
-            ? stats.attributes[obj.statName]
-            : stats[obj.statName];
+        const currentVal = getStatValue(stats, obj.statName) ?? 0;
         if (currentVal < obj.threshold) {
           return false;
         }

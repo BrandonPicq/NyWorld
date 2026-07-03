@@ -806,6 +806,72 @@ describe("GameplayEngine", () => {
     ]);
   });
 
+  it("exposes structured starter character stats in snapshots", () => {
+    const engine = createEngine();
+
+    expect(engine.getSnapshot().stats).toMatchObject({
+      resources: {
+        hp: 100,
+        maxHp: 100,
+        mp: 70,
+        maxMp: 70,
+        sp: 0,
+        maxSp: 100,
+        energy: 100,
+        maxEnergy: 100,
+      },
+      attributes: {
+        strength: 10,
+        vitality: 10,
+        agility: 10,
+        intelligence: 10,
+        spirit: 10,
+        willpower: 10,
+        perception: 10,
+        charisma: 10,
+      },
+      combat: {
+        attack: 10,
+        magicAttack: 10,
+        defense: 10,
+        magicDefense: 10,
+      },
+      skills: {
+        melee: 1,
+        ranged: 1,
+        guard: 1,
+        evasion: 1,
+        spellcasting: 1,
+        focus: 1,
+        athletics: 1,
+        scholarship: 1,
+        speech: 1,
+      },
+      progression: {
+        academicTitle: "Novice Scribe",
+        academicProgress: 0,
+      },
+      conditions: [],
+    });
+  });
+
+  it("protects engine stats state from snapshot mutations", () => {
+    const engine = createEngine();
+    const snapshot = engine.getSnapshot();
+
+    snapshot.stats.resources.energy = 1;
+    snapshot.stats.attributes.intelligence = 99;
+    snapshot.stats.skills.scholarship = 99;
+    snapshot.stats.conditions.push("external_change");
+
+    expect(engine.getSnapshot().stats).toMatchObject({
+      resources: { energy: 100 },
+      attributes: { intelligence: 10 },
+      skills: { scholarship: 1 },
+      conditions: [],
+    });
+  });
+
   it("protects engine inventory state from snapshot mutations", () => {
     const engine = createEngine();
     const snapshot = engine.getSnapshot();
@@ -947,20 +1013,25 @@ describe("GameplayEngine", () => {
           timeLabel: "09:30",
         },
         stats: {
-          energy: 90,
-          academicProgress: 15,
+          resources: {
+            energy: 90,
+          },
+          progression: {
+            academicProgress: 15,
+          },
         },
       });
       expect(engine.getSnapshot().stats.attributes.intelligence).toBe(11);
+      expect(engine.getSnapshot().stats.skills.scholarship).toBe(16);
       expect(engine.getSnapshot().log.map((entry) => entry.message)).toContain(
-        "Studied old notes. Intelligence +1, academic progress +15%.",
+        "Studied old notes. Intelligence +1, scholarship +15, academic progress +15%.",
       );
     });
 
     it("rejects study without enough energy", () => {
       const engine = createEngine();
       const save = engine.createSaveData();
-      save.stats.energy = 9;
+      save.stats.resources.energy = 9;
 
       const restored = GameplayEngine.fromSaveData(save, {
         resolveZone: (zoneId) =>
@@ -976,11 +1047,16 @@ describe("GameplayEngine", () => {
           totalMinutes: START_WORLD_TIME_MINUTES,
         },
         stats: {
-          energy: 9,
-          academicProgress: 0,
+          resources: {
+            energy: 9,
+          },
+          progression: {
+            academicProgress: 0,
+          },
         },
       });
       expect(restored.getSnapshot().stats.attributes.intelligence).toBe(10);
+      expect(restored.getSnapshot().stats.skills.scholarship).toBe(1);
       expect(restored.getSnapshot().log.map((entry) => entry.message)).toContain(
         "You are too exhausted to study. Rest [R] to recover energy.",
       );
@@ -996,11 +1072,11 @@ describe("GameplayEngine", () => {
         engine.execute({ type: directions[i % 4] });
       }
 
-      expect(engine.getSnapshot().stats.energy).toBe(90);
+      expect(engine.getSnapshot().stats.resources.energy).toBe(90);
 
       engine.execute({ type: "UseItem", itemId: "travel_ration" });
 
-      expect(engine.getSnapshot().stats.energy).toBe(100);
+      expect(engine.getSnapshot().stats.resources.energy).toBe(100);
     });
 
     it("reports the actual restored energy when capped by max energy", () => {
@@ -1011,11 +1087,11 @@ describe("GameplayEngine", () => {
         engine.execute({ type: directions[i % 4] });
       }
 
-      expect(engine.getSnapshot().stats.energy).toBe(95);
+      expect(engine.getSnapshot().stats.resources.energy).toBe(95);
 
       const result = engine.execute({ type: "UseItem", itemId: "travel_ration" });
 
-      expect(engine.getSnapshot().stats.energy).toBe(100);
+      expect(engine.getSnapshot().stats.resources.energy).toBe(100);
       expect(result.effects).toEqual([
         { type: "ItemUsed", itemId: "travel_ration", energyRestored: 5 },
       ]);
@@ -1159,8 +1235,12 @@ describe("GameplayEngine", () => {
       expect(save.playerX).toBe(2);
       expect(save.playerY).toBe(2);
       expect(save.playerFacing).toBe("south");
-      expect(save.stats.energy).toBe(98);
-      expect(save.stats.maxEnergy).toBe(100);
+      expect(save.stats.resources.energy).toBe(98);
+      expect(save.stats.resources.maxEnergy).toBe(100);
+      expect(save.stats.resources.maxHp).toBe(100);
+      expect(save.stats.combat.attack).toBe(10);
+      expect(save.stats.skills.scholarship).toBe(1);
+      expect(save.stats.progression.academicTitle).toBe("Novice Scribe");
       expect(save.inventory.items).toHaveLength(3);
       expect(save.npcStates).toContainEqual({
         npcId: "old_scholar",
@@ -1209,6 +1289,11 @@ describe("GameplayEngine", () => {
       engine.execute({ type: "MoveSouth" });
 
       const save = engine.createSaveData();
+      save.stats.resources.hp = 42;
+      save.stats.attributes.intelligence = 14;
+      save.stats.skills.scholarship = 7;
+      save.stats.progression.academicProgress = 30;
+      save.stats.conditions = ["tired"];
       save.npcStates = save.npcStates.map((state) =>
         state.npcId === "old_scholar"
           ? {
@@ -1233,7 +1318,12 @@ describe("GameplayEngine", () => {
       expect(snap.playerX).toBe(2);
       expect(snap.playerY).toBe(2);
       expect(snap.playerFacing).toBe("south");
-      expect(snap.stats.energy).toBe(98);
+      expect(snap.stats.resources.energy).toBe(98);
+      expect(snap.stats.resources.hp).toBe(42);
+      expect(snap.stats.attributes.intelligence).toBe(14);
+      expect(snap.stats.skills.scholarship).toBe(7);
+      expect(snap.stats.progression.academicProgress).toBe(30);
+      expect(snap.stats.conditions).toEqual(["tired"]);
       expect(snap.inventory.items).toHaveLength(3);
       expect(restored.getNpcState("old_scholar")).toEqual({
         npcId: "old_scholar",
@@ -1406,8 +1496,13 @@ describe("GameplayEngine", () => {
       expect(restoredSnap.playerX).toBe(original.playerX);
       expect(restoredSnap.playerY).toBe(original.playerY);
       expect(restoredSnap.playerFacing).toBe(original.playerFacing);
-      expect(restoredSnap.stats.energy).toBe(original.stats.energy);
-      expect(restoredSnap.stats.maxEnergy).toBe(original.stats.maxEnergy);
+      expect(restoredSnap.stats.resources.energy).toBe(
+        original.stats.resources.energy,
+      );
+      expect(restoredSnap.stats.resources.maxEnergy).toBe(
+        original.stats.resources.maxEnergy,
+      );
+      expect(restoredSnap.stats).toEqual(original.stats);
       expect(restoredSnap.inventory.items).toEqual(original.inventory.items);
       expect(restoredSnap.npcStates).toEqual(original.npcStates);
       expect(restoredSnap.log.length).toBe(original.log.length);

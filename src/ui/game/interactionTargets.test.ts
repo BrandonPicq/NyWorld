@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   START_WORLD_TIME_MINUTES,
+  createInitialStats,
   createWorldTimeSnapshot,
   type GameSnapshot,
 } from "../../engine";
@@ -27,15 +28,7 @@ const baseSnapshot: GameSnapshot = {
     [0, 0, 0, 0, 0],
   ],
   log: [],
-  stats: {
-    type: "Stats",
-    energy: 100,
-    maxEnergy: 100,
-    currency: 1550,
-    attributes: { strength: 10, intelligence: 10, charisma: 10 },
-    academicTitle: "Novice Scribe",
-    academicProgress: 0,
-  },
+  stats: createInitialStats(),
   entities: [
     {
       x: 3,

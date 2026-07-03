@@ -367,6 +367,44 @@
   margin: var(--space-4) 0;
 }
 
+.stats-modal--character {
+  width: min(92vw, 860px) !important;
+  max-height: min(86vh, 760px);
+  overflow-y: auto;
+}
+
+.stats-modal__content--character {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-areas:
+    "resources attributes"
+    "combat attributes"
+    "academy skills"
+    ". skills";
+  align-items: start;
+  gap: var(--space-4);
+}
+
+.stats-modal__section--resources {
+  grid-area: resources;
+}
+
+.stats-modal__section--attributes {
+  grid-area: attributes;
+}
+
+.stats-modal__section--combat {
+  grid-area: combat;
+}
+
+.stats-modal__section--skills {
+  grid-area: skills;
+}
+
+.stats-modal__section--academy {
+  grid-area: academy;
+}
+
 .stats-modal__section {
   display: flex;
   flex-direction: column;
@@ -383,9 +421,8 @@
   padding-bottom: var(--space-1);
 }
 
-.stats-modal__grid {
-  display: flex;
-  flex-direction: column;
+.stats-modal--character .stats-modal__grid {
+  display: grid;
   gap: var(--space-2);
 }
 
@@ -393,14 +430,17 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: var(--space-3);
   font-family: var(--font-mono);
 }
 
 .stats-modal__attr-name {
+  min-width: 0;
   color: var(--color-text-soft);
 }
 
 .stats-modal__attr-value {
+  flex: 0 0 auto;
   color: var(--color-accent);
   font-weight: bold;
 }
@@ -541,6 +581,22 @@
   margin-top: var(--space-2);
 }
 
+@media (max-width: 720px) {
+  .stats-modal--character {
+    width: min(94vw, 450px) !important;
+  }
+
+  .stats-modal__content--character {
+    grid-template-columns: 1fr;
+    grid-template-areas:
+      "resources"
+      "attributes"
+      "combat"
+      "skills"
+      "academy";
+  }
+}
+
 /* Animations */
 @keyframes fadeInModal {
   from {
@@ -644,14 +700,14 @@
 
 /* Game Toast */
 .game-toast-stack {
-  position: fixed;
+  position: absolute;
   top: var(--space-4);
   left: 50%;
   z-index: 2000;
   display: flex;
   flex-direction: column;
   gap: var(--space-2);
-  width: min(28rem, calc(100vw - var(--space-4)));
+  width: min(28rem, calc(100% - var(--space-4)));
   max-height: 10.75rem;
   padding: var(--focus-ring-offset);
   overflow-y: auto;
@@ -688,6 +744,7 @@
   padding: var(--space-2) var(--space-4);
   font-family: var(--font-mono);
   font-size: 0.95rem;
+  text-align: center;
   color: var(--game-toast-color);
   opacity: 0;
   transition: transform 0.3s ease, opacity 0.3s ease;

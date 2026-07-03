@@ -1,0 +1,116 @@
+import type { Stats } from "../components";
+
+export type CombatActionKind = "physical" | "magical";
+export type QteContestOutcome = "critical" | "hit" | "guarded" | "evaded";
+
+export interface QteChallenge {
+  sequenceLength: number;
+  timeLimitMs: number;
+  actorSpeed: number;
+  opponentSpeed: number;
+}
+
+export interface QteChallengeInput {
+  actor: Stats;
+  opponent: Stats;
+  kind: CombatActionKind;
+  baseSequenceLength?: number;
+  baseTimeLimitMs?: number;
+}
+
+export interface QteContestInput {
+  attacker: Stats;
+  defender: Stats;
+  kind: CombatActionKind;
+  attackerCompleted: boolean;
+  inputAdvantage: number;
+}
+
+export interface QteContestResult {
+  outcome: QteContestOutcome;
+  damage: number;
+  attackPower: number;
+  defensePower: number;
+  inputAdvantage: number;
+}
+
+export function createQteChallenge({
+  actor,
+  opponent,
+  kind,
+  baseSequenceLength = 5,
+  baseTimeLimitMs = 3000,
+}: QteChallengeInput): QteChallenge {
+  const actorSpeed = getQteSpeed(actor, kind);
+  const opponentSpeed = getQteSpeed(opponent, kind);
+  const speedAdvantage = actorSpeed - opponentSpeed;
+  const sequenceDelta = Math.trunc(speedAdvantage / 5);
+
+  return {
+    actorSpeed,
+    opponentSpeed,
+    sequenceLength: clamp(baseSequenceLength - sequenceDelta, 3, 8),
+    timeLimitMs: clamp(baseTimeLimitMs + speedAdvantage * 100, 1800, 4800),
+  };
+}
+
+export function resolveQteContest({
+  attacker,
+  defender,
+  kind,
+  attackerCompleted,
+  inputAdvantage,
+}: QteContestInput): QteContestResult {
+  const attackPower = getAttackPower(attacker, kind);
+  const defensePower = getDefensePower(defender, kind);
+
+  if (!attackerCompleted || inputAdvantage < 0) {
+    const defenderLead = Math.abs(inputAdvantage);
+    const outcome: QteContestOutcome = defenderLead >= 4 ? "evaded" : "guarded";
+    return {
+      outcome,
+      damage: outcome === "evaded" ? 0 : Math.max(1, Math.floor(attackPower / 4)),
+      attackPower,
+      defensePower,
+      inputAdvantage,
+    };
+  }
+
+  const defenseReduction = Math.floor(inputAdvantage / 2);
+  const effectiveDefense = Math.max(0, defensePower - defenseReduction);
+  const baseDamage = Math.max(1, attackPower - effectiveDefense);
+
+  if (inputAdvantage >= 5) {
+    return {
+      outcome: "critical",
+      damage: Math.max(2, Math.min(Math.max(attackPower, 2), baseDamage + 1)),
+      attackPower,
+      defensePower,
+      inputAdvantage,
+    };
+  }
+
+  return {
+    outcome: "hit",
+    damage: baseDamage,
+    attackPower,
+    defensePower,
+    inputAdvantage,
+  };
+}
+
+function getQteSpeed(stats: Stats, kind: CombatActionKind): number {
+  return kind === "physical" ? stats.attributes.agility : stats.attributes.spirit;
+}
+
+function getAttackPower(stats: Stats, kind: CombatActionKind): number {
+  return kind === "physical" ? stats.combat.attack : stats.combat.magicAttack;
+}
+
+function getDefensePower(stats: Stats, kind: CombatActionKind): number {
+  return kind === "physical" ? stats.combat.defense : stats.combat.magicDefense;
+}
+
+function clamp(value: number, min: number, max: number): number {
+  return Math.min(max, Math.max(min, value));
+}

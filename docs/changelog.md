@@ -4,6 +4,25 @@ This file tracks meaningful project changes by commit-oriented slices.
 
 Keep entries short and practical. When a slice is committed, its changelog section should stay aligned with the commit title so the project history remains easy to read after restores or bisects.
 
+## 2026-07-03 - [UPDATE]: Add structured character stats and QTE combat helpers
+
+- Replace flat character stats with resources, attributes, combat values, skills, progression, and conditions.
+- Add derived stat helpers for HP, MP, SP, combat values, and stat path lookups.
+- Add QTE combat helpers for speed-based challenge difficulty and attacker/defender contest results.
+- Update study, quests, saves, snapshots, and character UI to use the structured stats model.
+- Widen the character sheet into a responsive multi-column layout for the expanded stats.
+- Bump save data to version 0.6 and reject older local test saves.
+- Add engine tests for structured stats, deep snapshot cloning, save restore, and QTE outcomes.
+
+## 2026-07-03 - [FIX]: Center toast stack relative to center panel
+
+- Move game toast stack component inside the center panel.
+- Position toast stack absolutely relative to the center panel instead of fixed to the viewport.
+
+## 2026-07-03 - [FIX]: Center toast message text
+
+- Center item feedback toast labels inside their terminal frame.
+
 ## 2026-07-03 - [UPDATE]: Stack item feedback toasts
 
 - Show toast feedback when items are used or handed in for quest completion.

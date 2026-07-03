@@ -9,7 +9,7 @@ import type { NpcState } from "./npcs/NpcState";
  * Increment this when older save payloads can no longer be safely interpreted
  * by the loader without migration.
  */
-export const SAVE_VERSION = "0.5";
+export const SAVE_VERSION = "0.6";
 
 /**
  * Versioned payload written to persistent save slots.
@@ -35,8 +35,7 @@ export interface GameSaveData {
   /**
    * One-shot zone entry event ids that already fired in this playthrough.
    *
-   * Optional for backward compatibility with older 0.4 saves. Missing data is
-   * interpreted by the engine during restore instead of rejecting the save.
+   * Optional because early test saves did not include this field.
    */
   seenZoneEntryEventIds?: string[];
   activeQuests: string[];

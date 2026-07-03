@@ -1,7 +1,7 @@
 import { describe, expect, it, beforeEach } from "vitest";
 import { SAVE_VERSION } from "../../engine/GameSaveData";
 import type { GameSaveData } from "../../engine/GameSaveData";
-import { START_WORLD_TIME_MINUTES } from "../../engine";
+import { START_WORLD_TIME_MINUTES, createInitialStats } from "../../engine";
 import {
   deleteSlot,
   hasAnySave,
@@ -20,15 +20,7 @@ function stubSave(overrides: Partial<GameSaveData> = {}): GameSaveData {
     playerX: 5,
     playerY: 4,
     playerFacing: "south",
-    stats: {
-      type: "Stats",
-      energy: 100,
-      maxEnergy: 100,
-      currency: 1550,
-      attributes: { strength: 10, intelligence: 10, charisma: 10 },
-      academicTitle: "Novice Scribe",
-      academicProgress: 0,
-    },
+    stats: createInitialStats(),
     inventory: {
       type: "Inventory",
       items: [{ itemId: "travel_ration", quantity: 3 }],
@@ -97,7 +89,7 @@ describe("gameSaveStorage", () => {
     expect(restored!.playerX).toBe(5);
     expect(restored!.playerY).toBe(4);
     expect(restored!.playerFacing).toBe("south");
-    expect(restored!.stats.energy).toBe(100);
+    expect(restored!.stats.resources.energy).toBe(100);
     expect(restored!.inventory.items).toHaveLength(1);
     expect(restored!.npcStates).toEqual([
       {
@@ -182,7 +174,7 @@ describe("gameSaveStorage", () => {
     expect(readSlot(0)).toBeNull();
   });
 
-  it("migrates 0.4 saves without completed objective state", () => {
+  it("returns null for older 0.4 saves", () => {
     writeSlot(0, stubSave());
 
     const raw = JSON.parse(localStorage.getItem("nywarudo_save_slot_0")!);
@@ -190,11 +182,7 @@ describe("gameSaveStorage", () => {
     delete (raw as Record<string, unknown>).completedObjectives;
     localStorage.setItem("nywarudo_save_slot_0", JSON.stringify(raw));
 
-    expect(readSlot(0)).toMatchObject({
-      version: SAVE_VERSION,
-      completedObjectives: [],
-      zoneId: "test_zone",
-    });
+    expect(readSlot(0)).toBeNull();
   });
 
   it("returns null for a 0.4 save with invalid completed objective state", () => {

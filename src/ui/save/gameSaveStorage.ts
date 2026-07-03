@@ -2,7 +2,6 @@ import type { GameSaveData } from "../../engine/GameSaveData";
 import { SAVE_VERSION } from "../../engine/GameSaveData";
 
 export const SAVE_SLOT_COUNT = 3;
-const LEGACY_SAVE_VERSION_WITHOUT_COMPLETED_OBJECTIVES = "0.4";
 
 type GameSaveStorage = Pick<Storage, "getItem" | "setItem" | "removeItem">;
 type UnknownRecord = Record<string, unknown>;
@@ -55,18 +54,48 @@ function isOptionalStringArray(value: unknown): boolean {
 
 function isSaveStats(value: unknown): boolean {
   if (!isRecord(value)) return false;
+  if (!isRecord(value.resources)) return false;
   if (!isRecord(value.attributes)) return false;
+  if (!isRecord(value.combat)) return false;
+  if (!isRecord(value.skills)) return false;
+  if (!isRecord(value.progression)) return false;
 
   return (
     value.type === "Stats" &&
-    isFiniteNumber(value.energy) &&
-    isFiniteNumber(value.maxEnergy) &&
     isFiniteNumber(value.currency) &&
+    isFiniteNumber(value.resources.hp) &&
+    isFiniteNumber(value.resources.maxHp) &&
+    isFiniteNumber(value.resources.mp) &&
+    isFiniteNumber(value.resources.maxMp) &&
+    isFiniteNumber(value.resources.sp) &&
+    isFiniteNumber(value.resources.maxSp) &&
+    isFiniteNumber(value.resources.energy) &&
+    isFiniteNumber(value.resources.maxEnergy) &&
     isFiniteNumber(value.attributes.strength) &&
+    isFiniteNumber(value.attributes.vitality) &&
+    isFiniteNumber(value.attributes.agility) &&
     isFiniteNumber(value.attributes.intelligence) &&
+    isFiniteNumber(value.attributes.spirit) &&
+    isFiniteNumber(value.attributes.willpower) &&
+    isFiniteNumber(value.attributes.perception) &&
     isFiniteNumber(value.attributes.charisma) &&
-    typeof value.academicTitle === "string" &&
-    isFiniteNumber(value.academicProgress)
+    isFiniteNumber(value.combat.attack) &&
+    isFiniteNumber(value.combat.magicAttack) &&
+    isFiniteNumber(value.combat.defense) &&
+    isFiniteNumber(value.combat.magicDefense) &&
+    isFiniteNumber(value.skills.melee) &&
+    isFiniteNumber(value.skills.ranged) &&
+    isFiniteNumber(value.skills.guard) &&
+    isFiniteNumber(value.skills.evasion) &&
+    isFiniteNumber(value.skills.spellcasting) &&
+    isFiniteNumber(value.skills.focus) &&
+    isFiniteNumber(value.skills.athletics) &&
+    isFiniteNumber(value.skills.scholarship) &&
+    isFiniteNumber(value.skills.speech) &&
+    typeof value.progression.academicTitle === "string" &&
+    isFiniteNumber(value.progression.academicProgress) &&
+    Array.isArray(value.conditions) &&
+    value.conditions.every((condition) => typeof condition === "string")
   );
 }
 
@@ -150,33 +179,7 @@ function isGameSaveData(value: unknown): value is GameSaveData {
 }
 
 function normalizeGameSaveData(value: unknown): GameSaveData | null {
-  if (isGameSaveData(value)) {
-    return value;
-  }
-
-  if (!isRecord(value)) return null;
-
-  if (value.version !== LEGACY_SAVE_VERSION_WITHOUT_COMPLETED_OBJECTIVES) {
-    return null;
-  }
-
-  const completedObjectives =
-    value.completedObjectives === undefined ? [] : value.completedObjectives;
-
-  if (
-    !Array.isArray(completedObjectives) ||
-    !completedObjectives.every((objectiveId) => typeof objectiveId === "string")
-  ) {
-    return null;
-  }
-
-  const migrated = {
-    ...value,
-    version: SAVE_VERSION,
-    completedObjectives,
-  };
-
-  return isGameSaveData(migrated) ? migrated : null;
+  return isGameSaveData(value) ? value : null;
 }
 
 function isValidSlotIndex(index: number): boolean {

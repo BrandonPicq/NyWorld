@@ -287,6 +287,11 @@ export function GameScreen({
               visibleText={visibleText}
             />
           )}
+
+          <GameToastStack
+            onDismiss={dismissGameToast}
+            toasts={gameToasts}
+          />
         </GameCenterPanel>
 
         <div className={`game-layout__sidebar-right ${snapshot.activeQuests && snapshot.activeQuests.length > 0 ? "game-layout__sidebar-right--with-quests" : ""}`}>
@@ -426,11 +431,6 @@ export function GameScreen({
             slots={readAllSaves()}
           />
         )}
-
-        <GameToastStack
-          onDismiss={dismissGameToast}
-          toasts={gameToasts}
-        />
       </div>
     </main>
   );

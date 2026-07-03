@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { createInitialStats } from "../engine";
 import type { GameSnapshot } from "../engine/GameplayEngine";
 import {
   START_WORLD_TIME_MINUTES,
@@ -21,15 +22,7 @@ const gameSnapshot: GameSnapshot = {
   ],
   zoneId: "test_zone",
   zoneName: "Test Zone",
-  stats: {
-    type: "Stats",
-    energy: 100,
-    maxEnergy: 100,
-    currency: 1550,
-    attributes: { strength: 10, intelligence: 10, charisma: 10 },
-    academicTitle: "Novice Scribe",
-    academicProgress: 0,
-  },
+  stats: createInitialStats(),
   entities: [],
   entryDialogue: [],
   inventory: {
