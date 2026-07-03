@@ -324,6 +324,7 @@ export function CombatPanel({
               <span>ATK: {opponentStats.combat.attack}</span>
               <span>DEF: {opponentStats.combat.defense}</span>
               <span>AGI: {opponentStats.attributes.agility}</span>
+              <span>SPI: {opponentStats.attributes.spirit}</span>
             </div>
           </div>
         </div>

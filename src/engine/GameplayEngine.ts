@@ -1367,7 +1367,14 @@ export class GameplayEngine {
     const opponentStats = this.combatState.opponentStats;
 
     if (actionKind === "flee") {
-      const success = Math.random() < 0.5;
+      const fleeChance = Math.max(
+        0.1,
+        Math.min(
+          0.9,
+          0.5 + (playerStats.attributes.agility - opponentStats.attributes.agility) * 0.05,
+        ),
+      );
+      const success = Math.random() < fleeChance;
       if (success) {
         this.addLog("You successfully fled from the combat!");
         this.combatState = undefined;

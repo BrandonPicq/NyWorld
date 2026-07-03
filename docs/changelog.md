@@ -4,6 +4,11 @@ This file tracks meaningful project changes by commit-oriented slices.
 
 Keep entries short and practical. When a slice is committed, its changelog section should stay aligned with the commit title so the project history remains easy to read after restores or bisects.
 
+## 2026-07-03 - [UPDATE]: Display enemy Spirit and implement stats-based fleeing
+
+- Render opponent's Spirit (SPI) in the CombatPanel stats details block.
+- Adjust flee success chance to scale with player vs opponent Agility, clamped between 10% and 90%.
+
 ## 2026-07-03 - [UPDATE]: Refine QTE combat with sound, mistakes, and turn delay
 
 - Integrate Web Audio synthesizers for QTE key directional sounds and error buzz feedback.
