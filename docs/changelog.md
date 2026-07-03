@@ -4,6 +4,13 @@ This file tracks meaningful project changes by commit-oriented slices.
 
 Keep entries short and practical. When a slice is committed, its changelog section should stay aligned with the commit title so the project history remains easy to read after restores or bisects.
 
+## 2026-07-03 - [UPDATE]: Balance early combat targets and guardrails
+
+- Add first combat balance notes for stat roles, QTE profiles, and early enemy targets.
+- Rebalance Kobold as a faster, more offensive early duelist instead of a player-stat mirror.
+- Add deterministic fight length guardrail tests for Slime and Kobold.
+- Check that a Kobold critical hit threatens but does not defeat a fresh player.
+
 ## 2026-07-03 - [REFACTOR]: Extract combat systems and data-drive enemy quests
 
 - Move active combat state and combat command handling out of GameplayEngine.

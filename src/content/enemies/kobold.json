@@ -3,30 +3,30 @@
   "combatable": true,
   "stats": {
     "resources": {
-      "hp": 40,
-      "maxHp": 40,
-      "mp": 70,
-      "maxMp": 70,
+      "hp": 35,
+      "maxHp": 35,
+      "mp": 40,
+      "maxMp": 40,
       "sp": 100,
       "maxSp": 100,
       "energy": 100,
       "maxEnergy": 100
     },
     "attributes": {
-      "strength": 10,
-      "vitality": 10,
-      "agility": 10,
-      "intelligence": 10,
-      "spirit": 10,
-      "willpower": 10,
+      "strength": 12,
+      "vitality": 8,
+      "agility": 15,
+      "intelligence": 6,
+      "spirit": 8,
+      "willpower": 8,
       "perception": 10,
-      "charisma": 10
+      "charisma": 6
     },
     "combat": {
-      "attack": 10,
-      "magicAttack": 10,
-      "defense": 10,
-      "magicDefense": 10
+      "attack": 12,
+      "magicAttack": 8,
+      "defense": 8,
+      "magicDefense": 8
     },
     "skills": {
       "melee": 1,

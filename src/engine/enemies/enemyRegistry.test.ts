@@ -23,8 +23,9 @@ describe("enemyRegistry", () => {
       npcId: "kobold",
       combatable: true,
       stats: {
-        resources: { hp: 40, maxHp: 40 },
-        combat: { attack: 10, defense: 10 },
+        resources: { hp: 35, maxHp: 35 },
+        attributes: { agility: 15 },
+        combat: { attack: 12, defense: 8 },
       },
       loot: [{ itemId: "kobold_remains", quantity: 1 }],
     });
@@ -48,10 +49,10 @@ describe("enemyRegistry", () => {
     expect(stats).toMatchObject({
       type: "Stats",
       currency: 0,
-      resources: { hp: 1, maxHp: 40 },
+      resources: { hp: 1, maxHp: 35 },
       progression: { academicTitle: "Fierce Kobold" },
     });
-    expect(createNpcStats("kobold").resources.hp).toBe(40);
+    expect(createNpcStats("kobold").resources.hp).toBe(35);
   });
 
   it("throws when combat stats are requested for a NPC without enemy content", () => {
