@@ -4,6 +4,14 @@ This file tracks meaningful project changes by commit-oriented slices.
 
 Keep entries short and practical. When a slice is committed, its changelog section should stay aligned with the commit title so the project history remains easy to read after restores or bisects.
 
+## 2026-07-03 - [UPDATE]: Refine QTE combat with sound, mistakes, and turn delay
+
+- Integrate Web Audio synthesizers for QTE key directional sounds and error buzz feedback.
+- Add mistake scaling logic: 1 mistake gives a 20% penalty; 2 mistakes trigger an immediate QTE fail.
+- Implement an automatic 1.5-second transitional pause between player attacks and opponent responses.
+- Update GameplayEngine, commands, snapshots, and CombatPanel to propagate mistake counts.
+- Add unit tests for mistake damage modifiers, instant failures, and transitional phases.
+
 ## 2026-07-03 - [ADD]: Implement turn-based QTE combat system
 
 - Define enemy base statistics and createNpcStats builder.

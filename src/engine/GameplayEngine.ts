@@ -114,7 +114,7 @@ export interface CombatState {
   opponentNpcId: string;
   opponentName: string;
   opponentStats: Stats;
-  phase: "action_selection" | "player_qte" | "enemy_qte" | "victory" | "defeat";
+  phase: "action_selection" | "player_qte" | "opponent_turn_transition" | "enemy_qte" | "victory" | "defeat";
   actionKind?: CombatActionKind;
   qteChallenge?: QteChallenge;
   qteSequence?: string[];
@@ -293,7 +293,10 @@ export class GameplayEngine {
         return this.handleSelectCombatAction(command.actionKind);
       }
       if (command.type === "SubmitCombatQte") {
-        return this.handleSubmitCombatQte(command.completed, command.inputAdvantage);
+        return this.handleSubmitCombatQte(command.completed, command.inputAdvantage, command.mistakes);
+      }
+      if (command.type === "StartOpponentTurn") {
+        return this.handleStartOpponentTurn();
       }
       if (command.type === "ConcludeCombat") {
         return this.handleConcludeCombat();
@@ -1371,14 +1374,9 @@ export class GameplayEngine {
         return { success: true };
       } else {
         this.addLog("Flee attempt failed! The enemy attacks!");
-        this.combatState.phase = "enemy_qte";
-        const challenge = createQteChallenge({
-          actor: opponentStats,
-          opponent: playerStats,
-          kind: "physical",
-        });
-        this.combatState.qteChallenge = challenge;
-        this.combatState.qteSequence = generateQteSequence(challenge.sequenceLength);
+        this.combatState.phase = "opponent_turn_transition";
+        this.combatState.qteChallenge = undefined;
+        this.combatState.qteSequence = undefined;
         return { success: true };
       }
     }
@@ -1401,6 +1399,7 @@ export class GameplayEngine {
   private handleSubmitCombatQte(
     completed: boolean,
     inputAdvantage: number,
+    mistakes: number,
   ): ExecuteResult {
     if (!this.combatState) {
       return { success: false };
@@ -1411,49 +1410,84 @@ export class GameplayEngine {
     const actionKind = this.combatState.actionKind ?? "physical";
 
     if (this.combatState.phase === "player_qte") {
-      const result = resolveQteContest({
-        attacker: playerStats,
-        defender: opponentStats,
-        kind: actionKind,
-        attackerCompleted: completed,
-        inputAdvantage,
-      });
+      let finalDamage = 0;
+      let outcomeLabel = "";
 
-      opponentStats.resources.hp = Math.max(0, opponentStats.resources.hp - result.damage);
-      this.addLog(
-        `You used ${actionKind} attack! Outcome: ${result.outcome.toUpperCase()} (${result.damage} damage to ${this.combatState.opponentName}).`
-      );
+      if (mistakes >= 2) {
+        finalDamage = 0;
+        outcomeLabel = "MISS (input failure)";
+        this.addLog(`You used ${actionKind} attack! Outcome: ${outcomeLabel} (0 damage to ${this.combatState.opponentName}).`);
+      } else {
+        const result = resolveQteContest({
+          attacker: playerStats,
+          defender: opponentStats,
+          kind: actionKind,
+          attackerCompleted: completed,
+          inputAdvantage,
+        });
+
+        finalDamage = result.damage;
+        outcomeLabel = result.outcome.toUpperCase();
+
+        if (mistakes === 1) {
+          finalDamage = Math.floor(finalDamage * 0.8);
+          this.addLog(`You used ${actionKind} attack (1 mistake)! Outcome: ${outcomeLabel} (${finalDamage} damage to ${this.combatState.opponentName}).`);
+        } else {
+          this.addLog(`You used ${actionKind} attack! Outcome: ${outcomeLabel} (${finalDamage} damage to ${this.combatState.opponentName}).`);
+        }
+      }
+
+      opponentStats.resources.hp = Math.max(0, opponentStats.resources.hp - finalDamage);
 
       if (opponentStats.resources.hp <= 0) {
         this.combatState.phase = "victory";
         this.addLog(`You defeated the ${this.combatState.opponentName}!`);
       } else {
-        this.combatState.phase = "enemy_qte";
-        const challenge = createQteChallenge({
-          actor: opponentStats,
-          opponent: playerStats,
-          kind: "physical",
-        });
-        this.combatState.qteChallenge = challenge;
-        this.combatState.qteSequence = generateQteSequence(challenge.sequenceLength);
+        this.combatState.phase = "opponent_turn_transition";
+        this.combatState.qteChallenge = undefined;
+        this.combatState.qteSequence = undefined;
       }
 
       return { success: true };
     }
 
     if (this.combatState.phase === "enemy_qte") {
-      const result = resolveQteContest({
-        attacker: opponentStats,
-        defender: playerStats,
-        kind: "physical",
-        attackerCompleted: !completed,
-        inputAdvantage: -inputAdvantage,
-      });
+      let finalDamage = 0;
+      let outcomeLabel = "";
 
-      playerStats.resources.hp = Math.max(0, playerStats.resources.hp - result.damage);
-      this.addLog(
-        `${this.combatState.opponentName} attacks! Outcome: ${result.outcome.toUpperCase()} (${result.damage} damage to you).`
-      );
+      if (mistakes >= 2) {
+        // Force critical hit (inputAdvantage 5) + 20% penalty
+        const result = resolveQteContest({
+          attacker: opponentStats,
+          defender: playerStats,
+          kind: "physical",
+          attackerCompleted: true,
+          inputAdvantage: 5,
+        });
+        finalDamage = Math.floor(result.damage * 1.2);
+        outcomeLabel = "CRITICAL (input failure)";
+        this.addLog(`${this.combatState.opponentName} landed a crushing blow due to your input failure! Outcome: ${outcomeLabel} (${finalDamage} damage to you).`);
+      } else {
+        const result = resolveQteContest({
+          attacker: opponentStats,
+          defender: playerStats,
+          kind: "physical",
+          attackerCompleted: !completed,
+          inputAdvantage: -inputAdvantage,
+        });
+
+        finalDamage = result.damage;
+        outcomeLabel = result.outcome.toUpperCase();
+
+        if (mistakes === 1) {
+          finalDamage = Math.floor(finalDamage * 1.2);
+          this.addLog(`${this.combatState.opponentName} attacks (1 mistake)! Outcome: ${outcomeLabel} (${finalDamage} damage to you).`);
+        } else {
+          this.addLog(`${this.combatState.opponentName} attacks! Outcome: ${outcomeLabel} (${finalDamage} damage to you).`);
+        }
+      }
+
+      playerStats.resources.hp = Math.max(0, playerStats.resources.hp - finalDamage);
 
       if (playerStats.resources.hp <= 0) {
         this.combatState.phase = "defeat";
@@ -1469,6 +1503,26 @@ export class GameplayEngine {
     }
 
     return { success: false };
+  }
+
+  private handleStartOpponentTurn(): ExecuteResult {
+    if (!this.combatState || this.combatState.phase !== "opponent_turn_transition") {
+      return { success: false };
+    }
+
+    const playerStats = this.getPlayerStats();
+    const opponentStats = this.combatState.opponentStats;
+
+    this.combatState.phase = "enemy_qte";
+    const challenge = createQteChallenge({
+      actor: opponentStats,
+      opponent: playerStats,
+      kind: "physical",
+    });
+    this.combatState.qteChallenge = challenge;
+    this.combatState.qteSequence = generateQteSequence(challenge.sequenceLength);
+
+    return { success: true };
   }
 
   private handleConcludeCombat(): ExecuteResult {

@@ -12,5 +12,6 @@ export type GameCommand =
   | { type: "CompleteDialogue" }
   | { type: "AcknowledgeZoneEntryDialogue" }
   | { type: "SelectCombatAction"; actionKind: "physical" | "magical" | "flee" }
-  | { type: "SubmitCombatQte"; completed: boolean; inputAdvantage: number }
+  | { type: "SubmitCombatQte"; completed: boolean; inputAdvantage: number; mistakes: number }
+  | { type: "StartOpponentTurn" }
   | { type: "ConcludeCombat" };

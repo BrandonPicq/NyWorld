@@ -134,3 +134,25 @@ function getAudioContext() {
   audioContext = new AudioContextConstructor();
   return audioContext;
 }
+
+export function playQteKeySound(direction: "up" | "down" | "left" | "right") {
+  const frequencies = {
+    up: 600,
+    down: 400,
+    left: 480,
+    right: 520,
+  };
+  playMenuTone({
+    durationSeconds: 0.06,
+    frequency: frequencies[direction],
+    gain: 0.025,
+  });
+}
+
+export function playQteErrorSound() {
+  playMenuTone({
+    durationSeconds: 0.18,
+    frequency: 110,
+    gain: 0.04,
+  });
+}

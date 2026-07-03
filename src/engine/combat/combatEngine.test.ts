@@ -115,17 +115,22 @@ describe("Combat Engine Integration", () => {
     engine.execute({ type: "MoveEast" }); // Start combat
     engine.execute({ type: "SelectCombatAction", actionKind: "physical" }); // Select attack
 
-    // Player hits with advantage 2 (dealing normal damage)
-    const result = engine.execute({ type: "SubmitCombatQte", completed: true, inputAdvantage: 2 });
+    // Player hits with advantage 2 (dealing normal damage) and 0 mistakes
+    const result = engine.execute({ type: "SubmitCombatQte", completed: true, inputAdvantage: 2, mistakes: 0 });
     expect(result.success).toBe(true);
 
-    const snapshot = engine.getSnapshot();
+    let snapshot = engine.getSnapshot();
     // Opponent had 20 HP, attack was 10 (from player stats), slime def is 1
     // effectiveDefense = 1 - Math.floor(2/2) = 0.
     // baseDamage = 10 - 0 = 10.
     // Slime HP becomes 20 - 10 = 10.
     expect(snapshot.combatState!.opponentStats.resources.hp).toBe(10);
-    // Opponent survived, phase should now be enemy QTE
+    // Opponent survived, phase should now be opponent_turn_transition
+    expect(snapshot.combatState!.phase).toBe("opponent_turn_transition");
+
+    // Advance to enemy turn
+    engine.execute({ type: "StartOpponentTurn" });
+    snapshot = engine.getSnapshot();
     expect(snapshot.combatState!.phase).toBe("enemy_qte");
   });
 
@@ -133,10 +138,11 @@ describe("Combat Engine Integration", () => {
     const engine = createEngine();
     engine.execute({ type: "MoveEast" }); // Start combat
     engine.execute({ type: "SelectCombatAction", actionKind: "physical" });
-    engine.execute({ type: "SubmitCombatQte", completed: true, inputAdvantage: 2 }); // Player attack resolved
+    engine.execute({ type: "SubmitCombatQte", completed: true, inputAdvantage: 2, mistakes: 0 }); // Player attack resolved
+    engine.execute({ type: "StartOpponentTurn" }); // Go to enemy QTE
 
-    // Player defends successfully with inputAdvantage 5 (evaded, 0 damage)
-    const result = engine.execute({ type: "SubmitCombatQte", completed: true, inputAdvantage: 5 });
+    // Player defends successfully with inputAdvantage 5 (evaded, 0 damage) and 0 mistakes
+    const result = engine.execute({ type: "SubmitCombatQte", completed: true, inputAdvantage: 5, mistakes: 0 });
     expect(result.success).toBe(true);
 
     const snapshot = engine.getSnapshot();
@@ -157,14 +163,15 @@ describe("Combat Engine Integration", () => {
     // critical bonus = Math.floor(10 * 0.5) = 5.
     // damage = Math.max(2, 10 + Math.max(1, 5)) = 15.
     // This is not enough to kill, but we can do it twice.
-    engine.execute({ type: "SubmitCombatQte", completed: true, inputAdvantage: 6 }); // First hit (slime HP = 5)
+    engine.execute({ type: "SubmitCombatQte", completed: true, inputAdvantage: 6, mistakes: 0 }); // First hit (slime HP = 5)
+    engine.execute({ type: "StartOpponentTurn" });
     
     // Opponent attacks, player blocks
-    engine.execute({ type: "SubmitCombatQte", completed: true, inputAdvantage: 5 });
+    engine.execute({ type: "SubmitCombatQte", completed: true, inputAdvantage: 5, mistakes: 0 });
 
     // Second hit
     engine.execute({ type: "SelectCombatAction", actionKind: "physical" });
-    engine.execute({ type: "SubmitCombatQte", completed: true, inputAdvantage: 6 }); // Second hit (slime HP = 0)
+    engine.execute({ type: "SubmitCombatQte", completed: true, inputAdvantage: 6, mistakes: 0 }); // Second hit (slime HP = 0)
 
     const snapBeforeConclude = engine.getSnapshot();
     expect(snapBeforeConclude.combatState!.phase).toBe("victory");
@@ -223,10 +230,11 @@ describe("Combat Engine Integration", () => {
     // Start action
     engine.execute({ type: "SelectCombatAction", actionKind: "physical" });
     // Player hits slime
-    engine.execute({ type: "SubmitCombatQte", completed: true, inputAdvantage: 1 });
+    engine.execute({ type: "SubmitCombatQte", completed: true, inputAdvantage: 1, mistakes: 0 });
+    engine.execute({ type: "StartOpponentTurn" });
 
     // Enemy attacks, player fails defense
-    engine.execute({ type: "SubmitCombatQte", completed: false, inputAdvantage: -6 });
+    engine.execute({ type: "SubmitCombatQte", completed: false, inputAdvantage: -6, mistakes: 0 });
 
     const snapDefeat = engine.getSnapshot();
     expect(snapDefeat.combatState!.phase).toBe("defeat");
@@ -244,5 +252,74 @@ describe("Combat Engine Integration", () => {
     // HP and Energy restored to 50%
     expect(snapAfterDefeat.stats.resources.hp).toBe(50);
     expect(snapAfterDefeat.stats.resources.energy).toBe(50);
+  });
+
+  it("applies 20% attack damage reduction on 1 mistake", () => {
+    const engine = createEngine();
+    engine.execute({ type: "MoveEast" }); // Start combat
+    engine.execute({ type: "SelectCombatAction", actionKind: "physical" }); // Select attack
+
+    // Player hits with advantage 2 and 1 mistake
+    engine.execute({ type: "SubmitCombatQte", completed: true, inputAdvantage: 2, mistakes: 1 });
+
+    const snapshot = engine.getSnapshot();
+    // Base damage is 10 (player ATK 10 - slime DEF 0).
+    // Reduced by 20% -> 10 * 0.8 = 8 damage.
+    // Slime HP becomes 20 - 8 = 12.
+    expect(snapshot.combatState!.opponentStats.resources.hp).toBe(12);
+  });
+
+  it("deals 0 damage and misses attack on 2 mistakes", () => {
+    const engine = createEngine();
+    engine.execute({ type: "MoveEast" }); // Start combat
+    engine.execute({ type: "SelectCombatAction", actionKind: "physical" }); // Select attack
+
+    // Player fails with 2 mistakes
+    engine.execute({ type: "SubmitCombatQte", completed: false, inputAdvantage: -3, mistakes: 2 });
+
+    const snapshot = engine.getSnapshot();
+    // Slime HP remains 20 (0 damage)
+    expect(snapshot.combatState!.opponentStats.resources.hp).toBe(20);
+  });
+
+  it("applies 20% increased defense damage taken on 1 mistake during block", () => {
+    const engine = createEngine();
+    engine.execute({ type: "MoveEast" }); // Start combat
+    engine.execute({ type: "SelectCombatAction", actionKind: "physical" });
+    engine.execute({ type: "SubmitCombatQte", completed: true, inputAdvantage: 2, mistakes: 0 }); // Player attack resolved
+    engine.execute({ type: "StartOpponentTurn" }); // Go to enemy QTE
+
+    // Player blocks with 1 mistake.
+    // Slime attack is 3. Player def is 10.
+    // resolveQteContest yields: baseDamage = Math.max(1, 3 - 10) = 1.
+    // 20% penalty -> 1 * 1.2 = 1.2 -> Math.floor(1.2) = 1 damage.
+    // Let's verify player HP. Since player HP is 100, 100 - 1 = 99 HP.
+    engine.execute({ type: "SubmitCombatQte", completed: true, inputAdvantage: 1, mistakes: 1 });
+
+    const snapshot = engine.getSnapshot();
+    expect(snapshot.stats.resources.hp).toBe(99);
+  });
+
+  it("forces critical hit plus 20% damage on 2 mistakes during defense", () => {
+    const engine = createEngine();
+    engine.execute({ type: "MoveEast" }); // Start combat
+    engine.execute({ type: "SelectCombatAction", actionKind: "physical" });
+    engine.execute({ type: "SubmitCombatQte", completed: true, inputAdvantage: 2, mistakes: 0 }); // Player attack resolved
+    engine.execute({ type: "StartOpponentTurn" }); // Go to enemy QTE
+
+    // Player fails defense with 2 mistakes.
+    // Slime attack is 3. Player defense is 10.
+    // Critical contest forces inputAdvantage: 5 (attackerCompleted: true).
+    // defenseReduction = Math.floor(5/2) = 2.
+    // effectiveDefense = Math.max(0, 10 - 2) = 8.
+    // baseDamage = Math.max(1, 3 - 8) = 1.
+    // critical bonus = Math.floor(3 * 0.5) = 1.
+    // criticalDamage = Math.max(2, baseDamage + Math.max(1, critical bonus)) = Math.max(2, 1 + 1) = 2.
+    // finalDamage = Math.floor(criticalDamage * 1.2) = Math.floor(2 * 1.2) = 2.
+    // Player HP becomes 100 - 2 = 98.
+    engine.execute({ type: "SubmitCombatQte", completed: false, inputAdvantage: -1, mistakes: 2 });
+
+    const snapshot = engine.getSnapshot();
+    expect(snapshot.stats.resources.hp).toBe(98);
   });
 });

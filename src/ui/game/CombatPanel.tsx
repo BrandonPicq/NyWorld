@@ -3,6 +3,8 @@ import type { Stats } from "../../engine/components";
 import type { CombatState } from "../../engine/GameplayEngine";
 import type { GameCommand } from "../../engine";
 import type { KeyboardLayout } from "../controls/keyboardLayout";
+import type { AudioSettings } from "../audio/audioSettings";
+import { playQteKeySound, playQteErrorSound } from "../audio/menuAudio";
 import { TerminalPanel } from "../components/TerminalPanel";
 import { TerminalButton } from "../components/TerminalButton";
 
@@ -11,6 +13,7 @@ type CombatPanelProps = {
   playerStats: Stats;
   executeCommand: (command: GameCommand) => void;
   keyboardLayout: KeyboardLayout;
+  audioSettings: AudioSettings;
 };
 
 const ARROW_GLYPHS: Record<string, string> = {
@@ -25,14 +28,18 @@ export function CombatPanel({
   playerStats,
   executeCommand,
   keyboardLayout,
+  audioSettings,
 }: CombatPanelProps) {
   const { phase, opponentName, opponentStats, qteSequence, qteChallenge } = combatState;
 
-  // QTE player progress
+  // QTE player progress & mistakes
   const [playerInputIndex, setPlayerInputIndex] = useState(0);
   const [timeElapsed, setTimeElapsed] = useState(0);
+  const [mistakes, setMistakes] = useState(0);
 
-  // Real-time loop refs
+  // Real-time loop refs to avoid stale closures
+  const playerInputIndexRef = useRef(0);
+  const mistakesRef = useRef(0);
   const requestRef = useRef<number | null>(null);
   const startTimeRef = useRef<number | null>(null);
   const submittedRef = useRef(false);
@@ -46,7 +53,10 @@ export function CombatPanel({
   // Reset states on phase changes
   useEffect(() => {
     setPlayerInputIndex(0);
+    playerInputIndexRef.current = 0;
     setTimeElapsed(0);
+    setMistakes(0);
+    mistakesRef.current = 0;
     submittedRef.current = false;
     startTimeRef.current = null;
 
@@ -93,6 +103,17 @@ export function CombatPanel({
     return () => window.removeEventListener("keydown", handleConcludeKeys);
   }, [phase, executeCommand]);
 
+  // Opponent turn transitional pause
+  useEffect(() => {
+    if (phase !== "opponent_turn_transition") return;
+
+    const timer = setTimeout(() => {
+      executeCommand({ type: "StartOpponentTurn" });
+    }, 1500);
+
+    return () => clearTimeout(timer);
+  }, [phase, executeCommand]);
+
   // Real-time animation loop for QTE timer and opponent progress
   useEffect(() => {
     if (phase !== "player_qte" && phase !== "enemy_qte") return;
@@ -109,16 +130,16 @@ export function CombatPanel({
       // Check if opponent finished first
       if (oppProgress >= sequenceLength && !submittedRef.current) {
         submittedRef.current = true;
-        const currentIndex = playerInputIndex; // Use ref or local variable if updated, but state is okay since we check below
-        // Since we are inside loop, get player progress from state hook
-        setPlayerInputIndex((currentInputIndex) => {
-          const advantage = -(sequenceLength - currentInputIndex);
-          executeCommand({
-            type: "SubmitCombatQte",
-            completed: false,
-            inputAdvantage: advantage,
-          });
-          return currentInputIndex;
+        if (requestRef.current) cancelAnimationFrame(requestRef.current);
+
+        const currentIdx = playerInputIndexRef.current;
+        const advantage = -(sequenceLength - currentIdx);
+
+        executeCommand({
+          type: "SubmitCombatQte",
+          completed: false,
+          inputAdvantage: advantage,
+          mistakes: mistakesRef.current,
         });
         return;
       }
@@ -126,14 +147,16 @@ export function CombatPanel({
       // Check if time limit ran out
       if (elapsed >= timeLimitMs && !submittedRef.current) {
         submittedRef.current = true;
-        setPlayerInputIndex((currentInputIndex) => {
-          const advantage = -(sequenceLength - currentInputIndex);
-          executeCommand({
-            type: "SubmitCombatQte",
-            completed: false,
-            inputAdvantage: advantage,
-          });
-          return currentInputIndex;
+        if (requestRef.current) cancelAnimationFrame(requestRef.current);
+
+        const currentIdx = playerInputIndexRef.current;
+        const advantage = -(sequenceLength - currentIdx);
+
+        executeCommand({
+          type: "SubmitCombatQte",
+          completed: false,
+          inputAdvantage: advantage,
+          mistakes: mistakesRef.current,
         });
         return;
       }
@@ -156,7 +179,7 @@ export function CombatPanel({
 
     function handleQteKeys(e: KeyboardEvent) {
       const key = e.key.toLowerCase();
-      let inputDir: string | null = null;
+      let inputDir: "up" | "down" | "left" | "right" | null = null;
 
       // Map arrow keys and WASD/ZSQD
       if (e.key === "ArrowUp" || (keyboardLayout === "azerty" ? key === "z" : key === "w")) {
@@ -172,11 +195,17 @@ export function CombatPanel({
       if (!inputDir) return;
       e.preventDefault();
 
-      const expectedDir = qteSequence ? qteSequence[playerInputIndex] : undefined;
+      const currentIdx = playerInputIndexRef.current;
+      const expectedDir = qteSequence ? qteSequence[currentIdx] : undefined;
 
       if (inputDir === expectedDir) {
-        const nextIndex = playerInputIndex + 1;
+        if (audioSettings.soundEnabled) {
+          playQteKeySound(inputDir);
+        }
+
+        const nextIndex = currentIdx + 1;
         setPlayerInputIndex(nextIndex);
+        playerInputIndexRef.current = nextIndex;
 
         // Check if player completed the sequence
         if (nextIndex >= sequenceLength && !submittedRef.current) {
@@ -190,6 +219,29 @@ export function CombatPanel({
             type: "SubmitCombatQte",
             completed: true,
             inputAdvantage: advantage,
+            mistakes: mistakesRef.current,
+          });
+        }
+      } else {
+        if (audioSettings.soundEnabled) {
+          playQteErrorSound();
+        }
+
+        const nextMistakes = mistakesRef.current + 1;
+        setMistakes(nextMistakes);
+        mistakesRef.current = nextMistakes;
+
+        if (nextMistakes >= 2 && !submittedRef.current) {
+          submittedRef.current = true;
+          if (requestRef.current) cancelAnimationFrame(requestRef.current);
+
+          // Failed immediately due to 2 mistakes
+          const advantage = -(sequenceLength - currentIdx);
+          executeCommand({
+            type: "SubmitCombatQte",
+            completed: false,
+            inputAdvantage: advantage,
+            mistakes: nextMistakes,
           });
         }
       }
@@ -197,7 +249,7 @@ export function CombatPanel({
 
     window.addEventListener("keydown", handleQteKeys);
     return () => window.removeEventListener("keydown", handleQteKeys);
-  }, [phase, qteSequence, playerInputIndex, sequenceLength, timeElapsed, opponentKeyDelayMs, executeCommand, keyboardLayout]);
+  }, [phase, qteSequence, sequenceLength, timeElapsed, opponentKeyDelayMs, executeCommand, keyboardLayout, audioSettings.soundEnabled]);
 
   const opponentCompleted = Math.min(sequenceLength, Math.floor(timeElapsed / opponentKeyDelayMs));
 
@@ -322,6 +374,11 @@ export function CombatPanel({
                 })}
               </div>
 
+              {/* Mistakes display */}
+              <div className={`combat-loot-text ${mistakes > 0 ? "combat-result-title--defeat" : ""}`} style={{ fontSize: "0.95rem" }}>
+                Mistakes: {mistakes} / 2
+              </div>
+
               {/* Progress bars (Race) */}
               <div className="combat-race-container">
                 <div className="combat-race-track">
@@ -355,6 +412,14 @@ export function CombatPanel({
                   </div>
                 </div>
               </div>
+            </div>
+          )}
+
+          {phase === "opponent_turn_transition" && (
+            <div className="combat-result-menu">
+              <h3 className="combat-result-title" style={{ color: "var(--color-text-soft)" }}>PREPARING</h3>
+              <p className="combat-result-text">The {opponentName} is preparing to attack...</p>
+              <p className="combat-loot-text">Get ready to defend!</p>
             </div>
           )}
 

@@ -280,6 +280,7 @@ export function GameScreen({
           onExecuteCommand={handleExecuteCommand}
           renderSnapshot={gridRenderSnapshot}
           snapshot={snapshot}
+          audioSettings={audioSettings}
         >
           {activeDialogue && activeDialogue[dialogueIndex] && (
             <DialogueBox

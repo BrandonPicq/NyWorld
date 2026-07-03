@@ -8,6 +8,7 @@ import { TerminalPanel } from "../components/TerminalPanel";
 import { getInteractKeyLabel, getMovementKeyLabel } from "../controls/gameInput";
 import type { KeyboardLayout } from "../controls/keyboardLayout";
 import { CombatPanel } from "./CombatPanel";
+import type { AudioSettings } from "../audio/audioSettings";
 
 type GameCenterPanelProps = {
   children?: ReactNode;
@@ -17,6 +18,7 @@ type GameCenterPanelProps = {
   onExecuteCommand: (command: GameCommand) => void;
   renderSnapshot: GridRenderSnapshot;
   snapshot: GameSnapshot;
+  audioSettings: AudioSettings;
 };
 
 export function GameCenterPanel({
@@ -27,6 +29,7 @@ export function GameCenterPanel({
   onExecuteCommand,
   renderSnapshot,
   snapshot,
+  audioSettings,
 }: GameCenterPanelProps) {
   return (
     <TerminalPanel className="game-layout__center game-layout__center--overlay">
@@ -36,6 +39,7 @@ export function GameCenterPanel({
           playerStats={snapshot.stats}
           executeCommand={onExecuteCommand}
           keyboardLayout={keyboardLayout}
+          audioSettings={audioSettings}
         />
       ) : (
         <>
