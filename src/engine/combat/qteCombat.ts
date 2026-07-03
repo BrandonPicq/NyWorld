@@ -83,7 +83,10 @@ export function resolveQteContest({
   if (inputAdvantage >= 5) {
     return {
       outcome: "critical",
-      damage: Math.max(2, Math.min(Math.max(attackPower, 2), baseDamage + 1)),
+      damage: Math.max(
+        2,
+        baseDamage + Math.max(1, Math.floor(attackPower * 0.5)),
+      ),
       attackPower,
       defensePower,
       inputAdvantage,

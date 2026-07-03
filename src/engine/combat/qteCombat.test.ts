@@ -73,7 +73,7 @@ describe("qteCombat", () => {
     });
 
     expect(narrowHit).toMatchObject({ outcome: "hit", damage: 2 });
-    expect(criticalHit).toMatchObject({ outcome: "critical", damage: 4 });
+    expect(criticalHit).toMatchObject({ outcome: "critical", damage: 6 });
   });
 
   it("lets a strong defensive lead evade all damage", () => {

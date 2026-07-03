@@ -46,6 +46,12 @@ export interface CharacterProgression {
   academicProgress: number;
 }
 
+export interface CharacterCondition {
+  id: string;
+  name: string;
+  durationInTicks?: number;
+}
+
 /**
  * Player-facing numeric state used by simulation, progression, and UI panels.
  *
@@ -62,5 +68,5 @@ export interface Stats extends Component {
   combat: CombatStats;
   skills: CharacterSkills;
   progression: CharacterProgression;
-  conditions: string[];
+  conditions: CharacterCondition[];
 }

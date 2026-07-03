@@ -94,7 +94,7 @@ export function CharacterSheetModal({
               <p>
                 <strong>Conditions:</strong>{" "}
                 {stats.conditions.length > 0
-                  ? stats.conditions.join(", ")
+                  ? stats.conditions.map((c) => c.name).join(", ")
                   : "None"}
               </p>
             </div>

@@ -117,7 +117,7 @@ export function cloneStats(stats: Stats): Stats {
     combat: { ...stats.combat },
     skills: { ...stats.skills },
     progression: { ...stats.progression },
-    conditions: [...stats.conditions],
+    conditions: stats.conditions.map((c) => ({ ...c })),
   };
 }
 

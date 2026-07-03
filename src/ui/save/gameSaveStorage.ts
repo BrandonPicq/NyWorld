@@ -95,7 +95,14 @@ function isSaveStats(value: unknown): boolean {
     typeof value.progression.academicTitle === "string" &&
     isFiniteNumber(value.progression.academicProgress) &&
     Array.isArray(value.conditions) &&
-    value.conditions.every((condition) => typeof condition === "string")
+    value.conditions.every(
+      (condition) =>
+        isRecord(condition) &&
+        typeof condition.id === "string" &&
+        typeof condition.name === "string" &&
+        (condition.durationInTicks === undefined ||
+          isFiniteNumber(condition.durationInTicks)),
+    )
   );
 }
 

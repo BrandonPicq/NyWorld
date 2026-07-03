@@ -4,6 +4,12 @@ This file tracks meaningful project changes by commit-oriented slices.
 
 Keep entries short and practical. When a slice is committed, its changelog section should stay aligned with the commit title so the project history remains easy to read after restores or bisects.
 
+## 2026-07-03 - [UPDATE]: Improve conditions structure and critical hit scaling
+
+- Define CharacterCondition type with id, name, and optional durationInTicks.
+- Update save validator, deep clone function, and UI to support structured condition objects.
+- Refactor critical hit damage formula to deal bonus damage scaled to attacker's power.
+
 ## 2026-07-03 - [UPDATE]: Add structured character stats and QTE combat helpers
 
 - Replace flat character stats with resources, attributes, combat values, skills, progression, and conditions.

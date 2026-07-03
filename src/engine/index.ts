@@ -8,6 +8,7 @@ export type {
   PlayerControlled,
   Position,
   Renderable,
+  CharacterCondition,
   StatResources,
   Stats,
 } from "./components";

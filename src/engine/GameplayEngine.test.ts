@@ -862,7 +862,7 @@ describe("GameplayEngine", () => {
     snapshot.stats.resources.energy = 1;
     snapshot.stats.attributes.intelligence = 99;
     snapshot.stats.skills.scholarship = 99;
-    snapshot.stats.conditions.push("external_change");
+    snapshot.stats.conditions.push({ id: "external_change", name: "External Change" });
 
     expect(engine.getSnapshot().stats).toMatchObject({
       resources: { energy: 100 },
@@ -1293,7 +1293,7 @@ describe("GameplayEngine", () => {
       save.stats.attributes.intelligence = 14;
       save.stats.skills.scholarship = 7;
       save.stats.progression.academicProgress = 30;
-      save.stats.conditions = ["tired"];
+      save.stats.conditions = [{ id: "tired", name: "Tired" }];
       save.npcStates = save.npcStates.map((state) =>
         state.npcId === "old_scholar"
           ? {
@@ -1323,7 +1323,7 @@ describe("GameplayEngine", () => {
       expect(snap.stats.attributes.intelligence).toBe(14);
       expect(snap.stats.skills.scholarship).toBe(7);
       expect(snap.stats.progression.academicProgress).toBe(30);
-      expect(snap.stats.conditions).toEqual(["tired"]);
+      expect(snap.stats.conditions).toEqual([{ id: "tired", name: "Tired" }]);
       expect(snap.inventory.items).toHaveLength(3);
       expect(restored.getNpcState("old_scholar")).toEqual({
         npcId: "old_scholar",
