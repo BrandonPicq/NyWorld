@@ -4,6 +4,12 @@ This file tracks meaningful project changes by commit-oriented slices.
 
 Keep entries short and practical. When a slice is committed, its changelog section should stay aligned with the commit title so the project history remains easy to read after restores or bisects.
 
+## 2026-07-03 - [UPDATE]: Balance QTE difficulty constraints and adjust minimum key delay
+
+- Increase default QTE base time limit to 5 seconds.
+- Broaden QTE sequence length limits to clamp between 3 and 10 inputs.
+- Raise minimum opponent simulated keypress delay to 400ms.
+
 ## 2026-07-03 - [UPDATE]: Display enemy Spirit and implement stats-based fleeing
 
 - Render opponent's Spirit (SPI) in the CombatPanel stats details block.

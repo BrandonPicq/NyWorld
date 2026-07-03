@@ -39,7 +39,7 @@ export function createQteChallenge({
   opponent,
   kind,
   baseSequenceLength = 5,
-  baseTimeLimitMs = 3000,
+  baseTimeLimitMs = 5000,
 }: QteChallengeInput): QteChallenge {
   const actorSpeed = getQteSpeed(actor, kind);
   const opponentSpeed = getQteSpeed(opponent, kind);
@@ -49,8 +49,8 @@ export function createQteChallenge({
   return {
     actorSpeed,
     opponentSpeed,
-    sequenceLength: clamp(baseSequenceLength - sequenceDelta, 3, 8),
-    timeLimitMs: clamp(baseTimeLimitMs + speedAdvantage * 100, 1800, 4800),
+    sequenceLength: clamp(baseSequenceLength - sequenceDelta, 3, 10),
+    timeLimitMs: clamp(baseTimeLimitMs + speedAdvantage * 100, 3000, 8000),
   };
 }
 

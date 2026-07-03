@@ -46,9 +46,9 @@ export function CombatPanel({
 
   const opponentSpeed = qteChallenge?.opponentSpeed ?? 10;
   // Calculate opponent key delay: faster speed = shorter delay
-  const opponentKeyDelayMs = Math.max(250, 800 - opponentSpeed * 30);
+  const opponentKeyDelayMs = Math.max(400, 800 - opponentSpeed * 30);
   const sequenceLength = qteSequence?.length ?? 5;
-  const timeLimitMs = qteChallenge?.timeLimitMs ?? 3000;
+  const timeLimitMs = qteChallenge?.timeLimitMs ?? 5000;
 
   // Reset states on phase changes
   useEffect(() => {
