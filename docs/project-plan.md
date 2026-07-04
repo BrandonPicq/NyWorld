@@ -49,27 +49,27 @@ Le contenu circule JSON -> registre -> moteur. Les registres decouvrent leurs fi
 
 ## Dette et limites connues
 
-Le prototype a ete construit en tranches rapides et certaines donnees vivent encore dans le code :
-
-- les effets des consommables sont codes en dur et dupliques dans `GameplayEngine` et `CombatSystem` au lieu de venir du catalogue d'objets ;
-- l'inventaire de depart du joueur et les statistiques initiales sont codes en dur dans le moteur ;
-- le registre de tuiles (`TileRegistry`) est defini en TypeScript, pas en contenu JSON ;
-- la logique est concentree dans quelques gros fichiers : `GameplayEngine.ts` (~1500 lignes), `zoneLoader.ts` (~900), `questRegistry.ts` (~870), `CombatSystem.ts` et `CombatPanel.tsx` (~700 chacun), `GameScreen.tsx` (~500) ;
-- la plupart des loaders de contenu s'arretent a la premiere erreur ; seules les zones et les quetes produisent deja des diagnostics multi-erreurs orientes editeur.
+- la logique reste concentree dans quelques gros fichiers : `GameplayEngine.ts` (~1500 lignes), `zoneLoader.ts` (~950), `questRegistry.ts` (~870), `CombatSystem.ts` et `CombatPanel.tsx` (~700 chacun), `GameScreen.tsx` (~500) ; l'extraction du combat est faite, quetes/inventaire/dialogue restent des candidats ;
+- les textes descriptifs des actions de combat (`effects`) dupliquent les valeurs de tuning ; l'editeur devra generer cette prose depuis les donnees ;
+- les sauvegardes de prototype sont jetables : les changements de format bumpent `SAVE_VERSION` sans migration tant qu'aucune vraie partie n'existe.
 
 ## Jalon en cours : contenu data-driven et editeur
 
 Objectif : rendre tout le contenu editable en donnees, puis construire un editeur maison au-dessus.
 
-Etapes prevues, dans un ordre approximatif :
+Fondations posees (juillet 2026) :
 
-- migrer vers le contenu JSON ce qui est encore code en dur : effets d'objets, inventaire et stats de depart, definitions de tuiles ;
-- continuer a decouper `GameplayEngine` en systemes et modules dedies (l'extraction du combat est faite, quetes/inventaire/dialogue restent des candidats) ;
-- etendre les diagnostics de contenu (`ContentDiagnostic`) aux dialogues, PNJs, objets, ennemis, actions de combat, presence globale et config de jeu ;
-- generaliser le contexte de validation injecte (`ContentValidationContext`) pour que des brouillons d'editeur ou des bundles de mods puissent se valider avant de devenir le contenu actif ;
-- construire un `ContentReferenceGraph` pour repondre a "ou cet id est-il utilise" et "que casse un renommage" ;
+- contenu migre en JSON : effets de consommables, tuiles, inventaire/stats/monnaie de depart, tuning repos/etude, tuning des actions de combat ;
+- chaque famille de contenu a un validateur a diagnostics multi-erreurs (`ContentDiagnostic`) : zones, quetes, objets, tuiles, dialogues, PNJs, presence globale, ennemis, actions de combat, config de jeu ;
+- la validation des references passe par un contexte injecte (`ContentValidationContext` et sous-ensembles `Pick`), voir ADR 0005 ;
+- `ContentReferenceGraph` repond a "ou cet id est-il utilise" et "que casse un renommage" (avec indicateur de persistance en sauvegarde) ;
+- `validateAllContent` audite un bundle complet ; un test permanent garde le contenu livre sans erreur.
+
+Etapes restantes :
+
+- continuer a decouper `GameplayEngine` en systemes et modules dedies ;
 - exposer des metadonnees d'edition (labels, champs requis, options d'ids) separees des types gameplay ;
-- premiere interface d'editeur au-dessus de ces briques.
+- premiere interface d'editeur au-dessus de ces briques (liste de contenu, panneau de problemes branche sur l'audit, navigation par references).
 
 ## Tests et validation
 

@@ -61,6 +61,21 @@ export {
 export type {
   ContentValidationContext,
 } from "./content/ContentValidationContext";
+export { buildContentReferenceGraph } from "./content/ContentReferenceGraph";
+export type {
+  ContentCatalogSnapshot,
+  ContentRef,
+  ContentReference,
+  ContentReferenceGraph,
+  RenameImpact,
+} from "./content/ContentReferenceGraph";
+export {
+  createRuntimeContentCatalogSnapshot,
+} from "./content/runtimeContentCatalog";
+export {
+  getContentAuditErrors,
+  validateAllContent,
+} from "./content/contentAudit";
 export {
   createQteChallenge,
   resolveQteContest,

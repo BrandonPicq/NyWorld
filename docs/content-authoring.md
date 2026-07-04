@@ -92,28 +92,36 @@ its own top-of-graph module that registries must never import; registries that
 need a context at module load build their own subset from direct imports.
 Stable content-type names live in `contentTypes.ts` (see ADR 0005).
 
+## Whole-Bundle Audit And Reference Graph
+
+Every content family now has an editor-facing validator that accumulates
+`ContentDiagnostic`s: zones, quests, items, tiles, dialogues, NPCs, global
+presence, enemies, combat actions, and the game config.
+
+`validateAllContent` (`engine/content/contentAudit.ts`) runs all of them over a
+`ContentCatalogSnapshot` plus full-context cross checks that per-registry
+validation cannot see, such as presence schedules pointing at unknown zones.
+The shipped bundle is kept audit-clean by a permanent test; a future editor
+problems panel consumes the same API.
+
+`buildContentReferenceGraph` (`engine/content/ContentReferenceGraph.ts`)
+centralizes cross-content id links. It answers where an id is used, which
+references dangle against a catalog context, and what a rename would impact,
+including whether the id family is persisted in save files.
+`createRuntimeContentCatalogSnapshot` builds the snapshot from shipped content;
+editor drafts and mod bundles can assemble the same shape themselves.
+
 ## Future Editor Work
-
-The first validation split covers zones and quests. Future content tooling
-should move the remaining first-error loaders toward `ContentDiagnostic` so
-dialogues, NPCs, items, enemies, combat actions, NPC presence, and global config
-can report several precise issues at once.
-
-Reference validation should also move behind an explicit content context instead
-of reading runtime registries directly. Validators should receive the item,
-NPC, dialogue, zone, quest, and enemy catalogs they are checking against, which
-will let editor drafts and mod bundles validate themselves before becoming the
-active runtime bundle.
-
-A `ContentReferenceGraph` should centralize cross-content links. That graph
-should answer questions such as where an id is used, what breaks if an id is
-renamed, and which content files depend on a dialogue, item, NPC, zone, quest,
-or enemy definition.
 
 Editing metadata should be exposed separately from gameplay types. The editor
 will need available options for id fields, defaults, UI labels, required field
 markers, short descriptions, and eventually field-specific controls without
-putting React concerns inside the engine.
+putting React concerns inside the engine. Stable content-type names already
+live in `engine/content/contentTypes.ts` (ADR 0005 records the wider
+decisions and deferrals).
+
+The prose `effects` strings in combat action files duplicate the authored
+tuning numbers; the editor should eventually generate that prose from data.
 
 ## NPCs And Dialogue
 

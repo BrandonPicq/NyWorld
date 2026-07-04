@@ -4,6 +4,15 @@ This file tracks meaningful project changes by commit-oriented slices.
 
 Keep entries short and practical. When a slice is committed, its changelog section should stay aligned with the commit title so the project history remains easy to read after restores or bisects.
 
+## 2026-07-04 - [ADD]: Content reference graph and whole-bundle audit
+
+- Add a content reference graph answering where an id is used and what a rename impacts.
+- Flag id families persisted in save files in rename impact reports.
+- Build plain-data catalog snapshots from shipped content for graph and audit consumers.
+- Add a whole-bundle audit running every content validator plus dangling-reference checks.
+- Keep the shipped bundle audit-clean with a permanent regression test.
+- Update the project plan and content authoring notes for the completed editor foundations.
+
 ## 2026-07-04 - [ADD]: Move combat action tuning into content
 
 - Author SP gains, MP costs, and Guard/Focus multipliers in the combat action files.
