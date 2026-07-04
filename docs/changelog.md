@@ -4,6 +4,14 @@ This file tracks meaningful project changes by commit-oriented slices.
 
 Keep entries short and practical. When a slice is committed, its changelog section should stay aligned with the commit title so the project history remains easy to read after restores or bisects.
 
+## 2026-07-04 - [REFACTOR]: Validate the item catalog with content diagnostics
+
+- Validate the raw item catalog with accumulating content diagnostics instead of an unchecked cast.
+- Check item ids, names, descriptions, categories, and default quantities.
+- Keep the strict runtime registry throwing on the first blocking diagnostic.
+- Return detached item definitions from the registry getter.
+- Add item catalog validation tests and registry behavior tests.
+
 ## 2026-07-04 - [DOCS]: Refresh project plan around the finished prototype
 
 - Rewrite the project plan from the V0 milestone framing to the current playable prototype state.

@@ -1,7 +1,11 @@
 import itemsData from "../../content/items/items.json";
+import type { ContentDiagnostic } from "../content/ContentDiagnostic";
+import { formatContentDiagnostic } from "../content/ContentDiagnostic";
 import type { ItemDef, ItemDefMap } from "./ItemDef";
 
-const registry = itemsData as ItemDefMap;
+const ITEM_CONTENT_TYPE = "item";
+
+const ITEM_CATEGORIES = ["quest", "consumable", "material", "misc"] as const;
 
 const fallback: ItemDef = {
   name: "Unknown Item",
@@ -9,6 +13,143 @@ const fallback: ItemDef = {
   category: "misc",
   defaultQuantity: 1,
 };
+
+const registry = buildRegistry(itemsData);
+
+/**
+ * Validates a raw item catalog without throwing.
+ *
+ * This is the editor-facing path: it accumulates every authoring problem so
+ * tools can report several precise issues at once. Items are a leaf content
+ * type, so no validation context is needed.
+ */
+export function validateItemCatalog(value: unknown): ContentDiagnostic[] {
+  const diagnostics: ContentDiagnostic[] = [];
+
+  if (!isRecord(value)) {
+    addItemError(
+      diagnostics,
+      undefined,
+      "$",
+      "Item catalog must be an object map of item definitions.",
+    );
+    return diagnostics;
+  }
+
+  for (const [itemId, def] of Object.entries(value)) {
+    if (!itemId.trim()) {
+      addItemError(
+        diagnostics,
+        undefined,
+        "$",
+        "Item catalog contains an empty item id.",
+      );
+      continue;
+    }
+
+    validateItemDef(itemId, def, diagnostics);
+  }
+
+  return diagnostics;
+}
+
+function validateItemDef(
+  itemId: string,
+  value: unknown,
+  diagnostics: ContentDiagnostic[],
+): void {
+  if (!isRecord(value)) {
+    addItemError(
+      diagnostics,
+      itemId,
+      "$",
+      `Item "${itemId}" must be an object.`,
+    );
+    return;
+  }
+
+  if (typeof value.name !== "string" || !value.name.trim()) {
+    addItemError(
+      diagnostics,
+      itemId,
+      "name",
+      `Item "${itemId}" has invalid or missing name.`,
+    );
+  }
+
+  if (typeof value.description !== "string" || !value.description.trim()) {
+    addItemError(
+      diagnostics,
+      itemId,
+      "description",
+      `Item "${itemId}" has invalid or missing description.`,
+    );
+  }
+
+  if (
+    typeof value.category !== "string" ||
+    !(ITEM_CATEGORIES as readonly string[]).includes(value.category)
+  ) {
+    addItemError(
+      diagnostics,
+      itemId,
+      "category",
+      `Item "${itemId}" has invalid category "${String(value.category)}". Expected one of: ${ITEM_CATEGORIES.join(", ")}.`,
+    );
+  }
+
+  if (
+    typeof value.defaultQuantity !== "number" ||
+    !Number.isInteger(value.defaultQuantity) ||
+    value.defaultQuantity <= 0
+  ) {
+    addItemError(
+      diagnostics,
+      itemId,
+      "defaultQuantity",
+      `Item "${itemId}" has invalid defaultQuantity. Expected a positive integer.`,
+    );
+  }
+}
+
+function buildRegistry(value: unknown): ItemDefMap {
+  const diagnostics = validateItemCatalog(value);
+  const firstError = diagnostics.find(
+    (diagnostic) => diagnostic.severity === "error",
+  );
+
+  if (firstError) {
+    throw new Error(formatContentDiagnostic(firstError));
+  }
+
+  const catalog = value as ItemDefMap;
+  return Object.fromEntries(
+    Object.entries(catalog).map(([itemId, def]) => [itemId, cloneItemDef(def)]),
+  );
+}
+
+function cloneItemDef(def: ItemDef): ItemDef {
+  return { ...def };
+}
+
+function addItemError(
+  diagnostics: ContentDiagnostic[],
+  itemId: string | undefined,
+  path: string,
+  message: string,
+): void {
+  diagnostics.push({
+    severity: "error",
+    contentType: ITEM_CONTENT_TYPE,
+    contentId: itemId,
+    path,
+    message,
+  });
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
 
 /**
  * Returns true when an item id is defined in the item catalog.
@@ -33,5 +174,6 @@ export function getAllItemIds(): string[] {
  * should still validate ids with hasItemDef before accepting authored data.
  */
 export function getItemDef(itemId: string): ItemDef {
-  return registry[itemId] ?? fallback;
+  const def = registry[itemId];
+  return def ? cloneItemDef(def) : cloneItemDef(fallback);
 }

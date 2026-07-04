@@ -138,7 +138,12 @@ export type {
   WorldMonthName,
   WorldTimeSnapshot,
 } from "./time/WorldCalendar";
-export { getAllItemIds, getItemDef, hasItemDef } from "./items/itemRegistry";
+export {
+  getAllItemIds,
+  getItemDef,
+  hasItemDef,
+  validateItemCatalog,
+} from "./items/itemRegistry";
 export type { ItemDef, ItemDefMap } from "./items/ItemDef";
 export { getItemMapPresentation } from "./items/itemMapPresentation";
 export type { ItemMapPresentation } from "./items/itemMapPresentation";
