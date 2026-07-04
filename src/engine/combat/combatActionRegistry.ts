@@ -1,9 +1,13 @@
+import type { ContentDiagnostic } from "../content/ContentDiagnostic";
+import { formatContentDiagnostic } from "../content/ContentDiagnostic";
+import { CONTENT_TYPES } from "../content/contentTypes";
 import type {
-  CombatActionCategory,
   CombatActionDef,
   CombatActionDefMap,
   CombatActionId,
 } from "./CombatActionDef";
+
+const COMBAT_ACTION_CONTENT_TYPE = CONTENT_TYPES.combatAction;
 
 const combatActionDefs = getSortedContentModules(
   import.meta.glob<unknown>("../../content/combat-actions/*.json", {
@@ -40,17 +44,166 @@ export function getAllCombatActionDefs(): CombatActionDef[] {
     .map(cloneCombatActionDef);
 }
 
-function buildRegistry(defs: unknown[]): CombatActionDefMap {
-  const nextRegistry = {} as CombatActionDefMap;
+/**
+ * Validates one combat action definition without throwing.
+ *
+ * Combat actions are self-contained, so no content context is needed.
+ */
+export function validateCombatActionDef(value: unknown): ContentDiagnostic[] {
+  const diagnostics: ContentDiagnostic[] = [];
+
+  if (!isRecord(value)) {
+    addActionError(
+      diagnostics,
+      undefined,
+      "$",
+      "Combat action definition must be an object.",
+    );
+    return diagnostics;
+  }
+
+  const actionId = isCombatActionId(value.actionId)
+    ? value.actionId
+    : undefined;
+
+  if (!actionId) {
+    addActionError(
+      diagnostics,
+      undefined,
+      "actionId",
+      "Combat action definition has invalid or missing actionId.",
+    );
+  }
+
+  const actionLabel = actionId ?? "unknown";
+
+  validateNonEmptyString(value.name, actionId, actionLabel, "name", diagnostics);
+
+  if (
+    value.category !== "offense" &&
+    value.category !== "defense" &&
+    value.category !== "utility"
+  ) {
+    addActionError(
+      diagnostics,
+      actionId,
+      "category",
+      `Combat action definition "${actionLabel}" has invalid category.`,
+    );
+  }
+
+  if (
+    typeof value.order !== "number" ||
+    !Number.isInteger(value.order) ||
+    value.order < 0
+  ) {
+    addActionError(
+      diagnostics,
+      actionId,
+      "order",
+      `Combat action definition "${actionLabel}" has invalid order.`,
+    );
+  }
+
+  validateNonEmptyString(
+    value.summary,
+    actionId,
+    actionLabel,
+    "summary",
+    diagnostics,
+  );
+  validateNonEmptyString(
+    value.formula,
+    actionId,
+    actionLabel,
+    "formula",
+    diagnostics,
+  );
+  validateNonEmptyStringArray(
+    value.effects,
+    actionId,
+    actionLabel,
+    "effects",
+    diagnostics,
+  );
+  validateNonEmptyStringArray(
+    value.details,
+    actionId,
+    actionLabel,
+    "details",
+    diagnostics,
+  );
+
+  return diagnostics;
+}
+
+/**
+ * Validates a full combat action registry, adding duplicate checks on top of
+ * per-def validation. Duplicate menu orders are reported as warnings because
+ * they confuse authors without breaking gameplay.
+ */
+export function validateCombatActionRegistry(
+  defs: readonly unknown[],
+): ContentDiagnostic[] {
+  const diagnostics: ContentDiagnostic[] = [];
+  const seenIds = new Set<string>();
+  const seenOrders = new Map<number, string>();
 
   for (const def of defs) {
-    assertCombatActionDef(def);
+    diagnostics.push(...validateCombatActionDef(def));
 
-    if (nextRegistry[def.actionId]) {
-      throw new Error(`Duplicate combat action definition "${def.actionId}".`);
+    if (!isRecord(def) || !isCombatActionId(def.actionId)) {
+      continue;
     }
 
-    nextRegistry[def.actionId] = cloneCombatActionDef(def);
+    if (seenIds.has(def.actionId)) {
+      addActionError(
+        diagnostics,
+        def.actionId,
+        "actionId",
+        `Duplicate combat action definition "${def.actionId}".`,
+      );
+    } else {
+      seenIds.add(def.actionId);
+    }
+
+    if (
+      typeof def.order === "number" &&
+      Number.isInteger(def.order) &&
+      def.order >= 0
+    ) {
+      const existing = seenOrders.get(def.order);
+      if (existing !== undefined) {
+        diagnostics.push({
+          severity: "warning",
+          contentType: COMBAT_ACTION_CONTENT_TYPE,
+          contentId: def.actionId,
+          path: "order",
+          message: `Combat action "${def.actionId}" shares menu order ${def.order} with "${existing}".`,
+        });
+      } else {
+        seenOrders.set(def.order, def.actionId);
+      }
+    }
+  }
+
+  return diagnostics;
+}
+
+function buildRegistry(defs: readonly unknown[]): CombatActionDefMap {
+  const diagnostics = validateCombatActionRegistry(defs);
+  const firstError = diagnostics.find(
+    (diagnostic) => diagnostic.severity === "error",
+  );
+
+  if (firstError) {
+    throw new Error(formatContentDiagnostic(firstError));
+  }
+
+  const nextRegistry = {} as CombatActionDefMap;
+  for (const def of defs) {
+    const actionDef = def as CombatActionDef;
+    nextRegistry[actionDef.actionId] = cloneCombatActionDef(actionDef);
   }
 
   return nextRegistry;
@@ -70,72 +223,48 @@ function cloneCombatActionDef(def: CombatActionDef): CombatActionDef {
   };
 }
 
-function assertCombatActionDef(value: unknown): asserts value is CombatActionDef {
-  if (!isRecord(value)) {
-    throw new Error("Combat action definition must be an object.");
-  }
-
-  if (!isCombatActionId(value.actionId)) {
-    throw new Error("Combat action definition has invalid or missing actionId.");
-  }
-
-  assertNonEmptyString(value.name, value.actionId, "name");
-  assertCombatActionCategory(value.category, value.actionId);
-
-  if (
-    typeof value.order !== "number" ||
-    !Number.isInteger(value.order) ||
-    value.order < 0
-  ) {
-    throw new Error(
-      `Combat action definition "${value.actionId}" has invalid order.`,
-    );
-  }
-
-  assertNonEmptyString(value.summary, value.actionId, "summary");
-  assertNonEmptyString(value.formula, value.actionId, "formula");
-  assertNonEmptyStringArray(value.effects, value.actionId, "effects");
-  assertNonEmptyStringArray(value.details, value.actionId, "details");
-}
-
-function assertCombatActionCategory(
+function validateNonEmptyString(
   value: unknown,
-  actionId: CombatActionId,
-): asserts value is CombatActionCategory {
-  if (value !== "offense" && value !== "defense" && value !== "utility") {
-    throw new Error(
-      `Combat action definition "${actionId}" has invalid category.`,
-    );
-  }
-}
-
-function assertNonEmptyString(
-  value: unknown,
-  actionId: CombatActionId,
+  actionId: CombatActionId | undefined,
+  actionLabel: string,
   key: string,
-): asserts value is string {
+  diagnostics: ContentDiagnostic[],
+): void {
   if (typeof value !== "string" || !value.trim()) {
-    throw new Error(
-      `Combat action definition "${actionId}" has invalid ${key}.`,
+    addActionError(
+      diagnostics,
+      actionId,
+      key,
+      `Combat action definition "${actionLabel}" has invalid ${key}.`,
     );
   }
 }
 
-function assertNonEmptyStringArray(
+function validateNonEmptyStringArray(
   value: unknown,
-  actionId: CombatActionId,
+  actionId: CombatActionId | undefined,
+  actionLabel: string,
   key: string,
-): asserts value is string[] {
+  diagnostics: ContentDiagnostic[],
+): void {
   if (!Array.isArray(value) || value.length === 0) {
-    throw new Error(
-      `Combat action definition "${actionId}" has invalid ${key}.`,
+    addActionError(
+      diagnostics,
+      actionId,
+      key,
+      `Combat action definition "${actionLabel}" has invalid ${key}.`,
     );
+    return;
   }
 
-  for (const entry of value) {
+  for (let i = 0; i < value.length; i++) {
+    const entry = value[i];
     if (typeof entry !== "string" || !entry.trim()) {
-      throw new Error(
-        `Combat action definition "${actionId}" has invalid ${key} entry.`,
+      addActionError(
+        diagnostics,
+        actionId,
+        `${key}[${i}]`,
+        `Combat action definition "${actionLabel}" has invalid ${key} entry.`,
       );
     }
   }
@@ -150,6 +279,21 @@ function isCombatActionId(value: unknown): value is CombatActionId {
     value === "flee" ||
     value === "use_item"
   );
+}
+
+function addActionError(
+  diagnostics: ContentDiagnostic[],
+  actionId: string | undefined,
+  path: string,
+  message: string,
+): void {
+  diagnostics.push({
+    severity: "error",
+    contentType: COMBAT_ACTION_CONTENT_TYPE,
+    contentId: actionId,
+    path,
+    message,
+  });
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {

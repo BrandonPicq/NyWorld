@@ -1,11 +1,78 @@
 import { describe, expect, it } from "vitest";
+import slimeData from "../../content/enemies/slime.json";
 import { createNpcStats } from "../stats/npcStats";
 import {
   getAllEnemyDefs,
   getEnemyDef,
   hasEnemyDef,
   isCombatEnemy,
+  validateEnemyDef,
+  validateEnemyRegistry,
 } from "./enemyRegistry";
+
+const draftEnemyContext = {
+  npcIds: new Set(["slime", "draft_beast"]),
+  itemIds: new Set(["slime_remains", "draft_fang"]),
+};
+
+describe("validateEnemyDef", () => {
+  it("accepts the shipped slime definition against an injected context", () => {
+    expect(validateEnemyDef(slimeData, draftEnemyContext)).toEqual([]);
+  });
+
+  it("accumulates stat and loot errors with precise paths", () => {
+    const brokenEnemy = {
+      npcId: "phantom",
+      combatable: "yes",
+      stats: {
+        ...slimeData.stats,
+        combat: { attack: 3, magicAttack: 1, defense: 1 },
+        progression: { academicTitle: "", academicProgress: 0 },
+      },
+      loot: [{ itemId: "missing_item", quantity: 0 }],
+    };
+
+    const diagnostics = validateEnemyDef(brokenEnemy, draftEnemyContext);
+
+    expect(diagnostics).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          contentType: "enemy",
+          contentId: "phantom",
+          path: "npcId",
+          message: 'Enemy definition references unknown npcId "phantom".',
+        }),
+        expect.objectContaining({ path: "combatable" }),
+        expect.objectContaining({ path: "stats.combat.magicDefense" }),
+        expect.objectContaining({ path: "stats.progression.academicTitle" }),
+        expect.objectContaining({
+          path: "loot[0].itemId",
+          message:
+            'Enemy definition "phantom" loot entry 0 references unknown itemId "missing_item".',
+        }),
+        expect.objectContaining({ path: "loot[0].quantity" }),
+      ]),
+    );
+    expect(diagnostics).toHaveLength(6);
+  });
+});
+
+describe("validateEnemyRegistry", () => {
+  it("reports duplicate enemy ids", () => {
+    const diagnostics = validateEnemyRegistry(
+      [slimeData, slimeData],
+      draftEnemyContext,
+    );
+
+    expect(diagnostics).toEqual([
+      expect.objectContaining({
+        contentId: "slime",
+        path: "npcId",
+        message: 'Duplicate enemy definition "slime".',
+      }),
+    ]);
+  });
+});
 
 describe("enemyRegistry", () => {
   it("loads combat enemy definitions from content", () => {

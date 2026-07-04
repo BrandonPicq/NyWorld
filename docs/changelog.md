@@ -4,6 +4,14 @@ This file tracks meaningful project changes by commit-oriented slices.
 
 Keep entries short and practical. When a slice is committed, its changelog section should stay aligned with the commit title so the project history remains easy to read after restores or bisects.
 
+## 2026-07-04 - [REFACTOR]: Add enemy and combat action content diagnostics
+
+- Validate enemy definitions with accumulating diagnostics across stats, conditions, and loot.
+- Check enemy NPC and loot item references against an injected catalog subset.
+- Validate combat action definitions with accumulating diagnostics.
+- Report duplicate combat action ids as errors and shared menu orders as warnings.
+- Add multi-error and injected-context tests for both registries.
+
 ## 2026-07-04 - [REFACTOR]: Add dialogue, NPC, and presence content diagnostics
 
 - Validate dialogue files with accumulating diagnostics and cross-file duplicate checks.

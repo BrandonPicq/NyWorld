@@ -1,9 +1,76 @@
 import { describe, expect, it } from "vitest";
+import strikeData from "../../content/combat-actions/strike.json";
 import {
   getAllCombatActionDefs,
   getCombatActionDef,
   hasCombatActionDef,
+  validateCombatActionDef,
+  validateCombatActionRegistry,
 } from "./combatActionRegistry";
+
+describe("validateCombatActionDef", () => {
+  it("accepts the shipped strike definition", () => {
+    expect(validateCombatActionDef(strikeData)).toEqual([]);
+  });
+
+  it("accumulates several errors with precise paths", () => {
+    const diagnostics = validateCombatActionDef({
+      actionId: "dance",
+      name: "",
+      category: "party",
+      order: -1,
+      summary: "A move.",
+      formula: "None.",
+      effects: [],
+      details: ["Fine detail.", ""],
+    });
+
+    expect(diagnostics).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          contentType: "combat-action",
+          path: "actionId",
+          message:
+            "Combat action definition has invalid or missing actionId.",
+        }),
+        expect.objectContaining({ path: "name" }),
+        expect.objectContaining({ path: "category" }),
+        expect.objectContaining({ path: "order" }),
+        expect.objectContaining({ path: "effects" }),
+        expect.objectContaining({ path: "details[1]" }),
+      ]),
+    );
+    expect(diagnostics).toHaveLength(6);
+  });
+});
+
+describe("validateCombatActionRegistry", () => {
+  it("reports duplicate action ids and shared menu orders", () => {
+    const otherAction = { ...strikeData, actionId: "cast" };
+
+    const diagnostics = validateCombatActionRegistry([
+      strikeData,
+      strikeData,
+      otherAction,
+    ]);
+
+    expect(diagnostics).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          severity: "error",
+          contentId: "strike",
+          message: 'Duplicate combat action definition "strike".',
+        }),
+        expect.objectContaining({
+          severity: "warning",
+          contentId: "cast",
+          path: "order",
+          message: 'Combat action "cast" shares menu order 1 with "strike".',
+        }),
+      ]),
+    );
+  });
+});
 
 describe("combatActionRegistry", () => {
   it("loads the core combat action definitions in display order", () => {

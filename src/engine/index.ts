@@ -70,6 +70,8 @@ export {
   getAllCombatActionDefs,
   getCombatActionDef,
   hasCombatActionDef,
+  validateCombatActionDef,
+  validateCombatActionRegistry,
 } from "./combat/combatActionRegistry";
 export type {
   CombatActionCategory,
@@ -90,7 +92,10 @@ export {
   getEnemyDef,
   hasEnemyDef,
   isCombatEnemy,
+  validateEnemyDef,
+  validateEnemyRegistry,
 } from "./enemies/enemyRegistry";
+export type { EnemyValidationContext } from "./enemies/enemyRegistry";
 export type {
   EnemyDef,
   EnemyDefMap,
