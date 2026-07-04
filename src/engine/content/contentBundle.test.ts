@@ -33,6 +33,28 @@ describe("validateGameConfig", () => {
     ).toEqual([]);
   });
 
+  it("accumulates action tuning errors with precise paths", () => {
+    const config = gameConfigWith({
+      actions: {
+        rest: { energyRestore: 0 },
+        study: { energyCost: 10, academicProgressGain: -1 },
+      },
+    });
+
+    const diagnostics = validateGameConfig(config, createGameConfigContext());
+
+    expect(diagnostics).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ path: "actions.rest.energyRestore" }),
+        expect.objectContaining({
+          path: "actions.study.academicProgressGain",
+        }),
+        expect.objectContaining({ path: "actions.study.intelligenceGain" }),
+      ]),
+    );
+    expect(diagnostics).toHaveLength(3);
+  });
+
   it("requires a newGame section", () => {
     expect(
       validateGameConfig(

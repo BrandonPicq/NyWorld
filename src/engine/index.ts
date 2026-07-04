@@ -27,6 +27,7 @@ export type { StatPath } from "./stats/characterStats";
 export {
   defaultContentBundle,
   createContentBundle,
+  getActionTuning,
   getDefaultZoneData,
   getNewGameConfig,
   getSafeRespawn,
@@ -36,6 +37,7 @@ export {
   validateGameConfig,
 } from "./content/contentBundle";
 export type {
+  ActionTuningConfig,
   ContentBundle,
   GameConfigValidationContext,
   GameContentConfig,

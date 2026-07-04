@@ -130,6 +130,26 @@ describe("GameplayEngine", () => {
     ]);
   });
 
+  it("applies injected action tuning to rest and study", () => {
+    const engine = new GameplayEngine(loadZone(zoneData), {
+      actions: {
+        rest: { energyRestore: 5 },
+        study: { energyCost: 20, academicProgressGain: 30, intelligenceGain: 2 },
+      },
+    });
+
+    engine.execute({ type: "Study" });
+    let stats = engine.getSnapshot().stats;
+    expect(stats.resources.energy).toBe(80);
+    expect(stats.attributes.intelligence).toBe(12);
+    expect(stats.progression.academicProgress).toBe(30);
+    expect(stats.skills.scholarship).toBe(31);
+
+    engine.execute({ type: "Rest" });
+    stats = engine.getSnapshot().stats;
+    expect(stats.resources.energy).toBe(85);
+  });
+
   it("keeps the default starting state without an injected config", () => {
     const snapshot = createEngine().getSnapshot();
 

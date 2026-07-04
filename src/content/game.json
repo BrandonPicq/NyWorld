@@ -5,6 +5,16 @@
     "x": 5,
     "y": 4
   },
+  "actions": {
+    "rest": {
+      "energyRestore": 15
+    },
+    "study": {
+      "energyCost": 10,
+      "academicProgressGain": 15,
+      "intelligenceGain": 1
+    }
+  },
   "newGame": {
     "startingCurrency": 1550,
     "maxEnergy": 100,

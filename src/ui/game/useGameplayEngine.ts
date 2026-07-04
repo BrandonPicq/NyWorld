@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
+  getActionTuning,
   getDefaultZoneData,
   getNewGameConfig,
   getSafeRespawn,
@@ -65,15 +66,21 @@ export function useGameplayEngine({
     };
     const safeRespawn = getSafeRespawn(contentBundle);
     const newGame = getNewGameConfig(contentBundle);
+    const actions = getActionTuning(contentBundle);
 
     try {
       const saveData = initialSaveDataRef.current;
       const engine = saveData
-        ? GameplayEngine.fromSaveData(saveData, { resolveZone, safeRespawn })
+        ? GameplayEngine.fromSaveData(saveData, {
+            resolveZone,
+            safeRespawn,
+            actions,
+          })
         : new GameplayEngine(loadZone(getDefaultZoneData(contentBundle)), {
             resolveZone,
             safeRespawn,
             newGame,
+            actions,
           });
 
       engineRef.current = engine;

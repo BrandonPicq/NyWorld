@@ -48,6 +48,11 @@ combat defeat or similar recovery event.
 
 The safe respawn point must reference an authored zone and a walkable tile.
 
+The `actions` section authors the tuning of out-of-combat player actions:
+rest energy restoration and study costs and gains. Study reuses
+`academicProgressGain` for both academic progress and the scholarship skill
+gain, matching the current gameplay behavior.
+
 The `newGame` section authors the starting state of a fresh playthrough:
 starting currency, maximum energy, starting inventory stacks, and the initial
 attribute and skill values. Saves store the full mutable player state, so this

@@ -49,6 +49,23 @@ export interface NewGameConfig {
 }
 
 /**
+ * Authored tuning for the out-of-combat player actions.
+ *
+ * Study reuses academicProgressGain for both academic progress and the
+ * scholarship skill gain, matching the current gameplay behavior.
+ */
+export interface ActionTuningConfig {
+  rest: {
+    energyRestore: number;
+  };
+  study: {
+    energyCost: number;
+    academicProgressGain: number;
+    intelligenceGain: number;
+  };
+}
+
+/**
  * Global game content that should be authored as data instead of hardcoded in
  * UI or engine modules.
  */
@@ -57,6 +74,8 @@ export interface GameContentConfig {
   defaultZoneId: string;
   /** Safe recovery point used by generic defeat/recovery flows. */
   safeRespawn: SafeRespawnPoint;
+  /** Tuning values for rest and study actions. */
+  actions: ActionTuningConfig;
   /** Starting inventory, currency, and stats for a fresh playthrough. */
   newGame: NewGameConfig;
 }
@@ -189,6 +208,13 @@ export function getNewGameConfig(bundle: ContentBundle): NewGameConfig {
 }
 
 /**
+ * Returns the authored action tuning as a detached value.
+ */
+export function getActionTuning(bundle: ContentBundle): ActionTuningConfig {
+  return cloneActionTuningConfig(bundle.game.actions);
+}
+
+/**
  * Converts a bundled zone into a fresh runtime GameMap.
  *
  * This is the bridge from editor/content data into simulation-ready data. It
@@ -282,9 +308,76 @@ export function validateGameConfig(
   }
 
   validateSafeRespawn(value.safeRespawn, context, diagnostics);
+  validateActionTuning(value.actions, diagnostics);
   validateNewGameConfig(value.newGame, context, diagnostics);
 
   return diagnostics;
+}
+
+function validateActionTuning(
+  value: unknown,
+  diagnostics: ContentDiagnostic[],
+): void {
+  if (!isRecord(value)) {
+    addGameConfigError(
+      diagnostics,
+      "actions",
+      "Game content config has invalid or missing actions.",
+    );
+    return;
+  }
+
+  if (!isRecord(value.rest)) {
+    addGameConfigError(
+      diagnostics,
+      "actions.rest",
+      "Game content actions.rest must be an object.",
+    );
+  } else {
+    validatePositiveInteger(
+      value.rest.energyRestore,
+      "actions.rest.energyRestore",
+      diagnostics,
+    );
+  }
+
+  if (!isRecord(value.study)) {
+    addGameConfigError(
+      diagnostics,
+      "actions.study",
+      "Game content actions.study must be an object.",
+    );
+  } else {
+    validatePositiveInteger(
+      value.study.energyCost,
+      "actions.study.energyCost",
+      diagnostics,
+    );
+    validatePositiveInteger(
+      value.study.academicProgressGain,
+      "actions.study.academicProgressGain",
+      diagnostics,
+    );
+    validatePositiveInteger(
+      value.study.intelligenceGain,
+      "actions.study.intelligenceGain",
+      diagnostics,
+    );
+  }
+}
+
+function validatePositiveInteger(
+  value: unknown,
+  path: string,
+  diagnostics: ContentDiagnostic[],
+): void {
+  if (typeof value !== "number" || !Number.isInteger(value) || value <= 0) {
+    addGameConfigError(
+      diagnostics,
+      path,
+      `Game content ${path} must be a positive integer.`,
+    );
+  }
 }
 
 function validateSafeRespawn(
@@ -505,7 +598,15 @@ function cloneGameContentConfig(config: GameContentConfig): GameContentConfig {
   return {
     defaultZoneId: config.defaultZoneId,
     safeRespawn: { ...config.safeRespawn },
+    actions: cloneActionTuningConfig(config.actions),
     newGame: cloneNewGameConfig(config.newGame),
+  };
+}
+
+function cloneActionTuningConfig(config: ActionTuningConfig): ActionTuningConfig {
+  return {
+    rest: { ...config.rest },
+    study: { ...config.study },
   };
 }
 

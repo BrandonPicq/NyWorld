@@ -42,6 +42,7 @@ import type {
 } from "./ZoneTypes";
 import type { GameSaveData } from "./GameSaveData";
 import type {
+  ActionTuningConfig,
   NewGameConfig,
   SafeRespawnPoint,
 } from "./content/contentBundle";
@@ -172,9 +173,14 @@ const COMMAND_DIRECTION: Record<string, Direction> = {
 
 const INTERACTION_DIRECTIONS: Direction[] = ["north", "east", "south", "west"];
 
-const STUDY_ENERGY_COST = 10;
-const STUDY_ACADEMIC_PROGRESS_GAIN = 15;
-const STUDY_INTELLIGENCE_GAIN = 1;
+/**
+ * Fallback action tuning used when no authored config is injected, so tests
+ * and isolated engine instances remain self-contained.
+ */
+const DEFAULT_ACTION_TUNING: ActionTuningConfig = {
+  rest: { energyRestore: 15 },
+  study: { energyCost: 10, academicProgressGain: 15, intelligenceGain: 1 },
+};
 
 type ZoneResolver = (zoneId: string) => GameMap | undefined;
 
@@ -191,6 +197,8 @@ type GameplayEngineOptions = {
    * full player state, so restored engines ignore this config.
    */
   newGame?: NewGameConfig;
+  /** Optional authored tuning for rest and study actions. */
+  actions?: ActionTuningConfig;
   random?: () => number;
 };
 
@@ -217,10 +225,12 @@ export class GameplayEngine {
   private notices: EngineNotice[] = [];
   private readonly combat: CombatSystem;
   private readonly safeRespawn: SafeRespawnPoint;
+  private readonly actionTuning: ActionTuningConfig;
 
   constructor(map: GameMap, options: GameplayEngineOptions = {}) {
     this.map = map;
     this.resolveZone = options.resolveZone;
+    this.actionTuning = options.actions ?? DEFAULT_ACTION_TUNING;
     this.safeRespawn = options.safeRespawn ?? {
       zoneId: map.zoneId,
       x: map.playerStart.x,
@@ -759,41 +769,41 @@ export class GameplayEngine {
   }
 
   private restPlayer(): void {
+    const { energyRestore } = this.actionTuning.rest;
     const stats = this.getPlayerStats();
     stats.resources.energy = Math.min(
       stats.resources.maxEnergy,
-      stats.resources.energy + 15,
+      stats.resources.energy + energyRestore,
     );
     this.tickCounter.advance();
     this.advanceWorldTime(WORLD_TIME_ACTION_COST.rest);
-    this.addLog("Rested and recovered 15 energy.");
+    this.addLog(`Rested and recovered ${energyRestore} energy.`);
   }
 
   private studyPlayer(): ExecuteResult {
+    const { energyCost, academicProgressGain, intelligenceGain } =
+      this.actionTuning.study;
     const stats = this.getPlayerStats();
 
-    if (stats.resources.energy < STUDY_ENERGY_COST) {
+    if (stats.resources.energy < energyCost) {
       this.addLog("You are too exhausted to study. Rest [R] to recover energy.");
       return { success: false };
     }
 
-    stats.resources.energy = Math.max(
-      0,
-      stats.resources.energy - STUDY_ENERGY_COST,
-    );
+    stats.resources.energy = Math.max(0, stats.resources.energy - energyCost);
     stats.progression.academicProgress = Math.min(
       100,
-      stats.progression.academicProgress + STUDY_ACADEMIC_PROGRESS_GAIN,
+      stats.progression.academicProgress + academicProgressGain,
     );
     stats.attributes.intelligence =
-      (stats.attributes.intelligence ?? 0) + STUDY_INTELLIGENCE_GAIN;
-    stats.skills.scholarship += STUDY_ACADEMIC_PROGRESS_GAIN;
+      (stats.attributes.intelligence ?? 0) + intelligenceGain;
+    stats.skills.scholarship += academicProgressGain;
     refreshDerivedStats(stats);
 
     this.tickCounter.advance();
     this.advanceWorldTime(WORLD_TIME_ACTION_COST.study);
     this.addLog(
-      `Studied old notes. Intelligence +${STUDY_INTELLIGENCE_GAIN}, scholarship +${STUDY_ACADEMIC_PROGRESS_GAIN}, academic progress +${STUDY_ACADEMIC_PROGRESS_GAIN}%.`,
+      `Studied old notes. Intelligence +${intelligenceGain}, scholarship +${academicProgressGain}, academic progress +${academicProgressGain}%.`,
     );
 
     return { success: true };

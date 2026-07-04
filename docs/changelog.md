@@ -4,6 +4,13 @@ This file tracks meaningful project changes by commit-oriented slices.
 
 Keep entries short and practical. When a slice is committed, its changelog section should stay aligned with the commit title so the project history remains easy to read after restores or bisects.
 
+## 2026-07-04 - [ADD]: Author rest and study tuning in game config
+
+- Author rest energy restoration and study costs and gains in game config.
+- Validate action tuning values as positive integers with content diagnostics.
+- Drive rest and study behavior from injected tuning with code defaults for isolated engines.
+- Keep study reusing the academic progress gain for the scholarship skill, matching existing behavior.
+
 ## 2026-07-04 - [ADD]: Author new-game inventory and stats in game config
 
 - Author starting currency, max energy, inventory, attributes, and skills in game config.
