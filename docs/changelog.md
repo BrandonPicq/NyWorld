@@ -4,6 +4,14 @@ This file tracks meaningful project changes by commit-oriented slices.
 
 Keep entries short and practical. When a slice is committed, its changelog section should stay aligned with the commit title so the project history remains easy to read after restores or bisects.
 
+## 2026-07-04 - [DOCS]: Refresh project plan around the finished prototype
+
+- Rewrite the project plan from the V0 milestone framing to the current playable prototype state.
+- List the shipped systems: zones, NPCs, schedules, dialogues, quests, inventory, stats, QTE combat, saves.
+- Document known debt: hardcoded item effects, starting inventory, tile registry, and oversized central files.
+- Define the current milestone: data-driven content migration and content editor foundations.
+- Align the product direction milestone notes with the current scope.
+
 ## 2026-07-04 - [REFACTOR]: Add quest diagnostics validation context
 
 - Add an explicit content validation context for item, NPC, dialogue, and zone references.

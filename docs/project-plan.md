@@ -1,16 +1,26 @@
-# Plan V0 - Moteur web-first textuel + grille
+# Plan de projet - Du prototype au produit
 
 ## Resume
 
-Le projet est un jeu majoritairement textuel dans un monde fantastique medieval, avec une exploration sur grille XY, une simulation de vie, des PNJs vivants, des statistiques detaillees, et plus tard du combat, de l'audio, des portraits et des sprites.
+Le projet est un jeu majoritairement textuel dans un monde fantastique medieval, avec une exploration sur grille XY, une simulation de vie, des PNJs vivants, des statistiques detaillees, et a terme une vie d'academie, des carrieres non combattantes, de l'audio, des portraits et des sprites. Le combat est un moyen de resolution de conflit parmi d'autres, pas le coeur du jeu.
 
-La V0 ne cherche pas encore a construire le jeu complet. Elle doit seulement poser une base saine et jouable :
+La phase V0 (base jouable minimale) et la phase V1 (exploration + combat simple) sont terminees. Le projet est aujourd'hui un prototype jouable complet. Le jalon en cours est la transition du prototype vers un vrai produit : sortir les donnees encore codees en dur, decouper les gros fichiers centraux, et construire un editeur de contenu.
 
-- lancer l'application ;
-- afficher une zone vide ;
-- afficher le joueur sur une grille ;
-- deplacer le joueur avec le clavier et des boutons UI ;
-- afficher les informations minimales : position XY, date de monde, zone active.
+## Etat actuel : prototype jouable
+
+Le prototype couvre une boucle de jeu complete sur deux zones de test :
+
+- ecran titre, options (themes, vitesse de texte, audio, clavier QWERTY/AZERTY, confort gameplay), menu pause, sauvegardes sur 3 emplacements localStorage avec versionnage et migration ;
+- deux zones tutorielles chargees depuis JSON, transitions entre zones, rendu Canvas 2D de la grille, dialogues d'entree de zone joues une seule fois ;
+- deplacement clavier et D-pad, commande contextuelle `Interact`, actions `Rest` et `Study` avec cout en energie ;
+- calendrier de monde (12 mois de 30 jours) avec horloge, date affichee et journal d'actions en temps de monde ;
+- PNJs definis par fiches de personnage, dialogues reutilisables par `dialogueId`, presence globale par emploi du temps journalier, etat mutable persistant par `npcId` ;
+- inventaire avec catalogue d'objets, ramassage au sol, consommables utilisables en exploration et en combat, retours visuels par toasts ;
+- systeme de quetes : objectifs de collecte, de coordonnees, de seuil de statistique et de victoire en combat, declencheurs et surcharges de dialogue, journal de quetes, recompenses ;
+- statistiques structurees (ressources, attributs, valeurs de combat, competences, progression, conditions) avec fiche de personnage detaillee ;
+- combat au tour par tour a base de QTE : actions Strike, Cast, Guard, Focus, Use Item et Flee, variance de degats, trois ennemis (Slime, Goblin, Kobold), butin de victoire et retour au point de reapparition sur apres une defaite.
+
+Environ 250 tests unitaires Vitest couvrent le moteur (deplacements, zones, quetes, combat, sauvegardes, schedules, calendrier) et les modules de logique UI (menus, inputs, reglages, stockage des sauvegardes).
 
 ## Stack verrouillee
 
@@ -22,108 +32,53 @@ La V0 ne cherche pas encore a construire le jeu complet. Elle doit seulement pos
 - Temps discret : le moteur garde des ticks techniques et un temps narratif derive pour la date du monde.
 - Web-first, avec export desktop/mobile plus tard via wrappers type Tauri ou Capacitor.
 
-## Architecture V0
-
-Le code sera separe en deux grandes zones :
-
-- `engine` : logique pure du jeu, simulation, ECS, commandes, chargement des donnees.
-- `ui` : React, Canvas, controles clavier/boutons, affichage texte et debug.
-
-React ne doit pas contenir les regles du jeu. Il affiche des snapshots du moteur et envoie des commandes comme `MoveNorth`, `MoveSouth`, `MoveWest`, `MoveEast`.
-
-Le Canvas ne decide pas de l'etat du monde. Il recoit seulement un snapshot de rendu prepare a partir du snapshot moteur, avec les informations necessaires pour dessiner la grille et les entites visibles.
-
-## Structure projet V0
+## Architecture
 
 Le code applicatif est decoupe par responsabilite :
 
-- `app` : orchestration React de haut niveau, navigation entre ecrans et initialisation future de partie ;
+- `app` : orchestration React de haut niveau et navigation entre ecrans ;
 - `ui` : ecrans et composants React, sans regles de gameplay ;
-- `engine` : logique pure du jeu, ECS, commandes et snapshots, a ajouter dans une tranche dediee ;
-- `rendering` : rendu Canvas 2D a partir d'etats deja prepares, a ajouter quand la grille sera branchee ;
-- `content` : donnees JSON et schemas de validation, a ajouter avec la premiere carte ;
-- `styles` : variables de design, styles de base, composants reutilisables et styles propres aux ecrans.
+- `engine` : logique pure du jeu, ECS, commandes, snapshots, registres de contenu, sauvegardes ;
+- `rendering` : rendu Canvas 2D a partir de snapshots de rendu deja prepares ;
+- `content` : donnees JSON (zones, PNJs, dialogues, objets, ennemis, quetes, actions de combat, presence globale, config de jeu) ;
+- `styles` : variables de design, styles de base, composants et ecrans.
 
-La logique reutilisable de navigation de menu vit sous `ui/menu`. Les composants visuels comme `TerminalMenu` ne doivent porter que l'adaptation React et le rendu terminal.
+React ne contient pas les regles du jeu : il affiche des snapshots du moteur et envoie des commandes explicites (`GameCommand`). Le Canvas ne decide pas de l'etat du monde : il dessine un snapshot de rendu.
 
-La logique reutilisable d'input joueur vit sous `ui/controls`. Les ecrans React ecoutent les evenements et deleguent le mapping clavier vers les commandes moteur a ces modules.
+Le contenu circule JSON -> registre -> moteur. Les registres decouvrent leurs fichiers par `import.meta.glob`, valident les references et exposent des copies detachees. `ContentBundle` centralise les zones et la config globale. Le detail des contrats de contenu vit dans `docs/content-authoring.md`, les cibles d'equilibrage dans `docs/combat-balance.md`, et les decisions structurantes dans `docs/adr/`.
 
-## Systeme minimal
+## Dette et limites connues
 
-La V0 inclura :
+Le prototype a ete construit en tranches rapides et certaines donnees vivent encore dans le code :
 
-- un identifiant d'entite stable ;
-- un composant `Position` ;
-- un composant `Renderable` minimal ;
-- un composant ou marqueur `PlayerControlled` ;
-- un systeme de mouvement cardinal ;
-- un compteur de ticks ;
-- un calendrier de monde (12 mois de 30 jours) expose dans les snapshots ;
-- une carte chargee depuis JSON ;
-- une transition simple entre zones de test ;
-- un journal textuel minimal des actions ;
-- une commande d'interaction contextuelle pour parler aux PNJs proches, avec ciblage autour du joueur ou seulement dans la direction regardee ;
-- des dialogues d'entree de zone configures dans les donnees JSON ;
-- des personnages non-joueurs (PNJs) configurés dans des fiches de personnage réutilisables, puis placés par `npcId` dans les zones ou par un registre global de presence ;
-- un état mutable sauvegardable par PNJ (`npcId`) pour préparer relations, progression et rôles évolutifs ;
-- des emplois du temps journaliers simples pour déplacer les PNJs selon l'heure du calendrier et les faire apparaitre dans une autre zone ;
-- des dialogues de PNJ stockes dans un registre reutilisable, relies aux fiches par `defaultDialogueId` et aux apparitions de zone par `dialogueId` ;
-- un défilement de dialogue progressif ("typewriter") couplé à des signaux Web Audio ("bleeps") dont le pitch varie selon la voix du PNJ ;
-- un inventaire consultable en lecture seule, avec catégories, descriptions et état vide, accessible par bouton et raccourci clavier.
+- les effets des consommables sont codes en dur et dupliques dans `GameplayEngine` et `CombatSystem` au lieu de venir du catalogue d'objets ;
+- l'inventaire de depart du joueur et les statistiques initiales sont codes en dur dans le moteur ;
+- le registre de tuiles (`TileRegistry`) est defini en TypeScript, pas en contenu JSON ;
+- la logique est concentree dans quelques gros fichiers : `GameplayEngine.ts` (~1500 lignes), `zoneLoader.ts` (~900), `questRegistry.ts` (~870), `CombatSystem.ts` et `CombatPanel.tsx` (~700 chacun), `GameScreen.tsx` (~500) ;
+- la plupart des loaders de contenu s'arretent a la premiere erreur ; seules les zones et les quetes produisent deja des diagnostics multi-erreurs orientes editeur.
 
-## Interface V0
+## Jalon en cours : contenu data-driven et editeur
 
-L'ecran sera a texte dominant :
+Objectif : rendre tout le contenu editable en donnees, puis construire un editeur maison au-dessus.
 
-- textes visibles du jeu en anglais ;
-- menus navigables au clavier : fleches haut/bas pour choisir, entree pour confirmer, echap pour revenir quand l'ecran le permet, tabulation neutralisee dans les menus ; deplacement en jeu avec les fleches directionnelles et WASD ou ZQSD (selon la configuration clavier QWERTY/AZERTY active) ;
-- options V0 organisees en categories : `Graphics & Text` (avec selection de theme et vitesse de texte Slow/Normal/Fast/Instant en ligne), `Audio` (avec activation du son en ligne), configuration clavier `Controls` en ligne et réglages `Gameplay` (avec assistant d'interaction intelligent et ciblage Around/Facing) ;
-- zone principale de narration/log ;
-- carte Canvas compacte mais visible affichant le joueur et les PNJs (glyph commun pour les PNJs ordinaires, couleur par race) ;
-- boutons de deplacement en forme de croix directionnelle (D-pad) avec le bouton d'interaction contextuel `Interact [E]` au centre ;
-- informations de debug : zone active, position et direction regardee ;
-- tableau de bord lateral (gauche) affichant les ressources vitales : jauge d'energie (decroissance par pas), monnaie decomposee (Platinum, Gold, Silver, Copper), titre academique, avec boutons de repos et fiche de personnage ;
-- horloge et date de monde affichees dans le tableau de bord lateral ;
-- fiche de personnage detaillee (modal overlay) accessible avec la touche `C` ou clic, affichant la liste modulaire des attributs (Strength, Intelligence, Charisma) et le detail de la progression academique ;
-- boîte de dialogue superposée (bas de carte) bloquant temporairement les inputs de déplacement lors d'un échange avec un PNJ.
+Etapes prevues, dans un ordre approximatif :
 
-Les sprites, portraits, sons de fond, combats, equipement et schedules complexes ne sont pas inclus dans la V0, mais l'architecture doit eviter de les bloquer.
-
-Les themes visuels sont pilotes par des variables CSS. Pour ajouter un theme, etendre la liste des presets cote UI et ajouter les overrides de tokens correspondants dans les styles.
-
-Les sons de menu V0 sont generes par une petite couche Web Audio cote UI. Cette couche sert uniquement au feedback des menus et reste separee du futur systeme audio du jeu.
+- migrer vers le contenu JSON ce qui est encore code en dur : effets d'objets, inventaire et stats de depart, definitions de tuiles ;
+- continuer a decouper `GameplayEngine` en systemes et modules dedies (l'extraction du combat est faite, quetes/inventaire/dialogue restent des candidats) ;
+- etendre les diagnostics de contenu (`ContentDiagnostic`) aux dialogues, PNJs, objets, ennemis, actions de combat, presence globale et config de jeu ;
+- generaliser le contexte de validation injecte (`ContentValidationContext`) pour que des brouillons d'editeur ou des bundles de mods puissent se valider avant de devenir le contenu actif ;
+- construire un `ContentReferenceGraph` pour repondre a "ou cet id est-il utilise" et "que casse un renommage" ;
+- exposer des metadonnees d'edition (labels, champs requis, options d'ids) separees des types gameplay ;
+- premiere interface d'editeur au-dessus de ces briques.
 
 ## Tests et validation
 
-Tests unitaires V0 avec Vitest :
+Tests unitaires Vitest existants : moteur (deplacements, collisions, ticks, calendrier, zones, transitions, PNJs, schedules, dialogues, inventaire, quetes, combat QTE, equilibrage, sauvegardes et migrations) et logique UI (menus, themes, vitesse de texte, audio, layouts clavier, reglages gameplay, stockage des sauvegardes).
 
-- menus, themes, vitesse de défilement, réglages de confort gameplay et reglages audio ;
-- mapping d'input jeu : fleches, QWERTY, AZERTY, exclusivite des layouts et labels ;
-- moteur gameplay : deplacements cardinaux, interaction, blocage par la carte, ticks, date de monde, journal, collisions de dialogues avec les PNJs, resolution de dialogues contextualises et deplacements de PNJs par schedule ;
-- chargement de zone : donnees valides, tile ids inconnus, depart invalide, depart bloque, dialogues d'entree, validation des PNJs, validation des `dialogueId` et des schedules.
+A completer avec les prochaines tranches :
 
-Tests a completer avec les prochaines tranches :
+- tests des futurs validateurs de contenu multi-erreurs au fur et a mesure de leur extension ;
+- tests d'integration clavier/UI sur l'ecran de jeu ;
+- verification du rendu Canvas par automatisation navigateur quand cela deviendra utile.
 
-- rendu Canvas lisible et correctement cadre ;
-- snapshots de rendu entre moteur et Canvas ;
-- integration clavier/UI sur l'ecran de jeu ;
-- validation plus complete des futurs schemas de contenu.
-
-Validation manuelle :
-
-- lancer l'app ;
-- voir la carte vide ;
-- deplacer le joueur au clavier ;
-- deplacer le joueur avec les boutons UI ;
-- verifier une transition entre deux zones de test ;
-- verifier que la position XY, le tick et le journal changent correctement.
-
-## Jalon suivant probable
-
-Apres la V0, le jalon naturel sera une V1 orientee exploration + combat simple :
-
-- obstacles ou tuiles non traversables ;
-- premieres interactions de zone ;
-- premiere rencontre conflictuelle ;
-- resolution de combat minimale ;
-- journal textuel plus riche.
+Validation manuelle courante : lancer l'app, derouler la boucle complete (nouvelle partie, dialogue, quete, combat, sauvegarde, rechargement) sur les deux zones de test.
