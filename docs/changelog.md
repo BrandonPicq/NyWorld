@@ -4,6 +4,10 @@ This file tracks meaningful project changes by commit-oriented slices.
 
 Keep entries short and practical. When a slice is committed, its changelog section should stay aligned with the commit title so the project history remains easy to read after restores or bisects.
 
+## 2026-07-04 - [DOCS]: Keep additional local workspace notes untracked
+
+- Ignore an additional local planning note that should not enter the repository.
+
 ## 2026-07-04 - [ADD]: Content reference graph and whole-bundle audit
 
 - Add a content reference graph answering where an id is used and what a rename impacts.
