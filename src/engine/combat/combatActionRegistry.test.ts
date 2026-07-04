@@ -44,6 +44,46 @@ describe("validateCombatActionDef", () => {
   });
 });
 
+describe("combat action tuning", () => {
+  it("exposes authored tuning values", () => {
+    expect(getCombatActionDef("strike").tuning).toEqual({ spGain: 5 });
+    expect(getCombatActionDef("guard").tuning).toEqual({
+      spGain: 10,
+      incomingDamageMultiplier: 0.5,
+    });
+    expect(getCombatActionDef("focus").tuning).toEqual({
+      spGain: 5,
+      damageBoostMultiplier: 1.5,
+    });
+    expect(getCombatActionDef("cast").tuning).toEqual({ mpCost: 10 });
+    expect(getCombatActionDef("unknown_action").tuning).toBeUndefined();
+  });
+
+  it("validates tuning fields", () => {
+    const diagnostics = validateCombatActionDef({
+      ...strikeData,
+      tuning: { spGain: 0, mpCost: 2.5, damageBoostMultiplier: -1 },
+    });
+
+    expect(diagnostics).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          path: "tuning.spGain",
+          message:
+            'Combat action definition "strike" has invalid tuning.spGain. Expected a positive integer.',
+        }),
+        expect.objectContaining({ path: "tuning.mpCost" }),
+        expect.objectContaining({
+          path: "tuning.damageBoostMultiplier",
+          message:
+            'Combat action definition "strike" has invalid tuning.damageBoostMultiplier. Expected a positive number.',
+        }),
+      ]),
+    );
+    expect(diagnostics).toHaveLength(3);
+  });
+});
+
 describe("validateCombatActionRegistry", () => {
   it("reports duplicate action ids and shared menu orders", () => {
     const otherAction = { ...strikeData, actionId: "cast" };

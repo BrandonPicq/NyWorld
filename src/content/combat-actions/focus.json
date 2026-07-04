@@ -14,5 +14,9 @@
     "Focus is a setup action. It gives up immediate pressure to make the next attack much more threatening.",
     "The damage boost applies before the final damage variance roll, so the exact number can still move a little.",
     "Focus is best when you expect to survive the enemy response and want to punch through a tougher defense."
-  ]
+  ],
+  "tuning": {
+    "spGain": 5,
+    "damageBoostMultiplier": 1.5
+  }
 }

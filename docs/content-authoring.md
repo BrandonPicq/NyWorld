@@ -149,6 +149,16 @@ The item catalog owns item names, descriptions, categories, and default
 quantities. Inventories and ground spawns store only `itemId` and quantity.
 Ground item presentation is resolved from item category so maps stay readable.
 
+## Combat Actions
+
+Combat action files own the player-facing texts (name, summary, formula,
+effects, details) and a `tuning` block with the gameplay numbers the combat
+system reads: SP gains, MP costs, and the Guard/Focus damage multipliers.
+
+The prose `effects` strings currently repeat the tuning numbers (for example
+"Gain 5 SP."). Keep both in sync when rebalancing; a future editor should
+generate the prose from the tuning values instead.
+
 ## Quests
 
 Quest files define stable quest ids, objective lists, dialogue triggers, NPC

@@ -71,12 +71,24 @@ export interface CombatSystemContext {
   random?: () => number;
 }
 
-const STRIKE_SP_GAIN = 5;
-const GUARD_SP_GAIN = 10;
-const FOCUS_SP_GAIN = 5;
-const CAST_MP_COST = 10;
-const FOCUS_DAMAGE_MULTIPLIER = 1.5;
-const GUARD_DAMAGE_MULTIPLIER = 0.5;
+/**
+ * Combat tuning resolved from authored combat action content, with code
+ * defaults preserving the original balance when a tuning field is omitted.
+ */
+function resolveActionTuning() {
+  return {
+    strikeSpGain: getCombatActionDef("strike").tuning?.spGain ?? 5,
+    guardSpGain: getCombatActionDef("guard").tuning?.spGain ?? 10,
+    focusSpGain: getCombatActionDef("focus").tuning?.spGain ?? 5,
+    castMpCost: getCombatActionDef("cast").tuning?.mpCost ?? 10,
+    focusDamageMultiplier:
+      getCombatActionDef("focus").tuning?.damageBoostMultiplier ?? 1.5,
+    guardDamageMultiplier:
+      getCombatActionDef("guard").tuning?.incomingDamageMultiplier ?? 0.5,
+  };
+}
+
+const ACTION_TUNING = resolveActionTuning();
 
 /**
  * Owns the current combat encounter state and resolves combat-only commands.
@@ -178,7 +190,7 @@ export class CombatSystem {
     }
 
     if (actionKind === "guard") {
-      const spGained = gainSp(playerStats, GUARD_SP_GAIN);
+      const spGained = gainSp(playerStats, ACTION_TUNING.guardSpGain);
       this.state.isGuarding = true;
       this.state.phase = "opponent_turn_transition";
       this.state.actionKind = undefined;
@@ -192,8 +204,8 @@ export class CombatSystem {
     }
 
     if (actionKind === "focus") {
-      const spGained = gainSp(playerStats, FOCUS_SP_GAIN);
-      this.state.damageBoostMultiplier = FOCUS_DAMAGE_MULTIPLIER;
+      const spGained = gainSp(playerStats, ACTION_TUNING.focusSpGain);
+      this.state.damageBoostMultiplier = ACTION_TUNING.focusDamageMultiplier;
       this.state.phase = "opponent_turn_transition";
       this.state.actionKind = undefined;
       this.state.actionLabel = undefined;
@@ -205,17 +217,20 @@ export class CombatSystem {
       return { success: true };
     }
 
-    if (actionKind === "cast" && playerStats.resources.mp < CAST_MP_COST) {
+    if (
+      actionKind === "cast" &&
+      playerStats.resources.mp < ACTION_TUNING.castMpCost
+    ) {
       this.context.addLog("Not enough MP to cast.");
       return { success: false };
     }
 
     if (actionKind === "strike") {
-      gainSp(playerStats, STRIKE_SP_GAIN);
+      gainSp(playerStats, ACTION_TUNING.strikeSpGain);
     } else {
       playerStats.resources.mp = Math.max(
         0,
-        playerStats.resources.mp - CAST_MP_COST,
+        playerStats.resources.mp - ACTION_TUNING.castMpCost,
       );
     }
 
@@ -473,7 +488,10 @@ export class CombatSystem {
     if (wasGuarding) {
       finalDamage =
         finalDamage > 0
-          ? Math.max(1, Math.floor(finalDamage * GUARD_DAMAGE_MULTIPLIER))
+          ? Math.max(
+              1,
+              Math.floor(finalDamage * ACTION_TUNING.guardDamageMultiplier),
+            )
           : 0;
       this.state.isGuarding = false;
     }

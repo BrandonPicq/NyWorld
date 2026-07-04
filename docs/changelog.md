@@ -4,6 +4,14 @@ This file tracks meaningful project changes by commit-oriented slices.
 
 Keep entries short and practical. When a slice is committed, its changelog section should stay aligned with the commit title so the project history remains easy to read after restores or bisects.
 
+## 2026-07-04 - [ADD]: Move combat action tuning into content
+
+- Author SP gains, MP costs, and Guard/Focus multipliers in the combat action files.
+- Validate tuning fields as positive integers or positive multipliers.
+- Resolve combat tuning from content with code defaults preserving current balance.
+- Keep the unknown-action fallback free of tuning values.
+- Note that prose effect strings duplicate tuning numbers until an editor generates them.
+
 ## 2026-07-04 - [ADD]: Author rest and study tuning in game config
 
 - Author rest energy restoration and study costs and gains in game config.

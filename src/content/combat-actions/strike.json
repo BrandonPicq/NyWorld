@@ -14,5 +14,8 @@
     "Strike is the baseline physical attack. It compares your attack value and QTE performance against the enemy's defense.",
     "A strong QTE lead can push through a tougher defense, while a poor QTE can be guarded or evaded.",
     "Strike is reliable when you want to build SP without spending MP."
-  ]
+  ],
+  "tuning": {
+    "spGain": 5
+  }
 }

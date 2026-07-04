@@ -9,6 +9,12 @@ import type {
 
 const COMBAT_ACTION_CONTENT_TYPE = CONTENT_TYPES.combatAction;
 
+const TUNING_INTEGER_FIELDS = ["spGain", "mpCost"] as const;
+const TUNING_MULTIPLIER_FIELDS = [
+  "damageBoostMultiplier",
+  "incomingDamageMultiplier",
+] as const;
+
 const combatActionDefs = getSortedContentModules(
   import.meta.glob<unknown>("../../content/combat-actions/*.json", {
     eager: true,
@@ -134,7 +140,66 @@ export function validateCombatActionDef(value: unknown): ContentDiagnostic[] {
     diagnostics,
   );
 
+  if (value.tuning !== undefined) {
+    validateActionTuning(value.tuning, actionId, actionLabel, diagnostics);
+  }
+
   return diagnostics;
+}
+
+function validateActionTuning(
+  value: unknown,
+  actionId: CombatActionId | undefined,
+  actionLabel: string,
+  diagnostics: ContentDiagnostic[],
+): void {
+  if (!isRecord(value)) {
+    addActionError(
+      diagnostics,
+      actionId,
+      "tuning",
+      `Combat action definition "${actionLabel}" tuning must be an object.`,
+    );
+    return;
+  }
+
+  for (const field of TUNING_INTEGER_FIELDS) {
+    const fieldValue = value[field];
+    if (fieldValue === undefined) {
+      continue;
+    }
+    if (
+      typeof fieldValue !== "number" ||
+      !Number.isInteger(fieldValue) ||
+      fieldValue <= 0
+    ) {
+      addActionError(
+        diagnostics,
+        actionId,
+        `tuning.${field}`,
+        `Combat action definition "${actionLabel}" has invalid tuning.${field}. Expected a positive integer.`,
+      );
+    }
+  }
+
+  for (const field of TUNING_MULTIPLIER_FIELDS) {
+    const fieldValue = value[field];
+    if (fieldValue === undefined) {
+      continue;
+    }
+    if (
+      typeof fieldValue !== "number" ||
+      !Number.isFinite(fieldValue) ||
+      fieldValue <= 0
+    ) {
+      addActionError(
+        diagnostics,
+        actionId,
+        `tuning.${field}`,
+        `Combat action definition "${actionLabel}" has invalid tuning.${field}. Expected a positive number.`,
+      );
+    }
+  }
 }
 
 /**
@@ -220,6 +285,7 @@ function cloneCombatActionDef(def: CombatActionDef): CombatActionDef {
     ...def,
     effects: [...def.effects],
     details: [...def.details],
+    tuning: def.tuning ? { ...def.tuning } : undefined,
   };
 }
 

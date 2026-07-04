@@ -85,6 +85,7 @@ export type {
   CombatActionDef,
   CombatActionDefMap,
   CombatActionId,
+  CombatActionTuning,
 } from "./combat/CombatActionDef";
 export { CombatSystem, isCombatNpc } from "./combat/CombatSystem";
 export type {

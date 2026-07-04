@@ -14,5 +14,8 @@
     "Cast is the basic magical attack. It compares your magical attack value and QTE performance against the enemy's magical defense.",
     "The QTE uses Spirit instead of Agility, so magically gifted characters can apply pressure even when they are not physically fast.",
     "If your MP is below the casting cost, the action is unavailable and does not consume your turn."
-  ]
+  ],
+  "tuning": {
+    "mpCost": 10
+  }
 }
