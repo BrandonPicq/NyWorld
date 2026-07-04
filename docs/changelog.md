@@ -4,6 +4,12 @@ This file tracks meaningful project changes by commit-oriented slices.
 
 Keep entries short and practical. When a slice is committed, its changelog section should stay aligned with the commit title so the project history remains easy to read after restores or bisects.
 
+## 2026-07-04 - [REFACTOR]: Extract quest progression out of GameplayEngine
+
+- Move quest lifecycle, objective progression, and quest save-id restoration into a dedicated quest system.
+- Keep GameplayEngine delegating quest start, completion, coordinate checks, and combat victory tracking.
+- Preserve quest rewards, item turn-ins, completion logs, and active quest snapshots.
+
 ## 2026-07-04 - [SETUP]: Add continuous integration workflow
 
 - Add a GitHub Actions workflow for pushes and pull requests.
