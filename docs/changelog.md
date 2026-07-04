@@ -4,6 +4,14 @@ This file tracks meaningful project changes by commit-oriented slices.
 
 Keep entries short and practical. When a slice is committed, its changelog section should stay aligned with the commit title so the project history remains easy to read after restores or bisects.
 
+## 2026-07-04 - [ADD]: Author new-game inventory and stats in game config
+
+- Author starting currency, max energy, inventory, attributes, and skills in game config.
+- Validate the global game config with accumulating diagnostics and an injected context.
+- Check starting inventory ids against the item catalog and respawn walkability against zone maps.
+- Create fresh-game state from the injected config while keeping code defaults for isolated engines.
+- Leave save restoration untouched since saves store the full player state.
+
 ## 2026-07-04 - [REFACTOR]: Add enemy and combat action content diagnostics
 
 - Validate enemy definitions with accumulating diagnostics across stats, conditions, and loot.

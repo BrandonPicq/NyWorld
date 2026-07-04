@@ -4,5 +4,35 @@
     "zoneId": "test_zone",
     "x": 5,
     "y": 4
+  },
+  "newGame": {
+    "startingCurrency": 1550,
+    "maxEnergy": 100,
+    "startingInventory": [
+      { "itemId": "academy_notebook", "quantity": 1 },
+      { "itemId": "travel_ration", "quantity": 3 },
+      { "itemId": "chalk_piece", "quantity": 2 }
+    ],
+    "attributes": {
+      "strength": 10,
+      "vitality": 10,
+      "agility": 10,
+      "intelligence": 10,
+      "spirit": 10,
+      "willpower": 10,
+      "perception": 10,
+      "charisma": 10
+    },
+    "skills": {
+      "melee": 1,
+      "ranged": 1,
+      "guard": 1,
+      "evasion": 1,
+      "spellcasting": 1,
+      "focus": 1,
+      "athletics": 1,
+      "scholarship": 1,
+      "speech": 1
+    }
   }
 }

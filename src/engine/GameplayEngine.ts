@@ -41,7 +41,11 @@ import type {
   ZoneTransitionData,
 } from "./ZoneTypes";
 import type { GameSaveData } from "./GameSaveData";
-import type { SafeRespawnPoint } from "./content/contentBundle";
+import type {
+  NewGameConfig,
+  SafeRespawnPoint,
+} from "./content/contentBundle";
+import { createStartingInventory } from "./newGameState";
 import {
   START_WORLD_TIME_MINUTES,
   WORLD_TIME_ACTION_COST,
@@ -182,6 +186,11 @@ type GameplayEngineOptions = {
    * self-contained.
    */
   safeRespawn?: SafeRespawnPoint;
+  /**
+   * Optional authored starting state for fresh playthroughs. Saves restore the
+   * full player state, so restored engines ignore this config.
+   */
+  newGame?: NewGameConfig;
   random?: () => number;
 };
 
@@ -246,17 +255,8 @@ export class GameplayEngine {
     };
     this.world.addComponent(playerId, renderable);
 
-    this.world.addComponent(playerId, createInitialStats());
-
-    const inventory: Inventory = {
-      type: "Inventory",
-      items: [
-        { itemId: "academy_notebook", quantity: 1 },
-        { itemId: "travel_ration", quantity: 3 },
-        { itemId: "chalk_piece", quantity: 2 },
-      ],
-    };
-    this.world.addComponent(playerId, inventory);
+    this.world.addComponent(playerId, createInitialStats(options.newGame));
+    this.world.addComponent(playerId, createStartingInventory(options.newGame));
 
     const quests: Quests = {
       type: "Quests",

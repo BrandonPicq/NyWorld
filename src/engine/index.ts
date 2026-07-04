@@ -28,14 +28,19 @@ export {
   defaultContentBundle,
   createContentBundle,
   getDefaultZoneData,
+  getNewGameConfig,
   getSafeRespawn,
   getZoneData,
   resolveAllZonesFromBundle,
   resolveZoneFromBundle,
+  validateGameConfig,
 } from "./content/contentBundle";
 export type {
   ContentBundle,
+  GameConfigValidationContext,
   GameContentConfig,
+  NewGameConfig,
+  NewGameStartingStack,
   SafeRespawnPoint,
 } from "./content/contentBundle";
 export type {

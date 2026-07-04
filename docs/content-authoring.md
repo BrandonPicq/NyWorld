@@ -48,6 +48,12 @@ combat defeat or similar recovery event.
 
 The safe respawn point must reference an authored zone and a walkable tile.
 
+The `newGame` section authors the starting state of a fresh playthrough:
+starting currency, maximum energy, starting inventory stacks, and the initial
+attribute and skill values. Saves store the full mutable player state, so this
+section never affects loaded games. Starting inventory ids must exist in the
+item catalog.
+
 ## Zones
 
 Zone JSON describes the map rectangle, tile grid, player start, optional

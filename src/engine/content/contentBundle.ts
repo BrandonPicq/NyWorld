@@ -1,6 +1,11 @@
 import gameConfigData from "../../content/game.json";
+import type { CharacterSkills, CoreAttributes } from "../components";
+import type { ContentDiagnostic } from "./ContentDiagnostic";
+import { formatContentDiagnostic } from "./ContentDiagnostic";
+import { CONTENT_TYPES } from "./contentTypes";
+import type { ContentValidationContext } from "./ContentValidationContext";
 import { GameMap } from "../GameMap";
-import { getTileDef } from "../TileRegistry";
+import { getAllItemIds } from "../items/itemRegistry";
 import type {
   DialogueNodeData,
   ItemSpawnData,
@@ -22,6 +27,28 @@ export interface SafeRespawnPoint {
 }
 
 /**
+ * One authored starting inventory stack for a fresh playthrough.
+ */
+export interface NewGameStartingStack {
+  itemId: string;
+  quantity: number;
+}
+
+/**
+ * Authored starting state for a new game.
+ *
+ * Saves store the full mutable player state, so this config only affects
+ * fresh playthroughs.
+ */
+export interface NewGameConfig {
+  startingCurrency: number;
+  maxEnergy: number;
+  startingInventory: NewGameStartingStack[];
+  attributes: CoreAttributes;
+  skills: CharacterSkills;
+}
+
+/**
  * Global game content that should be authored as data instead of hardcoded in
  * UI or engine modules.
  */
@@ -30,7 +57,40 @@ export interface GameContentConfig {
   defaultZoneId: string;
   /** Safe recovery point used by generic defeat/recovery flows. */
   safeRespawn: SafeRespawnPoint;
+  /** Starting inventory, currency, and stats for a fresh playthrough. */
+  newGame: NewGameConfig;
 }
+
+/**
+ * Catalog subset that game config validation checks references against.
+ */
+export type GameConfigValidationContext = Pick<
+  ContentValidationContext,
+  "itemIds" | "zones"
+>;
+
+const ATTRIBUTE_KEYS: readonly (keyof CoreAttributes)[] = [
+  "strength",
+  "vitality",
+  "agility",
+  "intelligence",
+  "spirit",
+  "willpower",
+  "perception",
+  "charisma",
+];
+
+const SKILL_KEYS: readonly (keyof CharacterSkills)[] = [
+  "melee",
+  "ranged",
+  "guard",
+  "evasion",
+  "spellcasting",
+  "focus",
+  "athletics",
+  "scholarship",
+  "speech",
+];
 
 /**
  * Static content snapshot available to the runtime.
@@ -68,19 +128,21 @@ export function createContentBundle(input: {
   gameConfig: unknown;
   zones: unknown[];
 }): ContentBundle {
-  const zones = buildZoneDataRegistry(input.zones);
-  const game = parseGameContentConfig(input.gameConfig);
+  const { zones, zoneMaps } = buildZoneDataRegistry(input.zones);
 
-  if (!zones[game.defaultZoneId]) {
-    throw new Error(
-      `Game content references unknown defaultZoneId "${game.defaultZoneId}".`,
-    );
+  const diagnostics = validateGameConfig(input.gameConfig, {
+    itemIds: new Set(getAllItemIds()),
+    zones: zoneMaps,
+  });
+  const firstError = diagnostics.find(
+    (diagnostic) => diagnostic.severity === "error",
+  );
+  if (firstError) {
+    throw new Error(formatContentDiagnostic(firstError));
   }
 
-  assertSafeRespawn(zones, game.safeRespawn);
-
   return {
-    game: cloneGameContentConfig(game),
+    game: cloneGameContentConfig(input.gameConfig as GameContentConfig),
     zones: cloneZoneRegistry(zones),
   };
 }
@@ -117,6 +179,13 @@ export function getZoneData(
  */
 export function getSafeRespawn(bundle: ContentBundle): SafeRespawnPoint {
   return { ...bundle.game.safeRespawn };
+}
+
+/**
+ * Returns the authored new-game starting state as a detached value.
+ */
+export function getNewGameConfig(bundle: ContentBundle): NewGameConfig {
+  return cloneNewGameConfig(bundle.game.newGame);
 }
 
 /**
@@ -160,8 +229,12 @@ export function resolveAllZonesFromBundle(
  * Validates zone authoring data through loadZone, then stores detached raw data
  * by zone id for later runtime resolution.
  */
-function buildZoneDataRegistry(defs: unknown[]): Record<string, ZoneData> {
+function buildZoneDataRegistry(defs: unknown[]): {
+  zones: Record<string, ZoneData>;
+  zoneMaps: ReadonlyMap<string, GameMap>;
+} {
   const zones: Record<string, ZoneData> = {};
+  const zoneMaps = new Map<string, GameMap>();
 
   for (const def of defs) {
     const zone = loadZone(def);
@@ -171,81 +244,249 @@ function buildZoneDataRegistry(defs: unknown[]): Record<string, ZoneData> {
     }
 
     zones[zone.zoneId] = cloneZoneData(def as ZoneData);
+    zoneMaps.set(zone.zoneId, zone);
   }
 
-  return zones;
+  return { zones, zoneMaps };
 }
 
 /**
- * Parses the global game config before cross-reference validation can happen.
+ * Validates the global game config against an explicit content context.
+ *
+ * This is the editor-facing path: it accumulates every authoring problem so
+ * tools can report entry-point, respawn, and new-game issues at once.
  */
-function parseGameContentConfig(value: unknown): GameContentConfig {
+export function validateGameConfig(
+  value: unknown,
+  context: GameConfigValidationContext,
+): ContentDiagnostic[] {
+  const diagnostics: ContentDiagnostic[] = [];
+
   if (!isRecord(value)) {
-    throw new Error("Game content config must be an object.");
+    addGameConfigError(diagnostics, "$", "Game content config must be an object.");
+    return diagnostics;
   }
 
   if (typeof value.defaultZoneId !== "string" || !value.defaultZoneId.trim()) {
-    throw new Error("Game content config has invalid defaultZoneId.");
+    addGameConfigError(
+      diagnostics,
+      "defaultZoneId",
+      "Game content config has invalid defaultZoneId.",
+    );
+  } else if (!context.zones.has(value.defaultZoneId)) {
+    addGameConfigError(
+      diagnostics,
+      "defaultZoneId",
+      `Game content references unknown defaultZoneId "${value.defaultZoneId}".`,
+    );
   }
 
-  if (!isRecord(value.safeRespawn)) {
-    throw new Error("Game content config has invalid safeRespawn.");
-  }
+  validateSafeRespawn(value.safeRespawn, context, diagnostics);
+  validateNewGameConfig(value.newGame, context, diagnostics);
 
-  const safeRespawn = value.safeRespawn;
-  if (typeof safeRespawn.zoneId !== "string" || !safeRespawn.zoneId.trim()) {
-    throw new Error("Game content config has invalid safeRespawn.zoneId.");
-  }
-  if (
-    typeof safeRespawn.x !== "number" ||
-    !Number.isInteger(safeRespawn.x)
-  ) {
-    throw new Error("Game content config has invalid safeRespawn.x.");
-  }
-  if (
-    typeof safeRespawn.y !== "number" ||
-    !Number.isInteger(safeRespawn.y)
-  ) {
-    throw new Error("Game content config has invalid safeRespawn.y.");
-  }
-
-  return {
-    defaultZoneId: value.defaultZoneId,
-    safeRespawn: {
-      zoneId: safeRespawn.zoneId,
-      x: safeRespawn.x,
-      y: safeRespawn.y,
-    },
-  };
+  return diagnostics;
 }
 
-/**
- * Verifies that the authored safe respawn points at an existing walkable tile.
- */
-function assertSafeRespawn(
-  zones: Record<string, ZoneData>,
-  safeRespawn: SafeRespawnPoint,
+function validateSafeRespawn(
+  value: unknown,
+  context: GameConfigValidationContext,
+  diagnostics: ContentDiagnostic[],
 ): void {
-  const zoneData = zones[safeRespawn.zoneId];
-  if (!zoneData) {
-    throw new Error(
-      `Game content safeRespawn references unknown zoneId "${safeRespawn.zoneId}".`,
+  if (!isRecord(value)) {
+    addGameConfigError(
+      diagnostics,
+      "safeRespawn",
+      "Game content config has invalid safeRespawn.",
+    );
+    return;
+  }
+
+  let structureValid = true;
+
+  if (typeof value.zoneId !== "string" || !value.zoneId.trim()) {
+    addGameConfigError(
+      diagnostics,
+      "safeRespawn.zoneId",
+      "Game content config has invalid safeRespawn.zoneId.",
+    );
+    structureValid = false;
+  }
+  if (typeof value.x !== "number" || !Number.isInteger(value.x)) {
+    addGameConfigError(
+      diagnostics,
+      "safeRespawn.x",
+      "Game content config has invalid safeRespawn.x.",
+    );
+    structureValid = false;
+  }
+  if (typeof value.y !== "number" || !Number.isInteger(value.y)) {
+    addGameConfigError(
+      diagnostics,
+      "safeRespawn.y",
+      "Game content config has invalid safeRespawn.y.",
+    );
+    structureValid = false;
+  }
+
+  if (!structureValid) {
+    return;
+  }
+
+  const zone = context.zones.get(value.zoneId as string);
+  if (!zone) {
+    addGameConfigError(
+      diagnostics,
+      "safeRespawn.zoneId",
+      `Game content safeRespawn references unknown zoneId "${value.zoneId}".`,
+    );
+    return;
+  }
+
+  const x = value.x as number;
+  const y = value.y as number;
+
+  if (x < 0 || x >= zone.width || y < 0 || y >= zone.height) {
+    addGameConfigError(
+      diagnostics,
+      "safeRespawn",
+      "Game content safeRespawn is out of bounds.",
+    );
+    return;
+  }
+
+  if (!zone.isWalkable(x, y)) {
+    addGameConfigError(
+      diagnostics,
+      "safeRespawn",
+      "Game content safeRespawn must be on a walkable tile.",
+    );
+  }
+}
+
+function validateNewGameConfig(
+  value: unknown,
+  context: GameConfigValidationContext,
+  diagnostics: ContentDiagnostic[],
+): void {
+  if (!isRecord(value)) {
+    addGameConfigError(
+      diagnostics,
+      "newGame",
+      "Game content config has invalid or missing newGame.",
+    );
+    return;
+  }
+
+  if (
+    typeof value.startingCurrency !== "number" ||
+    !Number.isInteger(value.startingCurrency) ||
+    value.startingCurrency < 0
+  ) {
+    addGameConfigError(
+      diagnostics,
+      "newGame.startingCurrency",
+      "Game content newGame.startingCurrency must be a non-negative integer.",
     );
   }
 
   if (
-    safeRespawn.x < 0 ||
-    safeRespawn.x >= zoneData.width ||
-    safeRespawn.y < 0 ||
-    safeRespawn.y >= zoneData.height
+    typeof value.maxEnergy !== "number" ||
+    !Number.isInteger(value.maxEnergy) ||
+    value.maxEnergy <= 0
   ) {
-    throw new Error("Game content safeRespawn is out of bounds.");
+    addGameConfigError(
+      diagnostics,
+      "newGame.maxEnergy",
+      "Game content newGame.maxEnergy must be a positive integer.",
+    );
   }
 
-  const tileId = zoneData.tiles[safeRespawn.y][safeRespawn.x];
-  if (!getTileDef(tileId).walkable) {
-    throw new Error("Game content safeRespawn must be on a walkable tile.");
+  if (!Array.isArray(value.startingInventory)) {
+    addGameConfigError(
+      diagnostics,
+      "newGame.startingInventory",
+      "Game content newGame.startingInventory must be an array.",
+    );
+  } else {
+    for (let i = 0; i < value.startingInventory.length; i++) {
+      const stack = value.startingInventory[i];
+      const path = `newGame.startingInventory[${i}]`;
+
+      if (!isRecord(stack)) {
+        addGameConfigError(diagnostics, path, `Starting stack ${i} must be an object.`);
+        continue;
+      }
+
+      if (
+        typeof stack.itemId !== "string" ||
+        !context.itemIds.has(stack.itemId)
+      ) {
+        addGameConfigError(
+          diagnostics,
+          `${path}.itemId`,
+          `Starting stack ${i} references unknown itemId "${stack.itemId}".`,
+        );
+      }
+      if (
+        typeof stack.quantity !== "number" ||
+        !Number.isInteger(stack.quantity) ||
+        stack.quantity <= 0
+      ) {
+        addGameConfigError(
+          diagnostics,
+          `${path}.quantity`,
+          `Starting stack ${i} has invalid quantity. Expected a positive integer.`,
+        );
+      }
+    }
   }
+
+  validateStatSection(value.attributes, "attributes", ATTRIBUTE_KEYS, diagnostics);
+  validateStatSection(value.skills, "skills", SKILL_KEYS, diagnostics);
+}
+
+function validateStatSection(
+  value: unknown,
+  sectionName: string,
+  requiredKeys: readonly string[],
+  diagnostics: ContentDiagnostic[],
+): void {
+  if (!isRecord(value)) {
+    addGameConfigError(
+      diagnostics,
+      `newGame.${sectionName}`,
+      `Game content newGame.${sectionName} must be an object.`,
+    );
+    return;
+  }
+
+  for (const key of requiredKeys) {
+    const statValue = value[key];
+    if (
+      typeof statValue !== "number" ||
+      !Number.isInteger(statValue) ||
+      statValue < 0
+    ) {
+      addGameConfigError(
+        diagnostics,
+        `newGame.${sectionName}.${key}`,
+        `Game content newGame.${sectionName}.${key} must be a non-negative integer.`,
+      );
+    }
+  }
+}
+
+function addGameConfigError(
+  diagnostics: ContentDiagnostic[],
+  path: string,
+  message: string,
+): void {
+  diagnostics.push({
+    severity: "error",
+    contentType: CONTENT_TYPES.game,
+    path,
+    message,
+  });
 }
 
 /**
@@ -264,6 +505,17 @@ function cloneGameContentConfig(config: GameContentConfig): GameContentConfig {
   return {
     defaultZoneId: config.defaultZoneId,
     safeRespawn: { ...config.safeRespawn },
+    newGame: cloneNewGameConfig(config.newGame),
+  };
+}
+
+function cloneNewGameConfig(config: NewGameConfig): NewGameConfig {
+  return {
+    startingCurrency: config.startingCurrency,
+    maxEnergy: config.maxEnergy,
+    startingInventory: config.startingInventory.map((stack) => ({ ...stack })),
+    attributes: { ...config.attributes },
+    skills: { ...config.skills },
   };
 }
 

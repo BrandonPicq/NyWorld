@@ -88,6 +88,60 @@ function createCrossZoneYoungPageMaps() {
 }
 
 describe("GameplayEngine", () => {
+  it("starts a fresh game from an injected new-game config", () => {
+    const engine = new GameplayEngine(loadZone(zoneData), {
+      newGame: {
+        startingCurrency: 42,
+        maxEnergy: 60,
+        startingInventory: [{ itemId: "healing_herb", quantity: 5 }],
+        attributes: {
+          strength: 12,
+          vitality: 11,
+          agility: 10,
+          intelligence: 9,
+          spirit: 8,
+          willpower: 7,
+          perception: 6,
+          charisma: 5,
+        },
+        skills: {
+          melee: 2,
+          ranged: 2,
+          guard: 2,
+          evasion: 2,
+          spellcasting: 2,
+          focus: 2,
+          athletics: 2,
+          scholarship: 2,
+          speech: 2,
+        },
+      },
+    });
+
+    const snapshot = engine.getSnapshot();
+
+    expect(snapshot.stats.currency).toBe(42);
+    expect(snapshot.stats.resources.maxEnergy).toBe(60);
+    expect(snapshot.stats.resources.energy).toBe(60);
+    expect(snapshot.stats.attributes.strength).toBe(12);
+    expect(snapshot.stats.skills.melee).toBe(2);
+    expect(snapshot.inventory.items).toEqual([
+      { itemId: "healing_herb", quantity: 5 },
+    ]);
+  });
+
+  it("keeps the default starting state without an injected config", () => {
+    const snapshot = createEngine().getSnapshot();
+
+    expect(snapshot.stats.currency).toBe(1550);
+    expect(snapshot.stats.resources.maxEnergy).toBe(100);
+    expect(snapshot.inventory.items).toEqual([
+      { itemId: "academy_notebook", quantity: 1 },
+      { itemId: "travel_ration", quantity: 3 },
+      { itemId: "chalk_piece", quantity: 2 },
+    ]);
+  });
+
   it("moves the player with cardinal commands", () => {
     const engine = createEngine();
 

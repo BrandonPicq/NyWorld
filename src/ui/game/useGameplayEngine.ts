@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
   getDefaultZoneData,
+  getNewGameConfig,
   getSafeRespawn,
   GameplayEngine,
   loadZone,
@@ -63,6 +64,7 @@ export function useGameplayEngine({
       return resolveZoneFromBundle(contentBundle, zoneId);
     };
     const safeRespawn = getSafeRespawn(contentBundle);
+    const newGame = getNewGameConfig(contentBundle);
 
     try {
       const saveData = initialSaveDataRef.current;
@@ -71,6 +73,7 @@ export function useGameplayEngine({
         : new GameplayEngine(loadZone(getDefaultZoneData(contentBundle)), {
             resolveZone,
             safeRespawn,
+            newGame,
           });
 
       engineRef.current = engine;

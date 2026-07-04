@@ -69,10 +69,25 @@ const STAT_PATHS = [
   "progression.academicProgress",
 ] as const satisfies readonly StatPath[];
 
-export function createInitialStats(): Stats {
+/**
+ * Authored overrides for a fresh playthrough's starting stats.
+ *
+ * The shape matches the game config newGame section structurally; when a field
+ * is omitted, the engine defaults keep tests and isolated instances
+ * self-contained.
+ */
+export interface InitialStatsConfig {
+  startingCurrency?: number;
+  maxEnergy?: number;
+  attributes?: CoreAttributes;
+  skills?: CharacterSkills;
+}
+
+export function createInitialStats(config?: InitialStatsConfig): Stats {
+  const maxEnergy = config?.maxEnergy ?? 100;
   const stats: Stats = {
     type: "Stats",
-    currency: 1550,
+    currency: config?.startingCurrency ?? 1550,
     resources: {
       hp: 0,
       maxHp: 0,
@@ -80,17 +95,17 @@ export function createInitialStats(): Stats {
       maxMp: 0,
       sp: 0,
       maxSp: 0,
-      energy: 100,
-      maxEnergy: 100,
+      energy: maxEnergy,
+      maxEnergy,
     },
-    attributes: { ...INITIAL_ATTRIBUTES },
+    attributes: { ...(config?.attributes ?? INITIAL_ATTRIBUTES) },
     combat: {
       attack: 0,
       magicAttack: 0,
       defense: 0,
       magicDefense: 0,
     },
-    skills: { ...INITIAL_SKILLS },
+    skills: { ...(config?.skills ?? INITIAL_SKILLS) },
     progression: {
       academicTitle: "Novice Scribe",
       academicProgress: 0,
