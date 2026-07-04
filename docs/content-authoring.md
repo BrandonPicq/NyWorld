@@ -71,10 +71,15 @@ without constructing runtime objects.
 `GameMap`. `createGameMapFromZoneData` is the low-level conversion helper for
 data that has already crossed validation.
 
-Quest validation uses an explicit `ContentValidationContext` containing the
-known item, NPC, dialogue, and zone references. Runtime content builds that
-context from shipped registries, while future editor drafts or mod bundles can
-build their own context before becoming active content.
+Reference validation goes through an explicit `ContentValidationContext`
+holding the known item, NPC, dialogue, enemy, quest, combat action, tile, and
+zone catalogs. Each validator declares the subset it needs (for example
+`ZoneValidationContext` or `QuestValidationContext`), so editor drafts and mod
+bundles can build their own context and validate before becoming active
+content. The runtime builder `createRuntimeContentValidationContext` lives in
+its own top-of-graph module that registries must never import; registries that
+need a context at module load build their own subset from direct imports.
+Stable content-type names live in `contentTypes.ts` (see ADR 0005).
 
 ## Future Editor Work
 

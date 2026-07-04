@@ -1,13 +1,28 @@
 import type { ContentDiagnostic } from "../content/ContentDiagnostic";
+import type { ContentValidationContext } from "../content/ContentValidationContext";
+import { CONTENT_TYPES } from "../content/contentTypes";
 import {
-  createRuntimeContentValidationContext,
-  type ContentValidationContext,
-} from "../content/ContentValidationContext";
-import { defaultContentBundle } from "../content/contentBundle";
+  defaultContentBundle,
+  resolveAllZonesFromBundle,
+} from "../content/contentBundle";
+import { getAllDialogueIds } from "../dialogues/dialogueRegistry";
+import { getAllItemIds } from "../items/itemRegistry";
+import { getAllNpcDefs } from "../npcs/npcRegistry";
 import { isStatPath } from "../stats/characterStats";
 import type { QuestDef, QuestDefMap } from "./QuestDef";
 
-const QUEST_CONTENT_TYPE = "quest";
+const QUEST_CONTENT_TYPE = CONTENT_TYPES.quest;
+
+/**
+ * Catalog subset that quest validation checks references against.
+ *
+ * Full editor contexts satisfy this shape structurally; the runtime registry
+ * builds only this subset from its direct upstream content modules.
+ */
+export type QuestValidationContext = Pick<
+  ContentValidationContext,
+  "itemIds" | "npcIds" | "dialogueIds" | "zones"
+>;
 
 const questDefs = getSortedContentModules(
   import.meta.glob<unknown>("../../content/quests/*.json", {
@@ -16,9 +31,16 @@ const questDefs = getSortedContentModules(
   }),
 );
 
-const runtimeValidationContext =
-  createRuntimeContentValidationContext(defaultContentBundle);
-const registry = buildRegistry(questDefs, runtimeValidationContext);
+const registry = buildRegistry(questDefs, createQuestRuntimeContext());
+
+function createQuestRuntimeContext(): QuestValidationContext {
+  return {
+    itemIds: new Set(getAllItemIds()),
+    npcIds: new Set(getAllNpcDefs().map((npc) => npc.npcId)),
+    dialogueIds: new Set(getAllDialogueIds()),
+    zones: resolveAllZonesFromBundle(defaultContentBundle),
+  };
+}
 
 export function hasQuestDef(questId: string): boolean {
   return Object.prototype.hasOwnProperty.call(registry, questId);
@@ -41,7 +63,7 @@ export function getAllQuestDefs(): QuestDef[] {
  */
 export function validateQuestRegistry(
   defs: readonly unknown[],
-  context: ContentValidationContext,
+  context: QuestValidationContext,
 ): ContentDiagnostic[] {
   const diagnostics: ContentDiagnostic[] = [];
   const questIds = new Set<string>();
@@ -145,7 +167,7 @@ export function validateQuestRegistry(
  */
 export function validateQuestDef(
   value: unknown,
-  context: ContentValidationContext,
+  context: QuestValidationContext,
 ): ContentDiagnostic[] {
   const diagnostics: ContentDiagnostic[] = [];
 
@@ -217,7 +239,7 @@ export function validateQuestDef(
 
 function buildRegistry(
   defs: readonly unknown[],
-  context: ContentValidationContext,
+  context: QuestValidationContext,
 ): QuestDefMap {
   const diagnostics = validateQuestRegistry(defs, context);
   const firstError = diagnostics.find(
@@ -268,7 +290,7 @@ function validateTriggers(
   value: unknown,
   questId: string,
   questData: Record<string, unknown>,
-  context: ContentValidationContext,
+  context: QuestValidationContext,
   diagnostics: ContentDiagnostic[],
 ): void {
   if (!isRecord(value)) {
@@ -303,7 +325,7 @@ function validateTrigger(
   value: unknown,
   questId: string,
   questData: Record<string, unknown>,
-  context: ContentValidationContext,
+  context: QuestValidationContext,
   diagnostics: ContentDiagnostic[],
   triggerType: "start" | "complete",
 ): void {
@@ -323,7 +345,7 @@ function validateNpcOverrides(
   value: unknown,
   questId: string,
   questData: Record<string, unknown>,
-  context: ContentValidationContext,
+  context: QuestValidationContext,
   diagnostics: ContentDiagnostic[],
 ): void {
   if (!isRecord(value)) {
@@ -386,7 +408,7 @@ function validateNpcOverrides(
 function validateOptionalDialogueOverride(
   value: unknown,
   questData: Record<string, unknown>,
-  context: ContentValidationContext,
+  context: QuestValidationContext,
   diagnostics: ContentDiagnostic[],
   path: string,
   message: string,
@@ -403,7 +425,7 @@ function validateObjectives(
   value: unknown,
   questId: string,
   questData: Record<string, unknown>,
-  context: ContentValidationContext,
+  context: QuestValidationContext,
   diagnostics: ContentDiagnostic[],
 ): void {
   if (!Array.isArray(value) || value.length === 0) {
@@ -478,7 +500,7 @@ function validateObjectiveByType(
   obj: Record<string, unknown>,
   questId: string,
   questData: Record<string, unknown>,
-  context: ContentValidationContext,
+  context: QuestValidationContext,
   diagnostics: ContentDiagnostic[],
   path: string,
   objectiveId: string,
@@ -536,7 +558,7 @@ function validateFetchItemObjective(
   obj: Record<string, unknown>,
   questId: string,
   questData: Record<string, unknown>,
-  context: ContentValidationContext,
+  context: QuestValidationContext,
   diagnostics: ContentDiagnostic[],
   path: string,
   objectiveId: string,
@@ -568,7 +590,7 @@ function validateVisitCoordinateObjective(
   obj: Record<string, unknown>,
   questId: string,
   questData: Record<string, unknown>,
-  context: ContentValidationContext,
+  context: QuestValidationContext,
   diagnostics: ContentDiagnostic[],
   path: string,
   objectiveId: string,
@@ -683,7 +705,7 @@ function validateDefeatNpcObjective(
   obj: Record<string, unknown>,
   questId: string,
   questData: Record<string, unknown>,
-  context: ContentValidationContext,
+  context: QuestValidationContext,
   diagnostics: ContentDiagnostic[],
   path: string,
   objectiveId: string,
@@ -715,7 +737,7 @@ function validateRewards(
   value: unknown,
   questId: string,
   questData: Record<string, unknown>,
-  context: ContentValidationContext,
+  context: QuestValidationContext,
   diagnostics: ContentDiagnostic[],
 ): void {
   if (!isRecord(value)) {
@@ -751,7 +773,7 @@ function validateRewardItems(
   value: unknown,
   questId: string,
   questData: Record<string, unknown>,
-  context: ContentValidationContext,
+  context: QuestValidationContext,
   diagnostics: ContentDiagnostic[],
 ): void {
   if (!Array.isArray(value)) {

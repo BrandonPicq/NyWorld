@@ -135,6 +135,28 @@ export function resolveZoneFromBundle(
 }
 
 /**
+ * Resolves every bundled zone into a fresh runtime GameMap keyed by zone id.
+ *
+ * Validation contexts use this map so reference checks can test zone existence
+ * and tile walkability without reading registries directly.
+ */
+export function resolveAllZonesFromBundle(
+  bundle: ContentBundle,
+): ReadonlyMap<string, GameMap> {
+  const zones = new Map<string, GameMap>();
+
+  for (const zoneId of Object.keys(bundle.zones)) {
+    const zone = resolveZoneFromBundle(bundle, zoneId);
+    if (!zone) {
+      throw new Error(`Zone definition "${zoneId}" is not available.`);
+    }
+    zones.set(zone.zoneId, zone);
+  }
+
+  return zones;
+}
+
+/**
  * Validates zone authoring data through loadZone, then stores detached raw data
  * by zone id for later runtime resolution.
  */

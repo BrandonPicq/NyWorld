@@ -30,6 +30,7 @@ export {
   getDefaultZoneData,
   getSafeRespawn,
   getZoneData,
+  resolveAllZonesFromBundle,
   resolveZoneFromBundle,
 } from "./content/contentBundle";
 export type {
@@ -45,9 +46,11 @@ export {
   formatContentDiagnostic,
   hasContentDiagnosticErrors,
 } from "./content/ContentDiagnostic";
+export { CONTENT_TYPES } from "./content/contentTypes";
+export type { ContentTypeName } from "./content/contentTypes";
 export {
   createRuntimeContentValidationContext,
-} from "./content/ContentValidationContext";
+} from "./content/runtimeValidationContext";
 export type {
   ContentValidationContext,
 } from "./content/ContentValidationContext";
@@ -107,9 +110,11 @@ export type { TileDef } from "./TileRegistry";
 export {
   ZoneLoadError,
   createGameMapFromZoneData,
+  createRuntimeZoneValidationContext,
   loadZone,
   validateZoneData,
 } from "./zoneLoader";
+export type { ZoneValidationContext } from "./zoneLoader";
 export type {
   PlayerStart,
   TileGrid,
@@ -205,4 +210,5 @@ export {
   validateQuestDef,
   validateQuestRegistry,
 } from "./quests/questRegistry";
+export type { QuestValidationContext } from "./quests/questRegistry";
 export type { QuestDef, QuestObjective, QuestRewards, QuestTriggers, QuestNpcOverride } from "./quests/QuestDef";

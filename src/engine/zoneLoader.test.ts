@@ -4,9 +4,11 @@ import testZone2Data from "../content/zones/test_zone_2.json";
 import {
   ZoneLoadError,
   createGameMapFromZoneData,
+  createRuntimeZoneValidationContext,
   loadZone,
   validateZoneData,
 } from "./zoneLoader";
+import type { ZoneValidationContext } from "./zoneLoader";
 
 const validZoneData = {
   version: "0.1",
@@ -48,9 +50,68 @@ function zoneDataWith(overrides: Record<string, unknown>) {
   };
 }
 
+function createDraftValidationContext(
+  overrides: Partial<ZoneValidationContext> = {},
+): ZoneValidationContext {
+  return {
+    npcIds: new Set(["draft_npc"]),
+    dialogueIds: new Set(["draft_npc.default"]),
+    itemIds: new Set(["draft_item"]),
+    tileDefs: new Map([
+      [0, { name: "floor", walkable: true, glyph: ".", color: "#333333" }],
+      [1, { name: "wall", walkable: false, glyph: "#", color: "#666666" }],
+    ]),
+    ...overrides,
+  };
+}
+
 describe("validateZoneData", () => {
   it("returns no diagnostics for valid zone data", () => {
     expect(validateZoneData(validZoneData)).toEqual([]);
+  });
+
+  it("validates references against an injected draft context", () => {
+    const draftZone = zoneDataWith({
+      width: 4,
+      tiles: [
+        [1, 1, 1, 1],
+        [1, 0, 0, 0],
+        [1, 1, 1, 1],
+      ],
+      npcs: [{ npcId: "draft_npc", dialogueId: "draft_npc.default", x: 2, y: 1 }],
+      items: [{ itemId: "draft_item", x: 3, y: 1, quantity: 1 }],
+    });
+
+    expect(
+      validateZoneData(draftZone, createDraftValidationContext()),
+    ).toEqual([]);
+  });
+
+  it("reports unknown references when the injected context lacks them", () => {
+    const draftZone = zoneDataWith({
+      npcs: [{ npcId: "draft_npc", x: 2, y: 1 }],
+    });
+
+    const diagnostics = validateZoneData(
+      draftZone,
+      createDraftValidationContext({ npcIds: new Set() }),
+    );
+
+    expect(diagnostics).toEqual([
+      expect.objectContaining({
+        path: "npcs[0].npcId",
+        message: 'npc at index 0 references unknown npcId "draft_npc"',
+      }),
+    ]);
+  });
+
+  it("builds the runtime zone context from shipped registries", () => {
+    const context = createRuntimeZoneValidationContext();
+
+    expect(context.npcIds.has("old_scholar")).toBe(true);
+    expect(context.itemIds.has("chalk_piece")).toBe(true);
+    expect(context.tileDefs.get(0)?.walkable).toBe(true);
+    expect(context.tileDefs.get(1)?.walkable).toBe(false);
   });
 
   it("returns multiple diagnostics without throwing", () => {

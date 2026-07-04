@@ -1,9 +1,7 @@
 import { describe, expect, it } from "vitest";
 import lostNotebookQuestData from "../../content/quests/lost_notebook.json";
-import {
-  createRuntimeContentValidationContext,
-} from "../content/ContentValidationContext";
-import type { ContentValidationContext } from "../content/ContentValidationContext";
+import { createRuntimeContentValidationContext } from "../content/runtimeValidationContext";
+import type { QuestValidationContext } from "./questRegistry";
 import { defaultContentBundle } from "../content/contentBundle";
 import { GameplayEngine } from "../GameplayEngine";
 import { loadZone } from "../zoneLoader";
@@ -65,8 +63,8 @@ function createQuestEngine() {
 }
 
 function createValidationContext(
-  overrides: Partial<ContentValidationContext> = {},
-): ContentValidationContext {
+  overrides: Partial<QuestValidationContext> = {},
+): QuestValidationContext {
   const runtimeContext =
     createRuntimeContentValidationContext(defaultContentBundle);
 

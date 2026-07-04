@@ -1,9 +1,10 @@
 import itemsData from "../../content/items/items.json";
 import type { ContentDiagnostic } from "../content/ContentDiagnostic";
 import { formatContentDiagnostic } from "../content/ContentDiagnostic";
+import { CONTENT_TYPES } from "../content/contentTypes";
 import type { ItemDef, ItemDefMap } from "./ItemDef";
 
-const ITEM_CONTENT_TYPE = "item";
+const ITEM_CONTENT_TYPE = CONTENT_TYPES.item;
 
 const ITEM_CATEGORIES = ["quest", "consumable", "material", "misc"] as const;
 

@@ -4,6 +4,15 @@ This file tracks meaningful project changes by commit-oriented slices.
 
 Keep entries short and practical. When a slice is committed, its changelog section should stay aligned with the commit title so the project history remains easy to read after restores or bisects.
 
+## 2026-07-04 - [REFACTOR]: Inject the content validation context everywhere
+
+- Expand the content validation context with enemy, quest, combat action, and tile catalogs.
+- Make the context module type-only and move the runtime builder to a top-of-graph module.
+- Validate zone references against an injected context subset instead of runtime registries.
+- Build the quest registry startup context from direct imports instead of the full runtime context.
+- Share stable content-type names between diagnostics and future content tooling.
+- Add ADR 0005 for the injected validation context decision and its deferrals.
+
 ## 2026-07-04 - [ADD]: Move tile definitions into JSON content
 
 - Author floor and wall tiles in a JSON tile catalog instead of engine code.

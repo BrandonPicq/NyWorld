@@ -1,9 +1,10 @@
 import tilesData from "../content/tiles/tiles.json";
 import type { ContentDiagnostic } from "./content/ContentDiagnostic";
 import { formatContentDiagnostic } from "./content/ContentDiagnostic";
+import { CONTENT_TYPES } from "./content/contentTypes";
 import type { TileId } from "./ZoneTypes";
 
-const TILE_CONTENT_TYPE = "tile";
+const TILE_CONTENT_TYPE = CONTENT_TYPES.tile;
 
 export interface TileDef {
   name: string;

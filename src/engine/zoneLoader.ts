@@ -1,13 +1,41 @@
 import { GameMap } from "./GameMap";
 import type { ContentDiagnostic } from "./content/ContentDiagnostic";
-import { hasDialogue } from "./dialogues/dialogueRegistry";
-import { hasItemDef } from "./items/itemRegistry";
-import { hasNpcDef } from "./npcs/npcRegistry";
+import type { ContentValidationContext } from "./content/ContentValidationContext";
+import { CONTENT_TYPES } from "./content/contentTypes";
+import { getAllDialogueIds } from "./dialogues/dialogueRegistry";
+import { getAllItemIds } from "./items/itemRegistry";
+import { getAllNpcDefs } from "./npcs/npcRegistry";
 import { parseScheduleTime } from "./systems/NpcScheduleSystem";
-import { getTileDef, hasTileDef } from "./TileRegistry";
+import { getAllTileDefs } from "./TileRegistry";
 import type { ZoneData } from "./ZoneTypes";
 
-const ZONE_CONTENT_TYPE = "zone";
+const ZONE_CONTENT_TYPE = CONTENT_TYPES.zone;
+
+/**
+ * Catalog subset that zone validation checks references against.
+ *
+ * Tiles are provided as full definitions because spawn checks need
+ * walkability, not just tile existence.
+ */
+export type ZoneValidationContext = Pick<
+  ContentValidationContext,
+  "npcIds" | "dialogueIds" | "itemIds" | "tileDefs"
+>;
+
+/**
+ * Builds the zone validation subset from the shipped runtime registries.
+ *
+ * Editor drafts should build their own ZoneValidationContext instead so zone
+ * checks run against draft catalogs rather than the active content.
+ */
+export function createRuntimeZoneValidationContext(): ZoneValidationContext {
+  return {
+    npcIds: new Set(getAllNpcDefs().map((npc) => npc.npcId)),
+    dialogueIds: new Set(getAllDialogueIds()),
+    itemIds: new Set(getAllItemIds()),
+    tileDefs: getAllTileDefs(),
+  };
+}
 
 export class ZoneLoadError extends Error {
   constructor(message: string) {
@@ -56,7 +84,10 @@ export function createGameMapFromZoneData(zoneData: ZoneData): GameMap {
  * actionable paths and multiple errors at once instead of a single thrown
  * exception.
  */
-export function validateZoneData(data: unknown): ContentDiagnostic[] {
+export function validateZoneData(
+  data: unknown,
+  context: ZoneValidationContext = createRuntimeZoneValidationContext(),
+): ContentDiagnostic[] {
   const diagnostics: ContentDiagnostic[] = [];
 
   if (!isRecord(data)) {
@@ -92,7 +123,7 @@ export function validateZoneData(data: unknown): ContentDiagnostic[] {
   );
 
   const playerStart = validatePlayerStart(data, diagnostics);
-  const tiles = validateTileGrid(data, width, height, diagnostics);
+  const tiles = validateTileGrid(data, width, height, diagnostics, context);
 
   validatePlayerStartBounds(data, playerStart, width, height, diagnostics);
   validatePlayerStartWalkability(
@@ -102,11 +133,12 @@ export function validateZoneData(data: unknown): ContentDiagnostic[] {
     height,
     tiles,
     diagnostics,
+    context,
   );
-  validateTransitions(data, width, height, tiles, diagnostics);
+  validateTransitions(data, width, height, tiles, diagnostics, context);
   validateEntryDialogue(data, diagnostics);
-  validateNpcs(data, width, height, tiles, diagnostics);
-  validateItems(data, playerStart, width, height, tiles, diagnostics);
+  validateNpcs(data, width, height, tiles, diagnostics, context);
+  validateItems(data, playerStart, width, height, tiles, diagnostics, context);
 
   return diagnostics;
 }
@@ -215,6 +247,7 @@ function validatePlayerStartWalkability(
   height: number | undefined,
   tiles: unknown[][] | undefined,
   diagnostics: ContentDiagnostic[],
+  context: ZoneValidationContext,
 ): void {
   if (
     !playerStart ||
@@ -224,7 +257,9 @@ function validatePlayerStartWalkability(
     return;
   }
 
-  if (isKnownTileWalkable(tiles, playerStart.x, playerStart.y) === false) {
+  if (
+    isKnownTileWalkable(tiles, playerStart.x, playerStart.y, context) === false
+  ) {
     addZoneError(
       diagnostics,
       data,
@@ -239,6 +274,7 @@ function validateTileGrid(
   width: number | undefined,
   height: number | undefined,
   diagnostics: ContentDiagnostic[],
+  context: ZoneValidationContext,
 ): unknown[][] | undefined {
   if (!Array.isArray(data.tiles)) {
     addZoneError(
@@ -294,7 +330,7 @@ function validateTileGrid(
         continue;
       }
 
-      if (!hasTileDef(tileId)) {
+      if (!context.tileDefs.has(tileId)) {
         addZoneError(
           diagnostics,
           data,
@@ -314,6 +350,7 @@ function validateTransitions(
   height: number | undefined,
   tiles: unknown[][] | undefined,
   diagnostics: ContentDiagnostic[],
+  context: ZoneValidationContext,
 ): void {
   if (data.transitions === undefined) {
     return;
@@ -392,7 +429,7 @@ function validateTransitions(
       const transitionX = transition.x as number;
       const transitionY = transition.y as number;
 
-      if (isKnownTileWalkable(tiles, transitionX, transitionY) === false) {
+      if (isKnownTileWalkable(tiles, transitionX, transitionY, context) === false) {
         addZoneError(
           diagnostics,
           data,
@@ -425,6 +462,7 @@ function validateNpcs(
   height: number | undefined,
   tiles: unknown[][] | undefined,
   diagnostics: ContentDiagnostic[],
+  context: ZoneValidationContext,
 ): void {
   if (data.npcs === undefined) {
     return;
@@ -451,7 +489,7 @@ function validateNpcs(
         `${path}.npcId`,
         `npc at index ${i} has invalid or missing npcId`,
       );
-    } else if (!hasNpcDef(npc.npcId)) {
+    } else if (!context.npcIds.has(npc.npcId)) {
       addZoneError(
         diagnostics,
         data,
@@ -468,7 +506,7 @@ function validateNpcs(
           `${path}.dialogueId`,
           `npc at index ${i} has invalid dialogueId`,
         );
-      } else if (!hasDialogue(npc.dialogueId)) {
+      } else if (!context.dialogueIds.has(npc.dialogueId)) {
         addZoneError(
           diagnostics,
           data,
@@ -499,7 +537,7 @@ function validateNpcs(
       const npcX = npc.x as number;
       const npcY = npc.y as number;
 
-      if (isKnownTileWalkable(tiles, npcX, npcY) === false) {
+      if (isKnownTileWalkable(tiles, npcX, npcY, context) === false) {
         addZoneError(
           diagnostics,
           data,
@@ -518,6 +556,7 @@ function validateNpcs(
         height,
         tiles,
         diagnostics,
+        context,
       );
     }
   }
@@ -530,6 +569,7 @@ function validateItems(
   height: number | undefined,
   tiles: unknown[][] | undefined,
   diagnostics: ContentDiagnostic[],
+  context: ZoneValidationContext,
 ): void {
   if (data.items === undefined) {
     return;
@@ -556,7 +596,7 @@ function validateItems(
         `${path}.itemId`,
         `item at index ${i} has invalid or missing itemId`,
       );
-    } else if (!hasItemDef(item.itemId)) {
+    } else if (!context.itemIds.has(item.itemId)) {
       addZoneError(
         diagnostics,
         data,
@@ -599,7 +639,7 @@ function validateItems(
       const itemX = item.x as number;
       const itemY = item.y as number;
 
-      if (isKnownTileWalkable(tiles, itemX, itemY) === false) {
+      if (isKnownTileWalkable(tiles, itemX, itemY, context) === false) {
         addZoneError(
           diagnostics,
           data,
@@ -681,20 +721,22 @@ function isKnownTileWalkable(
   tiles: unknown[][],
   x: number,
   y: number,
+  context: ZoneValidationContext,
 ): boolean | undefined {
-  const tileId = getKnownTileIdAt(tiles, x, y);
+  const tileId = getKnownTileIdAt(tiles, x, y, context);
 
   if (tileId === undefined) {
     return undefined;
   }
 
-  return getTileDef(tileId).walkable;
+  return context.tileDefs.get(tileId)?.walkable;
 }
 
 function getKnownTileIdAt(
   tiles: unknown[][],
   x: number,
   y: number,
+  context: ZoneValidationContext,
 ): number | undefined {
   const row = tiles[y];
 
@@ -707,7 +749,7 @@ function getKnownTileIdAt(
   if (
     typeof tileId !== "number" ||
     !Number.isInteger(tileId) ||
-    !hasTileDef(tileId)
+    !context.tileDefs.has(tileId)
   ) {
     return undefined;
   }
@@ -791,6 +833,7 @@ function validateNpcSchedule(
   height: number | undefined,
   tiles: unknown[][] | undefined,
   diagnostics: ContentDiagnostic[],
+  context: ZoneValidationContext,
 ): void {
   const path = `npcs[${npcIndex}].schedule`;
 
@@ -875,7 +918,7 @@ function validateNpcSchedule(
       const entryX = entry.x as number;
       const entryY = entry.y as number;
 
-      if (isKnownTileWalkable(tiles, entryX, entryY) === false) {
+      if (isKnownTileWalkable(tiles, entryX, entryY, context) === false) {
         addZoneError(
           diagnostics,
           zone,
@@ -886,7 +929,10 @@ function validateNpcSchedule(
     }
 
     if (entry.dialogueId !== undefined) {
-      if (typeof entry.dialogueId !== "string" || !hasDialogue(entry.dialogueId)) {
+      if (
+        typeof entry.dialogueId !== "string" ||
+        !context.dialogueIds.has(entry.dialogueId)
+      ) {
         addZoneError(
           diagnostics,
           zone,
