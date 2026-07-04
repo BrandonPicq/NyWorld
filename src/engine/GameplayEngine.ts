@@ -181,6 +181,11 @@ type ZoneResolver = (zoneId: string) => GameMap | undefined;
 
 type GameplayEngineOptions = {
   resolveZone?: ZoneResolver;
+  /**
+   * Optional authored recovery point. When omitted, the engine falls back to the
+   * initial map's playerStart so tests and isolated engine instances remain
+   * self-contained.
+   */
   safeRespawn?: SafeRespawnPoint;
   random?: () => number;
 };

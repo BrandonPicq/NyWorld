@@ -37,6 +37,20 @@ export type {
   GameContentConfig,
   SafeRespawnPoint,
 } from "./content/contentBundle";
+export type {
+  ContentDiagnostic,
+  ContentDiagnosticSeverity,
+} from "./content/ContentDiagnostic";
+export {
+  formatContentDiagnostic,
+  hasContentDiagnosticErrors,
+} from "./content/ContentDiagnostic";
+export {
+  createRuntimeContentValidationContext,
+} from "./content/ContentValidationContext";
+export type {
+  ContentValidationContext,
+} from "./content/ContentValidationContext";
 export {
   createQteChallenge,
   resolveQteContest,
@@ -85,8 +99,12 @@ export type { Component, EntityId } from "./ecs";
 export { GameMap } from "./GameMap";
 export { getTileDef } from "./TileRegistry";
 export type { TileDef } from "./TileRegistry";
-export { ZoneLoadError } from "./zoneLoader";
-export { loadZone } from "./zoneLoader";
+export {
+  ZoneLoadError,
+  createGameMapFromZoneData,
+  loadZone,
+  validateZoneData,
+} from "./zoneLoader";
 export type {
   PlayerStart,
   TileGrid,
@@ -120,11 +138,15 @@ export type {
   WorldMonthName,
   WorldTimeSnapshot,
 } from "./time/WorldCalendar";
-export { getItemDef, hasItemDef } from "./items/itemRegistry";
+export { getAllItemIds, getItemDef, hasItemDef } from "./items/itemRegistry";
 export type { ItemDef, ItemDefMap } from "./items/ItemDef";
 export { getItemMapPresentation } from "./items/itemMapPresentation";
 export type { ItemMapPresentation } from "./items/itemMapPresentation";
-export { getDialogue, hasDialogue } from "./dialogues/dialogueRegistry";
+export {
+  getAllDialogueIds,
+  getDialogue,
+  hasDialogue,
+} from "./dialogues/dialogueRegistry";
 export type { DialogueDefMap, DialogueId } from "./dialogues/DialogueDef";
 export {
   COMMON_NPC_GLYPH,
@@ -167,5 +189,11 @@ export type {
 export type { LogEntry } from "./LogEntry";
 export type { GameSaveData } from "./GameSaveData";
 export { SAVE_VERSION } from "./GameSaveData";
-export { getQuestDef, getAllQuestDefs, hasQuestDef } from "./quests/questRegistry";
+export {
+  getQuestDef,
+  getAllQuestDefs,
+  hasQuestDef,
+  validateQuestDef,
+  validateQuestRegistry,
+} from "./quests/questRegistry";
 export type { QuestDef, QuestObjective, QuestRewards, QuestTriggers, QuestNpcOverride } from "./quests/QuestDef";

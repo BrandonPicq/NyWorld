@@ -29,6 +29,13 @@ export function hasDialogue(dialogueId: string): boolean {
 }
 
 /**
+ * Returns every registered dialogue id in deterministic order.
+ */
+export function getAllDialogueIds(): string[] {
+  return Object.keys(registry).sort();
+}
+
+/**
  * Returns a detached dialogue sequence for an id.
  *
  * Unknown ids resolve to a fallback line for runtime resilience. Content

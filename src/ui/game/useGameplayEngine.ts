@@ -18,6 +18,10 @@ import { playItemCollectSound, playMenuConfirmSound } from "../audio/menuAudio";
 
 type UseGameplayEngineInput = {
   audioSettings: AudioSettings;
+  /**
+   * Static authored content used to create the first zone, resolve transitions,
+   * and provide world-level config such as safe respawn.
+   */
   contentBundle: ContentBundle;
   initialSaveData?: GameSaveData;
   onDialogue: (nodes: DialogueNode[], dialogueId?: string) => void;

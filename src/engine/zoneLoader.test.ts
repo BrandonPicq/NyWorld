@@ -1,7 +1,12 @@
 import { describe, expect, it } from "vitest";
 import testZoneData from "../content/zones/test_zone.json";
 import testZone2Data from "../content/zones/test_zone_2.json";
-import { ZoneLoadError, loadZone } from "./zoneLoader";
+import {
+  ZoneLoadError,
+  createGameMapFromZoneData,
+  loadZone,
+  validateZoneData,
+} from "./zoneLoader";
 
 const validZoneData = {
   version: "0.1",
@@ -42,6 +47,100 @@ function zoneDataWith(overrides: Record<string, unknown>) {
     ...overrides,
   };
 }
+
+describe("validateZoneData", () => {
+  it("returns no diagnostics for valid zone data", () => {
+    expect(validateZoneData(validZoneData)).toEqual([]);
+  });
+
+  it("returns multiple diagnostics without throwing", () => {
+    const diagnostics = validateZoneData({
+      version: 1,
+      zoneId: "broken_zone",
+      name: 42,
+      width: 0,
+      height: 0,
+      playerStart: { x: 1.5, y: 1 },
+      tiles: "bad",
+      transitions: "bad",
+      npcs: "bad",
+      items: "bad",
+    });
+
+    expect(diagnostics).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          contentType: "zone",
+          contentId: "broken_zone",
+          path: "version",
+          message: "missing or invalid version",
+        }),
+        expect.objectContaining({
+          path: "width",
+          message: "width must be a positive integer",
+        }),
+        expect.objectContaining({
+          path: "height",
+          message: "height must be a positive integer",
+        }),
+        expect.objectContaining({
+          path: "playerStart",
+          message: "missing or invalid playerStart",
+        }),
+        expect.objectContaining({
+          path: "tiles",
+          message: "tiles must be an array with height rows",
+        }),
+        expect.objectContaining({
+          path: "transitions",
+          message: "transitions must be an array",
+        }),
+      ]),
+    );
+  });
+
+  it("includes actionable paths for nested zone issues", () => {
+    const diagnostics = validateZoneData(
+      zoneDataWith({
+        entryDialogue: [{ speaker: "", text: "", pitch: 0 }],
+        items: [{ ...validItem, itemId: "", x: -1, y: 9, quantity: 0 }],
+      }),
+    );
+
+    expect(diagnostics).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          path: "entryDialogue[0].speaker",
+          message: "entryDialogue node 0 has invalid or missing speaker",
+        }),
+        expect.objectContaining({
+          path: "entryDialogue[0].text",
+          message: "entryDialogue node 0 has invalid or missing text",
+        }),
+        expect.objectContaining({
+          path: "items[0].itemId",
+          message: "item at index 0 has invalid or missing itemId",
+        }),
+        expect.objectContaining({
+          path: "items[0].quantity",
+          message:
+            "item at index 0 has an invalid quantity (must be a positive integer)",
+        }),
+      ]),
+    );
+  });
+});
+
+describe("createGameMapFromZoneData", () => {
+  it("converts already validated zone data into a runtime map", () => {
+    const map = createGameMapFromZoneData(validZoneData);
+
+    expect(map.zoneId).toBe("test_zone");
+    expect(map.width).toBe(3);
+    expect(map.height).toBe(3);
+    expect(map.isWalkable(1, 1)).toBe(true);
+  });
+});
 
 describe("loadZone", () => {
   it("accepts valid zone data", () => {

@@ -58,6 +58,47 @@ and invalid schedules before a `GameMap` reaches gameplay code.
 
 Zone coordinates use integer grid space with `(0, 0)` at the top-left corner.
 
+## Validation And Runtime Conversion
+
+Content validation is split from runtime conversion. `validateZoneData` and
+`validateQuestDef` accept unknown JSON-like input and return content diagnostics
+with a severity, content type, optional content id, path, and message. This is
+the editor-facing path: tools can show several authoring mistakes at once
+without constructing runtime objects.
+
+`loadZone` remains the strict runtime path. It validates the raw data, throws a
+`ZoneLoadError` on the first blocking diagnostic, and only then creates a
+`GameMap`. `createGameMapFromZoneData` is the low-level conversion helper for
+data that has already crossed validation.
+
+Quest validation uses an explicit `ContentValidationContext` containing the
+known item, NPC, dialogue, and zone references. Runtime content builds that
+context from shipped registries, while future editor drafts or mod bundles can
+build their own context before becoming active content.
+
+## Future Editor Work
+
+The first validation split covers zones and quests. Future content tooling
+should move the remaining first-error loaders toward `ContentDiagnostic` so
+dialogues, NPCs, items, enemies, combat actions, NPC presence, and global config
+can report several precise issues at once.
+
+Reference validation should also move behind an explicit content context instead
+of reading runtime registries directly. Validators should receive the item,
+NPC, dialogue, zone, quest, and enemy catalogs they are checking against, which
+will let editor drafts and mod bundles validate themselves before becoming the
+active runtime bundle.
+
+A `ContentReferenceGraph` should centralize cross-content links. That graph
+should answer questions such as where an id is used, what breaks if an id is
+renamed, and which content files depend on a dialogue, item, NPC, zone, quest,
+or enemy definition.
+
+Editing metadata should be exposed separately from gameplay types. The editor
+will need available options for id fields, defaults, UI labels, required field
+markers, short descriptions, and eventually field-specific controls without
+putting React concerns inside the engine.
+
 ## NPCs And Dialogue
 
 NPC definitions are character sheets: name, race, importance, optional map

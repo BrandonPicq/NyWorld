@@ -1,7 +1,18 @@
 import { describe, expect, it } from "vitest";
+import lostNotebookQuestData from "../../content/quests/lost_notebook.json";
+import {
+  createRuntimeContentValidationContext,
+} from "../content/ContentValidationContext";
+import type { ContentValidationContext } from "../content/ContentValidationContext";
+import { defaultContentBundle } from "../content/contentBundle";
 import { GameplayEngine } from "../GameplayEngine";
 import { loadZone } from "../zoneLoader";
-import { getQuestDef, hasQuestDef } from "./questRegistry";
+import {
+  getQuestDef,
+  hasQuestDef,
+  validateQuestDef,
+  validateQuestRegistry,
+} from "./questRegistry";
 import type { Inventory } from "../components";
 
 const zoneData = {
@@ -52,6 +63,156 @@ const combatQuestZoneData = {
 function createQuestEngine() {
   return new GameplayEngine(loadZone(zoneData));
 }
+
+function createValidationContext(
+  overrides: Partial<ContentValidationContext> = {},
+): ContentValidationContext {
+  const runtimeContext =
+    createRuntimeContentValidationContext(defaultContentBundle);
+
+  return {
+    itemIds: new Set(runtimeContext.itemIds),
+    npcIds: new Set(runtimeContext.npcIds),
+    dialogueIds: new Set(runtimeContext.dialogueIds),
+    zones: new Map(runtimeContext.zones),
+    ...overrides,
+  };
+}
+
+describe("Quest content validation", () => {
+  it("returns no diagnostics for a valid quest", () => {
+    expect(validateQuestDef(lostNotebookQuestData, createValidationContext()))
+      .toEqual([]);
+  });
+
+  it("returns multiple diagnostics with precise paths", () => {
+    const diagnostics = validateQuestDef(
+      {
+        questId: "broken_quest",
+        name: "",
+        description: "",
+        targetNpcId: "missing_npc",
+        triggers: {
+          start: { dialogueId: "missing.start" },
+          complete: {},
+        },
+        npcOverrides: {
+          old_scholar: {
+            active: "missing.active",
+          },
+        },
+        objectives: [
+          {
+            id: "fetch_missing",
+            type: "fetch_item",
+            itemId: "missing_item",
+            quantity: 0,
+            description: "",
+          },
+          {
+            id: "visit_missing",
+            type: "visit_coordinate",
+            zoneId: "missing_zone",
+            x: -1,
+            y: "bad",
+            description: "Visit somewhere impossible",
+          },
+        ],
+        rewards: {
+          currency: -1,
+          items: [{ itemId: "missing_reward", quantity: 0 }],
+        },
+      },
+      createValidationContext(),
+    );
+
+    expect(diagnostics).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          contentType: "quest",
+          contentId: "broken_quest",
+          path: "targetNpcId",
+          message:
+            'Quest "broken_quest" references unknown targetNpcId "missing_npc".',
+        }),
+        expect.objectContaining({
+          path: "triggers.start.dialogueId",
+          message:
+            'Quest "broken_quest" start trigger references unknown dialogueId "missing.start".',
+        }),
+        expect.objectContaining({
+          path: "npcOverrides.old_scholar.active",
+          message:
+            'Quest "broken_quest" npcOverrides for "old_scholar" active dialogue references unknown dialogueId "missing.active".',
+        }),
+        expect.objectContaining({
+          path: "objectives[0].itemId",
+          message:
+            'Quest "broken_quest" objective "fetch_missing" references unknown itemId "missing_item".',
+        }),
+        expect.objectContaining({
+          path: "objectives[1].zoneId",
+          message:
+            'Quest "broken_quest" objective "visit_missing" references unknown zoneId "missing_zone".',
+        }),
+        expect.objectContaining({
+          path: "rewards.items[0].quantity",
+          message:
+            'Quest "broken_quest" reward item 0 has invalid quantity. Must be a positive integer.',
+        }),
+      ]),
+    );
+  });
+
+  it("uses the injected validation context instead of runtime registries", () => {
+    const runtimeContext = createValidationContext();
+    const itemIds = new Set(runtimeContext.itemIds);
+    itemIds.delete("lost_notebook");
+
+    const diagnostics = validateQuestDef(
+      lostNotebookQuestData,
+      createValidationContext({ itemIds }),
+    );
+
+    expect(diagnostics).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          path: "objectives[0].itemId",
+          message:
+            'Quest "lost_notebook" objective "find_notebook" references unknown itemId "lost_notebook".',
+        }),
+      ]),
+    );
+  });
+
+  it("reports registry-level duplicate quest ids and trigger collisions", () => {
+    const diagnostics = validateQuestRegistry(
+      [lostNotebookQuestData, lostNotebookQuestData],
+      createValidationContext(),
+    );
+
+    expect(diagnostics).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          contentType: "quest",
+          contentId: "lost_notebook",
+          path: "questId",
+          message: 'Duplicate quest definition "lost_notebook".',
+        }),
+        expect.objectContaining({
+          path: "triggers.start.dialogueId",
+          message:
+            'Quest "lost_notebook" triggers start from dialogueId "old_scholar.quest_start", which is already registered by another quest.',
+        }),
+        expect.objectContaining({
+          path: "triggers.complete.dialogueId",
+          message:
+            'Quest "lost_notebook" triggers complete from dialogueId "old_scholar.quest_active_ready", which is already registered by another quest.',
+        }),
+      ]),
+    );
+  });
+});
 
 describe("Quest System", () => {
   it("loads and validates the registries", () => {

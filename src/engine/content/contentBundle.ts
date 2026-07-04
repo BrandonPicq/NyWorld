@@ -11,17 +11,33 @@ import type {
 } from "../ZoneTypes";
 import { loadZone } from "../zoneLoader";
 
+/**
+ * Author-controlled recovery point used when gameplay needs to return the
+ * player to a safe place, such as after combat defeat.
+ */
 export interface SafeRespawnPoint {
   zoneId: string;
   x: number;
   y: number;
 }
 
+/**
+ * Global game content that should be authored as data instead of hardcoded in
+ * UI or engine modules.
+ */
 export interface GameContentConfig {
+  /** Zone used when starting a new game without save data. */
   defaultZoneId: string;
+  /** Safe recovery point used by generic defeat/recovery flows. */
   safeRespawn: SafeRespawnPoint;
 }
 
+/**
+ * Static content snapshot available to the runtime.
+ *
+ * The bundle keeps raw authoring data, not mutable gameplay state. Runtime
+ * systems should resolve zones into fresh GameMap instances before using them.
+ */
 export interface ContentBundle {
   game: GameContentConfig;
   zones: Record<string, ZoneData>;
@@ -34,6 +50,9 @@ const zoneDataModules = getSortedContentModules(
   }),
 );
 
+/**
+ * Runtime bundle built from the source-controlled content shipped with the app.
+ */
 export const defaultContentBundle = createContentBundle({
   gameConfig: gameConfigData,
   zones: zoneDataModules,
@@ -66,6 +85,12 @@ export function createContentBundle(input: {
   };
 }
 
+/**
+ * Returns authoring data for the configured new-game zone.
+ *
+ * Callers receive a detached copy so accidental mutations cannot affect the
+ * shared bundle or imported JSON modules.
+ */
 export function getDefaultZoneData(bundle: ContentBundle): ZoneData {
   const zoneData = getZoneData(bundle, bundle.game.defaultZoneId);
   if (!zoneData) {
@@ -76,6 +101,9 @@ export function getDefaultZoneData(bundle: ContentBundle): ZoneData {
   return zoneData;
 }
 
+/**
+ * Returns detached authoring data for a zone id, if that zone exists.
+ */
 export function getZoneData(
   bundle: ContentBundle,
   zoneId: string,
@@ -84,10 +112,20 @@ export function getZoneData(
   return zoneData ? cloneZoneData(zoneData) : undefined;
 }
 
+/**
+ * Returns the configured safe respawn point as a detached value.
+ */
 export function getSafeRespawn(bundle: ContentBundle): SafeRespawnPoint {
   return { ...bundle.game.safeRespawn };
 }
 
+/**
+ * Converts a bundled zone into a fresh runtime GameMap.
+ *
+ * This is the bridge from editor/content data into simulation-ready data. It
+ * intentionally creates a new map for every call so zone-local mutations stay
+ * isolated to the active engine instance.
+ */
 export function resolveZoneFromBundle(
   bundle: ContentBundle,
   zoneId: string,
@@ -96,6 +134,10 @@ export function resolveZoneFromBundle(
   return zoneData ? loadZone(zoneData) : undefined;
 }
 
+/**
+ * Validates zone authoring data through loadZone, then stores detached raw data
+ * by zone id for later runtime resolution.
+ */
 function buildZoneDataRegistry(defs: unknown[]): Record<string, ZoneData> {
   const zones: Record<string, ZoneData> = {};
 
@@ -112,6 +154,9 @@ function buildZoneDataRegistry(defs: unknown[]): Record<string, ZoneData> {
   return zones;
 }
 
+/**
+ * Parses the global game config before cross-reference validation can happen.
+ */
 function parseGameContentConfig(value: unknown): GameContentConfig {
   if (!isRecord(value)) {
     throw new Error("Game content config must be an object.");
@@ -152,6 +197,9 @@ function parseGameContentConfig(value: unknown): GameContentConfig {
   };
 }
 
+/**
+ * Verifies that the authored safe respawn points at an existing walkable tile.
+ */
 function assertSafeRespawn(
   zones: Record<string, ZoneData>,
   safeRespawn: SafeRespawnPoint,
@@ -178,12 +226,18 @@ function assertSafeRespawn(
   }
 }
 
+/**
+ * Gives deterministic registry order regardless of filesystem glob ordering.
+ */
 function getSortedContentModules(modules: Record<string, unknown>): unknown[] {
   return Object.entries(modules)
     .sort(([a], [b]) => a.localeCompare(b))
     .map(([, module]) => module);
 }
 
+/**
+ * Clones global config so consumers cannot mutate the shared bundle.
+ */
 function cloneGameContentConfig(config: GameContentConfig): GameContentConfig {
   return {
     defaultZoneId: config.defaultZoneId,
@@ -191,6 +245,10 @@ function cloneGameContentConfig(config: GameContentConfig): GameContentConfig {
   };
 }
 
+/**
+ * Clones the zone registry shallowly by id and deeply enough for authored
+ * nested arrays/objects that gameplay or editor previews may mutate.
+ */
 function cloneZoneRegistry(
   zones: Record<string, ZoneData>,
 ): Record<string, ZoneData> {
@@ -202,6 +260,9 @@ function cloneZoneRegistry(
   );
 }
 
+/**
+ * Clones zone authoring data while preserving the JSON shape.
+ */
 function cloneZoneData(zoneData: ZoneData): ZoneData {
   return {
     ...zoneData,

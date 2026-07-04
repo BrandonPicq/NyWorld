@@ -4,6 +4,23 @@ This file tracks meaningful project changes by commit-oriented slices.
 
 Keep entries short and practical. When a slice is committed, its changelog section should stay aligned with the commit title so the project history remains easy to read after restores or bisects.
 
+## 2026-07-04 - [REFACTOR]: Add quest diagnostics validation context
+
+- Add an explicit content validation context for item, NPC, dialogue, and zone references.
+- Expose registered item and dialogue ids for editor-facing validation.
+- Validate quest definitions and quest registry collisions through content diagnostics.
+- Keep the runtime quest registry strict while enabling multi-error editor checks.
+- Document quest diagnostics and injected validation context for future content tooling.
+
+## 2026-07-04 - [REFACTOR]: Split zone validation from runtime map creation
+
+- Add reusable content diagnostics for editor-facing validation.
+- Expose zone validation without constructing runtime maps.
+- Keep `loadZone` as the strict runtime API that throws on invalid content.
+- Add explicit conversion from validated zone data to `GameMap`.
+- Document the validation/conversion boundary for future content tooling.
+- Document the remaining editor-readiness work around injected validation context, references, and editing metadata.
+
 ## 2026-07-04 - [REFACTOR]: Introduce a central content bundle
 
 - Add global game content config for the default zone and safe respawn point.

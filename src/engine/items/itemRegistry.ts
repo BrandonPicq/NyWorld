@@ -20,6 +20,13 @@ export function hasItemDef(itemId: string): boolean {
 }
 
 /**
+ * Returns every registered item id in deterministic order.
+ */
+export function getAllItemIds(): string[] {
+  return Object.keys(registry).sort();
+}
+
+/**
  * Returns catalog metadata for an item id.
  *
  * Unknown ids resolve to a safe fallback for display code, but content loaders
