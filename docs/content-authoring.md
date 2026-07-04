@@ -148,8 +148,9 @@ world day and applies that position to the active map when relevant.
 
 The tile catalog at `src/content/tiles/tiles.json` maps numeric tile ids to a
 name, a walkable flag, and map presentation (glyph and color). Zone grids
-reference tiles by these numeric ids. Unknown tile ids fall back to the floor
-tile for display code, but zone validation rejects them before gameplay.
+reference tiles by these numeric ids. The catalog must define tile id `0`
+because unknown tile ids fall back to tile 0 for display code, while zone
+validation rejects unknown ids before gameplay.
 
 ## Enemies
 

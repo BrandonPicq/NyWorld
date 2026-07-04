@@ -29,6 +29,7 @@ export {
   createContentBundle,
   getActionTuning,
   getDefaultZoneData,
+  getGameConfig,
   getNewGameConfig,
   getSafeRespawn,
   getZoneData,

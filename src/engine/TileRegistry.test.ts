@@ -24,8 +24,24 @@ describe("validateTileCatalog", () => {
     ]);
   });
 
+  it("requires tile 0 for unknown-tile fallback", () => {
+    const diagnostics = validateTileCatalog({
+      "1": { name: "wall", walkable: false, glyph: "#", color: "#666666" },
+    });
+
+    expect(diagnostics).toEqual([
+      expect.objectContaining({
+        contentId: "0",
+        path: "$",
+        message:
+          'Tile catalog must include tile id "0" because unknown tile ids fall back to tile 0.',
+      }),
+    ]);
+  });
+
   it("accumulates several errors with precise paths", () => {
     const diagnostics = validateTileCatalog({
+      "0": { name: "floor", walkable: true, glyph: ".", color: "#333333" },
       "2": { name: "", walkable: "yes", glyph: "~~", color: "#123456" },
       "-1": { name: "void", walkable: false, glyph: "x", color: "#000000" },
     });

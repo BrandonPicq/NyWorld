@@ -4,6 +4,13 @@ This file tracks meaningful project changes by commit-oriented slices.
 
 Keep entries short and practical. When a slice is committed, its changelog section should stay aligned with the commit title so the project history remains easy to read after restores or bisects.
 
+## 2026-07-04 - [FIX]: Close content validation gaps found in review
+
+- Check known-zone NPC schedule targets for bounds and walkability in the whole-bundle audit.
+- Return detached game config data from runtime catalog snapshots.
+- Require tile id 0 so the unknown-tile fallback contract is always valid.
+- Document the tile 0 fallback requirement in the content authoring notes.
+
 ## 2026-07-04 - [DOCS]: Document content contracts and engine API for modding
 
 - Document enemy definitions: NPC linkage, combatable flag, authored stat block, and loot.

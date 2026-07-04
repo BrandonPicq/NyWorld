@@ -10,7 +10,11 @@ import { getAllNpcPresenceDefs } from "../npcs/npcPresenceRegistry";
 import { getAllQuestDefs } from "../quests/questRegistry";
 import { getAllTileDefs } from "../TileRegistry";
 import type { ContentBundle } from "./contentBundle";
-import { defaultContentBundle, getZoneData } from "./contentBundle";
+import {
+  defaultContentBundle,
+  getGameConfig,
+  getZoneData,
+} from "./contentBundle";
 import type { ContentCatalogSnapshot } from "./ContentReferenceGraph";
 
 /**
@@ -24,7 +28,7 @@ export function createRuntimeContentCatalogSnapshot(
   bundle: ContentBundle = defaultContentBundle,
 ): ContentCatalogSnapshot {
   return {
-    game: bundle.game,
+    game: getGameConfig(bundle),
     zones: Object.fromEntries(
       Object.keys(bundle.zones).map((zoneId) => [
         zoneId,

@@ -38,4 +38,76 @@ describe("validateAllContent", () => {
       ]),
     );
   });
+
+  it("reports global presence schedules targeting blocked or missing coordinates in known zones", () => {
+    const snapshot = createRuntimeContentCatalogSnapshot();
+    const context = createRuntimeContentValidationContext();
+
+    snapshot.npcPresence[0].schedule = [
+      {
+        time: "08:00",
+        zoneId: "test_zone",
+        x: 0,
+        y: 0,
+      },
+      {
+        time: "12:00",
+        zoneId: "test_zone",
+        x: 99,
+        y: 1,
+      },
+    ];
+
+    const errors = getContentAuditErrors(
+      validateAllContent(snapshot, context),
+    );
+
+    expect(errors).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          contentType: "npc-presence",
+          contentId: snapshot.npcPresence[0].npcId,
+          path: "schedule[0]",
+          message:
+            'Schedule entry targets a non-walkable tile in zone "test_zone".',
+        }),
+        expect.objectContaining({
+          contentType: "npc-presence",
+          contentId: snapshot.npcPresence[0].npcId,
+          path: "schedule[1]",
+          message: 'Schedule entry targets zone "test_zone" outside its bounds.',
+        }),
+      ]),
+    );
+  });
+
+  it("reports zone-local schedules targeting blocked coordinates in a different known zone", () => {
+    const snapshot = createRuntimeContentCatalogSnapshot();
+    const context = createRuntimeContentValidationContext();
+
+    snapshot.zones.test_zone.npcs![0].schedule = [
+      {
+        time: "08:00",
+        zoneId: "test_zone_2",
+        x: 0,
+        y: 0,
+      },
+    ];
+
+    const errors = getContentAuditErrors(
+      validateAllContent(snapshot, context),
+    );
+
+    expect(errors).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          contentType: "zone",
+          contentId: "test_zone",
+          path: "npcs[0].schedule[0]",
+          message:
+            'Schedule entry targets a non-walkable tile in zone "test_zone_2".',
+        }),
+      ]),
+    );
+  });
 });

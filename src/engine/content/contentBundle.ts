@@ -194,6 +194,13 @@ export function getZoneData(
 }
 
 /**
+ * Returns the authored game config as a detached value.
+ */
+export function getGameConfig(bundle: ContentBundle): GameContentConfig {
+  return cloneGameContentConfig(bundle.game);
+}
+
+/**
  * Returns the configured safe respawn point as a detached value.
  */
 export function getSafeRespawn(bundle: ContentBundle): SafeRespawnPoint {

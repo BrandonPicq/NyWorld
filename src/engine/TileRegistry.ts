@@ -5,6 +5,7 @@ import { CONTENT_TYPES } from "./content/contentTypes";
 import type { TileId } from "./ZoneTypes";
 
 const TILE_CONTENT_TYPE = CONTENT_TYPES.tile;
+const FALLBACK_TILE_ID = "0";
 
 export interface TileDef {
   name: string;
@@ -32,6 +33,15 @@ export function validateTileCatalog(value: unknown): ContentDiagnostic[] {
       "Tile catalog must be an object map of tile definitions.",
     );
     return diagnostics;
+  }
+
+  if (!Object.prototype.hasOwnProperty.call(value, FALLBACK_TILE_ID)) {
+    addTileError(
+      diagnostics,
+      FALLBACK_TILE_ID,
+      "$",
+      'Tile catalog must include tile id "0" because unknown tile ids fall back to tile 0.',
+    );
   }
 
   for (const [tileKey, def] of Object.entries(value)) {
