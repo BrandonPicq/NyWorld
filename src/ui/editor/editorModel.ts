@@ -3,6 +3,9 @@ import type {
   ContentDiagnostic,
   ContentRef,
   ContentTypeName,
+  ContentValidationContext,
+  ItemDef,
+  ItemDefMap,
 } from "../../engine";
 import { CONTENT_TYPES } from "../../engine";
 
@@ -137,6 +140,36 @@ export function formatContentRef(ref: ContentRef): string {
   return `${ref.type}:${ref.id}`;
 }
 
+export function cloneItemCatalog(items: ItemDefMap): ItemDefMap {
+  return Object.fromEntries(
+    Object.entries(items).map(([itemId, item]) => [itemId, cloneItem(item)]),
+  );
+}
+
+export function createItemDraftSnapshot(
+  snapshot: ContentCatalogSnapshot,
+  draftItems: ItemDefMap,
+): ContentCatalogSnapshot {
+  return {
+    ...snapshot,
+    items: cloneItemCatalog(draftItems),
+  };
+}
+
+export function createItemDraftValidationContext(
+  context: ContentValidationContext,
+  draftItems: ItemDefMap,
+): ContentValidationContext {
+  return {
+    ...context,
+    itemIds: new Set(Object.keys(draftItems)),
+  };
+}
+
+export function serializeItemCatalog(items: ItemDefMap): string {
+  return JSON.stringify(items, null, 2);
+}
+
 function entry(type: ContentTypeName, id: string): ContentBrowserEntry {
   return {
     ref: { type, id },
@@ -159,4 +192,11 @@ function compareDiagnostics(
   return `${a.contentId ?? ""}.${a.path}.${a.message}`.localeCompare(
     `${b.contentId ?? ""}.${b.path}.${b.message}`,
   );
+}
+
+function cloneItem(item: ItemDef): ItemDef {
+  return {
+    ...item,
+    effects: item.effects ? { ...item.effects } : undefined,
+  };
 }

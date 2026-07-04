@@ -140,6 +140,107 @@
   color: var(--color-text);
 }
 
+.editor-item-editor {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.editor-item-form {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.editor-field {
+  min-width: 0;
+  display: grid;
+  gap: 0.35rem;
+  color: var(--color-text-muted);
+  font-size: 0.85rem;
+  text-transform: uppercase;
+}
+
+.editor-field input,
+.editor-field select,
+.editor-field textarea {
+  width: 100%;
+  min-width: 0;
+  border: 1px solid var(--color-border-muted);
+  border-radius: 0;
+  padding: 0.55rem 0.65rem;
+  color: var(--color-text);
+  background: var(--color-button-background);
+  font: inherit;
+  text-transform: none;
+}
+
+.editor-field textarea {
+  min-height: 6rem;
+  resize: vertical;
+  line-height: var(--line-height-copy);
+}
+
+.editor-field input:focus-visible,
+.editor-field select:focus-visible,
+.editor-field textarea:focus-visible {
+  outline: var(--focus-ring-width) solid var(--color-text);
+  outline-offset: var(--focus-ring-offset);
+}
+
+.editor-field input:disabled,
+.editor-field select:disabled,
+.editor-field textarea:disabled {
+  color: var(--color-disabled-text);
+  border-color: var(--color-disabled-border);
+  cursor: not-allowed;
+}
+
+.editor-inline-control,
+.editor-form-row,
+.editor-actions {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.editor-inline-control {
+  grid-template-columns: minmax(0, 1fr) 6rem;
+}
+
+.editor-form-row,
+.editor-actions {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.editor-compact-button,
+.editor-action-button {
+  min-height: 2.35rem;
+  padding: 0.55rem 0.65rem;
+  text-align: center;
+}
+
+.editor-inline-diagnostics {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: var(--space-1);
+}
+
+.editor-save-status {
+  min-height: 1.4rem;
+  margin: 0;
+  color: var(--color-text-muted);
+  line-height: var(--line-height-copy);
+  overflow-wrap: anywhere;
+}
+
+.editor-save-status--error {
+  color: var(--color-accent);
+}
+
+.editor-save-status--saved {
+  color: var(--color-text-soft);
+}
+
 .editor-selected-ref {
   display: grid;
   gap: var(--space-1);
@@ -222,5 +323,11 @@
 
   .editor-header__back {
     width: 100%;
+  }
+
+  .editor-inline-control,
+  .editor-form-row,
+  .editor-actions {
+    grid-template-columns: 1fr;
   }
 }

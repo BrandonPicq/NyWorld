@@ -1,8 +1,17 @@
 import { describe, expect, it } from "vitest";
 
-import type { ContentCatalogSnapshot, ContentDiagnostic } from "../../engine";
+import type {
+  ContentCatalogSnapshot,
+  ContentDiagnostic,
+  ContentValidationContext,
+  GameMap,
+} from "../../engine";
+import { buildContentReferenceGraph } from "../../engine";
 import {
   buildContentBrowserGroups,
+  cloneItemCatalog,
+  createItemDraftSnapshot,
+  createItemDraftValidationContext,
   groupDiagnosticsByContentType,
 } from "./editorModel";
 
@@ -143,3 +152,65 @@ describe("groupDiagnosticsByContentType", () => {
     ]);
   });
 });
+
+describe("item draft helpers", () => {
+  it("creates detached item snapshots and injected item id contexts", () => {
+    const snapshot = createSnapshot();
+    const draftItems = cloneItemCatalog(snapshot.items);
+    draftItems.ration.effects = { energyRestore: 5 };
+
+    const draftSnapshot = createItemDraftSnapshot(snapshot, draftItems);
+    draftSnapshot.items.ration.effects!.energyRestore = 9;
+
+    expect(draftItems.ration.effects?.energyRestore).toBe(5);
+
+    const context = createValidationContext(["ration"]);
+    const draftContext = createItemDraftValidationContext(context, {
+      renamed_ration: draftItems.ration,
+    });
+
+    expect([...draftContext.itemIds]).toEqual(["renamed_ration"]);
+    expect([...context.itemIds]).toEqual(["ration"]);
+  });
+
+  it("uses draft item ids when checking dangling references", () => {
+    const snapshot = createSnapshot();
+    snapshot.game.newGame.startingInventory = [
+      { itemId: "ration", quantity: 1 },
+    ];
+
+    const draftSnapshot = createItemDraftSnapshot(snapshot, {});
+    const draftContext = createItemDraftValidationContext(
+      createValidationContext(["ration"]),
+      {},
+    );
+
+    const danglingReferences =
+      buildContentReferenceGraph(draftSnapshot).getDanglingReferences(
+        draftContext,
+      );
+
+    expect(danglingReferences).toContainEqual(
+      expect.objectContaining({
+        from: { type: "game", id: "game" },
+        to: { type: "item", id: "ration" },
+        path: "newGame.startingInventory[0].itemId",
+      }),
+    );
+  });
+});
+
+function createValidationContext(itemIds: string[]): ContentValidationContext {
+  return {
+    itemIds: new Set(itemIds),
+    npcIds: new Set(),
+    dialogueIds: new Set(),
+    enemyIds: new Set(),
+    questIds: new Set(),
+    combatActionIds: new Set(),
+    tileDefs: new Map([
+      [0, { name: "floor", walkable: true, glyph: ".", color: "#333333" }],
+    ]),
+    zones: new Map([["zone_b", {} as GameMap]]),
+  };
+}

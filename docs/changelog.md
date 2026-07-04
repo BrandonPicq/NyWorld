@@ -4,6 +4,13 @@ This file tracks meaningful project changes by commit-oriented slices.
 
 Keep entries short and practical. When a slice is committed, its changelog section should stay aligned with the commit title so the project history remains easy to read after restores or bisects.
 
+## 2026-07-04 - [ADD]: Editable item catalog in the editor
+
+- Add an editable item draft panel to the dev content editor.
+- Validate item drafts live and refresh cross-content reference checks from the draft ids.
+- Save the item catalog through the dev-only editor persistence endpoint.
+- Share item category options between runtime validation and the editor UI.
+
 ## 2026-07-04 - [ADD]: Add dev editor content persistence
 
 - Accept the editor persistence ADR around a dev-only Vite save endpoint.

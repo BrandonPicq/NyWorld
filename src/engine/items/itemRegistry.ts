@@ -2,11 +2,10 @@ import itemsData from "../../content/items/items.json";
 import type { ContentDiagnostic } from "../content/ContentDiagnostic";
 import { formatContentDiagnostic } from "../content/ContentDiagnostic";
 import { CONTENT_TYPES } from "../content/contentTypes";
+import { ITEM_CATEGORY_OPTIONS } from "../content/editingMetadata";
 import type { ItemDef, ItemDefMap } from "./ItemDef";
 
 const ITEM_CONTENT_TYPE = CONTENT_TYPES.item;
-
-const ITEM_CATEGORIES = ["quest", "consumable", "material", "misc"] as const;
 
 const ITEM_EFFECT_FIELDS = ["energyRestore", "hpRestore"] as const;
 
@@ -91,13 +90,13 @@ function validateItemDef(
 
   if (
     typeof value.category !== "string" ||
-    !(ITEM_CATEGORIES as readonly string[]).includes(value.category)
+    !(ITEM_CATEGORY_OPTIONS as readonly string[]).includes(value.category)
   ) {
     addItemError(
       diagnostics,
       itemId,
       "category",
-      `Item "${itemId}" has invalid category "${String(value.category)}". Expected one of: ${ITEM_CATEGORIES.join(", ")}.`,
+      `Item "${itemId}" has invalid category "${String(value.category)}". Expected one of: ${ITEM_CATEGORY_OPTIONS.join(", ")}.`,
     );
   }
 

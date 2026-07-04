@@ -66,12 +66,13 @@ Fondations posees (juillet 2026) :
 - `validateAllContent` audite un bundle complet ; un test permanent garde le contenu livre sans erreur.
 - premier ecran d'editeur dev-only en lecture seule : navigateur de contenu, panneau de problemes, navigation par references et impact de renommage.
 - persistance editeur dev-only acceptee par ADR 0006 et branchee au dev server Vite avec allowlist `src/content/**/*.json`.
+- premiere boucle d'edition dev-only pour le catalogue d'objets : brouillon en memoire, validation live, controles de references et sauvegarde JSON.
 
 Etapes restantes :
 
 - continuer a decouper `GameplayEngine` en systemes et modules dedies ;
-- exposer des metadonnees d'edition (labels, champs requis, options d'ids) separees des types gameplay ;
-- commencer une premiere boucle d'edition de catalogue au-dessus de la persistance.
+- etendre les boucles d'edition aux autres familles de contenu, en gardant les metadonnees d'edition separees des types gameplay ;
+- reevaluer a terme la separation de l'editeur dans une application dediee si sa surface depasse le simple outil dev integre.
 
 ## Tests et validation
 
