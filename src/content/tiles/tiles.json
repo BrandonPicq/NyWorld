@@ -1,0 +1,14 @@
+{
+  "0": {
+    "name": "floor",
+    "walkable": true,
+    "glyph": ".",
+    "color": "#3a3a3a"
+  },
+  "1": {
+    "name": "wall",
+    "walkable": false,
+    "glyph": "#",
+    "color": "#666666"
+  }
+}

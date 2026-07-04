@@ -120,6 +120,13 @@ Unlike a zone-local spawn, global presence can move the same `npcId` between
 zones. The schedule system resolves the latest reached entry for the current
 world day and applies that position to the active map when relevant.
 
+## Tiles
+
+The tile catalog at `src/content/tiles/tiles.json` maps numeric tile ids to a
+name, a walkable flag, and map presentation (glyph and color). Zone grids
+reference tiles by these numeric ids. Unknown tile ids fall back to the floor
+tile for display code, but zone validation rejects them before gameplay.
+
 ## Items
 
 The item catalog owns item names, descriptions, categories, and default

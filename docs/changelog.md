@@ -4,6 +4,14 @@ This file tracks meaningful project changes by commit-oriented slices.
 
 Keep entries short and practical. When a slice is committed, its changelog section should stay aligned with the commit title so the project history remains easy to read after restores or bisects.
 
+## 2026-07-04 - [ADD]: Move tile definitions into JSON content
+
+- Author floor and wall tiles in a JSON tile catalog instead of engine code.
+- Validate the tile catalog with accumulating content diagnostics.
+- Expose the full tile definition map for validation contexts.
+- Keep tile lookup signatures and the floor fallback unchanged.
+- Document the tile catalog in the content authoring notes.
+
 ## 2026-07-04 - [ADD]: Move consumable item effects into the item catalog
 
 - Author energy and HP restoration values in the item catalog effects block.

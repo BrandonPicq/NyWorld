@@ -1,4 +1,9 @@
+import tilesData from "../content/tiles/tiles.json";
+import type { ContentDiagnostic } from "./content/ContentDiagnostic";
+import { formatContentDiagnostic } from "./content/ContentDiagnostic";
 import type { TileId } from "./ZoneTypes";
+
+const TILE_CONTENT_TYPE = "tile";
 
 export interface TileDef {
   name: string;
@@ -7,10 +12,133 @@ export interface TileDef {
   color: string;
 }
 
-const registry: Record<TileId, TileDef> = {
-  0: { name: "floor", walkable: true,  glyph: ".", color: "#3a3a3a" },
-  1: { name: "wall",  walkable: false, glyph: "#", color: "#666666" },
-};
+const registry = buildRegistry(tilesData);
+
+/**
+ * Validates a raw tile catalog without throwing.
+ *
+ * Tiles are a leaf content type: zone grids reference them by numeric id, so
+ * the catalog only needs internally consistent definitions.
+ */
+export function validateTileCatalog(value: unknown): ContentDiagnostic[] {
+  const diagnostics: ContentDiagnostic[] = [];
+
+  if (!isRecord(value)) {
+    addTileError(
+      diagnostics,
+      undefined,
+      "$",
+      "Tile catalog must be an object map of tile definitions.",
+    );
+    return diagnostics;
+  }
+
+  for (const [tileKey, def] of Object.entries(value)) {
+    if (!/^(0|[1-9][0-9]*)$/.test(tileKey)) {
+      addTileError(
+        diagnostics,
+        tileKey,
+        "$",
+        `Tile id "${tileKey}" must be a non-negative integer.`,
+      );
+      continue;
+    }
+
+    validateTileDef(tileKey, def, diagnostics);
+  }
+
+  return diagnostics;
+}
+
+function validateTileDef(
+  tileKey: string,
+  value: unknown,
+  diagnostics: ContentDiagnostic[],
+): void {
+  if (!isRecord(value)) {
+    addTileError(
+      diagnostics,
+      tileKey,
+      "$",
+      `Tile "${tileKey}" must be an object.`,
+    );
+    return;
+  }
+
+  if (typeof value.name !== "string" || !value.name.trim()) {
+    addTileError(
+      diagnostics,
+      tileKey,
+      "name",
+      `Tile "${tileKey}" has invalid or missing name.`,
+    );
+  }
+
+  if (typeof value.walkable !== "boolean") {
+    addTileError(
+      diagnostics,
+      tileKey,
+      "walkable",
+      `Tile "${tileKey}" has invalid or missing walkable flag.`,
+    );
+  }
+
+  if (typeof value.glyph !== "string" || value.glyph.length !== 1) {
+    addTileError(
+      diagnostics,
+      tileKey,
+      "glyph",
+      `Tile "${tileKey}" glyph must be exactly one character.`,
+    );
+  }
+
+  if (typeof value.color !== "string" || !value.color.trim()) {
+    addTileError(
+      diagnostics,
+      tileKey,
+      "color",
+      `Tile "${tileKey}" has invalid or missing color.`,
+    );
+  }
+}
+
+function buildRegistry(value: unknown): Record<TileId, TileDef> {
+  const diagnostics = validateTileCatalog(value);
+  const firstError = diagnostics.find(
+    (diagnostic) => diagnostic.severity === "error",
+  );
+
+  if (firstError) {
+    throw new Error(formatContentDiagnostic(firstError));
+  }
+
+  const catalog = value as Record<string, TileDef>;
+  return Object.fromEntries(
+    Object.entries(catalog).map(([tileKey, def]) => [
+      Number(tileKey),
+      { ...def },
+    ]),
+  );
+}
+
+function addTileError(
+  diagnostics: ContentDiagnostic[],
+  tileId: string | undefined,
+  path: string,
+  message: string,
+): void {
+  diagnostics.push({
+    severity: "error",
+    contentType: TILE_CONTENT_TYPE,
+    contentId: tileId,
+    path,
+    message,
+  });
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
 
 export function hasTileDef(id: TileId): boolean {
   return Object.prototype.hasOwnProperty.call(registry, id);
@@ -18,4 +146,19 @@ export function hasTileDef(id: TileId): boolean {
 
 export function getTileDef(id: TileId): TileDef {
   return registry[id] ?? registry[0];
+}
+
+/**
+ * Returns every registered tile definition keyed by numeric tile id.
+ *
+ * Validation contexts use this map so zone checks can test tile existence and
+ * walkability without reading the runtime registry directly.
+ */
+export function getAllTileDefs(): ReadonlyMap<TileId, TileDef> {
+  return new Map(
+    Object.entries(registry).map(([tileKey, def]) => [
+      Number(tileKey),
+      { ...def },
+    ]),
+  );
 }

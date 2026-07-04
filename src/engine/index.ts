@@ -97,7 +97,12 @@ export type {
 export { World } from "./ecs";
 export type { Component, EntityId } from "./ecs";
 export { GameMap } from "./GameMap";
-export { getTileDef } from "./TileRegistry";
+export {
+  getAllTileDefs,
+  getTileDef,
+  hasTileDef,
+  validateTileCatalog,
+} from "./TileRegistry";
 export type { TileDef } from "./TileRegistry";
 export {
   ZoneLoadError,
