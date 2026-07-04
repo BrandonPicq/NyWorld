@@ -4,6 +4,13 @@ This file tracks meaningful project changes by commit-oriented slices.
 
 Keep entries short and practical. When a slice is committed, its changelog section should stay aligned with the commit title so the project history remains easy to read after restores or bisects.
 
+## 2026-07-04 - [ADD]: Read-only content editor screen
+
+- Add a dev-only content editor screen reachable from the title menu.
+- List runtime content families and ids from the catalog snapshot.
+- Show whole-bundle content diagnostics grouped by content type.
+- Explore incoming and outgoing references plus rename impact for selected content ids.
+
 ## 2026-07-04 - [DOCS]: Propose editor persistence architecture
 
 - Propose a dev-only Vite middleware for saving editor JSON changes.

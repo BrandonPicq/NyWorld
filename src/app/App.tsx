@@ -8,6 +8,7 @@ import {
   playMenuConfirmSound,
   playMenuMoveSound,
 } from "../ui/audio/menuAudio";
+import { ContentEditorScreen } from "../ui/editor/ContentEditorScreen";
 import { GameScreen } from "../ui/screens/GameScreen";
 import { OptionsScreen } from "../ui/screens/OptionsScreen";
 import { TitleScreen } from "../ui/screens/TitleScreen";
@@ -40,9 +41,10 @@ type OptionsScreenId =
   | "options-audio"
   | "options-gameplay";
 type AppScreen = "title" | "game" | OptionsScreenId;
+type DevAppScreen = AppScreen | "editor";
 
 function App() {
-  const [screen, setScreen] = useState<AppScreen>("title");
+  const [screen, setScreen] = useState<DevAppScreen>("title");
   const [isGameActive, setIsGameActive] = useState(false);
   const [saves, setSaves] = useState<(GameSaveData | null)[]>(() =>
     readAllSaves(),
@@ -104,6 +106,7 @@ function App() {
   const showGame = isGameActive && screen === "game";
   const showOptions = isOptionsScreenId(screen);
   const showTitle = screen === "title" && !isGameActive;
+  const showEditor = import.meta.env.DEV && screen === "editor";
 
   const handleStartNewGame = () => {
     setLoadedSaveData(null);
@@ -157,6 +160,9 @@ function App() {
         <TitleScreen
           {...menuFeedback}
           onOpenOptions={() => setScreen("options")}
+          onOpenEditor={
+            import.meta.env.DEV ? () => setScreen("editor") : undefined
+          }
           onStartNewGame={handleStartNewGame}
           onLoadSlot={handleLoadSlot}
           notice={titleNotice}
@@ -193,13 +199,15 @@ function App() {
           screen={screen}
         />
       )}
+
+      {showEditor && <ContentEditorScreen onBack={() => setScreen("title")} />}
     </>
   );
 }
 
 export default App;
 
-function isOptionsScreenId(screen: AppScreen): screen is OptionsScreenId {
+function isOptionsScreenId(screen: DevAppScreen): screen is OptionsScreenId {
   return (
     screen === "options" ||
     screen === "options-graphics" ||

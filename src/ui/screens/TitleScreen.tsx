@@ -8,6 +8,7 @@ type TitleScreenProps = {
   onMenuConfirm?: () => void;
   onMenuMove?: () => void;
   onOpenOptions: () => void;
+  onOpenEditor?: () => void;
   onStartNewGame: () => void;
   onLoadSlot?: (slotIndex: number) => void;
   notice?: string | null;
@@ -18,6 +19,7 @@ export function TitleScreen({
   onMenuConfirm,
   onMenuMove,
   onOpenOptions,
+  onOpenEditor,
   onStartNewGame,
   onLoadSlot,
   notice,
@@ -42,6 +44,9 @@ export function TitleScreen({
         })
       : [{ label: "Continue — No saved games", disabled: true }]),
     { label: "Options", onSelect: onOpenOptions },
+    ...(onOpenEditor
+      ? [{ label: "Content Editor", onSelect: onOpenEditor }]
+      : []),
   ];
 
   return (

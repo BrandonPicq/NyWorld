@@ -64,12 +64,13 @@ Fondations posees (juillet 2026) :
 - la validation des references passe par un contexte injecte (`ContentValidationContext` et sous-ensembles `Pick`), voir ADR 0005 ;
 - `ContentReferenceGraph` repond a "ou cet id est-il utilise" et "que casse un renommage" (avec indicateur de persistance en sauvegarde) ;
 - `validateAllContent` audite un bundle complet ; un test permanent garde le contenu livre sans erreur.
+- premier ecran d'editeur dev-only en lecture seule : navigateur de contenu, panneau de problemes, navigation par references et impact de renommage.
 
 Etapes restantes :
 
 - continuer a decouper `GameplayEngine` en systemes et modules dedies ;
 - exposer des metadonnees d'edition (labels, champs requis, options d'ids) separees des types gameplay ;
-- premiere interface d'editeur au-dessus de ces briques (liste de contenu, panneau de problemes branche sur l'audit, navigation par references).
+- rendre l'editeur persistant et commencer une premiere boucle d'edition de catalogue.
 
 ## Tests et validation
 
