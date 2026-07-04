@@ -5,20 +5,16 @@
     "category": "quest",
     "defaultQuantity": 1
   },
-  "travel_ration": {
-    "name": "Travel Ration",
-    "description": "Dried meat and hardtack. Keeps you going.",
-    "category": "consumable",
-    "defaultQuantity": 1,
-    "effects": {
-      "energyRestore": 10,
-      "hpRestore": 10
-    }
-  },
   "chalk_piece": {
     "name": "Chalk Piece",
     "description": "White chalk used for temporary markings.",
     "category": "material",
+    "defaultQuantity": 1
+  },
+  "goblin_ear": {
+    "name": "Goblin Ear",
+    "description": "A sharp, pointed green ear, cut from a defeated goblin.",
+    "category": "quest",
     "defaultQuantity": 1
   },
   "healing_herb": {
@@ -31,10 +27,10 @@
       "hpRestore": 20
     }
   },
-  "old_coin": {
-    "name": "Old Coin",
-    "description": "A tarnished coin from a forgotten era. Worth a few copper to a collector.",
-    "category": "misc",
+  "kobold_remains": {
+    "name": "Kobold Remains",
+    "description": "Evidence of a defeated Kobold, requested by the Old Wizard.",
+    "category": "quest",
     "defaultQuantity": 1
   },
   "lost_notebook": {
@@ -43,22 +39,26 @@
     "category": "quest",
     "defaultQuantity": 1
   },
+  "old_coin": {
+    "name": "Old Coin",
+    "description": "A tarnished coin from a forgotten era. Worth a few copper to a collector.",
+    "category": "misc",
+    "defaultQuantity": 1
+  },
   "slime_remains": {
     "name": "Slime Remains",
     "description": "A gelatinous blob left behind by a defeated slime. Still faintly warm.",
     "category": "quest",
     "defaultQuantity": 1
   },
-  "goblin_ear": {
-    "name": "Goblin Ear",
-    "description": "A sharp, pointed green ear, cut from a defeated goblin.",
-    "category": "quest",
-    "defaultQuantity": 1
-  },
-  "kobold_remains": {
-    "name": "Kobold Remains",
-    "description": "Evidence of a defeated Kobold, requested by the Old Wizard.",
-    "category": "quest",
-    "defaultQuantity": 1
+  "travel_ration": {
+    "name": "Travel Ration",
+    "description": "Dried meat and hardtack. Keeps you going.",
+    "category": "consumable",
+    "defaultQuantity": 1,
+    "effects": {
+      "energyRestore": 10,
+      "hpRestore": 10
+    }
   }
 }
