@@ -6,9 +6,11 @@ content is replaced by larger worlds or mods.
 
 ## Content Flow
 
-Content starts as JSON under `src/content`. Registries discover those files,
-validate references where they can, and expose detached copies to the engine.
-Zone files are validated by `loadZone`, then converted into `GameMap` instances.
+Content starts as JSON under `src/content`. The central game config in
+`src/content/game.json` declares the default zone and safe respawn point.
+Registries discover content files, validate references where they can, and
+expose detached copies to the engine. `ContentBundle` discovers zone files,
+validates the global references, and resolves zones into `GameMap` instances.
 Gameplay systems work from `GameMap`, registries, and save state rather than
 editing imported JSON directly.
 
@@ -16,6 +18,8 @@ The important rule is ownership:
 
 - content files define stable data such as zones, items, NPC identities, dialogue
   sequences, and daily presence;
+- game config defines world-level entry points such as the default zone and safe
+  respawn;
 - the engine owns mutable runtime state such as position, inventory, logs, world
   time, collected item placements, and NPC progression;
 - save data stores only mutable playthrough state and reloads static content
@@ -35,13 +39,22 @@ Most content links are id based:
 Ids should be stable once they appear in saves. Renaming an id later requires a
 save migration or compatibility alias.
 
+## Game Config
+
+`src/content/game.json` owns global authoring choices that should not be
+hardcoded in React or the gameplay engine. `defaultZoneId` selects the starting
+zone for a new game. `safeRespawn` selects where the player returns after a
+combat defeat or similar recovery event.
+
+The safe respawn point must reference an authored zone and a walkable tile.
+
 ## Zones
 
 Zone JSON describes the map rectangle, tile grid, player start, optional
 transitions, optional entry dialogue, NPC appearances, and ground item stacks.
-`loadZone` rejects invalid tile ids, blocked spawn positions, unknown content
-references, malformed dialogue, and invalid schedules before a `GameMap` reaches
-gameplay code.
+`ContentBundle` discovers authored zones, while `loadZone` rejects invalid tile
+ids, blocked spawn positions, unknown content references, malformed dialogue,
+and invalid schedules before a `GameMap` reaches gameplay code.
 
 Zone coordinates use integer grid space with `(0, 0)` at the top-left corner.
 

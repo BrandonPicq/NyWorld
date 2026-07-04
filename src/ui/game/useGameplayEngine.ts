@@ -1,27 +1,29 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
+  getDefaultZoneData,
+  getSafeRespawn,
   GameplayEngine,
   loadZone,
+  resolveZoneFromBundle,
+  type ContentBundle,
   type DialogueNode,
   type EngineNotice,
   type EngineEffect,
   type GameCommand,
   type GameSaveData,
   type GameSnapshot,
-  type ZoneData,
 } from "../../engine";
 import type { AudioSettings } from "../audio/audioSettings";
 import { playItemCollectSound, playMenuConfirmSound } from "../audio/menuAudio";
 
 type UseGameplayEngineInput = {
   audioSettings: AudioSettings;
-  initialZoneData: ZoneData;
+  contentBundle: ContentBundle;
   initialSaveData?: GameSaveData;
   onDialogue: (nodes: DialogueNode[], dialogueId?: string) => void;
   onEffect?: (effect: EngineEffect) => void;
   onLoadError?: (message: string) => void;
   onNotice?: (notice: EngineNotice) => void;
-  zoneRegistry: Record<string, ZoneData>;
 };
 
 /**
@@ -33,13 +35,12 @@ type UseGameplayEngineInput = {
  */
 export function useGameplayEngine({
   audioSettings,
-  initialZoneData,
+  contentBundle,
   initialSaveData,
   onDialogue,
   onEffect,
   onLoadError,
   onNotice,
-  zoneRegistry,
 }: UseGameplayEngineInput) {
   const [snapshot, setSnapshot] = useState<GameSnapshot | null>(null);
   const engineRef = useRef<GameplayEngine | null>(null);
@@ -55,15 +56,18 @@ export function useGameplayEngine({
 
   useEffect(() => {
     const resolveZone = (zoneId: string) => {
-      const zoneData = zoneRegistry[zoneId];
-      return zoneData ? loadZone(zoneData) : undefined;
+      return resolveZoneFromBundle(contentBundle, zoneId);
     };
+    const safeRespawn = getSafeRespawn(contentBundle);
 
     try {
       const saveData = initialSaveDataRef.current;
       const engine = saveData
-        ? GameplayEngine.fromSaveData(saveData, { resolveZone })
-        : new GameplayEngine(loadZone(initialZoneData), { resolveZone });
+        ? GameplayEngine.fromSaveData(saveData, { resolveZone, safeRespawn })
+        : new GameplayEngine(loadZone(getDefaultZoneData(contentBundle)), {
+            resolveZone,
+            safeRespawn,
+          });
 
       engineRef.current = engine;
       setSnapshot(engine.getSnapshot());
@@ -81,7 +85,7 @@ export function useGameplayEngine({
     return () => {
       engineRef.current = null;
     };
-  }, [initialZoneData, zoneRegistry]);
+  }, [contentBundle]);
 
   const executeCommand = useCallback(
     (command: GameCommand) => {

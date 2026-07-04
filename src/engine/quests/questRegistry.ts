@@ -1,7 +1,10 @@
 import { hasItemDef } from "../items/itemRegistry";
 import { hasNpcDef } from "../npcs/npcRegistry";
 import { hasDialogue } from "../dialogues/dialogueRegistry";
-import { loadZone } from "../zoneLoader";
+import {
+  defaultContentBundle,
+  resolveZoneFromBundle,
+} from "../content/contentBundle";
 import type { GameMap } from "../GameMap";
 import { isStatPath } from "../stats/characterStats";
 import type { QuestDef, QuestDefMap } from "./QuestDef";
@@ -13,14 +16,7 @@ const questDefs = getSortedContentModules(
   }),
 );
 
-const zoneDefs = getSortedContentModules(
-  import.meta.glob<unknown>("../../content/zones/*.json", {
-    eager: true,
-    import: "default",
-  }),
-);
-
-const zoneRegistry = buildZoneRegistry(zoneDefs);
+const zoneRegistry = buildZoneRegistry(defaultContentBundle);
 const registry = buildRegistry(questDefs);
 
 export function hasQuestDef(questId: string): boolean {
@@ -88,13 +84,15 @@ function buildRegistry(defs: unknown[]): QuestDefMap {
   return nextRegistry;
 }
 
-function buildZoneRegistry(defs: unknown[]): Map<string, GameMap> {
+function buildZoneRegistry(
+  bundle: typeof defaultContentBundle,
+): Map<string, GameMap> {
   const zones = new Map<string, GameMap>();
 
-  for (const def of defs) {
-    const zone = loadZone(def);
-    if (zones.has(zone.zoneId)) {
-      throw new Error(`Duplicate zone definition "${zone.zoneId}".`);
+  for (const zoneId of Object.keys(bundle.zones)) {
+    const zone = resolveZoneFromBundle(bundle, zoneId);
+    if (!zone) {
+      throw new Error(`Zone definition "${zoneId}" is not available.`);
     }
     zones.set(zone.zoneId, zone);
   }

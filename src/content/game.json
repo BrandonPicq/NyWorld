@@ -1,0 +1,8 @@
+{
+  "defaultZoneId": "test_zone",
+  "safeRespawn": {
+    "zoneId": "test_zone",
+    "x": 5,
+    "y": 4
+  }
+}

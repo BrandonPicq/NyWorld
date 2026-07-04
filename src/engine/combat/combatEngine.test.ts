@@ -230,8 +230,10 @@ describe("Combat Engine Integration", () => {
       movement_test: movementZoneData,
       second_zone: secondZoneData,
     };
+    const safeRespawn = { zoneId: "movement_test", x: 4, y: 4 };
     let engine = new GameplayEngine(loadZone(secondZoneData), {
       random: () => 0.5,
+      safeRespawn,
       resolveZone: (zoneId) => {
         const data = zoneRegistry[zoneId];
         return data ? loadZone(data) : undefined;
@@ -247,6 +249,7 @@ describe("Combat Engine Integration", () => {
 
     engine = GameplayEngine.fromSaveData(save, {
       random: () => 0.5,
+      safeRespawn,
       resolveZone: (zoneId) => {
         const data = zoneRegistry[zoneId];
         return data ? loadZone(data) : undefined;
@@ -280,9 +283,9 @@ describe("Combat Engine Integration", () => {
 
     const snapAfterDefeat = engine.getSnapshot();
     expect(snapAfterDefeat.combatState).toBeUndefined();
-    // Teleported to safety on test_zone at (5, 4)
+    // Teleported to the configured safe respawn point.
     expect(snapAfterDefeat.zoneId).toBe("movement_test");
-    expect(snapAfterDefeat.playerX).toBe(5);
+    expect(snapAfterDefeat.playerX).toBe(4);
     expect(snapAfterDefeat.playerY).toBe(4);
     // HP and Energy restored to 50%
     expect(snapAfterDefeat.stats.resources.hp).toBe(50);

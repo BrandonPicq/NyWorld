@@ -41,6 +41,7 @@ import type {
   ZoneTransitionData,
 } from "./ZoneTypes";
 import type { GameSaveData } from "./GameSaveData";
+import type { SafeRespawnPoint } from "./content/contentBundle";
 import {
   START_WORLD_TIME_MINUTES,
   WORLD_TIME_ACTION_COST,
@@ -180,6 +181,7 @@ type ZoneResolver = (zoneId: string) => GameMap | undefined;
 
 type GameplayEngineOptions = {
   resolveZone?: ZoneResolver;
+  safeRespawn?: SafeRespawnPoint;
   random?: () => number;
 };
 
@@ -205,10 +207,16 @@ export class GameplayEngine {
   private seenZoneEntryEventIds = new Set<string>();
   private notices: EngineNotice[] = [];
   private readonly combat: CombatSystem;
+  private readonly safeRespawn: SafeRespawnPoint;
 
   constructor(map: GameMap, options: GameplayEngineOptions = {}) {
     this.map = map;
     this.resolveZone = options.resolveZone;
+    this.safeRespawn = options.safeRespawn ?? {
+      zoneId: map.zoneId,
+      x: map.playerStart.x,
+      y: map.playerStart.y,
+    };
     this.combat = new CombatSystem({
       world: this.world,
       getPlayerStats: () => this.getPlayerStats(),
@@ -1369,23 +1377,30 @@ export class GameplayEngine {
   }
 
   private recoverPlayerFromCombatDefeat(): void {
+    const targetMap =
+      this.map.zoneId === this.safeRespawn.zoneId
+        ? this.map
+        : this.resolveZone?.(this.safeRespawn.zoneId);
+
+    if (targetMap && targetMap.zoneId !== this.map.zoneId) {
+      this.map = targetMap;
+      this.spawnNpcs();
+      this.spawnItems();
+    }
+
     const pos = this.getPlayerPosition();
-    pos.x = 5;
-    pos.y = 4;
+    if (targetMap) {
+      pos.x = this.safeRespawn.x;
+      pos.y = this.safeRespawn.y;
+    } else {
+      pos.x = this.map.playerStart.x;
+      pos.y = this.map.playerStart.y;
+    }
 
     const playerStats = this.getPlayerStats();
     playerStats.resources.hp = Math.floor(playerStats.resources.maxHp / 2);
     playerStats.resources.energy = Math.floor(playerStats.resources.maxEnergy / 2);
     refreshDerivedStats(playerStats);
-
-    if (this.map.zoneId !== "test_zone" && this.resolveZone) {
-      const firstMap = this.resolveZone("test_zone");
-      if (firstMap) {
-        this.map = firstMap;
-        this.spawnNpcs();
-        this.spawnItems();
-      }
-    }
 
     this.addLog("Teleported back to safety. HP and Energy partially restored.");
   }

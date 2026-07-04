@@ -1,9 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { createGridRenderSnapshot } from "../../rendering";
-import testZoneData from "../../content/zones/test_zone.json";
-import testZone2Data from "../../content/zones/test_zone_2.json";
-import type { ZoneData } from "../../engine/ZoneTypes";
 import {
+  defaultContentBundle,
   getItemDef,
   getNpcDef,
   type DialogueNode,
@@ -52,11 +50,6 @@ type GameScreenProps = {
   onBackToTitle: () => void;
   onLoadError?: (message: string) => void;
   onOpenOptions: () => void;
-};
-
-const zoneRegistry: Record<string, ZoneData> = {
-  test_zone: testZoneData as ZoneData,
-  test_zone_2: testZone2Data as ZoneData,
 };
 
 const MAX_RETAINED_GAME_TOASTS = 6;
@@ -110,13 +103,12 @@ export function GameScreen({
 
   const { createSaveData, executeCommand, snapshot } = useGameplayEngine({
     audioSettings,
+    contentBundle: defaultContentBundle,
     initialSaveData,
-    initialZoneData: zoneRegistry.test_zone,
     onDialogue: (nodes, id) => triggerDialogue(nodes, id),
     onEffect: handleEngineEffect,
     onLoadError,
     onNotice: setGameNotice,
-    zoneRegistry,
   });
 
   const {

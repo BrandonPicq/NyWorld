@@ -4,6 +4,14 @@ This file tracks meaningful project changes by commit-oriented slices.
 
 Keep entries short and practical. When a slice is committed, its changelog section should stay aligned with the commit title so the project history remains easy to read after restores or bisects.
 
+## 2026-07-04 - [REFACTOR]: Introduce a central content bundle
+
+- Add global game content config for the default zone and safe respawn point.
+- Add a ContentBundle layer that discovers authored zones and resolves runtime maps.
+- Replace hardcoded UI zone imports with the central content bundle.
+- Use configured safe respawn data for combat defeat recovery.
+- Reuse the central zone bundle when validating quest coordinate objectives.
+
 ## 2026-07-03 - [ADD]: Expand combat action choices
 
 - Replace raw physical and magical choices with Strike, Cast, Guard, Focus, Use Item, and Flee actions.

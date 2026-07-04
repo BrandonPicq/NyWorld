@@ -25,6 +25,19 @@ export {
 } from "./stats/characterStats";
 export type { StatPath, StatSection } from "./stats/characterStats";
 export {
+  defaultContentBundle,
+  createContentBundle,
+  getDefaultZoneData,
+  getSafeRespawn,
+  getZoneData,
+  resolveZoneFromBundle,
+} from "./content/contentBundle";
+export type {
+  ContentBundle,
+  GameContentConfig,
+  SafeRespawnPoint,
+} from "./content/contentBundle";
+export {
   createQteChallenge,
   resolveQteContest,
 } from "./combat/qteCombat";
