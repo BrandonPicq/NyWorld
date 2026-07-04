@@ -4,6 +4,12 @@ This file tracks meaningful project changes by commit-oriented slices.
 
 Keep entries short and practical. When a slice is committed, its changelog section should stay aligned with the commit title so the project history remains easy to read after restores or bisects.
 
+## 2026-07-04 - [DOCS]: Propose editor persistence architecture
+
+- Propose a dev-only Vite middleware for saving editor JSON changes.
+- Compare the Vite middleware approach with the File System Access API.
+- Document the path allowlist, traversal rejection, and git-tracked JSON constraints.
+
 ## 2026-07-04 - [REFACTOR]: Extract inventory and item use out of GameplayEngine
 
 - Move ground item pickup and exploration item use into a dedicated inventory system.
