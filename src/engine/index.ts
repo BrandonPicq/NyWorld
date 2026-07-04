@@ -144,7 +144,7 @@ export {
   hasItemDef,
   validateItemCatalog,
 } from "./items/itemRegistry";
-export type { ItemDef, ItemDefMap } from "./items/ItemDef";
+export type { ItemDef, ItemDefMap, ItemEffects } from "./items/ItemDef";
 export { getItemMapPresentation } from "./items/itemMapPresentation";
 export type { ItemMapPresentation } from "./items/itemMapPresentation";
 export {

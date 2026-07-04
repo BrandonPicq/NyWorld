@@ -4,6 +4,14 @@ This file tracks meaningful project changes by commit-oriented slices.
 
 Keep entries short and practical. When a slice is committed, its changelog section should stay aligned with the commit title so the project history remains easy to read after restores or bisects.
 
+## 2026-07-04 - [ADD]: Move consumable item effects into the item catalog
+
+- Author energy and HP restoration values in the item catalog effects block.
+- Read exploration item use from authored energy effects instead of a hardcoded map.
+- Read combat item use from authored HP effects instead of a duplicated hardcoded map.
+- Validate effect fields as positive integers and warn when a non-consumable declares effects.
+- Keep the unknown-item fallback free of effects so unknown ids stay unusable.
+
 ## 2026-07-04 - [REFACTOR]: Validate the item catalog with content diagnostics
 
 - Validate the raw item catalog with accumulating content diagnostics instead of an unchecked cast.

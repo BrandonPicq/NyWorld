@@ -168,11 +168,6 @@ const COMMAND_DIRECTION: Record<string, Direction> = {
 
 const INTERACTION_DIRECTIONS: Direction[] = ["north", "east", "south", "west"];
 
-const CONSUMABLE_ENERGY: Record<string, number> = {
-  travel_ration: 10,
-  healing_herb: 20,
-};
-
 const STUDY_ENERGY_COST = 10;
 const STUDY_ACADEMIC_PROGRESS_GAIN = 15;
 const STUDY_INTELLIGENCE_GAIN = 1;
@@ -542,7 +537,7 @@ export class GameplayEngine {
       return { success: false };
     }
 
-    const energyRestored = CONSUMABLE_ENERGY[itemId];
+    const energyRestored = def.effects?.energyRestore;
 
     if (energyRestored === undefined) {
       const message = `${def.name} has no usable effect yet.`;

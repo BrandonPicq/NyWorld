@@ -78,11 +78,6 @@ const CAST_MP_COST = 10;
 const FOCUS_DAMAGE_MULTIPLIER = 1.5;
 const GUARD_DAMAGE_MULTIPLIER = 0.5;
 
-const COMBAT_CONSUMABLE_HP: Record<string, number> = {
-  travel_ration: 10,
-  healing_herb: 20,
-};
-
 /**
  * Owns the current combat encounter state and resolves combat-only commands.
  *
@@ -297,7 +292,7 @@ export class CombatSystem {
       return { success: false };
     }
 
-    const hpRestored = COMBAT_CONSUMABLE_HP[itemId];
+    const hpRestored = itemDef.effects?.hpRestore;
     if (hpRestored === undefined) {
       const message = `${itemDef.name} has no combat effect yet.`;
       this.context.addLog(message);

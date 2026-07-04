@@ -1,6 +1,19 @@
 import type { InventoryItemCategory } from "../components/Inventory";
 
 /**
+ * Authored gameplay effects applied when a consumable item is used.
+ *
+ * Systems read only the effect fields they support: exploration item use reads
+ * energy restoration, combat item use reads HP restoration.
+ */
+export interface ItemEffects {
+  /** Energy restored when used outside combat. */
+  energyRestore?: number;
+  /** HP restored when used during combat. */
+  hpRestore?: number;
+}
+
+/**
  * Catalog entry for an item type.
  *
  * The catalog owns player-facing metadata. Inventories and ground spawns store
@@ -16,6 +29,8 @@ export interface ItemDef {
   category: InventoryItemCategory;
   /** Suggested stack amount for systems that create this item without one. */
   defaultQuantity: number;
+  /** Optional use effects; consumables without effects are rejected on use. */
+  effects?: ItemEffects;
 }
 
 /**

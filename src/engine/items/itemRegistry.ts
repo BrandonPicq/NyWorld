@@ -7,6 +7,8 @@ const ITEM_CONTENT_TYPE = "item";
 
 const ITEM_CATEGORIES = ["quest", "consumable", "material", "misc"] as const;
 
+const ITEM_EFFECT_FIELDS = ["energyRestore", "hpRestore"] as const;
+
 const fallback: ItemDef = {
   name: "Unknown Item",
   description: "An item that is not yet defined.",
@@ -110,6 +112,57 @@ function validateItemDef(
       `Item "${itemId}" has invalid defaultQuantity. Expected a positive integer.`,
     );
   }
+
+  if (value.effects !== undefined) {
+    validateItemEffects(itemId, value.effects, value.category, diagnostics);
+  }
+}
+
+function validateItemEffects(
+  itemId: string,
+  value: unknown,
+  category: unknown,
+  diagnostics: ContentDiagnostic[],
+): void {
+  if (!isRecord(value)) {
+    addItemError(
+      diagnostics,
+      itemId,
+      "effects",
+      `Item "${itemId}" effects must be an object.`,
+    );
+    return;
+  }
+
+  for (const field of ITEM_EFFECT_FIELDS) {
+    const effectValue = value[field];
+    if (effectValue === undefined) {
+      continue;
+    }
+
+    if (
+      typeof effectValue !== "number" ||
+      !Number.isInteger(effectValue) ||
+      effectValue <= 0
+    ) {
+      addItemError(
+        diagnostics,
+        itemId,
+        `effects.${field}`,
+        `Item "${itemId}" has invalid effects.${field}. Expected a positive integer.`,
+      );
+    }
+  }
+
+  if (category !== "consumable") {
+    diagnostics.push({
+      severity: "warning",
+      contentType: ITEM_CONTENT_TYPE,
+      contentId: itemId,
+      path: "effects",
+      message: `Item "${itemId}" declares use effects but is not a consumable, so the effects will never apply.`,
+    });
+  }
 }
 
 function buildRegistry(value: unknown): ItemDefMap {
@@ -129,7 +182,10 @@ function buildRegistry(value: unknown): ItemDefMap {
 }
 
 function cloneItemDef(def: ItemDef): ItemDef {
-  return { ...def };
+  return {
+    ...def,
+    effects: def.effects ? { ...def.effects } : undefined,
+  };
 }
 
 function addItemError(

@@ -9,7 +9,11 @@
     "name": "Travel Ration",
     "description": "Dried meat and hardtack. Keeps you going.",
     "category": "consumable",
-    "defaultQuantity": 1
+    "defaultQuantity": 1,
+    "effects": {
+      "energyRestore": 10,
+      "hpRestore": 10
+    }
   },
   "chalk_piece": {
     "name": "Chalk Piece",
@@ -21,7 +25,11 @@
     "name": "Healing Herb",
     "description": "A small bundle of dried herbs with a faint medicinal scent.",
     "category": "consumable",
-    "defaultQuantity": 1
+    "defaultQuantity": 1,
+    "effects": {
+      "energyRestore": 20,
+      "hpRestore": 20
+    }
   },
   "old_coin": {
     "name": "Old Coin",

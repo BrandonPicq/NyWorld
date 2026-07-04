@@ -77,6 +77,58 @@ describe("validateItemCatalog", () => {
     expect(diagnostics).toHaveLength(4);
   });
 
+  it("validates use effects fields", () => {
+    const diagnostics = validateItemCatalog({
+      odd_potion: {
+        name: "Odd Potion",
+        description: "A potion with broken effects.",
+        category: "consumable",
+        defaultQuantity: 1,
+        effects: { energyRestore: 0, hpRestore: 2.5 },
+      },
+    });
+
+    expect(diagnostics).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          contentId: "odd_potion",
+          path: "effects.energyRestore",
+          message:
+            'Item "odd_potion" has invalid effects.energyRestore. Expected a positive integer.',
+        }),
+        expect.objectContaining({
+          contentId: "odd_potion",
+          path: "effects.hpRestore",
+          message:
+            'Item "odd_potion" has invalid effects.hpRestore. Expected a positive integer.',
+        }),
+      ]),
+    );
+    expect(diagnostics).toHaveLength(2);
+  });
+
+  it("warns when a non-consumable declares use effects", () => {
+    const diagnostics = validateItemCatalog({
+      strange_rock: {
+        name: "Strange Rock",
+        description: "A rock that thinks it is a potion.",
+        category: "material",
+        defaultQuantity: 1,
+        effects: { energyRestore: 5 },
+      },
+    });
+
+    expect(diagnostics).toEqual([
+      expect.objectContaining({
+        severity: "warning",
+        contentId: "strange_rock",
+        path: "effects",
+        message:
+          'Item "strange_rock" declares use effects but is not a consumable, so the effects will never apply.',
+      }),
+    ]);
+  });
+
   it("reports empty item ids", () => {
     const diagnostics = validateItemCatalog({
       "": {
@@ -114,8 +166,22 @@ describe("itemRegistry", () => {
   });
 
   it("falls back to a safe definition for unknown ids", () => {
-    expect(getItemDef("missing_item")).toEqual(
+    const def = getItemDef("missing_item");
+
+    expect(def).toEqual(
       expect.objectContaining({ name: "Unknown Item", category: "misc" }),
     );
+    expect(def.effects).toBeUndefined();
+  });
+
+  it("exposes authored consumable effects", () => {
+    expect(getItemDef("travel_ration").effects).toEqual({
+      energyRestore: 10,
+      hpRestore: 10,
+    });
+    expect(getItemDef("healing_herb").effects).toEqual({
+      energyRestore: 20,
+      hpRestore: 20,
+    });
   });
 });
