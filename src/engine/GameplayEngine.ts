@@ -2,7 +2,6 @@ import type { GameCommand } from "./commands";
 import type {
   DialogueNode,
   Inventory,
-  Item,
   Npc,
   Position,
   Renderable,
@@ -19,7 +18,7 @@ import {
   normalizeCompletedObjectiveKeys,
 } from "./quests/QuestProgressionSystem";
 import { getDialogue } from "./dialogues/dialogueRegistry";
-import { getItemDef } from "./items/itemRegistry";
+import { InventorySystem } from "./items/InventorySystem";
 import { getAllNpcPresenceDefs } from "./npcs/npcPresenceRegistry";
 import {
   cloneNpcState,
@@ -32,7 +31,6 @@ import {
 import { spawnNpcsInWorld, spawnItemsInWorld } from "./spawner/EntitySpawner";
 import { serializeSaveData } from "./save/gameSaveSerializer";
 import { World } from "./ecs/World";
-import type { EntityId } from "./ecs/types";
 import { GameMap } from "./GameMap";
 import type { LogEntry } from "./LogEntry";
 import { DIRECTION_DELTA, MovementSystem } from "./systems/MovementSystem";
@@ -236,6 +234,7 @@ export class GameplayEngine {
   private seenZoneEntryEventIds = new Set<string>();
   private notices: EngineNotice[] = [];
   private readonly quests: QuestProgressionSystem;
+  private readonly inventory: InventorySystem;
   private readonly combat: CombatSystem;
   private readonly safeRespawn: SafeRespawnPoint;
   private readonly actionTuning: ActionTuningConfig;
@@ -257,6 +256,16 @@ export class GameplayEngine {
       getZoneId: () => this.map.zoneId,
       addLog: (message) => this.addLog(message),
       addNotice: (notice) => this.notices.push({ ...notice }),
+    });
+    this.inventory = new InventorySystem({
+      world: this.world,
+      getPlayerInventory: () => this.getPlayerInventory(),
+      getPlayerStats: () => this.getPlayerStats(),
+      addLog: (message) => this.addLog(message),
+      advanceTick: () => this.tickCounter.advance(),
+      advanceWorldTime: (minutes) => this.advanceWorldTime(minutes),
+      markItemSpawnPickedUp: (spawnKey) =>
+        this.pickedUpItemSpawnKeys.add(spawnKey),
     });
     this.combat = new CombatSystem({
       world: this.world,
@@ -351,7 +360,7 @@ export class GameplayEngine {
     }
 
     if (command.type === "UseItem") {
-      return this.useItem(command.itemId);
+      return this.inventory.useItem(command.itemId);
     }
 
     if (command.type === "CompleteDialogue") {
@@ -421,11 +430,14 @@ export class GameplayEngine {
       const pos = this.getPlayerPosition();
       this.addLog(`Moved ${direction} to (${pos.x}, ${pos.y}).`);
       this.quests.checkCoordinateObjectives();
-      const itemAtPosition = this.getItemAt(pos.x, pos.y);
+      const itemAtPosition = this.inventory.getItemAt(pos.x, pos.y);
       const effects: EngineEffect[] = [];
       if (itemAtPosition) {
         effects.push(
-          this.pickupItem(itemAtPosition.entity, itemAtPosition.component),
+          this.inventory.pickupItem(
+            itemAtPosition.entity,
+            itemAtPosition.component,
+          ),
         );
       }
       this.resolvePendingTransition();
@@ -501,123 +513,6 @@ export class GameplayEngine {
     }
 
     return undefined;
-  }
-
-  private getItemAt(
-    x: number,
-    y: number,
-  ): { entity: EntityId; component: Item } | undefined {
-    const itemEntities = this.world.entitiesWith("Position", "Item");
-
-    for (const itemEntityId of itemEntities) {
-      const itemPos = this.world.getComponent<Position>(itemEntityId, "Position")!;
-
-      if (itemPos.x === x && itemPos.y === y) {
-        const component = this.world.getComponent<Item>(itemEntityId, "Item")!;
-        return { entity: itemEntityId, component };
-      }
-    }
-
-    return undefined;
-  }
-
-  private pickupItem(entity: EntityId, item: Item): EngineEffect {
-    const def = getItemDef(item.itemId);
-    const inventory = this.getPlayerInventory();
-    const existingStack = inventory.items.find(
-      (stack) => stack.itemId === item.itemId,
-    );
-
-    if (existingStack) {
-      existingStack.quantity += item.quantity;
-    } else {
-      inventory.items.push({
-        itemId: item.itemId,
-        quantity: item.quantity,
-      });
-    }
-
-    this.world.destroyEntity(entity);
-    this.pickedUpItemSpawnKeys.add(item.spawnKey);
-
-    this.addLog(
-      `Picked up ${def.name}${item.quantity > 1 ? ` x${item.quantity}` : ""}.`,
-    );
-
-    return {
-      type: "ItemCollected",
-      itemId: item.itemId,
-      quantity: item.quantity,
-    };
-  }
-
-  private useItem(itemId: string): ExecuteResult {
-    const inventory = this.getPlayerInventory();
-    const stackIndex = inventory.items.findIndex(
-      (stack) => stack.itemId === itemId,
-    );
-
-    if (stackIndex === -1) {
-      this.addLog("You don't have that item.");
-      return { success: false };
-    }
-
-    const def = getItemDef(itemId);
-
-    if (def.category !== "consumable") {
-      this.addLog(`${def.name} cannot be used.`);
-      return { success: false };
-    }
-
-    const energyRestored = def.effects?.energyRestore;
-
-    if (energyRestored === undefined) {
-      const message = `${def.name} has no usable effect yet.`;
-      this.addLog(message);
-      return {
-        success: false,
-        effects: [
-          { type: "ItemUseRejected", itemId, reason: "no_effect", message },
-        ],
-      };
-    }
-
-    const stats = this.getPlayerStats();
-    if (stats.resources.energy >= stats.resources.maxEnergy) {
-      const message = `${def.name} would have no effect right now.`;
-      this.addLog(message);
-      return {
-        success: false,
-        effects: [
-          { type: "ItemUseRejected", itemId, reason: "energy_full", message },
-        ],
-      };
-    }
-
-    const nextEnergy = Math.min(
-      stats.resources.maxEnergy,
-      stats.resources.energy + energyRestored,
-    );
-    const actualEnergyRestored = nextEnergy - stats.resources.energy;
-    stats.resources.energy = nextEnergy;
-
-    const stack = inventory.items[stackIndex];
-    stack.quantity -= 1;
-
-    if (stack.quantity <= 0) {
-      inventory.items.splice(stackIndex, 1);
-    }
-
-    this.tickCounter.advance();
-    this.advanceWorldTime(WORLD_TIME_ACTION_COST.useItem);
-    this.addLog(`Used ${def.name}. Recovered ${actualEnergyRestored} energy.`);
-
-    return {
-      success: true,
-      effects: [
-        { type: "ItemUsed", itemId, energyRestored: actualEnergyRestored },
-      ],
-    };
   }
 
   private talkToNpc(
