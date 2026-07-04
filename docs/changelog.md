@@ -12,6 +12,12 @@ Keep entries short and practical. When a slice is committed, its changelog secti
 - Define the current milestone: data-driven content migration and content editor foundations.
 - Align the product direction milestone notes with the current scope.
 
+## 2026-07-04 - [REFACTOR]: Remove unused engine helpers
+
+- Remove the unused NPC state map clone helper superseded by per-state cloning.
+- Remove the unused stat section type from character stats.
+- Drop both from the engine barrel exports.
+
 ## 2026-07-04 - [REFACTOR]: Add quest diagnostics validation context
 
 - Add an explicit content validation context for item, NPC, dialogue, and zone references.

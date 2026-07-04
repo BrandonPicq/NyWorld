@@ -6,12 +6,6 @@ import type {
   Stats,
 } from "../components";
 
-export type StatSection =
-  | "resources"
-  | "attributes"
-  | "combat"
-  | "skills"
-  | "progression";
 export type StatPath =
   | `resources.${keyof StatResources & string}`
   | `attributes.${keyof CoreAttributes & string}`

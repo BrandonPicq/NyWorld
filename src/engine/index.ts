@@ -23,7 +23,7 @@ export {
   isStatPath,
   refreshDerivedStats,
 } from "./stats/characterStats";
-export type { StatPath, StatSection } from "./stats/characterStats";
+export type { StatPath } from "./stats/characterStats";
 export {
   defaultContentBundle,
   createContentBundle,
@@ -172,7 +172,6 @@ export type {
 } from "./npcs/NpcPresenceDef";
 export {
   cloneNpcState,
-  cloneNpcStateMap,
   createInitialNpcState,
 } from "./npcs/NpcState";
 export type { NpcState, NpcStateMap } from "./npcs/NpcState";

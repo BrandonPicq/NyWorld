@@ -46,18 +46,6 @@ export function cloneNpcState(state: NpcState): NpcState {
 }
 
 /**
- * Deep-clones an NPC state map while preserving each npcId key.
- */
-export function cloneNpcStateMap(states: NpcStateMap): NpcStateMap {
-  return Object.fromEntries(
-    Object.entries(states).map(([npcId, state]) => [
-      npcId,
-      cloneNpcState(state),
-    ]),
-  );
-}
-
-/**
  * Builds default state for every currently registered NPC definition.
  */
 export function createInitialNpcStateMap(): NpcStateMap {
