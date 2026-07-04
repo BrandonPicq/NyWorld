@@ -161,6 +161,8 @@ export {
   getAllDialogueIds,
   getDialogue,
   hasDialogue,
+  validateDialogueFile,
+  validateDialogueRegistry,
 } from "./dialogues/dialogueRegistry";
 export type { DialogueDefMap, DialogueId } from "./dialogues/DialogueDef";
 export {
@@ -168,12 +170,22 @@ export {
   getNpcMapPresentation,
 } from "./npcs/npcMapPresentation";
 export type { NpcMapPresentation } from "./npcs/npcMapPresentation";
-export { getAllNpcDefs, getNpcDef, hasNpcDef } from "./npcs/npcRegistry";
+export {
+  getAllNpcDefs,
+  getNpcDef,
+  hasNpcDef,
+  validateNpcDef,
+  validateNpcRegistry,
+} from "./npcs/npcRegistry";
+export type { NpcValidationContext } from "./npcs/npcRegistry";
 export {
   getAllNpcPresenceDefs,
   getNpcPresenceDef,
   hasNpcPresenceDef,
+  validateNpcPresenceDef,
+  validateNpcPresenceRegistry,
 } from "./npcs/npcPresenceRegistry";
+export type { NpcPresenceValidationContext } from "./npcs/npcPresenceRegistry";
 export type {
   NpcDef,
   NpcDefMap,

@@ -1,7 +1,25 @@
-import { hasDialogue } from "../dialogues/dialogueRegistry";
+import type { ContentDiagnostic } from "../content/ContentDiagnostic";
+import { formatContentDiagnostic } from "../content/ContentDiagnostic";
+import { CONTENT_TYPES } from "../content/contentTypes";
+import type { ContentValidationContext } from "../content/ContentValidationContext";
+import { getAllDialogueIds } from "../dialogues/dialogueRegistry";
 import { parseScheduleTime } from "../systems/NpcScheduleSystem";
-import { hasNpcDef } from "./npcRegistry";
+import { getAllNpcDefs } from "./npcRegistry";
 import type { NpcPresenceDef, NpcPresenceDefMap } from "./NpcPresenceDef";
+
+const NPC_PRESENCE_CONTENT_TYPE = CONTENT_TYPES.npcPresence;
+
+/**
+ * Catalog subset that global presence validation checks references against.
+ *
+ * Zone existence is deliberately not checked here: the presence registry loads
+ * before the zone bundle, so cross-zone checks belong to the whole-bundle
+ * content audit that runs with the full context.
+ */
+export type NpcPresenceValidationContext = Pick<
+  ContentValidationContext,
+  "npcIds" | "dialogueIds"
+>;
 
 const presenceDefs = getSortedContentModules(
   import.meta.glob<unknown>("../../content/npc-presence/*.json", {
@@ -34,17 +52,196 @@ export function getAllNpcPresenceDefs(): NpcPresenceDef[] {
   return Object.values(registry).map(cloneNpcPresenceDef);
 }
 
-function buildRegistry(defs: unknown[]): NpcPresenceDefMap {
-  const nextRegistry: NpcPresenceDefMap = {};
+/**
+ * Validates one global presence definition against an explicit content context.
+ */
+export function validateNpcPresenceDef(
+  value: unknown,
+  context: NpcPresenceValidationContext,
+): ContentDiagnostic[] {
+  const diagnostics: ContentDiagnostic[] = [];
+
+  if (!isRecord(value)) {
+    addPresenceError(
+      diagnostics,
+      undefined,
+      "$",
+      "NPC presence definition must be an object.",
+    );
+    return diagnostics;
+  }
+
+  const npcId =
+    typeof value.npcId === "string" && value.npcId.trim()
+      ? value.npcId
+      : undefined;
+
+  if (!npcId) {
+    addPresenceError(
+      diagnostics,
+      undefined,
+      "npcId",
+      "NPC presence definition has invalid or missing npcId.",
+    );
+  } else if (!context.npcIds.has(npcId)) {
+    addPresenceError(
+      diagnostics,
+      npcId,
+      "npcId",
+      `NPC presence definition references unknown npcId "${npcId}".`,
+    );
+  }
+
+  validateSchedule(value.schedule, npcId, context, diagnostics);
+
+  return diagnostics;
+}
+
+/**
+ * Validates a full presence registry, adding duplicate-id checks on top of
+ * per-def validation.
+ */
+export function validateNpcPresenceRegistry(
+  defs: readonly unknown[],
+  context: NpcPresenceValidationContext,
+): ContentDiagnostic[] {
+  const diagnostics: ContentDiagnostic[] = [];
+  const seenIds = new Set<string>();
 
   for (const def of defs) {
-    assertNpcPresenceDef(def);
+    diagnostics.push(...validateNpcPresenceDef(def, context));
 
-    if (nextRegistry[def.npcId]) {
-      throw new Error(`Duplicate NPC presence definition "${def.npcId}".`);
+    if (!isRecord(def) || typeof def.npcId !== "string" || !def.npcId.trim()) {
+      continue;
     }
 
-    nextRegistry[def.npcId] = cloneNpcPresenceDef(def);
+    if (seenIds.has(def.npcId)) {
+      addPresenceError(
+        diagnostics,
+        def.npcId,
+        "npcId",
+        `Duplicate NPC presence definition "${def.npcId}".`,
+      );
+    } else {
+      seenIds.add(def.npcId);
+    }
+  }
+
+  return diagnostics;
+}
+
+function validateSchedule(
+  value: unknown,
+  npcId: string | undefined,
+  context: NpcPresenceValidationContext,
+  diagnostics: ContentDiagnostic[],
+): void {
+  const npcLabel = npcId ?? "unknown";
+
+  if (!Array.isArray(value) || value.length === 0) {
+    addPresenceError(
+      diagnostics,
+      npcId,
+      "schedule",
+      `NPC presence definition "${npcLabel}" schedule must contain entries.`,
+    );
+    return;
+  }
+
+  for (let i = 0; i < value.length; i++) {
+    const entry = value[i];
+    const entryPath = `schedule[${i}]`;
+
+    if (!isRecord(entry)) {
+      addPresenceError(
+        diagnostics,
+        npcId,
+        entryPath,
+        `NPC presence definition "${npcLabel}" schedule entry ${i} must be an object.`,
+      );
+      continue;
+    }
+
+    if (
+      typeof entry.time !== "string" ||
+      parseScheduleTime(entry.time) === undefined
+    ) {
+      addPresenceError(
+        diagnostics,
+        npcId,
+        `${entryPath}.time`,
+        `NPC presence definition "${npcLabel}" schedule entry ${i} has invalid time.`,
+      );
+    }
+
+    if (typeof entry.zoneId !== "string" || !entry.zoneId.trim()) {
+      addPresenceError(
+        diagnostics,
+        npcId,
+        `${entryPath}.zoneId`,
+        `NPC presence definition "${npcLabel}" schedule entry ${i} has invalid zoneId.`,
+      );
+    }
+
+    if (
+      typeof entry.x !== "number" ||
+      !Number.isInteger(entry.x) ||
+      entry.x < 0
+    ) {
+      addPresenceError(
+        diagnostics,
+        npcId,
+        `${entryPath}.x`,
+        `NPC presence definition "${npcLabel}" schedule entry ${i} has invalid x.`,
+      );
+    }
+
+    if (
+      typeof entry.y !== "number" ||
+      !Number.isInteger(entry.y) ||
+      entry.y < 0
+    ) {
+      addPresenceError(
+        diagnostics,
+        npcId,
+        `${entryPath}.y`,
+        `NPC presence definition "${npcLabel}" schedule entry ${i} has invalid y.`,
+      );
+    }
+
+    if (entry.dialogueId !== undefined) {
+      if (
+        typeof entry.dialogueId !== "string" ||
+        !context.dialogueIds.has(entry.dialogueId)
+      ) {
+        addPresenceError(
+          diagnostics,
+          npcId,
+          `${entryPath}.dialogueId`,
+          `NPC presence definition "${npcLabel}" schedule entry ${i} references unknown dialogueId "${entry.dialogueId}".`,
+        );
+      }
+    }
+  }
+}
+
+function buildRegistry(defs: readonly unknown[]): NpcPresenceDefMap {
+  const diagnostics = validateNpcPresenceRegistry(defs, {
+    npcIds: new Set(getAllNpcDefs().map((npc) => npc.npcId)),
+    dialogueIds: new Set(getAllDialogueIds()),
+  });
+  const firstError = diagnostics.find(
+    (diagnostic) => diagnostic.severity === "error",
+  );
+
+  if (firstError) {
+    throw new Error(formatContentDiagnostic(firstError));
+  }
+
+  const nextRegistry: NpcPresenceDefMap = {};
+  for (const def of defs) {
+    const presenceDef = def as NpcPresenceDef;
+    nextRegistry[presenceDef.npcId] = cloneNpcPresenceDef(presenceDef);
   }
 
   return nextRegistry;
@@ -69,91 +266,19 @@ function cloneNpcPresenceDef(def: NpcPresenceDef): NpcPresenceDef {
   };
 }
 
-function assertNpcPresenceDef(value: unknown): asserts value is NpcPresenceDef {
-  if (!isRecord(value)) {
-    throw new Error("NPC presence definition must be an object.");
-  }
-
-  if (typeof value.npcId !== "string" || !value.npcId.trim()) {
-    throw new Error("NPC presence definition has invalid or missing npcId.");
-  }
-
-  if (!hasNpcDef(value.npcId)) {
-    throw new Error(
-      `NPC presence definition references unknown npcId "${value.npcId}".`,
-    );
-  }
-
-  assertSchedule(value.schedule, value.npcId);
-}
-
-function assertSchedule(value: unknown, npcId: string): void {
-  if (!Array.isArray(value) || value.length === 0) {
-    throw new Error(
-      `NPC presence definition "${npcId}" schedule must contain entries.`,
-    );
-  }
-
-  for (let i = 0; i < value.length; i++) {
-    const entry = value[i];
-
-    if (!isRecord(entry)) {
-      throw new Error(
-        `NPC presence definition "${npcId}" schedule entry ${i} must be an object.`,
-      );
-    }
-
-    assertScheduleEntry(entry, npcId, i);
-  }
-}
-
-function assertScheduleEntry(
-  entry: Record<string, unknown>,
-  npcId: string,
-  index: number,
+function addPresenceError(
+  diagnostics: ContentDiagnostic[],
+  npcId: string | undefined,
+  path: string,
+  message: string,
 ): void {
-  if (
-    typeof entry.time !== "string" ||
-    parseScheduleTime(entry.time) === undefined
-  ) {
-    throw new Error(
-      `NPC presence definition "${npcId}" schedule entry ${index} has invalid time.`,
-    );
-  }
-
-  if (typeof entry.zoneId !== "string" || !entry.zoneId.trim()) {
-    throw new Error(
-      `NPC presence definition "${npcId}" schedule entry ${index} has invalid zoneId.`,
-    );
-  }
-
-  if (
-    typeof entry.x !== "number" ||
-    !Number.isInteger(entry.x) ||
-    entry.x < 0
-  ) {
-    throw new Error(
-      `NPC presence definition "${npcId}" schedule entry ${index} has invalid x.`,
-    );
-  }
-
-  if (
-    typeof entry.y !== "number" ||
-    !Number.isInteger(entry.y) ||
-    entry.y < 0
-  ) {
-    throw new Error(
-      `NPC presence definition "${npcId}" schedule entry ${index} has invalid y.`,
-    );
-  }
-
-  if (entry.dialogueId !== undefined) {
-    if (typeof entry.dialogueId !== "string" || !hasDialogue(entry.dialogueId)) {
-      throw new Error(
-        `NPC presence definition "${npcId}" schedule entry ${index} references unknown dialogueId "${entry.dialogueId}".`,
-      );
-    }
-  }
+  diagnostics.push({
+    severity: "error",
+    contentType: NPC_PRESENCE_CONTENT_TYPE,
+    contentId: npcId,
+    path,
+    message,
+  });
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {

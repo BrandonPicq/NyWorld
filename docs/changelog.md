@@ -4,6 +4,15 @@ This file tracks meaningful project changes by commit-oriented slices.
 
 Keep entries short and practical. When a slice is committed, its changelog section should stay aligned with the commit title so the project history remains easy to read after restores or bisects.
 
+## 2026-07-04 - [REFACTOR]: Add dialogue, NPC, and presence content diagnostics
+
+- Validate dialogue files with accumulating diagnostics and cross-file duplicate checks.
+- Validate NPC definitions against an injected dialogue catalog subset.
+- Validate global presence definitions against injected NPC and dialogue catalogs.
+- Keep strict registry builds throwing on the first blocking diagnostic.
+- Leave presence zone-existence checks to the future whole-bundle content audit.
+- Add multi-error and injected-context tests for the three registries.
+
 ## 2026-07-04 - [REFACTOR]: Inject the content validation context everywhere
 
 - Expand the content validation context with enemy, quest, combat action, and tile catalogs.

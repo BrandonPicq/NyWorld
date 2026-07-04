@@ -1,5 +1,19 @@
-import { hasDialogue } from "../dialogues/dialogueRegistry";
+import type { ContentDiagnostic } from "../content/ContentDiagnostic";
+import { formatContentDiagnostic } from "../content/ContentDiagnostic";
+import { CONTENT_TYPES } from "../content/contentTypes";
+import type { ContentValidationContext } from "../content/ContentValidationContext";
+import { getAllDialogueIds } from "../dialogues/dialogueRegistry";
 import type { NpcDef, NpcDefMap, NpcImportance, NpcRace } from "./NpcDef";
+
+const NPC_CONTENT_TYPE = CONTENT_TYPES.npc;
+
+/**
+ * Catalog subset that NPC definition validation checks references against.
+ */
+export type NpcValidationContext = Pick<
+  ContentValidationContext,
+  "dialogueIds"
+>;
 
 const npcDefs = getSortedContentModules(
   import.meta.glob<unknown>("../../content/npcs/*.json", {
@@ -41,20 +55,173 @@ export function getAllNpcDefs(): NpcDef[] {
   return Object.values(registry).map(cloneNpcDef);
 }
 
-function buildRegistry(defs: unknown[]): NpcDefMap {
-  const nextRegistry: NpcDefMap = {};
+/**
+ * Validates one NPC character definition against an explicit content context.
+ */
+export function validateNpcDef(
+  value: unknown,
+  context: NpcValidationContext,
+): ContentDiagnostic[] {
+  const diagnostics: ContentDiagnostic[] = [];
+
+  if (!isRecord(value)) {
+    addNpcError(diagnostics, undefined, "$", "NPC definition must be an object.");
+    return diagnostics;
+  }
+
+  const npcId =
+    typeof value.npcId === "string" && value.npcId.trim()
+      ? value.npcId
+      : undefined;
+
+  if (!npcId) {
+    addNpcError(
+      diagnostics,
+      undefined,
+      "npcId",
+      "NPC definition has invalid or missing npcId.",
+    );
+  }
+
+  const npcLabel = npcId ?? "unknown";
+
+  if (typeof value.name !== "string" || !value.name.trim()) {
+    addNpcError(
+      diagnostics,
+      npcId,
+      "name",
+      `NPC definition "${npcLabel}" has invalid or missing name.`,
+    );
+  }
+
+  if (!isNpcRace(value.race)) {
+    addNpcError(
+      diagnostics,
+      npcId,
+      "race",
+      `NPC definition "${npcLabel}" has invalid or missing race.`,
+    );
+  }
+
+  if (value.importance !== undefined && !isNpcImportance(value.importance)) {
+    addNpcError(
+      diagnostics,
+      npcId,
+      "importance",
+      `NPC definition "${npcLabel}" has invalid importance.`,
+    );
+  }
+
+  if (value.presentation !== undefined) {
+    validateNpcPresentation(value.presentation, npcId, npcLabel, diagnostics);
+  }
+
+  if (
+    typeof value.defaultDialogueId !== "string" ||
+    !value.defaultDialogueId.trim()
+  ) {
+    addNpcError(
+      diagnostics,
+      npcId,
+      "defaultDialogueId",
+      `NPC definition "${npcLabel}" has invalid or missing defaultDialogueId.`,
+    );
+  } else if (!context.dialogueIds.has(value.defaultDialogueId)) {
+    addNpcError(
+      diagnostics,
+      npcId,
+      "defaultDialogueId",
+      `NPC definition "${npcLabel}" references unknown defaultDialogueId "${value.defaultDialogueId}".`,
+    );
+  }
+
+  return diagnostics;
+}
+
+/**
+ * Validates a full NPC registry, adding duplicate-id checks on top of per-def
+ * validation.
+ */
+export function validateNpcRegistry(
+  defs: readonly unknown[],
+  context: NpcValidationContext,
+): ContentDiagnostic[] {
+  const diagnostics: ContentDiagnostic[] = [];
+  const seenIds = new Set<string>();
 
   for (const def of defs) {
-    assertNpcDef(def);
+    diagnostics.push(...validateNpcDef(def, context));
 
-    if (nextRegistry[def.npcId]) {
-      throw new Error(`Duplicate NPC definition "${def.npcId}".`);
+    if (!isRecord(def) || typeof def.npcId !== "string" || !def.npcId.trim()) {
+      continue;
     }
 
-    nextRegistry[def.npcId] = {
-      ...def,
-      presentation: def.presentation ? { ...def.presentation } : undefined,
-    };
+    if (seenIds.has(def.npcId)) {
+      addNpcError(
+        diagnostics,
+        def.npcId,
+        "npcId",
+        `Duplicate NPC definition "${def.npcId}".`,
+      );
+    } else {
+      seenIds.add(def.npcId);
+    }
+  }
+
+  return diagnostics;
+}
+
+function validateNpcPresentation(
+  value: unknown,
+  npcId: string | undefined,
+  npcLabel: string,
+  diagnostics: ContentDiagnostic[],
+): void {
+  if (!isRecord(value)) {
+    addNpcError(
+      diagnostics,
+      npcId,
+      "presentation",
+      `NPC definition "${npcLabel}" presentation must be an object.`,
+    );
+    return;
+  }
+
+  if (typeof value.glyph !== "string" || value.glyph.length !== 1) {
+    addNpcError(
+      diagnostics,
+      npcId,
+      "presentation.glyph",
+      `NPC definition "${npcLabel}" presentation has invalid glyph.`,
+    );
+  }
+
+  if (typeof value.color !== "string" || !value.color.trim()) {
+    addNpcError(
+      diagnostics,
+      npcId,
+      "presentation.color",
+      `NPC definition "${npcLabel}" presentation has invalid color.`,
+    );
+  }
+}
+
+function buildRegistry(defs: readonly unknown[]): NpcDefMap {
+  const diagnostics = validateNpcRegistry(defs, {
+    dialogueIds: new Set(getAllDialogueIds()),
+  });
+  const firstError = diagnostics.find(
+    (diagnostic) => diagnostic.severity === "error",
+  );
+
+  if (firstError) {
+    throw new Error(formatContentDiagnostic(firstError));
+  }
+
+  const nextRegistry: NpcDefMap = {};
+  for (const def of defs) {
+    const npcDef = def as NpcDef;
+    nextRegistry[npcDef.npcId] = cloneNpcDef(npcDef);
   }
 
   return nextRegistry;
@@ -79,63 +246,19 @@ function cloneNpcDef(def: NpcDef): NpcDef {
   };
 }
 
-function assertNpcDef(value: unknown): asserts value is NpcDef {
-  if (!isRecord(value)) {
-    throw new Error("NPC definition must be an object.");
-  }
-
-  if (typeof value.npcId !== "string" || !value.npcId.trim()) {
-    throw new Error("NPC definition has invalid or missing npcId.");
-  }
-
-  if (typeof value.name !== "string" || !value.name.trim()) {
-    throw new Error(`NPC definition "${value.npcId}" has invalid or missing name.`);
-  }
-
-  if (!isNpcRace(value.race)) {
-    throw new Error(`NPC definition "${value.npcId}" has invalid or missing race.`);
-  }
-
-  if (value.importance !== undefined && !isNpcImportance(value.importance)) {
-    throw new Error(`NPC definition "${value.npcId}" has invalid importance.`);
-  }
-
-  if (value.presentation !== undefined) {
-    assertNpcPresentation(value.presentation, value.npcId);
-  }
-
-  if (
-    typeof value.defaultDialogueId !== "string" ||
-    !value.defaultDialogueId.trim()
-  ) {
-    throw new Error(
-      `NPC definition "${value.npcId}" has invalid or missing defaultDialogueId.`,
-    );
-  }
-
-  if (!hasDialogue(value.defaultDialogueId)) {
-    throw new Error(
-      `NPC definition "${value.npcId}" references unknown defaultDialogueId "${value.defaultDialogueId}".`,
-    );
-  }
-}
-
-function assertNpcPresentation(value: unknown, npcId: string): void {
-  if (!isRecord(value)) {
-    throw new Error(`NPC definition "${npcId}" presentation must be an object.`);
-  }
-
-  if (typeof value.glyph !== "string" || value.glyph.length !== 1) {
-    throw new Error(
-      `NPC definition "${npcId}" presentation has invalid glyph.`,
-    );
-  }
-
-  if (typeof value.color !== "string" || !value.color.trim()) {
-    throw new Error(
-      `NPC definition "${npcId}" presentation has invalid color.`,
-    );
-  }
+function addNpcError(
+  diagnostics: ContentDiagnostic[],
+  npcId: string | undefined,
+  path: string,
+  message: string,
+): void {
+  diagnostics.push({
+    severity: "error",
+    contentType: NPC_CONTENT_TYPE,
+    contentId: npcId,
+    path,
+    message,
+  });
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
