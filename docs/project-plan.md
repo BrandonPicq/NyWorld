@@ -65,12 +65,13 @@ Fondations posees (juillet 2026) :
 - `ContentReferenceGraph` repond a "ou cet id est-il utilise" et "que casse un renommage" (avec indicateur de persistance en sauvegarde) ;
 - `validateAllContent` audite un bundle complet ; un test permanent garde le contenu livre sans erreur.
 - premier ecran d'editeur dev-only en lecture seule : navigateur de contenu, panneau de problemes, navigation par references et impact de renommage.
+- persistance editeur dev-only acceptee par ADR 0006 et branchee au dev server Vite avec allowlist `src/content/**/*.json`.
 
 Etapes restantes :
 
 - continuer a decouper `GameplayEngine` en systemes et modules dedies ;
 - exposer des metadonnees d'edition (labels, champs requis, options d'ids) separees des types gameplay ;
-- rendre l'editeur persistant et commencer une premiere boucle d'edition de catalogue.
+- commencer une premiere boucle d'edition de catalogue au-dessus de la persistance.
 
 ## Tests et validation
 

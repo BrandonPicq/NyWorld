@@ -2,7 +2,7 @@
 
 ## Statut
 
-Proposee
+Acceptee
 
 ## Contexte
 
@@ -21,7 +21,7 @@ Deux options sont etudiees :
   d'ecriture, par exemple `POST /__editor/save` ;
 - (b) utiliser la File System Access API depuis le navigateur.
 
-## Decision proposee
+## Decision
 
 Choisir l'option (a) : un middleware Vite actif seulement en developpement.
 
@@ -74,5 +74,6 @@ Compromis et reports explicites :
 - l'editeur de contenu reste d'abord un outil dev-only ;
 - une build statique de production ne pourra pas sauvegarder sans autre
   mecanisme ;
-- l'implementation du plugin Vite, de l'endpoint et des tests de l'allowlist est
-  reportee a une slice separee apres validation de cette ADR.
+- une application d'editeur separee, eventuellement dans un autre langage, reste
+  une option future a reevaluer si l'editeur devient assez gros pour justifier
+  son propre cycle de vie.

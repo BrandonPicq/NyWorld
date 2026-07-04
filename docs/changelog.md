@@ -4,6 +4,13 @@ This file tracks meaningful project changes by commit-oriented slices.
 
 Keep entries short and practical. When a slice is committed, its changelog section should stay aligned with the commit title so the project history remains easy to read after restores or bisects.
 
+## 2026-07-04 - [ADD]: Add dev editor content persistence
+
+- Accept the editor persistence ADR around a dev-only Vite save endpoint.
+- Add a Vite middleware for saving JSON content editor drafts.
+- Restrict editor writes to project-relative `src/content/**/*.json` paths.
+- Add path allowlist regression tests for traversal, absolute paths, and non-JSON files.
+
 ## 2026-07-04 - [ADD]: Read-only content editor screen
 
 - Add a dev-only content editor screen reachable from the title menu.
