@@ -127,7 +127,9 @@ export interface RenderEntity {
  * directly.
  */
 export interface GameSnapshot {
+  /** Technical simulation tick count; UI mostly shows worldTime instead. */
   tick: number;
+  /** Narrative calendar time derived from total world minutes. */
   worldTime: WorldTimeSnapshot;
   zoneId: string;
   zoneName: string;
@@ -136,13 +138,18 @@ export interface GameSnapshot {
   playerX: number;
   playerY: number;
   playerFacing: Direction;
+  /** Tile id grid of the active zone, indexed as tiles[y][x]. */
   tiles: number[][];
   log: LogEntry[];
+  /** Detached copies: mutating snapshot data never affects the engine. */
   stats: Stats;
   inventory: Inventory;
   npcStates: NpcState[];
+  /** Render-ready NPC and ground item projections for the canvas. */
   entities: RenderEntity[];
+  /** Pending one-shot zone entry dialogue; empty once acknowledged. */
   entryDialogue: DialogueNode[];
+  /** UI projection of quest progress with live objective quantities. */
   activeQuests: Array<{
     questId: string;
     name: string;
@@ -161,6 +168,7 @@ export interface GameSnapshot {
     rewards: { currency?: number; items?: Array<{ itemId: string; quantity: number }> };
   }>;
   completedQuests: string[];
+  /** Present only while a combat encounter is active. */
   combatState?: CombatState;
 }
 

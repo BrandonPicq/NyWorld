@@ -22,17 +22,29 @@ export type CombatPhase =
   | "victory"
   | "defeat";
 
+/**
+ * UI-facing state of the active combat encounter.
+ *
+ * Exposed through GameSnapshot.combatState while a fight is running; the
+ * combat panel renders phases, meters, and the QTE race from this shape.
+ */
 export interface CombatState {
   opponentId: EntityId;
   opponentNpcId: string;
   opponentName: string;
+  /** Detached copy of the opponent's live stats. */
   opponentStats: Stats;
   phase: CombatPhase;
+  /** Damage school of the pending action while a QTE is running. */
   actionKind?: CombatActionKind;
+  /** Menu label of the pending action, for the combat log and panel. */
   actionLabel?: string;
+  /** True while Guard reduces the next incoming enemy attack. */
   isGuarding?: boolean;
+  /** Focus multiplier applied to the next damaging player action. */
   damageBoostMultiplier?: number;
   qteChallenge?: QteChallenge;
+  /** Ordered arrow-key sequence the player must type for the active QTE. */
   qteSequence?: string[];
 }
 

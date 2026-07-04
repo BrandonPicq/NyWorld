@@ -151,11 +151,28 @@ name, a walkable flag, and map presentation (glyph and color). Zone grids
 reference tiles by these numeric ids. Unknown tile ids fall back to the floor
 tile for display code, but zone validation rejects them before gameplay.
 
+## Enemies
+
+Enemy files attach a combat profile to an existing NPC: the `npcId` must match
+a character definition, which keeps identity, dialogue, and map presence in
+the NPC sheet while the enemy file owns combat data. Walking into or
+interacting with a `combatable` NPC starts combat instead of dialogue.
+
+An enemy authors its full stat block directly (resources, attributes, combat
+values, skills, progression, optional conditions) — unlike the player, no
+values are derived. `loot` lists the item stacks granted on defeat and may be
+empty. Stat roles and balance target ranges live in `docs/combat-balance.md`.
+
 ## Items
 
 The item catalog owns item names, descriptions, categories, and default
 quantities. Inventories and ground spawns store only `itemId` and quantity.
 Ground item presentation is resolved from item category so maps stay readable.
+
+Consumables declare their use effects in an `effects` block: `energyRestore`
+applies when the item is used during exploration, `hpRestore` when it is used
+during combat. A consumable without effects is rejected on use with a player
+notice.
 
 ## Combat Actions
 

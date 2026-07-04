@@ -41,8 +41,11 @@ export interface ZoneTransitionData {
  * node for emphasis, shouting, whispers, or unusual voices.
  */
 export interface DialogueNodeData {
+  /** Display name of the character speaking the line. */
   speaker: string;
+  /** Line text, revealed with the typewriter effect. */
   text: string;
+  /** Voice bleep pitch multiplier; 1 is neutral, minimum accepted is 0.1. */
   pitch: number;
 }
 
@@ -92,18 +95,35 @@ export interface ItemSpawnData {
  * Raw author-facing data for a zone JSON file.
  *
  * loadZone validates this shape and turns it into a GameMap before gameplay
- * systems can use it.
+ * systems can use it; validateZoneData reports all authoring problems at once
+ * for editor workflows.
  */
 export interface ZoneData {
+  /** Free-form data format marker for future migrations, e.g. "0.1". */
   version: string;
+  /** Stable id referenced by transitions, schedules, quests, and saves. */
   zoneId: string;
+  /** Display name shown when entering the zone. */
   name: string;
+  /** Grid width in tiles; every tiles row must have exactly this length. */
   width: number;
+  /** Grid height in tiles; tiles must have exactly this many rows. */
   height: number;
+  /** Where the player appears on a fresh game; must be a walkable tile. */
   playerStart: PlayerStart;
+  /** Tile grid indexed as tiles[y][x]; ids must exist in the tile catalog. */
   tiles: TileGrid;
+  /** Doorways to other zones; each must sit on a walkable tile. */
   transitions?: ZoneTransitionData[];
+  /** NPC appearances; spawn tiles must be walkable. */
   npcs?: NpcSpawnData[];
+  /** Ground item stacks; must not overlap the player start or an NPC spawn. */
   items?: ItemSpawnData[];
+  /**
+   * Dialogue played the first time the player enters this zone.
+   *
+   * This is a one-shot event per playthrough: once acknowledged it is
+   * recorded in the save and never replays.
+   */
   entryDialogue?: DialogueNodeData[];
 }

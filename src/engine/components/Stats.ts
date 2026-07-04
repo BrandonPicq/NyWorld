@@ -1,5 +1,13 @@
 import type { Component } from "../ecs/types";
 
+/**
+ * Consumable pools tracked during play.
+ *
+ * hp/mp/sp are combat pools; energy is the out-of-combat stamina spent by
+ * movement, study, and similar activities. For the player, the max values are
+ * derived from attributes by refreshDerivedStats; enemy content authors both
+ * current and max values directly.
+ */
 export interface StatResources {
   hp: number;
   maxHp: number;
@@ -11,6 +19,14 @@ export interface StatResources {
   maxEnergy: number;
 }
 
+/**
+ * Innate character attributes feeding derived pools and combat values.
+ *
+ * Combat-relevant roles: vitality drives max HP, spirit and intelligence
+ * drive max MP, willpower and agility drive max SP, agility controls physical
+ * QTE pressure, and spirit controls magical QTE pressure
+ * (see docs/combat-balance.md).
+ */
 export interface CoreAttributes {
   strength: number;
   vitality: number;
@@ -22,6 +38,13 @@ export interface CoreAttributes {
   charisma: number;
 }
 
+/**
+ * Effective offensive and defensive combat values.
+ *
+ * Player values are derived from attributes and skills; enemy content
+ * authors them directly. attack/defense pair for physical actions,
+ * magicAttack/magicDefense for magical ones.
+ */
 export interface CombatStats {
   attack: number;
   magicAttack: number;
@@ -29,6 +52,9 @@ export interface CombatStats {
   magicDefense: number;
 }
 
+/**
+ * Learned proficiencies feeding derived combat values and future activities.
+ */
 export interface CharacterSkills {
   melee: number;
   ranged: number;
@@ -41,14 +67,25 @@ export interface CharacterSkills {
   speech: number;
 }
 
+/**
+ * Academic career progression shown by UI panels.
+ */
 export interface CharacterProgression {
+  /** Display title, e.g. "Novice Scribe" or "Wild Monster" for enemies. */
   academicTitle: string;
+  /** Progress toward the next title, clamped to 0-100 by gameplay. */
   academicProgress: number;
 }
 
+/**
+ * One temporary or permanent status affecting a character.
+ */
 export interface CharacterCondition {
+  /** Stable condition id for gameplay rules. */
   id: string;
+  /** Display name shown by UI. */
   name: string;
+  /** Remaining duration in engine ticks; omitted means permanent. */
   durationInTicks?: number;
 }
 
