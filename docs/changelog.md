@@ -4,6 +4,10 @@ This file tracks meaningful project changes by commit-oriented slices.
 
 Keep entries short and practical. When a slice is committed, its changelog section should stay aligned with the commit title so the project history remains easy to read after restores or bisects.
 
+## 2026-07-05 - [UPDATE]: Adjust the Test Zone 2 layout
+
+- Add interior wall pillars to the Test Zone 2 grid (throwaway test content); the schedule targets stay walkable.
+
 ## 2026-07-05 - [FIX]: Validate zone tile edits against the whole content bundle
 
 - Validate a zone paint draft with `validateAllContent` (draft zone swapped into both the snapshot and the validation context) instead of only the zone's own data.
