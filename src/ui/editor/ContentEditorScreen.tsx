@@ -1,6 +1,8 @@
 import { useMemo, useState } from "react";
 import { createRuntimeContentCatalogSnapshot } from "../../engine";
 import { TerminalButton } from "../components/TerminalButton";
+import { ActionsTab } from "./actions/ActionsTab";
+import { useActionDraft } from "./actions/useActionDraft";
 import { ContentTab } from "./ContentTab";
 import { DialogueTab } from "./dialogues/DialogueTab";
 import { useDialogueDraft } from "./dialogues/useDialogueDraft";
@@ -25,7 +27,8 @@ type EditorTab =
   | "dialogues"
   | "npcs"
   | "presence"
-  | "enemies";
+  | "enemies"
+  | "actions";
 
 export function ContentEditorScreen({ onBack }: ContentEditorScreenProps) {
   const baseSnapshot = useMemo(() => createRuntimeContentCatalogSnapshot(), []);
@@ -35,6 +38,7 @@ export function ContentEditorScreen({ onBack }: ContentEditorScreenProps) {
   const npcDraft = useNpcDraft(baseSnapshot);
   const presenceDraft = useNpcPresenceDraft(baseSnapshot);
   const enemyDraft = useEnemyDraft(baseSnapshot);
+  const actionDraft = useActionDraft(baseSnapshot);
   const shellClasses = ["editor-shell", tab === "zones" && "editor-shell--zones"]
     .filter(Boolean)
     .join(" ");
@@ -107,6 +111,13 @@ export function ContentEditorScreen({ onBack }: ContentEditorScreenProps) {
           >
             Enemies
           </TerminalButton>
+          <TerminalButton
+            className="editor-tab"
+            isSelected={tab === "actions"}
+            onClick={() => setTab("actions")}
+          >
+            Actions
+          </TerminalButton>
         </nav>
 
         {tab === "zones" ? (
@@ -121,6 +132,8 @@ export function ContentEditorScreen({ onBack }: ContentEditorScreenProps) {
           <PresenceTab draft={presenceDraft} />
         ) : tab === "enemies" ? (
           <EnemyTab draft={enemyDraft} />
+        ) : tab === "actions" ? (
+          <ActionsTab draft={actionDraft} />
         ) : (
           <ContentTab draft={itemDraft} />
         )}

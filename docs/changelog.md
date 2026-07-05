@@ -4,6 +4,13 @@ This file tracks meaningful project changes by commit-oriented slices.
 
 Keep entries short and practical. When a slice is committed, its changelog section should stay aligned with the commit title so the project history remains easy to read after restores or bisects.
 
+## 2026-07-06 - [ADD]: Edit combat action tuning in the editor
+
+- Add an Actions editor tab for the fixed combat actions (no creation or deletion): edit name, category, order, summary, formula, tuning numbers, and the authored effect/detail lines.
+- Show a live preview of the tuning-derived effect lines via `deriveCombatActionEffects`, and strip that derived prefix before editing so a save never rewrites the derived lines back into the file.
+- Save one combat-action JSON per action, gated on `validateCombatActionDef` plus the whole-bundle audit, with a byte-stable round-trip test over the shipped files.
+- Share the combat-action category options with runtime validation through `COMBAT_ACTION_CATEGORY_OPTIONS`.
+
 ## 2026-07-06 - [UPDATE]: Drop derived numeric lines from combat action content
 
 - Remove the hand-authored "Gain N SP." / "Costs N MP." effect lines from the strike, cast, guard, and focus combat-action JSONs now that the registry derives them from `tuning`.

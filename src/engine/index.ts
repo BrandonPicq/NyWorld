@@ -57,6 +57,7 @@ export {
 export { CONTENT_TYPES } from "./content/contentTypes";
 export type { ContentTypeName } from "./content/contentTypes";
 export {
+  COMBAT_ACTION_CATEGORY_OPTIONS,
   ITEM_CATEGORY_OPTIONS,
   NPC_IMPORTANCE_OPTIONS,
   NPC_RACE_OPTIONS,

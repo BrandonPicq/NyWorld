@@ -1,3 +1,4 @@
+import type { CombatActionCategory } from "../combat/CombatActionDef";
 import type { NpcImportance, NpcRace } from "../npcs/NpcDef";
 
 export const ITEM_CATEGORY_OPTIONS = [
@@ -6,6 +7,12 @@ export const ITEM_CATEGORY_OPTIONS = [
   "material",
   "misc",
 ] as const;
+
+export const COMBAT_ACTION_CATEGORY_OPTIONS = [
+  "offense",
+  "defense",
+  "utility",
+] as const satisfies readonly CombatActionCategory[];
 
 export const NPC_RACE_OPTIONS = [
   "human",

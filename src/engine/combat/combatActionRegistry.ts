@@ -1,6 +1,7 @@
 import type { ContentDiagnostic } from "../content/ContentDiagnostic";
 import { formatContentDiagnostic } from "../content/ContentDiagnostic";
 import { CONTENT_TYPES } from "../content/contentTypes";
+import { COMBAT_ACTION_CATEGORY_OPTIONS } from "../content/editingMetadata";
 import type {
   CombatActionDef,
   CombatActionDefMap,
@@ -108,9 +109,10 @@ export function validateCombatActionDef(value: unknown): ContentDiagnostic[] {
   validateNonEmptyString(value.name, actionId, actionLabel, "name", diagnostics);
 
   if (
-    value.category !== "offense" &&
-    value.category !== "defense" &&
-    value.category !== "utility"
+    typeof value.category !== "string" ||
+    !(COMBAT_ACTION_CATEGORY_OPTIONS as readonly string[]).includes(
+      value.category,
+    )
   ) {
     addActionError(
       diagnostics,
