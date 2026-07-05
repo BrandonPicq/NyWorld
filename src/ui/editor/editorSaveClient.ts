@@ -1,4 +1,5 @@
 export const ITEM_CATALOG_CONTENT_PATH = "src/content/items/items.json";
+export const GAME_CONFIG_CONTENT_PATH = "src/content/game.json";
 
 export type EditorSaveResult =
   | {

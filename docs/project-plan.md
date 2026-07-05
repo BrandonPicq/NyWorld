@@ -70,6 +70,7 @@ Fondations posees (juillet 2026) :
 - onglet zones dev-only en lecture seule : rendu Canvas de la zone selectionnee (via `createZoneEditRenderSnapshot`) et inspection des placements PNJ/objets, transitions et dialogue d'entree.
 - edition dev-only des tuiles d'une zone : palette de tuiles, peinture au clic et au glisser sur le canvas, validation live (mur sous le depart, un PNJ, un objet ou une transition) et sauvegarde JSON via l'endpoint editeur.
 - edition dev-only des placements d'une zone : selecteur de mode (depart joueur, PNJ, objet, transition, gomme), pose au clic, validation live sur l'ensemble du contenu et sauvegarde JSON ; les schedules restent en lecture seule.
+- creation de zone, edition du dialogue d'entree, et onglet Game (defaultZoneId / safeRespawn de game.json) depuis l'editeur, avec validation live et diffs JSON minimaux.
 
 Etapes restantes :
 

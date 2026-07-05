@@ -4,6 +4,12 @@ This file tracks meaningful project changes by commit-oriented slices.
 
 Keep entries short and practical. When a slice is committed, its changelog section should stay aligned with the commit title so the project history remains easy to read after restores or bisects.
 
+## 2026-07-05 - [ADD]: Pick the default zone and safe respawn in the editor
+
+- Add a "Game" tab that edits game.json's `defaultZoneId` and `safeRespawn` (zone + coordinates), with live whole-bundle validation and save gating.
+- Add `serializeGameConfig`, keeping each `startingInventory` stack on one line so a config edit produces a minimal diff; round-trip tested against the shipped game.json.
+- Preserve the rest of game.json (actions, newGame) untouched on save.
+
 ## 2026-07-05 - [TEST]: Track test_zone_3 in zone discovery
 
 - Update the zone-discovery test to expect the authored `test_zone_3`, restoring a green suite.

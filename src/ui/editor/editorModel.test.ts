@@ -1,9 +1,11 @@
+import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 
 import type {
   ContentCatalogSnapshot,
   ContentDiagnostic,
   ContentValidationContext,
+  GameContentConfig,
   GameMap,
 } from "../../engine";
 import { buildContentReferenceGraph } from "../../engine";
@@ -13,6 +15,7 @@ import {
   createItemDraftSnapshot,
   createItemDraftValidationContext,
   groupDiagnosticsByContentType,
+  serializeGameConfig,
 } from "./editorModel";
 
 function createSnapshot(): ContentCatalogSnapshot {
@@ -91,6 +94,29 @@ function createSnapshot(): ContentCatalogSnapshot {
     ]),
   };
 }
+
+describe("serializeGameConfig", () => {
+  it("round-trips the shipped game.json byte-for-byte", () => {
+    const raw = readFileSync(
+      new URL("../../content/game.json", import.meta.url),
+      "utf8",
+    );
+    const config = JSON.parse(raw) as GameContentConfig;
+    // The endpoint owns the trailing newline; the serializer does not add it.
+    expect(serializeGameConfig(config) + "\n").toBe(raw);
+  });
+
+  it("keeps each starting-inventory stack on a single line", () => {
+    const raw = readFileSync(
+      new URL("../../content/game.json", import.meta.url),
+      "utf8",
+    );
+    const serialized = serializeGameConfig(JSON.parse(raw) as GameContentConfig);
+    expect(serialized).toContain(
+      '      { "itemId": "academy_notebook", "quantity": 1 },',
+    );
+  });
+});
 
 describe("buildContentBrowserGroups", () => {
   it("lists content families with deterministic ids", () => {

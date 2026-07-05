@@ -338,6 +338,15 @@
   gap: var(--space-3);
 }
 
+.editor-game-layout {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 44rem);
+  grid-template-rows: minmax(0, 1fr);
+  justify-content: center;
+}
+
 .editor-zone-entry {
   display: grid;
   gap: 0.2rem;
@@ -526,9 +535,14 @@
 
   /* Stacked single-column layout scrolls the page naturally (see layout.css). */
   .editor-grid,
-  .editor-zone-layout {
+  .editor-zone-layout,
+  .editor-game-layout {
     flex: none;
     grid-template-rows: none;
+  }
+
+  .editor-game-layout {
+    grid-template-columns: 1fr;
   }
 
   .editor-shell {

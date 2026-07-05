@@ -179,6 +179,44 @@ export function serializeItemCatalog(items: ItemDefMap): string {
   return JSON.stringify(items, null, 2);
 }
 
+const STARTING_INVENTORY_PLACEHOLDER = "__NYWARUDO_STARTING_INVENTORY__";
+
+/**
+ * Serializes game config as 2-space JSON, keeping each `startingInventory`
+ * stack on one line.
+ *
+ * Mirrors the zone serializer: everything is standard 2-space JSON except the
+ * inline inventory stacks, so a defaultZoneId/safeRespawn edit produces a
+ * minimal, reviewable diff instead of reformatting the whole file.
+ */
+export function serializeGameConfig(config: GameContentConfig): string {
+  const newGame: Record<string, unknown> = {
+    ...config.newGame,
+    startingInventory: STARTING_INVENTORY_PLACEHOLDER,
+  };
+  const withPlaceholder: Record<string, unknown> = { ...config, newGame };
+  const json = JSON.stringify(withPlaceholder, null, 2);
+  return json.replace(
+    `"${STARTING_INVENTORY_PLACEHOLDER}"`,
+    formatStartingInventory(config.newGame.startingInventory),
+  );
+}
+
+function formatStartingInventory(
+  stacks: readonly NewGameStartingStack[],
+): string {
+  if (stacks.length === 0) {
+    return "[]";
+  }
+  const rows = stacks
+    .map(
+      (stack) =>
+        `      { "itemId": ${JSON.stringify(stack.itemId)}, "quantity": ${JSON.stringify(stack.quantity)} }`,
+    )
+    .join(",\n");
+  return `[\n${rows}\n    ]`;
+}
+
 function entry(type: ContentTypeName, id: string): ContentBrowserEntry {
   return {
     ref: { type, id },

@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { createRuntimeContentCatalogSnapshot } from "../../engine";
 import { TerminalButton } from "../components/TerminalButton";
 import { ContentTab } from "./ContentTab";
+import { GameConfigPanel } from "./GameConfigPanel";
 import { useItemDraft } from "./useItemDraft";
 import { ZoneEditorPanel } from "./zone/ZoneEditorPanel";
 
@@ -9,7 +10,7 @@ type ContentEditorScreenProps = {
   onBack: () => void;
 };
 
-type EditorTab = "content" | "zones";
+type EditorTab = "content" | "zones" | "game";
 
 export function ContentEditorScreen({ onBack }: ContentEditorScreenProps) {
   const baseSnapshot = useMemo(() => createRuntimeContentCatalogSnapshot(), []);
@@ -49,10 +50,19 @@ export function ContentEditorScreen({ onBack }: ContentEditorScreenProps) {
           >
             Zones
           </TerminalButton>
+          <TerminalButton
+            className="editor-tab"
+            isSelected={tab === "game"}
+            onClick={() => setTab("game")}
+          >
+            Game
+          </TerminalButton>
         </nav>
 
         {tab === "zones" ? (
           <ZoneEditorPanel snapshot={baseSnapshot} />
+        ) : tab === "game" ? (
+          <GameConfigPanel snapshot={baseSnapshot} />
         ) : (
           <ContentTab draft={draft} />
         )}
