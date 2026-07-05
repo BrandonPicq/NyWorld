@@ -4,6 +4,12 @@ This file tracks meaningful project changes by commit-oriented slices.
 
 Keep entries short and practical. When a slice is committed, its changelog section should stay aligned with the commit title so the project history remains easy to read after restores or bisects.
 
+## 2026-07-05 - [ADD]: Undo and redo for zone edits
+
+- Back the zone draft with a past/present/future history stack; add Undo and Redo controls.
+- Make Reset undoable (it pushes the current draft onto the history) so a reset never loses work.
+- No-op edits do not create history entries, so a drag that stays in one cell adds a single undo step.
+
 ## 2026-07-05 - [ADD]: Pick the default zone and safe respawn in the editor
 
 - Add a "Game" tab that edits game.json's `defaultZoneId` and `safeRespawn` (zone + coordinates), with live whole-bundle validation and save gating.

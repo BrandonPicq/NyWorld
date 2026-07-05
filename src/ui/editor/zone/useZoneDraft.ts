@@ -35,8 +35,18 @@ export interface ZoneDraftController {
   canSave: boolean;
   isSaving: boolean;
   saveStatus: SaveStatus;
+  canUndo: boolean;
+  canRedo: boolean;
+  undo: () => void;
+  redo: () => void;
   resetDraft: () => void;
   saveDraft: () => Promise<void>;
+}
+
+interface ZoneHistory {
+  past: ZoneData[];
+  present: ZoneData;
+  future: ZoneData[];
 }
 
 export function useZoneDraft(
@@ -45,7 +55,12 @@ export function useZoneDraft(
 ): ZoneDraftController {
   const context = useMemo(() => createRuntimeContentValidationContext(), []);
 
-  const [draft, setDraft] = useState<ZoneData>(() => cloneZoneData(zone));
+  const [history, setHistory] = useState<ZoneHistory>(() => ({
+    past: [],
+    present: cloneZoneData(zone),
+    future: [],
+  }));
+  const draft = history.present;
   const [savedJson, setSavedJson] = useState(() => serializeZoneData(zone));
   const [saveStatus, setSaveStatus] = useState<SaveStatus>({
     state: "idle",
@@ -73,6 +88,8 @@ export function useZoneDraft(
   const hasUnsavedChanges = serialized !== savedJson;
   const isSaving = saveStatus.state === "saving";
   const canSave = hasUnsavedChanges && errorCount === 0 && !isSaving;
+  const canUndo = history.past.length > 0;
+  const canRedo = history.future.length > 0;
 
   const displayStatus: SaveStatus =
     saveStatus.state === "idle"
@@ -82,18 +99,65 @@ export function useZoneDraft(
         }
       : saveStatus;
 
-  function updateDraft(updater: (zone: ZoneData) => ZoneData): void {
-    setDraft((prev) => updater(prev));
-    // Clear a lingering "saved"/"error" message once editing resumes; the
-    // functional update bails out (same reference) while already idle, so a
-    // drag does not churn state after the first cell.
+  // Clear a lingering "saved"/"error" message once editing resumes; the
+  // functional update bails out (same reference) while already idle, so a drag
+  // does not churn state after the first cell.
+  function markEditing(): void {
     setSaveStatus((prev) =>
       prev.state === "idle" ? prev : { state: "idle", message: "" },
     );
   }
 
+  function updateDraft(updater: (zone: ZoneData) => ZoneData): void {
+    setHistory((current) => {
+      const next = updater(current.present);
+      if (next === current.present) {
+        return current;
+      }
+      return {
+        past: [...current.past, current.present],
+        present: next,
+        future: [],
+      };
+    });
+    markEditing();
+  }
+
+  function undo(): void {
+    setHistory((current) => {
+      if (current.past.length === 0) {
+        return current;
+      }
+      return {
+        past: current.past.slice(0, -1),
+        present: current.past[current.past.length - 1],
+        future: [current.present, ...current.future],
+      };
+    });
+    markEditing();
+  }
+
+  function redo(): void {
+    setHistory((current) => {
+      if (current.future.length === 0) {
+        return current;
+      }
+      return {
+        past: [...current.past, current.present],
+        present: current.future[0],
+        future: current.future.slice(1),
+      };
+    });
+    markEditing();
+  }
+
   function resetDraft(): void {
-    setDraft(cloneZoneData(zone));
+    // Reset is undoable: the current draft is pushed onto the history first.
+    setHistory((current) => ({
+      past: [...current.past, current.present],
+      present: cloneZoneData(zone),
+      future: [],
+    }));
     setSavedJson(serializeZoneData(zone));
     setSaveStatus({ state: "idle", message: "" });
   }
@@ -137,6 +201,10 @@ export function useZoneDraft(
     canSave,
     isSaving,
     saveStatus: displayStatus,
+    canUndo,
+    canRedo,
+    undo,
+    redo,
     resetDraft,
     saveDraft,
   };

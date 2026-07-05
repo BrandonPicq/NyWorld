@@ -35,6 +35,10 @@ export function ZoneDraftEditor({ zone, snapshot }: ZoneDraftEditorProps) {
     canSave,
     isSaving,
     saveStatus,
+    canUndo,
+    canRedo,
+    undo,
+    redo,
     resetDraft,
     saveDraft,
   } = useZoneDraft(zone, snapshot);
@@ -70,6 +74,22 @@ export function ZoneDraftEditor({ zone, snapshot }: ZoneDraftEditorProps) {
               {draft.width} × {draft.height} tiles · start (
               {draft.playerStart.x}, {draft.playerStart.y})
             </p>
+            <div className="editor-actions">
+              <TerminalButton
+                className="editor-action-button"
+                disabled={!canUndo || isSaving}
+                onClick={undo}
+              >
+                Undo
+              </TerminalButton>
+              <TerminalButton
+                className="editor-action-button"
+                disabled={!canRedo || isSaving}
+                onClick={redo}
+              >
+                Redo
+              </TerminalButton>
+            </div>
             <div className="editor-actions">
               <TerminalButton
                 className="editor-action-button"
