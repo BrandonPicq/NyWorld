@@ -2,6 +2,7 @@ import {
   formatContentDiagnostic,
   type ItemDef,
 } from "../../engine";
+import { IdentifierLabel } from "../components/IdentifierLabel";
 import { ScrollRegion } from "../components/ScrollRegion";
 import { TerminalButton } from "../components/TerminalButton";
 import { TerminalPanel } from "../components/TerminalPanel";
@@ -60,7 +61,7 @@ export function ContentTab({ draft }: ContentTabProps) {
                       key={`${entry.ref.type}:${entry.ref.id}`}
                       onClick={() => setSelectedRef(entry.ref)}
                     >
-                      {entry.label}
+                      <IdentifierLabel value={entry.label} />
                     </TerminalButton>
                   ))}
                 </div>

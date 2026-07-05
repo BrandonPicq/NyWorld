@@ -4,6 +4,12 @@ This file tracks meaningful project changes by commit-oriented slices.
 
 Keep entries short and practical. When a slice is committed, its changelog section should stay aligned with the commit title so the project history remains easy to read after restores or bisects.
 
+## 2026-07-05 - [UPDATE]: Wrap editor identifier labels at separators
+
+- Add a reusable identifier label helper that inserts safe wrap points after `_`, `.`, `-`, and `:` separators.
+- Use it on editor id buttons so long content ids wrap between meaningful segments instead of inside words.
+- Keep the fallback behavior scoped to technical id labels, leaving ordinary button text unchanged.
+
 ## 2026-07-05 - [UPDATE]: Add breathing room to scroll indicators
 
 - Reserve a small end padding in scroll regions only when the custom scroll indicator is visible.

@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import type { ContentCatalogSnapshot, ZoneData } from "../../../engine";
+import { IdentifierLabel } from "../../components/IdentifierLabel";
 import { ScrollRegion } from "../../components/ScrollRegion";
 import { TerminalButton } from "../../components/TerminalButton";
 import { TerminalPanel } from "../../components/TerminalPanel";
@@ -42,7 +43,8 @@ export function ZoneEditorPanel({ snapshot }: ZoneEditorPanelProps) {
               >
                 <span className="editor-zone-entry__name">{zone.name}</span>
                 <span className="editor-zone-entry__meta">
-                  {zone.zoneId} · {zone.npcCount}N {zone.itemCount}I{" "}
+                  <IdentifierLabel value={zone.zoneId} /> · {zone.npcCount}N{" "}
+                  {zone.itemCount}I{" "}
                   {zone.transitionCount}T
                 </span>
               </TerminalButton>

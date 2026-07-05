@@ -2,6 +2,7 @@ import {
   formatContentDiagnostic,
   type ContentReference,
 } from "../../../engine";
+import { IdentifierLabel } from "../../components/IdentifierLabel";
 import { ScrollRegion } from "../../components/ScrollRegion";
 import { TerminalButton } from "../../components/TerminalButton";
 import { TerminalPanel } from "../../components/TerminalPanel";
@@ -46,7 +47,7 @@ export function DialogueTab({ draft }: DialogueTabProps) {
                 >
                   <span className="editor-zone-entry">
                     <span className="editor-zone-entry__name">
-                      {file.stem}
+                      <IdentifierLabel value={file.stem} />
                       {file.hasUnsavedChanges ? " *" : ""}
                     </span>
                     <span className="editor-zone-entry__meta">
@@ -105,7 +106,7 @@ export function DialogueTab({ draft }: DialogueTabProps) {
                           key={dialogueId}
                           onClick={() => draft.selectDialogue(dialogueId)}
                         >
-                          {dialogueId}
+                          <IdentifierLabel value={dialogueId} />
                         </TerminalButton>
                       ))}
                     </div>
