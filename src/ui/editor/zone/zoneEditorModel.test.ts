@@ -1,6 +1,19 @@
+import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import type { ContentCatalogSnapshot, ZoneData } from "../../../engine";
-import { listEditorZones, setTileAt, zoneContentPath } from "./zoneEditorModel";
+import {
+  listEditorZones,
+  serializeZoneData,
+  setTileAt,
+  zoneContentPath,
+} from "./zoneEditorModel";
+
+function readShippedZone(zoneId: string): string {
+  return readFileSync(
+    new URL(`../../../content/zones/${zoneId}.json`, import.meta.url),
+    "utf8",
+  );
+}
 
 function createZone(overrides: Partial<ZoneData>): ZoneData {
   return {
@@ -93,5 +106,26 @@ describe("zoneContentPath", () => {
     expect(zoneContentPath("test_zone")).toBe(
       "src/content/zones/test_zone.json",
     );
+  });
+});
+
+describe("serializeZoneData", () => {
+  it.each(["test_zone", "test_zone_2"])(
+    "round-trips the shipped %s.json byte-for-byte",
+    (zoneId) => {
+      const raw = readShippedZone(zoneId);
+      const zone = JSON.parse(raw) as ZoneData;
+      // The endpoint owns the trailing newline; the serializer does not add it.
+      expect(serializeZoneData(zone) + "\n").toBe(raw);
+    },
+  );
+
+  it("keeps each tiles row on a single line and never explodes a tile", () => {
+    const serialized = serializeZoneData(
+      JSON.parse(readShippedZone("test_zone")) as ZoneData,
+    );
+    expect(serialized).toContain("    [1, 1, 1, 1, 1, 1, 1, 1, 1, 1],");
+    // No tile number ever sits alone on its own line.
+    expect(serialized).not.toMatch(/^\s+\d+,?$/m);
   });
 });

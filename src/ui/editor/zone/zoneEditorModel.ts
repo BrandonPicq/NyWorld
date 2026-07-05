@@ -45,9 +45,30 @@ export function cloneZoneData(zone: ZoneData): ZoneData {
   return structuredClone(zone);
 }
 
-/** Serialization convention shared with the item catalog: 2-space JSON. */
+const TILES_PLACEHOLDER = "__NYWARUDO_TILES__";
+
+/**
+ * Serializes a zone as 2-space JSON, but keeps each `tiles` row on one line.
+ *
+ * Plain `JSON.stringify(zone, null, 2)` puts every tile number on its own line,
+ * turning a grid into a hundred-line, undiffable block. Everything else stays
+ * standard 2-space JSON so editor saves produce clean, reviewable diffs.
+ */
 export function serializeZoneData(zone: ZoneData): string {
-  return JSON.stringify(zone, null, 2);
+  const withPlaceholder: Record<string, unknown> = {
+    ...zone,
+    tiles: TILES_PLACEHOLDER,
+  };
+  const json = JSON.stringify(withPlaceholder, null, 2);
+  return json.replace(`"${TILES_PLACEHOLDER}"`, formatTilesBlock(zone.tiles));
+}
+
+function formatTilesBlock(tiles: ZoneData["tiles"]): string {
+  if (tiles.length === 0) {
+    return "[]";
+  }
+  const rows = tiles.map((row) => `    [${row.join(", ")}]`).join(",\n");
+  return `[\n${rows}\n  ]`;
 }
 
 /**

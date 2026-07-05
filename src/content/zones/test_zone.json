@@ -4,7 +4,10 @@
   "name": "Test Zone",
   "width": 10,
   "height": 8,
-  "playerStart": { "x": 5, "y": 4 },
+  "playerStart": {
+    "x": 5,
+    "y": 4
+  },
   "tiles": [
     [1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
     [1, 0, 0, 0, 0, 0, 0, 0, 0, 1],
@@ -16,11 +19,25 @@
     [1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
   ],
   "entryDialogue": [
-    { "speaker": "Narrator", "text": "Welcome to the test fields of NyWarudo.", "pitch": 1.0 },
-    { "speaker": "Old Sage", "text": "Watch your steps, traveler. Each movement consumes your vital Energy.", "pitch": 0.7 }
+    {
+      "speaker": "Narrator",
+      "text": "Welcome to the test fields of NyWarudo.",
+      "pitch": 1
+    },
+    {
+      "speaker": "Old Sage",
+      "text": "Watch your steps, traveler. Each movement consumes your vital Energy.",
+      "pitch": 0.7
+    }
   ],
   "transitions": [
-    { "x": 9, "y": 4, "targetZoneId": "test_zone_2", "targetX": 1, "targetY": 4 }
+    {
+      "x": 9,
+      "y": 4,
+      "targetZoneId": "test_zone_2",
+      "targetX": 1,
+      "targetY": 4
+    }
   ],
   "npcs": [
     {
@@ -36,7 +53,17 @@
     }
   ],
   "items": [
-    { "itemId": "lost_notebook", "x": 2, "y": 5, "quantity": 1 },
-    { "itemId": "old_coin", "x": 7, "y": 3, "quantity": 1 }
+    {
+      "itemId": "lost_notebook",
+      "x": 2,
+      "y": 5,
+      "quantity": 1
+    },
+    {
+      "itemId": "old_coin",
+      "x": 7,
+      "y": 3,
+      "quantity": 1
+    }
   ]
 }

@@ -4,6 +4,12 @@ This file tracks meaningful project changes by commit-oriented slices.
 
 Keep entries short and practical. When a slice is committed, its changelog section should stay aligned with the commit title so the project history remains easy to read after restores or bisects.
 
+## 2026-07-05 - [FIX]: Keep zone tile rows compact when the editor saves
+
+- Serialize zone drafts as standard 2-space JSON but keep each `tiles` row on a single line, so a save no longer explodes the grid into ~100 lines.
+- Canonicalize the shipped zone files to that format so editor saves diff cleanly (tile content unchanged).
+- Add a byte-stable round-trip test over the shipped zones; item catalog saves keep plain stringify.
+
 ## 2026-07-05 - [ADD]: Tile painting in the zone editor
 
 - Make the Zones tab paint tiles: a tile palette plus click and click-drag painting on the zone canvas.

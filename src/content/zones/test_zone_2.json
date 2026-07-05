@@ -4,7 +4,10 @@
   "name": "Test Zone 2",
   "width": 10,
   "height": 8,
-  "playerStart": { "x": 1, "y": 4 },
+  "playerStart": {
+    "x": 1,
+    "y": 4
+  },
   "tiles": [
     [1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
     [1, 0, 0, 0, 0, 0, 0, 0, 0, 1],
@@ -16,11 +19,25 @@
     [1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
   ],
   "entryDialogue": [
-    { "speaker": "Narrator", "text": "The air here grows heavy and cold.", "pitch": 0.9 },
-    { "speaker": "Mysterious Voice", "text": "Who dares trespass in the Eastern Ruins?", "pitch": 1.4 }
+    {
+      "speaker": "Narrator",
+      "text": "The air here grows heavy and cold.",
+      "pitch": 0.9
+    },
+    {
+      "speaker": "Mysterious Voice",
+      "text": "Who dares trespass in the Eastern Ruins?",
+      "pitch": 1.4
+    }
   ],
   "transitions": [
-    { "x": 0, "y": 4, "targetZoneId": "test_zone", "targetX": 8, "targetY": 4 }
+    {
+      "x": 0,
+      "y": 4,
+      "targetZoneId": "test_zone",
+      "targetX": 8,
+      "targetY": 4
+    }
   ],
   "npcs": [
     {
@@ -40,6 +57,11 @@
     }
   ],
   "items": [
-    { "itemId": "chalk_piece", "x": 5, "y": 2, "quantity": 1 }
+    {
+      "itemId": "chalk_piece",
+      "x": 5,
+      "y": 2,
+      "quantity": 1
+    }
   ]
 }
