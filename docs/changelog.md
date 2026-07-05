@@ -4,6 +4,12 @@ This file tracks meaningful project changes by commit-oriented slices.
 
 Keep entries short and practical. When a slice is committed, its changelog section should stay aligned with the commit title so the project history remains easy to read after restores or bisects.
 
+## 2026-07-06 - [UPDATE]: Derive combat-action effect lines from tuning
+
+- Add a pure `deriveCombatActionEffects(tuning)` that emits the exact SP/MP effect lines the combat-action JSONs used to hand-author, with unit tests.
+- Compose derived numeric lines ahead of the authored qualitative effects when the combat-action registry builds, keeping multiplier tuning as authored prose and leaving the tuning-less fallback inert.
+- Export the derivation for reuse (an editor tuning preview consumes it next).
+
 ## 2026-07-06 - [UPDATE]: Defer whole-bundle draft validation off the typing path
 
 - Feed whole-bundle `validateAllContent` through `useDeferredValue` in every editor draft hook (items, zones, dialogues, NPCs, presence, enemies) and the game config panel, so typing and painting no longer re-audit the bundle synchronously per keystroke.

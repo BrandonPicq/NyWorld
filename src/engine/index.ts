@@ -95,6 +95,7 @@ export type {
   QteContestResult,
 } from "./combat/qteCombat";
 export {
+  deriveCombatActionEffects,
   getAllCombatActionDefs,
   getCombatActionDef,
   hasCombatActionDef,

@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import strikeData from "../../content/combat-actions/strike.json";
 import {
+  deriveCombatActionEffects,
   getAllCombatActionDefs,
   getCombatActionDef,
   hasCombatActionDef,
@@ -90,6 +91,24 @@ describe("combat action tuning", () => {
       ]),
     );
     expect(diagnostics).toHaveLength(3);
+  });
+});
+
+describe("deriveCombatActionEffects", () => {
+  it("emits the exact SP and MP lines the JSONs used to hand-author", () => {
+    expect(deriveCombatActionEffects({ spGain: 5 })).toEqual(["Gain 5 SP."]);
+    expect(deriveCombatActionEffects({ spGain: 10 })).toEqual(["Gain 10 SP."]);
+    expect(deriveCombatActionEffects({ mpCost: 10 })).toEqual(["Costs 10 MP."]);
+  });
+
+  it("omits lines for multiplier-only or empty tuning", () => {
+    expect(deriveCombatActionEffects({ damageBoostMultiplier: 1.5 })).toEqual(
+      [],
+    );
+    expect(
+      deriveCombatActionEffects({ incomingDamageMultiplier: 0.5 }),
+    ).toEqual([]);
+    expect(deriveCombatActionEffects({})).toEqual([]);
   });
 });
 

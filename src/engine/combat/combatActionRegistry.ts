@@ -5,9 +5,31 @@ import type {
   CombatActionDef,
   CombatActionDefMap,
   CombatActionId,
+  CombatActionTuning,
 } from "./CombatActionDef";
 
 const COMBAT_ACTION_CONTENT_TYPE = CONTENT_TYPES.combatAction;
+
+/**
+ * Derives the numeric effect lines a combat action's tuning implies.
+ *
+ * The registry prepends these to the authored (qualitative) effects at build
+ * time, so the SP/MP numbers live only in `tuning` while the rendered help text
+ * stays byte-identical to the previously hand-authored strings. Multiplier
+ * tuning (Guard/Focus) has no numeric effect line — those stay authored prose.
+ */
+export function deriveCombatActionEffects(
+  tuning: CombatActionTuning,
+): string[] {
+  const lines: string[] = [];
+  if (tuning.spGain !== undefined) {
+    lines.push(`Gain ${tuning.spGain} SP.`);
+  }
+  if (tuning.mpCost !== undefined) {
+    lines.push(`Costs ${tuning.mpCost} MP.`);
+  }
+  return lines;
+}
 
 const TUNING_INTEGER_FIELDS = ["spGain", "mpCost"] as const;
 const TUNING_MULTIPLIER_FIELDS = [
@@ -268,10 +290,23 @@ function buildRegistry(defs: readonly unknown[]): CombatActionDefMap {
   const nextRegistry = {} as CombatActionDefMap;
   for (const def of defs) {
     const actionDef = def as CombatActionDef;
-    nextRegistry[actionDef.actionId] = cloneCombatActionDef(actionDef);
+    nextRegistry[actionDef.actionId] = composeCombatActionDef(actionDef);
   }
 
   return nextRegistry;
+}
+
+/**
+ * Clones an authored action and prepends its tuning-derived effect lines.
+ *
+ * Actions without tuning (including the fallback) gain no derived lines, so the
+ * fallback stays inert.
+ */
+function composeCombatActionDef(def: CombatActionDef): CombatActionDef {
+  const cloned = cloneCombatActionDef(def);
+  const derived = cloned.tuning ? deriveCombatActionEffects(cloned.tuning) : [];
+  cloned.effects = [...derived, ...cloned.effects];
+  return cloned;
 }
 
 function getSortedContentModules(modules: Record<string, unknown>): unknown[] {
