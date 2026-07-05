@@ -73,6 +73,7 @@ Fondations posees (juillet 2026) :
 - creation de zone, edition du dialogue d'entree, et onglet Game (defaultZoneId / safeRespawn de game.json) depuis l'editeur, avec validation live et diffs JSON minimaux.
 - edition dev-only des fichiers de dialogues reutilisables : creation de fichiers, ajout de sequences, edition des lignes speaker/text/pitch, suppression bloquee par les references entrantes, validation live du bundle.
 - edition dev-only des fiches PNJ : creation de fichiers PNJ, champs race/importance/presentation/dialogue par defaut, validation live du bundle, et raccourci de creation du dialogue par defaut.
+- edition dev-only des profils ennemis rattaches aux PNJ : toggle combatable, stat block complet, loot, validation live du bundle, sauvegarde et suppression des fichiers de profil.
 
 Etapes restantes :
 

@@ -45,6 +45,40 @@ export async function saveEditorContent(
   }
 }
 
+export async function deleteEditorContent(
+  path: string,
+): Promise<EditorSaveResult> {
+  try {
+    const response = await fetch("/__editor/save", {
+      method: "DELETE",
+      headers: {
+        "Content-Type": "application/json",
+        "X-NyWarudo-Editor": "save",
+      },
+      body: JSON.stringify({ path }),
+    });
+    const payload = await readJsonPayload(response);
+
+    if (!response.ok) {
+      return {
+        ok: false,
+        error:
+          readErrorMessage(payload) ?? `Delete failed (${response.status}).`,
+      };
+    }
+
+    return {
+      ok: true,
+      path: readSavedPath(payload) ?? path,
+    };
+  } catch (error) {
+    return {
+      ok: false,
+      error: error instanceof Error ? error.message : "Delete failed.",
+    };
+  }
+}
+
 async function readJsonPayload(response: Response): Promise<unknown> {
   const text = await response.text();
   if (!text.trim()) {

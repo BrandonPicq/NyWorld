@@ -4,6 +4,13 @@ This file tracks meaningful project changes by commit-oriented slices.
 
 Keep entries short and practical. When a slice is committed, its changelog section should stay aligned with the commit title so the project history remains easy to read after restores or bisects.
 
+## 2026-07-06 - [ADD]: Create and edit enemy profiles in the editor
+
+- Add an Enemies editor tab for attaching combat profiles to existing NPCs, editing raw stat sections, toggling combatability, and managing loot.
+- Validate enemy drafts against the whole content bundle with draft enemy ids substituted into the validation context.
+- Save enemy profiles as one JSON file per NPC and delete obsolete profile files through the dev-only editor endpoint.
+- Surface compact combat-balance targets beside enemy stat editing.
+
 ## 2026-07-05 - [TEST]: Make content catalog tests tolerate growth
 
 - Derive expected authored zones, enemies, NPC states, and zone serializer coverage from runtime content instead of fixed id lists.

@@ -381,6 +381,50 @@
   gap: var(--space-3);
 }
 
+.editor-enemy-layout {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: minmax(14rem, 0.7fr) minmax(28rem, 1.35fr) minmax(
+      18rem,
+      0.95fr
+    );
+  grid-template-rows: minmax(0, 1fr);
+  gap: var(--space-3);
+}
+
+.editor-enemy-stat-section,
+.editor-enemy-balance-hint {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.editor-enemy-stat-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-2);
+}
+
+.editor-enemy-balance-hint {
+  border: 1px solid var(--color-border-muted);
+  padding: var(--space-2);
+  background: var(--color-button-background);
+}
+
+.editor-enemy-balance-hint h3 {
+  margin: 0;
+  color: var(--color-text-soft);
+  font-size: 0.85rem;
+  text-transform: uppercase;
+}
+
+.editor-enemy-balance-hint p {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: 0.85rem;
+  line-height: var(--line-height-copy);
+}
+
 .editor-zone-entry {
   display: grid;
   gap: 0.2rem;
@@ -651,6 +695,7 @@
   .editor-zone-layout,
   .editor-dialogue-layout,
   .editor-npc-layout,
+  .editor-enemy-layout,
   .editor-reference-columns {
     grid-template-columns: 1fr;
   }
@@ -660,6 +705,7 @@
   .editor-zone-layout,
   .editor-dialogue-layout,
   .editor-npc-layout,
+  .editor-enemy-layout,
   .editor-game-layout {
     flex: none;
     grid-template-rows: none;
@@ -702,7 +748,8 @@
 
   .editor-inline-control,
   .editor-form-row,
-  .editor-actions {
+  .editor-actions,
+  .editor-enemy-stat-grid {
     grid-template-columns: 1fr;
   }
 }

@@ -1,0 +1,369 @@
+import { useEffect, useMemo, useState } from "react";
+import {
+  buildContentReferenceGraph,
+  CONTENT_TYPES,
+  createRuntimeContentValidationContext,
+  validateAllContent,
+  validateEnemyDef,
+  type ContentCatalogSnapshot,
+  type ContentDiagnostic,
+  type ContentReference,
+  type EnemyDef,
+  type NpcDef,
+} from "../../../engine";
+import {
+  deleteEditorContent,
+  saveEditorContent,
+} from "../editorSaveClient";
+import type { SaveStatus } from "../editorModel";
+import {
+  cloneEnemyDefs,
+  createEnemyDefForNpc,
+  createEnemyDraftSnapshot,
+  createEnemyDraftValidationContext,
+  enemyContentPath,
+  listEnemyNpcEntries,
+  removeEnemyDef,
+  serializeEnemyDef,
+  serializeEnemyDefsById,
+  updateEnemyDef,
+  upsertEnemyDef,
+  type EditorEnemyNpcEntry,
+} from "./enemyEditorModel";
+
+export interface EnemyNpcListEntry extends EditorEnemyNpcEntry {
+  hasUnsavedChanges: boolean;
+}
+
+export interface EnemyDraftController {
+  npcs: EnemyNpcListEntry[];
+  selectedNpcId: string;
+  selectedNpc: NpcDef | null;
+  selectedEnemy: EnemyDef | null;
+  itemIds: string[];
+  diagnostics: ContentDiagnostic[];
+  selectedEnemyDiagnostics: ContentDiagnostic[];
+  selectedEnemyReferences: ContentReference[];
+  errorCount: number;
+  warningCount: number;
+  hasUnsavedChanges: boolean;
+  selectedEnemyHasUnsavedChanges: boolean;
+  canCreateSelectedEnemy: boolean;
+  canSaveSelectedEnemy: boolean;
+  canResetSelectedEnemy: boolean;
+  canDeleteSelectedEnemy: boolean;
+  isSaving: boolean;
+  saveStatus: SaveStatus;
+  selectNpc: (npcId: string) => void;
+  createSelectedEnemy: () => void;
+  updateSelectedEnemy: (updater: (enemy: EnemyDef) => EnemyDef) => void;
+  resetSelectedEnemy: () => void;
+  saveSelectedEnemy: () => Promise<void>;
+  deleteSelectedEnemy: () => Promise<void>;
+}
+
+export function useEnemyDraft(
+  baseSnapshot: ContentCatalogSnapshot,
+): EnemyDraftController {
+  const baseValidationContext = useMemo(
+    () => createRuntimeContentValidationContext(),
+    [],
+  );
+  const [draftEnemies, setDraftEnemies] = useState<EnemyDef[]>(() =>
+    cloneEnemyDefs(baseSnapshot.enemies),
+  );
+  const [savedEnemies, setSavedEnemies] = useState<EnemyDef[]>(() =>
+    cloneEnemyDefs(baseSnapshot.enemies),
+  );
+  const [selectedNpcId, setSelectedNpcId] = useState(
+    firstNpcId(baseSnapshot.npcs),
+  );
+  const [saveStatus, setSaveStatus] = useState<SaveStatus>({
+    state: "idle",
+    message: "No changes.",
+  });
+
+  const draftSnapshot = useMemo(
+    () => createEnemyDraftSnapshot(baseSnapshot, draftEnemies),
+    [baseSnapshot, draftEnemies],
+  );
+  const validationContext = useMemo(
+    () =>
+      createEnemyDraftValidationContext(baseValidationContext, draftEnemies),
+    [baseValidationContext, draftEnemies],
+  );
+  const diagnostics = useMemo(
+    () => validateAllContent(draftSnapshot, validationContext),
+    [draftSnapshot, validationContext],
+  );
+  const graph = useMemo(
+    () => buildContentReferenceGraph(draftSnapshot),
+    [draftSnapshot],
+  );
+  const savedEnemyJsonById = useMemo(
+    () => serializeEnemyDefsById(savedEnemies),
+    [savedEnemies],
+  );
+  const npcEntries = useMemo(
+    () =>
+      listEnemyNpcEntries(baseSnapshot.npcs, draftEnemies).map((entry) => {
+        const draftEnemy = draftEnemies.find(
+          (enemy) => enemy.npcId === entry.npcId,
+        );
+        return {
+          ...entry,
+          hasUnsavedChanges:
+            (draftEnemy
+              ? serializeEnemyDef(draftEnemy)
+              : undefined) !== savedEnemyJsonById.get(entry.npcId),
+        };
+      }),
+    [baseSnapshot.npcs, draftEnemies, savedEnemyJsonById],
+  );
+  const itemIds = useMemo(
+    () => Object.keys(baseSnapshot.items).sort((a, b) => a.localeCompare(b)),
+    [baseSnapshot.items],
+  );
+  const selectedNpc =
+    baseSnapshot.npcs.find((npc) => npc.npcId === selectedNpcId) ?? null;
+  const selectedEnemy =
+    draftEnemies.find((enemy) => enemy.npcId === selectedNpcId) ?? null;
+  const selectedEnemyDiagnostics = selectedNpcId
+    ? diagnostics.filter(
+        (diagnostic) =>
+          diagnostic.contentType === CONTENT_TYPES.enemy &&
+          diagnostic.contentId === selectedNpcId,
+      )
+    : [];
+  const selectedEnemyReferences = selectedNpcId
+    ? graph.getReferencesTo({
+        type: CONTENT_TYPES.enemy,
+        id: selectedNpcId,
+      })
+    : [];
+  const errorCount = diagnostics.filter(
+    (diagnostic) => diagnostic.severity === "error",
+  ).length;
+  const warningCount = diagnostics.length - errorCount;
+  const selectedEnemyHasUnsavedChanges =
+    selectedEnemy !== null &&
+    serializeEnemyDef(selectedEnemy) !==
+      savedEnemyJsonById.get(selectedEnemy.npcId);
+  const hasUnsavedChanges = hasAnyUnsavedEnemy(draftEnemies, savedEnemies);
+  const isSaving = saveStatus.state === "saving";
+  const canCreateSelectedEnemy =
+    selectedNpc !== null && selectedEnemy === null && !isSaving;
+  const canSaveSelectedEnemy =
+    selectedEnemy !== null &&
+    selectedEnemyHasUnsavedChanges &&
+    errorCount === 0 &&
+    !isSaving;
+  const canResetSelectedEnemy =
+    selectedNpcId !== "" &&
+    hasSelectedEnemyUnsavedState(
+      selectedNpcId,
+      draftEnemies,
+      savedEnemies,
+    ) &&
+    !isSaving;
+  const canDeleteSelectedEnemy =
+    selectedEnemy !== null &&
+    selectedEnemyReferences.length === 0 &&
+    !isSaving;
+  const displayStatus: SaveStatus =
+    saveStatus.state === "idle"
+      ? {
+          state: "idle",
+          message: hasUnsavedChanges ? "Unsaved changes." : "No changes.",
+        }
+      : saveStatus;
+
+  useEffect(() => {
+    if (
+      !selectedNpcId ||
+      baseSnapshot.npcs.some((npc) => npc.npcId === selectedNpcId)
+    ) {
+      return;
+    }
+    setSelectedNpcId(firstNpcId(baseSnapshot.npcs));
+  }, [baseSnapshot.npcs, selectedNpcId]);
+
+  function selectNpc(npcId: string): void {
+    setSelectedNpcId(npcId);
+  }
+
+  function markEditing(): void {
+    setSaveStatus((prev) =>
+      prev.state === "idle" ? prev : { state: "idle", message: "" },
+    );
+  }
+
+  function createSelectedEnemy(): void {
+    if (!canCreateSelectedEnemy || !selectedNpc) {
+      return;
+    }
+    const enemy = createEnemyDefForNpc(selectedNpc);
+    setDraftEnemies((enemies) => upsertEnemyDef(enemies, enemy));
+    markEditing();
+  }
+
+  function updateSelectedEnemy(updater: (enemy: EnemyDef) => EnemyDef): void {
+    if (!selectedEnemy) {
+      return;
+    }
+    setDraftEnemies((enemies) =>
+      updateEnemyDef(enemies, selectedEnemy.npcId, updater),
+    );
+    markEditing();
+  }
+
+  function resetSelectedEnemy(): void {
+    if (!selectedNpcId) {
+      return;
+    }
+
+    const savedEnemy = savedEnemies.find(
+      (enemy) => enemy.npcId === selectedNpcId,
+    );
+    setDraftEnemies((enemies) =>
+      savedEnemy
+        ? upsertEnemyDef(enemies, savedEnemy)
+        : removeEnemyDef(enemies, selectedNpcId),
+    );
+    setSaveStatus({ state: "idle", message: "" });
+  }
+
+  async function saveSelectedEnemy(): Promise<void> {
+    if (!selectedEnemy) {
+      return;
+    }
+    if (!selectedEnemyHasUnsavedChanges) {
+      setSaveStatus({ state: "idle", message: "" });
+      return;
+    }
+    if (
+      errorCount > 0 ||
+      validateEnemyDef(selectedEnemy, validationContext).length > 0
+    ) {
+      setSaveStatus({
+        state: "error",
+        message: "Resolve errors before saving.",
+      });
+      return;
+    }
+
+    const content = serializeEnemyDef(selectedEnemy);
+    setSaveStatus({ state: "saving", message: "Saving..." });
+    const result = await saveEditorContent(
+      enemyContentPath(selectedEnemy.npcId),
+      content,
+    );
+    if (!result.ok) {
+      setSaveStatus({ state: "error", message: result.error });
+      return;
+    }
+
+    setSavedEnemies((enemies) => upsertEnemyDef(enemies, selectedEnemy));
+    setSaveStatus({ state: "saved", message: `Saved ${result.path}.` });
+  }
+
+  async function deleteSelectedEnemy(): Promise<void> {
+    if (!selectedEnemy || !canDeleteSelectedEnemy) {
+      return;
+    }
+    if (selectedEnemyReferences.length > 0) {
+      setSaveStatus({
+        state: "error",
+        message: `Enemy "${selectedEnemy.npcId}" is still referenced.`,
+      });
+      return;
+    }
+
+    const savedEnemy = savedEnemies.find(
+      (enemy) => enemy.npcId === selectedEnemy.npcId,
+    );
+    if (!savedEnemy) {
+      setDraftEnemies((enemies) => removeEnemyDef(enemies, selectedEnemy.npcId));
+      setSaveStatus({ state: "idle", message: "" });
+      return;
+    }
+
+    setSaveStatus({ state: "saving", message: "Deleting..." });
+    const result = await deleteEditorContent(
+      enemyContentPath(selectedEnemy.npcId),
+    );
+    if (!result.ok) {
+      setSaveStatus({ state: "error", message: result.error });
+      return;
+    }
+
+    setDraftEnemies((enemies) => removeEnemyDef(enemies, selectedEnemy.npcId));
+    setSavedEnemies((enemies) => removeEnemyDef(enemies, selectedEnemy.npcId));
+    setSaveStatus({ state: "saved", message: `Deleted ${result.path}.` });
+  }
+
+  return {
+    npcs: npcEntries,
+    selectedNpcId,
+    selectedNpc,
+    selectedEnemy,
+    itemIds,
+    diagnostics,
+    selectedEnemyDiagnostics,
+    selectedEnemyReferences,
+    errorCount,
+    warningCount,
+    hasUnsavedChanges,
+    selectedEnemyHasUnsavedChanges,
+    canCreateSelectedEnemy,
+    canSaveSelectedEnemy,
+    canResetSelectedEnemy,
+    canDeleteSelectedEnemy,
+    isSaving,
+    saveStatus: displayStatus,
+    selectNpc,
+    createSelectedEnemy,
+    updateSelectedEnemy,
+    resetSelectedEnemy,
+    saveSelectedEnemy,
+    deleteSelectedEnemy,
+  };
+}
+
+function firstNpcId(npcs: readonly NpcDef[]): string {
+  return (
+    [...npcs].sort((a, b) => a.npcId.localeCompare(b.npcId))[0]?.npcId ?? ""
+  );
+}
+
+function hasAnyUnsavedEnemy(
+  draftEnemies: readonly EnemyDef[],
+  savedEnemies: readonly EnemyDef[],
+): boolean {
+  const draftJsonById = serializeEnemyDefsById(draftEnemies);
+  const savedJsonById = serializeEnemyDefsById(savedEnemies);
+  const allIds = new Set([
+    ...draftJsonById.keys(),
+    ...savedJsonById.keys(),
+  ]);
+
+  for (const npcId of allIds) {
+    if (draftJsonById.get(npcId) !== savedJsonById.get(npcId)) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+function hasSelectedEnemyUnsavedState(
+  npcId: string,
+  draftEnemies: readonly EnemyDef[],
+  savedEnemies: readonly EnemyDef[],
+): boolean {
+  const draftEnemy = draftEnemies.find((enemy) => enemy.npcId === npcId);
+  const savedEnemy = savedEnemies.find((enemy) => enemy.npcId === npcId);
+  const draftJson = draftEnemy ? serializeEnemyDef(draftEnemy) : undefined;
+  const savedJson = savedEnemy ? serializeEnemyDef(savedEnemy) : undefined;
+  return draftJson !== savedJson;
+}

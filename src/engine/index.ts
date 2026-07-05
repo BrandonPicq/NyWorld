@@ -117,6 +117,7 @@ export type {
   CombatSystemContext,
 } from "./combat/CombatSystem";
 export {
+  cloneEnemyStats,
   getAllEnemyDefs,
   getEnemyDef,
   hasEnemyDef,

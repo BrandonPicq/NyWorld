@@ -4,6 +4,8 @@ import { TerminalButton } from "../components/TerminalButton";
 import { ContentTab } from "./ContentTab";
 import { DialogueTab } from "./dialogues/DialogueTab";
 import { useDialogueDraft } from "./dialogues/useDialogueDraft";
+import { EnemyTab } from "./enemies/EnemyTab";
+import { useEnemyDraft } from "./enemies/useEnemyDraft";
 import { GameConfigPanel } from "./GameConfigPanel";
 import { NpcTab } from "./npcs/NpcTab";
 import { useNpcDraft } from "./npcs/useNpcDraft";
@@ -14,7 +16,13 @@ type ContentEditorScreenProps = {
   onBack: () => void;
 };
 
-type EditorTab = "content" | "zones" | "game" | "dialogues" | "npcs";
+type EditorTab =
+  | "content"
+  | "zones"
+  | "game"
+  | "dialogues"
+  | "npcs"
+  | "enemies";
 
 export function ContentEditorScreen({ onBack }: ContentEditorScreenProps) {
   const baseSnapshot = useMemo(() => createRuntimeContentCatalogSnapshot(), []);
@@ -22,6 +30,7 @@ export function ContentEditorScreen({ onBack }: ContentEditorScreenProps) {
   const itemDraft = useItemDraft(baseSnapshot);
   const dialogueDraft = useDialogueDraft(baseSnapshot);
   const npcDraft = useNpcDraft(baseSnapshot);
+  const enemyDraft = useEnemyDraft(baseSnapshot);
   const shellClasses = ["editor-shell", tab === "zones" && "editor-shell--zones"]
     .filter(Boolean)
     .join(" ");
@@ -80,6 +89,13 @@ export function ContentEditorScreen({ onBack }: ContentEditorScreenProps) {
           >
             NPCs
           </TerminalButton>
+          <TerminalButton
+            className="editor-tab"
+            isSelected={tab === "enemies"}
+            onClick={() => setTab("enemies")}
+          >
+            Enemies
+          </TerminalButton>
         </nav>
 
         {tab === "zones" ? (
@@ -90,6 +106,8 @@ export function ContentEditorScreen({ onBack }: ContentEditorScreenProps) {
           <DialogueTab draft={dialogueDraft} />
         ) : tab === "npcs" ? (
           <NpcTab draft={npcDraft} />
+        ) : tab === "enemies" ? (
+          <EnemyTab draft={enemyDraft} />
         ) : (
           <ContentTab draft={itemDraft} />
         )}

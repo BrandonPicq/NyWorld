@@ -1,4 +1,4 @@
-import { mkdir, writeFile } from "node:fs/promises";
+import { mkdir, unlink, writeFile } from "node:fs/promises";
 import type { IncomingMessage, ServerResponse } from "node:http";
 import path from "node:path";
 import type { Plugin } from "vite";
@@ -138,7 +138,7 @@ export function editorContentSavePlugin(): Plugin {
           return;
         }
 
-        if (req.method !== "POST") {
+        if (req.method !== "POST" && req.method !== "DELETE") {
           sendJson(res, 405, { error: "Method not allowed." });
           return;
         }
@@ -154,38 +154,60 @@ export function editorContentSavePlugin(): Plugin {
         }
 
         try {
-          const payload = parseSaveRequest(await readRequestBody(req));
-          if (!payload.ok) {
-            sendJson(res, 400, { error: payload.reason });
-            return;
+          const rawBody = await readRequestBody(req);
+          if (req.method === "DELETE") {
+            const payload = parseDeleteRequest(rawBody);
+            if (!payload.ok) {
+              sendJson(res, 400, { error: payload.reason });
+              return;
+            }
+
+            const resolvedPath = resolveEditorContentPath(
+              projectRoot,
+              payload.path,
+            );
+            if (!resolvedPath.ok) {
+              sendJson(res, 403, { error: resolvedPath.reason });
+              return;
+            }
+
+            await deleteContentFile(resolvedPath.absolutePath);
+            sendJson(res, 200, { ok: true, path: resolvedPath.relativePath });
+          } else {
+            const payload = parseSaveRequest(rawBody);
+            if (!payload.ok) {
+              sendJson(res, 400, { error: payload.reason });
+              return;
+            }
+
+            const resolvedPath = resolveEditorContentPath(
+              projectRoot,
+              payload.path,
+            );
+            if (!resolvedPath.ok) {
+              sendJson(res, 403, { error: resolvedPath.reason });
+              return;
+            }
+
+            try {
+              JSON.parse(payload.content);
+            } catch {
+              sendJson(res, 400, {
+                error: "Content must be valid JSON text.",
+              });
+              return;
+            }
+
+            await mkdir(path.dirname(resolvedPath.absolutePath), {
+              recursive: true,
+            });
+            await writeFile(
+              resolvedPath.absolutePath,
+              ensureTrailingNewline(payload.content),
+              "utf8",
+            );
+            sendJson(res, 200, { ok: true, path: resolvedPath.relativePath });
           }
-
-          const resolvedPath = resolveEditorContentPath(
-            projectRoot,
-            payload.path,
-          );
-          if (!resolvedPath.ok) {
-            sendJson(res, 403, { error: resolvedPath.reason });
-            return;
-          }
-
-          try {
-            JSON.parse(payload.content);
-          } catch {
-            sendJson(res, 400, { error: "Content must be valid JSON text." });
-            return;
-          }
-
-          await mkdir(path.dirname(resolvedPath.absolutePath), {
-            recursive: true,
-          });
-          await writeFile(
-            resolvedPath.absolutePath,
-            ensureTrailingNewline(payload.content),
-            "utf8",
-          );
-
-          sendJson(res, 200, { ok: true, path: resolvedPath.relativePath });
         } catch (error) {
           const message =
             error instanceof Error ? error.message : "Unable to save content.";
@@ -194,6 +216,28 @@ export function editorContentSavePlugin(): Plugin {
       });
     },
   };
+}
+
+function parseDeleteRequest(
+  rawBody: string,
+): { ok: true; path: string } | { ok: false; reason: string } {
+  let value: unknown;
+
+  try {
+    value = JSON.parse(rawBody);
+  } catch {
+    return { ok: false, reason: "Request body must be JSON." };
+  }
+
+  if (!isRecord(value)) {
+    return { ok: false, reason: "Request body must be an object." };
+  }
+
+  if (typeof value.path !== "string") {
+    return { ok: false, reason: "Request body must include a string path." };
+  }
+
+  return { ok: true, path: value.path };
 }
 
 function parseSaveRequest(
@@ -222,6 +266,21 @@ function parseSaveRequest(
   }
 
   return { ok: true, path: value.path, content: value.content };
+}
+
+async function deleteContentFile(absolutePath: string): Promise<void> {
+  try {
+    await unlink(absolutePath);
+  } catch (error) {
+    if (
+      isRecord(error) &&
+      "code" in error &&
+      error.code === "ENOENT"
+    ) {
+      return;
+    }
+    throw error;
+  }
 }
 
 async function readRequestBody(req: IncomingMessage): Promise<string> {
