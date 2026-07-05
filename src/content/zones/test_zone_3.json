@@ -35,6 +35,12 @@
       "npcId": "kobold",
       "x": 7,
       "y": 1
+    },
+    {
+      "npcId": "yuria",
+      "dialogueId": "yuria.default",
+      "x": 1,
+      "y": 3
     }
   ],
   "items": [

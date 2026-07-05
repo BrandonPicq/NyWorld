@@ -1,0 +1,11 @@
+{
+  "npcId": "yuria",
+  "name": "Yuria",
+  "race": "human",
+  "importance": "story",
+  "defaultDialogueId": "yuria.default",
+  "presentation": {
+    "glyph": "!",
+    "color": "#f0f0f0"
+  }
+}

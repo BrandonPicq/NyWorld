@@ -4,6 +4,13 @@ This file tracks meaningful project changes by commit-oriented slices.
 
 Keep entries short and practical. When a slice is committed, its changelog section should stay aligned with the commit title so the project history remains easy to read after restores or bisects.
 
+## 2026-07-05 - [ADD]: Add Yuria NPC
+
+- Add Yuria as a story NPC with custom map presentation.
+- Add Yuria's default dialogue sequence.
+- Place Yuria in Test Zone 3.
+- Track Yuria in the persistent NPC state regression expectation.
+
 ## 2026-07-05 - [ADD]: Create and edit NPC sheets in the editor
 
 - Add an NPCs editor tab with sheet fields for name, race, importance, optional map presentation, and default dialogue.

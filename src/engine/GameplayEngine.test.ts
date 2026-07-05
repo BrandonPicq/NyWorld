@@ -880,6 +880,7 @@ describe("GameplayEngine", () => {
       "old_wizard",
       "slime",
       "young_page",
+      "yuria",
     ]);
   });
 
