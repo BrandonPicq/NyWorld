@@ -1,9 +1,11 @@
+import type { GridCell } from "../../../rendering/canvasCellMapping";
 import type { GridRenderSnapshot } from "../../../rendering/renderSnapshot";
 import { GameCanvas } from "../../components/GameCanvas";
 
 type EditorZoneCanvasProps = {
   ariaLabel: string;
   renderSnapshot: GridRenderSnapshot;
+  onCellPointer?: (cell: GridCell, kind: "down" | "move") => void;
 };
 
 /**
@@ -11,17 +13,19 @@ type EditorZoneCanvasProps = {
  *
  * It reuses GameCanvas (and therefore GridRenderer) so the editor preview stays
  * pixel-identical to in-game rendering, tagging the canvas with an editor class
- * for layout. Interaction (click-to-cell painting) is added in a later slice.
+ * for layout. Passing onCellPointer turns the preview into a paint surface.
  */
 export function EditorZoneCanvas({
   ariaLabel,
   renderSnapshot,
+  onCellPointer,
 }: EditorZoneCanvasProps) {
   return (
     <GameCanvas
       ariaLabel={ariaLabel}
       className="editor-zone-canvas"
       renderSnapshot={renderSnapshot}
+      onCellPointer={onCellPointer}
     />
   );
 }

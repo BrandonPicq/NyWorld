@@ -3,7 +3,7 @@ import { createRuntimeContentCatalogSnapshot } from "../../engine";
 import { TerminalButton } from "../components/TerminalButton";
 import { ContentTab } from "./ContentTab";
 import { useItemDraft } from "./useItemDraft";
-import { ZoneViewerPanel } from "./zone/ZoneViewerPanel";
+import { ZoneEditorPanel } from "./zone/ZoneEditorPanel";
 
 type ContentEditorScreenProps = {
   onBack: () => void;
@@ -52,7 +52,7 @@ export function ContentEditorScreen({ onBack }: ContentEditorScreenProps) {
         </nav>
 
         {tab === "zones" ? (
-          <ZoneViewerPanel snapshot={baseSnapshot} />
+          <ZoneEditorPanel snapshot={baseSnapshot} />
         ) : (
           <ContentTab draft={draft} />
         )}

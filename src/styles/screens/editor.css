@@ -371,12 +371,55 @@
 
 .editor-zone-canvas {
   display: block;
+  cursor: crosshair;
+  /* Let pointer drags paint without the frame scrolling on touch/trackpad. */
+  touch-action: none;
 }
 
 .editor-zone-dimensions {
   margin: 0;
   color: var(--color-text-muted);
   font-size: 0.85rem;
+}
+
+.editor-tile-palette {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+}
+
+.editor-tile-swatch {
+  width: auto;
+  min-height: 2.35rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.35rem 0.6rem;
+}
+
+.editor-tile-swatch__glyph {
+  min-width: 1ch;
+  color: var(--color-text-strong);
+  font-weight: 700;
+}
+
+.editor-tile-swatch__name {
+  color: var(--color-text-soft);
+}
+
+.editor-tile-swatch__badge {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+
+.editor-tile-swatch__badge--blocked {
+  color: var(--color-accent);
+}
+
+.editor-zone-save {
+  display: grid;
+  gap: var(--space-2);
 }
 
 .editor-zone-section {

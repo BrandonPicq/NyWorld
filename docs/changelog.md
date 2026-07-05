@@ -4,6 +4,14 @@ This file tracks meaningful project changes by commit-oriented slices.
 
 Keep entries short and practical. When a slice is committed, its changelog section should stay aligned with the commit title so the project history remains easy to read after restores or bisects.
 
+## 2026-07-05 - [ADD]: Tile painting in the zone editor
+
+- Make the Zones tab paint tiles: a tile palette plus click and click-drag painting on the zone canvas.
+- Add a pure `pointerToCell` helper mapping pointer positions to grid cells via the canvas CSS box (devicePixelRatio-safe), wired through an optional `GameCanvas` `onCellPointer`.
+- Keep a deep-cloned zone draft, re-run `validateZoneData` live, and surface walkability errors (wall under the player start, an NPC, an item, or a transition) in a problems panel.
+- Save the draft to `src/content/zones/<zoneId>.json` through the dev editor endpoint, blocked while the draft has error diagnostics.
+- Split the zones UI into `ZoneEditorPanel`, `ZoneDraftEditor`, `ZoneTilePalette`, and `ZoneContents`; switching zones starts a fresh draft (unsaved tile edits are discarded — follow-up, and no undo stack yet).
+
 ## 2026-07-05 - [REFACTOR]: Split the content editor screen into panels
 
 - Extract `ContentTab`, `ItemDraftEditor`, and `ReferenceList` into their own files under `src/ui/editor/`.

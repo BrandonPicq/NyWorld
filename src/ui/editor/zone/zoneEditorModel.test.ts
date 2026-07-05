@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { ContentCatalogSnapshot, ZoneData } from "../../../engine";
-import { listEditorZones } from "./zoneEditorModel";
+import { listEditorZones, setTileAt, zoneContentPath } from "./zoneEditorModel";
 
 function createZone(overrides: Partial<ZoneData>): ZoneData {
   return {
@@ -55,5 +55,43 @@ describe("listEditorZones", () => {
         transitionCount: 1,
       },
     ]);
+  });
+});
+
+describe("setTileAt", () => {
+  const zone = createZone({
+    width: 3,
+    height: 2,
+    tiles: [
+      [0, 0, 0],
+      [0, 0, 0],
+    ],
+  });
+
+  it("returns a new zone with the target tile changed, leaving the source intact", () => {
+    const next = setTileAt(zone, 1, 1, 5);
+
+    expect(next).not.toBe(zone);
+    expect(next.tiles).toEqual([
+      [0, 0, 0],
+      [0, 5, 0],
+    ]);
+    // Source zone is untouched.
+    expect(zone.tiles[1][1]).toBe(0);
+  });
+
+  it("returns the same reference for a no-op paint or out-of-bounds cell", () => {
+    expect(setTileAt(zone, 1, 1, 0)).toBe(zone);
+    expect(setTileAt(zone, 3, 0, 5)).toBe(zone);
+    expect(setTileAt(zone, 0, 2, 5)).toBe(zone);
+    expect(setTileAt(zone, -1, 0, 5)).toBe(zone);
+  });
+});
+
+describe("zoneContentPath", () => {
+  it("builds the zone JSON path from the zone id", () => {
+    expect(zoneContentPath("test_zone")).toBe(
+      "src/content/zones/test_zone.json",
+    );
   });
 });
