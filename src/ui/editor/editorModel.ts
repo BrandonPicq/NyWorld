@@ -9,7 +9,7 @@ import type {
   ItemDefMap,
   NewGameStartingStack,
 } from "../../engine";
-import { CONTENT_TYPES } from "../../engine";
+import { CONTENT_TYPES, validateAllContent } from "../../engine";
 
 /** Save lifecycle state shared between the editor screen and its panels. */
 export type SaveStatus =
@@ -139,6 +139,25 @@ export function groupDiagnosticsByContentType(
         (diagnostic) => diagnostic.severity === "warning",
       ).length,
     }));
+}
+
+/**
+ * Re-runs the whole-bundle audit synchronously and reports whether it blocks a
+ * save.
+ *
+ * Draft hooks defer whole-bundle validation off the typing path with
+ * `useDeferredValue`, so a memoized `errorCount` can lag one render behind the
+ * live draft. Every save calls this on the LIVE draft snapshot and context
+ * before writing, closing that staleness window without trusting the deferred
+ * count.
+ */
+export function draftHasBlockingErrors(
+  snapshot: ContentCatalogSnapshot,
+  context: ContentValidationContext,
+): boolean {
+  return validateAllContent(snapshot, context).some(
+    (diagnostic) => diagnostic.severity === "error",
+  );
 }
 
 export function refsEqual(a: ContentRef, b: ContentRef): boolean {

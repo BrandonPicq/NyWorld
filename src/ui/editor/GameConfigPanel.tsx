@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useDeferredValue, useMemo, useState } from "react";
 import {
   createRuntimeContentValidationContext,
   formatContentDiagnostic,
@@ -10,7 +10,11 @@ import { ScrollRegion } from "../components/ScrollRegion";
 import { TerminalButton } from "../components/TerminalButton";
 import { TerminalPanel } from "../components/TerminalPanel";
 import { GAME_CONFIG_CONTENT_PATH, saveEditorContent } from "./editorSaveClient";
-import { serializeGameConfig, type SaveStatus } from "./editorModel";
+import {
+  draftHasBlockingErrors,
+  serializeGameConfig,
+  type SaveStatus,
+} from "./editorModel";
 
 type GameConfigPanelProps = {
   snapshot: ContentCatalogSnapshot;
@@ -38,9 +42,11 @@ export function GameConfigPanel({ snapshot }: GameConfigPanelProps) {
     message: "",
   });
 
+  // Defer whole-bundle validation off the typing path; save stays live.
+  const deferredDraft = useDeferredValue(draft);
   const diagnostics = useMemo(
-    () => validateAllContent({ ...snapshot, game: draft }, context),
-    [snapshot, draft, context],
+    () => validateAllContent({ ...snapshot, game: deferredDraft }, context),
+    [snapshot, deferredDraft, context],
   );
   const errorCount = diagnostics.filter(
     (diagnostic) => diagnostic.severity === "error",
@@ -78,7 +84,15 @@ export function GameConfigPanel({ snapshot }: GameConfigPanelProps) {
   }
 
   async function save(): Promise<void> {
-    if (!canSave) {
+    if (!hasUnsavedChanges || isSaving) {
+      return;
+    }
+    // Re-validate the live draft: canSave/errorCount may lag behind typing.
+    if (draftHasBlockingErrors({ ...snapshot, game: draft }, context)) {
+      setSaveStatus({
+        state: "error",
+        message: "Resolve errors before saving.",
+      });
       return;
     }
     setSaveStatus({ state: "saving", message: "Saving..." });

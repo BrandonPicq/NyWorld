@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useDeferredValue, useEffect, useMemo, useState } from "react";
 import {
   buildContentReferenceGraph,
   CONTENT_TYPES,
@@ -15,7 +15,7 @@ import {
   deleteEditorContent,
   saveEditorContent,
 } from "../editorSaveClient";
-import type { SaveStatus } from "../editorModel";
+import { draftHasBlockingErrors, type SaveStatus } from "../editorModel";
 import {
   cloneEnemyDefs,
   createEnemyDefForNpc,
@@ -92,9 +92,18 @@ export function useEnemyDraft(
       createEnemyDraftValidationContext(baseValidationContext, draftEnemies),
     [baseValidationContext, draftEnemies],
   );
+  // Defer whole-bundle validation off the typing path; graph and save stay live.
+  const deferredDraftEnemies = useDeferredValue(draftEnemies);
   const diagnostics = useMemo(
-    () => validateAllContent(draftSnapshot, validationContext),
-    [draftSnapshot, validationContext],
+    () =>
+      validateAllContent(
+        createEnemyDraftSnapshot(baseSnapshot, deferredDraftEnemies),
+        createEnemyDraftValidationContext(
+          baseValidationContext,
+          deferredDraftEnemies,
+        ),
+      ),
+    [baseSnapshot, baseValidationContext, deferredDraftEnemies],
   );
   const graph = useMemo(
     () => buildContentReferenceGraph(draftSnapshot),
@@ -242,7 +251,7 @@ export function useEnemyDraft(
       return;
     }
     if (
-      errorCount > 0 ||
+      draftHasBlockingErrors(draftSnapshot, validationContext) ||
       validateEnemyDef(selectedEnemy, validationContext).length > 0
     ) {
       setSaveStatus({

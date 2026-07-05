@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useDeferredValue, useEffect, useMemo, useState } from "react";
 import {
   buildContentReferenceGraph,
   CONTENT_TYPES,
@@ -13,7 +13,7 @@ import {
   type NpcPresenceDef,
 } from "../../../engine";
 import { deleteEditorContent, saveEditorContent } from "../editorSaveClient";
-import type { SaveStatus } from "../editorModel";
+import { draftHasBlockingErrors, type SaveStatus } from "../editorModel";
 import {
   addPresenceScheduleEntry,
   clonePresenceDefs,
@@ -94,9 +94,15 @@ export function useNpcPresenceDraft(
     () => createPresenceDraftSnapshot(baseSnapshot, draftPresence),
     [baseSnapshot, draftPresence],
   );
+  // Defer whole-bundle validation off the typing path; graph and save stay live.
+  const deferredDraftPresence = useDeferredValue(draftPresence);
   const diagnostics = useMemo(
-    () => validateAllContent(draftSnapshot, validationContext),
-    [draftSnapshot, validationContext],
+    () =>
+      validateAllContent(
+        createPresenceDraftSnapshot(baseSnapshot, deferredDraftPresence),
+        validationContext,
+      ),
+    [baseSnapshot, deferredDraftPresence, validationContext],
   );
   const graph = useMemo(
     () => buildContentReferenceGraph(draftSnapshot),
@@ -268,7 +274,7 @@ export function useNpcPresenceDraft(
       return;
     }
     if (
-      errorCount > 0 ||
+      draftHasBlockingErrors(draftSnapshot, validationContext) ||
       validateNpcPresenceDef(selectedPresence, validationContext).length > 0
     ) {
       setSaveStatus({

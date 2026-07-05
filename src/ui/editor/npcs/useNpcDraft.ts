@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useDeferredValue, useEffect, useMemo, useState } from "react";
 import {
   buildContentReferenceGraph,
   CONTENT_TYPES,
@@ -15,7 +15,7 @@ import {
   cloneDialogueFiles,
 } from "../dialogues/dialogueEditorModel";
 import { saveEditorContent } from "../editorSaveClient";
-import type { SaveStatus } from "../editorModel";
+import { draftHasBlockingErrors, type SaveStatus } from "../editorModel";
 import {
   addDefaultDialogueForNpc,
   cloneNpcDefs,
@@ -122,9 +122,30 @@ export function useNpcDraft(
       ),
     [baseSnapshot, baseValidationContext, draftDialogueFiles, draftNpcs],
   );
+  // Defer whole-bundle validation off the typing path; graph and save stay live.
+  const deferredDraftNpcs = useDeferredValue(draftNpcs);
+  const deferredDraftDialogueFiles = useDeferredValue(draftDialogueFiles);
   const diagnostics = useMemo(
-    () => validateAllContent(draftSnapshot, validationContext),
-    [draftSnapshot, validationContext],
+    () =>
+      validateAllContent(
+        createNpcDraftSnapshot(
+          baseSnapshot,
+          deferredDraftNpcs,
+          deferredDraftDialogueFiles,
+        ),
+        createNpcDraftValidationContext(
+          baseValidationContext,
+          baseSnapshot,
+          deferredDraftNpcs,
+          deferredDraftDialogueFiles,
+        ),
+      ),
+    [
+      baseSnapshot,
+      baseValidationContext,
+      deferredDraftNpcs,
+      deferredDraftDialogueFiles,
+    ],
   );
   const graph = useMemo(
     () => buildContentReferenceGraph(draftSnapshot),
@@ -367,7 +388,7 @@ export function useNpcDraft(
       return;
     }
     if (
-      errorCount > 0 ||
+      draftHasBlockingErrors(draftSnapshot, validationContext) ||
       validateNpcDef(selectedNpc, validationContext).length > 0
     ) {
       setSaveStatus({

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useDeferredValue, useEffect, useMemo, useState } from "react";
 import {
   buildContentReferenceGraph,
   CONTENT_TYPES,
@@ -21,6 +21,7 @@ import {
   cloneItemCatalog,
   createItemDraftSnapshot,
   createItemDraftValidationContext,
+  draftHasBlockingErrors,
   groupDiagnosticsByContentType,
   serializeItemCatalog,
   type SaveStatus,
@@ -77,21 +78,29 @@ export function useItemDraft(
     message: "No changes.",
   });
 
-  const { diagnostics, diagnosticGroups, graph, browserGroups } = useMemo(() => {
-    const snapshot = createItemDraftSnapshot(baseSnapshot, draftItems);
+  // Defer whole-bundle validation off the typing path; the reference graph and
+  // content browser (which drive selection) stay live.
+  const deferredDraftItems = useDeferredValue(draftItems);
+  const { diagnostics, diagnosticGroups } = useMemo(() => {
+    const snapshot = createItemDraftSnapshot(baseSnapshot, deferredDraftItems);
     const validationContext = createItemDraftValidationContext(
       baseValidationContext,
-      draftItems,
+      deferredDraftItems,
     );
     const nextDiagnostics = validateAllContent(snapshot, validationContext);
 
     return {
       diagnostics: nextDiagnostics,
       diagnosticGroups: groupDiagnosticsByContentType(nextDiagnostics),
+    };
+  }, [baseSnapshot, baseValidationContext, deferredDraftItems]);
+  const { graph, browserGroups } = useMemo(() => {
+    const snapshot = createItemDraftSnapshot(baseSnapshot, draftItems);
+    return {
       graph: buildContentReferenceGraph(snapshot),
       browserGroups: buildContentBrowserGroups(snapshot),
     };
-  }, [baseSnapshot, baseValidationContext, draftItems]);
+  }, [baseSnapshot, draftItems]);
   const itemCatalogDiagnostics = useMemo(
     () => validateItemCatalog(draftItems),
     [draftItems],
@@ -212,7 +221,12 @@ export function useItemDraft(
       return;
     }
 
-    if (errorCount > 0) {
+    if (
+      draftHasBlockingErrors(
+        createItemDraftSnapshot(baseSnapshot, draftItems),
+        createItemDraftValidationContext(baseValidationContext, draftItems),
+      )
+    ) {
       setSaveStatus({
         state: "error",
         message: "Resolve errors before saving.",

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useDeferredValue, useEffect, useMemo, useState } from "react";
 import {
   buildContentReferenceGraph,
   CONTENT_TYPES,
@@ -12,7 +12,7 @@ import {
   type DialogueNodeData,
 } from "../../../engine";
 import { saveEditorContent } from "../editorSaveClient";
-import type { SaveStatus } from "../editorModel";
+import { draftHasBlockingErrors, type SaveStatus } from "../editorModel";
 import {
   addDialogueFile,
   addDialogueToFile,
@@ -104,17 +104,19 @@ export function useDialogueDraft(
     () => createDialogueDraftSnapshot(baseSnapshot, draftFiles),
     [baseSnapshot, draftFiles],
   );
+  // Defer whole-bundle validation off the typing path; graph and save stay live.
+  const deferredDraftFiles = useDeferredValue(draftFiles);
   const diagnostics = useMemo(
     () =>
       validateAllContent(
-        draftSnapshot,
+        createDialogueDraftSnapshot(baseSnapshot, deferredDraftFiles),
         createDialogueDraftValidationContext(
           baseValidationContext,
           baseSnapshot,
-          draftFiles,
+          deferredDraftFiles,
         ),
       ),
-    [baseSnapshot, baseValidationContext, draftFiles, draftSnapshot],
+    [baseSnapshot, baseValidationContext, deferredDraftFiles],
   );
   const graph = useMemo(
     () => buildContentReferenceGraph(draftSnapshot),
@@ -337,7 +339,17 @@ export function useDialogueDraft(
       setSaveStatus({ state: "idle", message: "" });
       return;
     }
-    if (errorCount > 0 || validateDialogueFile(selectedFile).length > 0) {
+    if (
+      draftHasBlockingErrors(
+        draftSnapshot,
+        createDialogueDraftValidationContext(
+          baseValidationContext,
+          baseSnapshot,
+          draftFiles,
+        ),
+      ) ||
+      validateDialogueFile(selectedFile).length > 0
+    ) {
       setSaveStatus({
         state: "error",
         message: "Resolve errors before saving.",

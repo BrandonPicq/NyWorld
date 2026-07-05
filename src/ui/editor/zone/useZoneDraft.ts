@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useDeferredValue, useMemo, useState } from "react";
 import {
   createRuntimeContentValidationContext,
   validateAllContent,
@@ -9,7 +9,7 @@ import {
 import type { GridRenderSnapshot } from "../../../rendering/renderSnapshot";
 import { createZoneEditRenderSnapshot } from "../../../rendering/zoneEditRenderSnapshot";
 import { saveEditorContent } from "../editorSaveClient";
-import type { SaveStatus } from "../editorModel";
+import { draftHasBlockingErrors, type SaveStatus } from "../editorModel";
 import {
   cloneZoneData,
   createZoneDraftSnapshot,
@@ -69,13 +69,15 @@ export function useZoneDraft(
 
   // Validate against the whole bundle so cross-zone breakage shows up too — for
   // example painting a wall where a global NPC's schedule walks into this zone.
+  // Deferred off the typing path; the render snapshot and save stay live.
+  const deferredDraft = useDeferredValue(draft);
   const diagnostics = useMemo(
     () =>
       validateAllContent(
-        createZoneDraftSnapshot(snapshot, draft),
-        createZoneDraftValidationContext(context, draft),
+        createZoneDraftSnapshot(snapshot, deferredDraft),
+        createZoneDraftValidationContext(context, deferredDraft),
       ),
-    [snapshot, draft, context],
+    [snapshot, deferredDraft, context],
   );
   const errorCount = diagnostics.filter(
     (diagnostic) => diagnostic.severity === "error",
@@ -168,7 +170,12 @@ export function useZoneDraft(
       return;
     }
 
-    if (errorCount > 0) {
+    if (
+      draftHasBlockingErrors(
+        createZoneDraftSnapshot(snapshot, draft),
+        createZoneDraftValidationContext(context, draft),
+      )
+    ) {
       setSaveStatus({
         state: "error",
         message: "Resolve errors before saving.",

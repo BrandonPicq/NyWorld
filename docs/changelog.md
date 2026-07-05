@@ -4,6 +4,12 @@ This file tracks meaningful project changes by commit-oriented slices.
 
 Keep entries short and practical. When a slice is committed, its changelog section should stay aligned with the commit title so the project history remains easy to read after restores or bisects.
 
+## 2026-07-06 - [UPDATE]: Defer whole-bundle draft validation off the typing path
+
+- Feed whole-bundle `validateAllContent` through `useDeferredValue` in every editor draft hook (items, zones, dialogues, NPCs, presence, enemies) and the game config panel, so typing and painting no longer re-audit the bundle synchronously per keystroke.
+- Keep each reference graph, content browser, and render snapshot on the live draft so selection and painting stay responsive.
+- Add a shared `draftHasBlockingErrors` helper and re-run the whole-bundle audit synchronously inside every save before writing, so a save never trusts a possibly-stale deferred error count.
+
 ## 2026-07-06 - [ADD]: Edit global NPC presence in the editor
 
 - Add a Presence tab listing every NPC with its presence status, creating a presence for one that lacks it, editing its schedule with the shared `ScheduleEntriesEditor`, and deleting a presence file through the dev-only editor endpoint.

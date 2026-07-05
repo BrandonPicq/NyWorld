@@ -8,12 +8,17 @@ import type {
   GameContentConfig,
   GameMap,
 } from "../../engine";
-import { buildContentReferenceGraph } from "../../engine";
+import {
+  buildContentReferenceGraph,
+  createRuntimeContentCatalogSnapshot,
+  createRuntimeContentValidationContext,
+} from "../../engine";
 import {
   buildContentBrowserGroups,
   cloneItemCatalog,
   createItemDraftSnapshot,
   createItemDraftValidationContext,
+  draftHasBlockingErrors,
   groupDiagnosticsByContentType,
   serializeGameConfig,
 } from "./editorModel";
@@ -231,6 +236,30 @@ describe("item draft helpers", () => {
         path: "newGame.startingInventory[0].itemId",
       }),
     );
+  });
+});
+
+describe("draftHasBlockingErrors", () => {
+  it("re-audits the live draft: clean bundle passes, a dangling id blocks", () => {
+    const snapshot = createRuntimeContentCatalogSnapshot();
+    const context = createRuntimeContentValidationContext();
+
+    // The shipped bundle is audit-clean, so a save is never blocked spuriously.
+    expect(draftHasBlockingErrors(snapshot, context)).toBe(false);
+
+    // A draft that dangles an id must block the save even if a deferred
+    // errorCount has not caught up yet.
+    const broken = {
+      ...snapshot,
+      game: {
+        ...snapshot.game,
+        newGame: {
+          ...snapshot.game.newGame,
+          startingInventory: [{ itemId: "definitely_missing", quantity: 1 }],
+        },
+      },
+    };
+    expect(draftHasBlockingErrors(broken, context)).toBe(true);
   });
 });
 
