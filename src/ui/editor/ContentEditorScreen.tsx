@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import {
   buildContentReferenceGraph,
   CONTENT_TYPES,
@@ -12,6 +12,7 @@ import {
   type ContentReference,
   type ItemDef,
   type ItemDefMap,
+  type RenameImpact,
 } from "../../engine";
 import { TerminalButton } from "../components/TerminalButton";
 import { TerminalPanel } from "../components/TerminalPanel";
@@ -29,10 +30,13 @@ import {
   refsEqual,
   serializeItemCatalog,
 } from "./editorModel";
+import { ZoneViewerPanel } from "./zone/ZoneViewerPanel";
 
 type ContentEditorScreenProps = {
   onBack: () => void;
 };
+
+type EditorTab = "content" | "zones";
 
 type SaveStatus =
   | { state: "idle"; message: string }
@@ -56,6 +60,7 @@ export function ContentEditorScreen({ onBack }: ContentEditorScreenProps) {
     state: "idle",
     message: "No changes.",
   });
+  const [tab, setTab] = useState<EditorTab>("content");
 
   const { diagnostics, diagnosticGroups, graph, browserGroups } =
     useMemo(() => {
@@ -230,148 +235,223 @@ export function ContentEditorScreen({ onBack }: ContentEditorScreenProps) {
           </TerminalButton>
         </header>
 
-        <section className="editor-summary" aria-label="Content summary">
-          <span>{browserGroups.length} families</span>
-          <span>{totalEntries} entries</span>
-          <span>{errorCount} errors</span>
-          <span>{warningCount} warnings</span>
-          <span>{itemDraftErrorCount} item draft errors</span>
-          <span>{hasUnsavedChanges ? "unsaved" : "saved"}</span>
-        </section>
+        <nav className="editor-tabs" aria-label="Editor sections">
+          <TerminalButton
+            className="editor-tab"
+            isSelected={tab === "content"}
+            onClick={() => setTab("content")}
+          >
+            Content
+          </TerminalButton>
+          <TerminalButton
+            className="editor-tab"
+            isSelected={tab === "zones"}
+            onClick={() => setTab("zones")}
+          >
+            Zones
+          </TerminalButton>
+        </nav>
 
-        <div className="editor-grid">
-          <TerminalPanel className="editor-panel editor-browser">
-            <h2 className="editor-panel__title">Content</h2>
-            <div className="editor-scroll" role="list">
-              {browserGroups.map((group) => (
-                <section className="editor-family" key={group.type}>
+        {tab === "zones" ? (
+          <ZoneViewerPanel snapshot={baseSnapshot} />
+        ) : (
+          <ContentTab
+            browserGroups={browserGroups}
+            diagnosticGroups={diagnosticGroups}
+            errorCount={errorCount}
+            warningCount={warningCount}
+            itemDraftErrorCount={itemDraftErrorCount}
+            totalEntries={totalEntries}
+            hasUnsavedChanges={hasUnsavedChanges}
+            selectedRef={selectedRef}
+            setSelectedRef={setSelectedRef}
+            selectedImpact={selectedImpact}
+            incomingRefs={incomingRefs}
+            outgoingRefs={outgoingRefs}
+            itemEditor={
+              <ItemDraftEditor
+                canSave={canSaveItems}
+                isSaving={isSaving}
+                item={selectedItem}
+                itemDiagnostics={selectedItemDiagnostics}
+                itemIdDraft={itemIdDraft}
+                onApplyItemId={renameSelectedItem}
+                onCategoryChange={(category) =>
+                  updateSelectedItem((item) => ({ ...item, category }))
+                }
+                onDefaultQuantityChange={(value) =>
+                  updateSelectedItem((item) => ({
+                    ...item,
+                    defaultQuantity: parseNumberDraft(value),
+                  }))
+                }
+                onDescriptionChange={(description) =>
+                  updateSelectedItem((item) => ({ ...item, description }))
+                }
+                onEffectChange={(field, value) =>
+                  updateSelectedItem((item) =>
+                    updateItemEffect(item, field, value),
+                  )
+                }
+                onItemIdDraftChange={setItemIdDraft}
+                onNameChange={(name) =>
+                  updateSelectedItem((item) => ({ ...item, name }))
+                }
+                onReset={resetItemDraft}
+                onSave={saveItemDraft}
+                saveStatus={saveStatus}
+                selectedRef={selectedRef}
+                hasUnsavedChanges={hasUnsavedChanges}
+              />
+            }
+          />
+        )}
+      </div>
+    </main>
+  );
+}
+
+type ContentTabProps = {
+  browserGroups: ReturnType<typeof buildContentBrowserGroups>;
+  diagnosticGroups: ReturnType<typeof groupDiagnosticsByContentType>;
+  errorCount: number;
+  warningCount: number;
+  itemDraftErrorCount: number;
+  totalEntries: number;
+  hasUnsavedChanges: boolean;
+  selectedRef: ContentRef;
+  setSelectedRef: (ref: ContentRef) => void;
+  selectedImpact: RenameImpact;
+  incomingRefs: ContentReference[];
+  outgoingRefs: ContentReference[];
+  itemEditor: ReactNode;
+};
+
+function ContentTab({
+  browserGroups,
+  diagnosticGroups,
+  errorCount,
+  warningCount,
+  itemDraftErrorCount,
+  totalEntries,
+  hasUnsavedChanges,
+  selectedRef,
+  setSelectedRef,
+  selectedImpact,
+  incomingRefs,
+  outgoingRefs,
+  itemEditor,
+}: ContentTabProps) {
+  return (
+    <>
+      <section className="editor-summary" aria-label="Content summary">
+        <span>{browserGroups.length} families</span>
+        <span>{totalEntries} entries</span>
+        <span>{errorCount} errors</span>
+        <span>{warningCount} warnings</span>
+        <span>{itemDraftErrorCount} item draft errors</span>
+        <span>{hasUnsavedChanges ? "unsaved" : "saved"}</span>
+      </section>
+
+      <div className="editor-grid">
+        <TerminalPanel className="editor-panel editor-browser">
+          <h2 className="editor-panel__title">Content</h2>
+          <div className="editor-scroll" role="list">
+            {browserGroups.map((group) => (
+              <section className="editor-family" key={group.type}>
+                <div className="editor-family__header">
+                  <h3>{group.label}</h3>
+                  <span>{group.entries.length}</span>
+                </div>
+                <div className="editor-entry-list">
+                  {group.entries.map((entry) => (
+                    <TerminalButton
+                      className="editor-entry-button"
+                      isSelected={refsEqual(entry.ref, selectedRef)}
+                      key={`${entry.ref.type}:${entry.ref.id}`}
+                      onClick={() => setSelectedRef(entry.ref)}
+                    >
+                      {entry.label}
+                    </TerminalButton>
+                  ))}
+                </div>
+              </section>
+            ))}
+          </div>
+        </TerminalPanel>
+
+        <TerminalPanel className="editor-panel editor-problems">
+          <h2 className="editor-panel__title">Problems</h2>
+          {diagnosticGroups.length === 0 ? (
+            <p className="editor-empty">No content problems.</p>
+          ) : (
+            <div className="editor-scroll">
+              {diagnosticGroups.map((group) => (
+                <section
+                  className="editor-diagnostic-group"
+                  key={group.contentType}
+                >
                   <div className="editor-family__header">
-                    <h3>{group.label}</h3>
-                    <span>{group.entries.length}</span>
+                    <h3>{group.contentType}</h3>
+                    <span>
+                      {group.errorCount}E / {group.warningCount}W
+                    </span>
                   </div>
-                  <div className="editor-entry-list">
-                    {group.entries.map((entry) => (
-                      <TerminalButton
-                        className="editor-entry-button"
-                        isSelected={refsEqual(entry.ref, selectedRef)}
-                        key={`${entry.ref.type}:${entry.ref.id}`}
-                        onClick={() => setSelectedRef(entry.ref)}
+                  <ul className="editor-diagnostic-list">
+                    {group.diagnostics.map((diagnostic, index) => (
+                      <li
+                        className={`editor-diagnostic editor-diagnostic--${diagnostic.severity}`}
+                        key={`${group.contentType}-${diagnostic.path}-${index}`}
                       >
-                        {entry.label}
-                      </TerminalButton>
+                        {formatContentDiagnostic(diagnostic)}
+                      </li>
                     ))}
-                  </div>
+                  </ul>
                 </section>
               ))}
             </div>
-          </TerminalPanel>
+          )}
+        </TerminalPanel>
 
-          <TerminalPanel className="editor-panel editor-problems">
-            <h2 className="editor-panel__title">Problems</h2>
-            {diagnosticGroups.length === 0 ? (
-              <p className="editor-empty">No content problems.</p>
-            ) : (
-              <div className="editor-scroll">
-                {diagnosticGroups.map((group) => (
-                  <section
-                    className="editor-diagnostic-group"
-                    key={group.contentType}
-                  >
-                    <div className="editor-family__header">
-                      <h3>{group.contentType}</h3>
-                      <span>
-                        {group.errorCount}E / {group.warningCount}W
-                      </span>
-                    </div>
-                    <ul className="editor-diagnostic-list">
-                      {group.diagnostics.map((diagnostic, index) => (
-                        <li
-                          className={`editor-diagnostic editor-diagnostic--${diagnostic.severity}`}
-                          key={`${group.contentType}-${diagnostic.path}-${index}`}
-                        >
-                          {formatContentDiagnostic(diagnostic)}
-                        </li>
-                      ))}
-                    </ul>
-                  </section>
-                ))}
-              </div>
-            )}
-          </TerminalPanel>
+        <TerminalPanel className="editor-panel editor-reference">
+          <h2 className="editor-panel__title">Editor</h2>
+          {itemEditor}
 
-          <TerminalPanel className="editor-panel editor-reference">
-            <h2 className="editor-panel__title">Editor</h2>
-            <ItemDraftEditor
-              canSave={canSaveItems}
-              isSaving={isSaving}
-              item={selectedItem}
-              itemDiagnostics={selectedItemDiagnostics}
-              itemIdDraft={itemIdDraft}
-              onApplyItemId={renameSelectedItem}
-              onCategoryChange={(category) =>
-                updateSelectedItem((item) => ({ ...item, category }))
-              }
-              onDefaultQuantityChange={(value) =>
-                updateSelectedItem((item) => ({
-                  ...item,
-                  defaultQuantity: parseNumberDraft(value),
-                }))
-              }
-              onDescriptionChange={(description) =>
-                updateSelectedItem((item) => ({ ...item, description }))
-              }
-              onEffectChange={(field, value) =>
-                updateSelectedItem((item) =>
-                  updateItemEffect(item, field, value),
-                )
-              }
-              onItemIdDraftChange={setItemIdDraft}
-              onNameChange={(name) =>
-                updateSelectedItem((item) => ({ ...item, name }))
-              }
-              onReset={resetItemDraft}
-              onSave={saveItemDraft}
-              saveStatus={saveStatus}
-              selectedRef={selectedRef}
-              hasUnsavedChanges={hasUnsavedChanges}
+          <h2 className="editor-panel__title">References</h2>
+          <div className="editor-selected-ref">
+            <span>{selectedRef.type}</span>
+            <strong>{selectedRef.id}</strong>
+          </div>
+
+          <div className="editor-impact">
+            <p>
+              Rename impact: {selectedImpact.references.length} references
+            </p>
+            <p>
+              Save persistence:{" "}
+              {selectedImpact.appearsInSaves ? "yes" : "no"}
+            </p>
+          </div>
+
+          <div className="editor-reference-columns">
+            <ReferenceList
+              emptyLabel="No incoming references."
+              onSelectRef={setSelectedRef}
+              references={incomingRefs}
+              title="Incoming"
+              useTarget={false}
             />
-
-            <h2 className="editor-panel__title">References</h2>
-            <div className="editor-selected-ref">
-              <span>{selectedRef.type}</span>
-              <strong>{selectedRef.id}</strong>
-            </div>
-
-            <div className="editor-impact">
-              <p>
-                Rename impact: {selectedImpact.references.length} references
-              </p>
-              <p>
-                Save persistence:{" "}
-                {selectedImpact.appearsInSaves ? "yes" : "no"}
-              </p>
-            </div>
-
-            <div className="editor-reference-columns">
-              <ReferenceList
-                emptyLabel="No incoming references."
-                onSelectRef={setSelectedRef}
-                references={incomingRefs}
-                title="Incoming"
-                useTarget={false}
-              />
-              <ReferenceList
-                emptyLabel="No outgoing references."
-                onSelectRef={setSelectedRef}
-                references={outgoingRefs}
-                title="Outgoing"
-                useTarget
-              />
-            </div>
-          </TerminalPanel>
-        </div>
+            <ReferenceList
+              emptyLabel="No outgoing references."
+              onSelectRef={setSelectedRef}
+              references={outgoingRefs}
+              title="Outgoing"
+              useTarget
+            />
+          </div>
+        </TerminalPanel>
       </div>
-    </main>
+    </>
   );
 }
 

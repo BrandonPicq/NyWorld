@@ -30,6 +30,18 @@
   text-align: center;
 }
 
+.editor-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.editor-tab {
+  width: auto;
+  min-width: 8rem;
+  text-align: center;
+}
+
 .editor-summary {
   display: flex;
   flex-wrap: wrap;
@@ -304,8 +316,114 @@
   outline-offset: var(--focus-ring-offset);
 }
 
+.editor-zone-layout {
+  min-height: 0;
+  display: grid;
+  grid-template-columns: minmax(14rem, 0.7fr) minmax(20rem, 1.4fr) minmax(
+      18rem,
+      1fr
+    );
+  gap: var(--space-3);
+}
+
+.editor-zone-entry {
+  display: grid;
+  gap: 0.2rem;
+  text-align: left;
+}
+
+.editor-zone-entry__name {
+  color: var(--color-text);
+}
+
+.editor-zone-entry__meta {
+  color: var(--color-text-muted);
+  font-size: 0.8rem;
+  text-transform: none;
+}
+
+.editor-zone-preview__body {
+  min-height: 0;
+  display: grid;
+  gap: var(--space-2);
+}
+
+.editor-zone-canvas-frame {
+  min-height: 0;
+  overflow: auto;
+  border: 1px solid var(--color-border-muted);
+  padding: var(--space-2);
+  background: var(--color-panel-background);
+}
+
+.editor-zone-canvas {
+  display: block;
+}
+
+.editor-zone-dimensions {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: 0.85rem;
+}
+
+.editor-zone-section {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.editor-zone-row-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: var(--space-1);
+}
+
+.editor-zone-row {
+  display: grid;
+  gap: 0.25rem;
+  border: 1px solid var(--color-border-muted);
+  padding: 0.5rem;
+  background: var(--color-button-background);
+  overflow-wrap: anywhere;
+}
+
+.editor-zone-row__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+.editor-zone-row__head strong {
+  color: var(--color-text);
+}
+
+.editor-zone-row__head span {
+  color: var(--color-text-muted);
+  font-size: 0.85rem;
+}
+
+.editor-zone-row__meta {
+  margin: 0;
+  color: var(--color-text-soft);
+  font-size: 0.85rem;
+  line-height: var(--line-height-copy);
+}
+
+.editor-zone-schedule {
+  margin: 0;
+  padding-left: var(--space-3);
+  display: grid;
+  gap: 0.15rem;
+  color: var(--color-text-muted);
+  font-size: 0.8rem;
+}
+
 @media (max-width: 1100px) {
   .editor-grid,
+  .editor-zone-layout,
   .editor-reference-columns {
     grid-template-columns: 1fr;
   }

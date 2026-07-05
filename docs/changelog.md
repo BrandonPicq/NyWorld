@@ -4,6 +4,13 @@ This file tracks meaningful project changes by commit-oriented slices.
 
 Keep entries short and practical. When a slice is committed, its changelog section should stay aligned with the commit title so the project history remains easy to read after restores or bisects.
 
+## 2026-07-05 - [ADD]: Read-only zone viewer in the editor
+
+- Add a Zones tab to the dev content editor for previewing authored zones.
+- Add `createZoneEditRenderSnapshot` to project authored zone data into the shared grid render contract.
+- Render the selected zone through the existing `GridRenderer` via an `EditorZoneCanvas` adapter.
+- List the selected zone's NPC spawns (with schedules), item stacks, transitions, and entry dialogue read-only.
+
 ## 2026-07-04 - [FIX]: Require trusted request headers for editor saves
 
 - Require a custom editor header on the save endpoint so cross-origin pages trigger an unapproved CORS preflight.
