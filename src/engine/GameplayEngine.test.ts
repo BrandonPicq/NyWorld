@@ -4,6 +4,7 @@ import testZone2Data from "../content/zones/test_zone_2.json";
 import { getDialogue } from "./dialogues/dialogueRegistry";
 import { SAVE_VERSION } from "./GameSaveData";
 import { GameplayEngine } from "./GameplayEngine";
+import { getAllNpcDefs } from "./npcs/npcRegistry";
 import type { ZoneData } from "./ZoneTypes";
 import {
   START_WORLD_TIME_MINUTES,
@@ -873,15 +874,10 @@ describe("GameplayEngine", () => {
       currentRole: "resident",
       knownFlags: [],
     });
-    expect(engine.getSnapshot().npcStates.map((state) => state.npcId)).toEqual([
-      "goblin",
-      "kobold",
-      "old_scholar",
-      "old_wizard",
-      "slime",
-      "young_page",
-      "yuria",
-    ]);
+    const stateIds = engine.getSnapshot().npcStates.map((state) => state.npcId);
+    const authoredNpcIds = getAllNpcDefs().map((npc) => npc.npcId);
+    expect(new Set(stateIds)).toEqual(new Set(authoredNpcIds));
+    expect(stateIds).toHaveLength(authoredNpcIds.length);
   });
 
   it("protects NPC state from external mutations", () => {

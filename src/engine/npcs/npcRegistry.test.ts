@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  getAllNpcDefs,
   getNpcDef,
   hasNpcDef,
   validateNpcDef,
@@ -7,16 +8,14 @@ import {
 } from "./npcRegistry";
 
 describe("npcRegistry", () => {
-  it("exposes known NPC character sheets", () => {
-    expect(hasNpcDef("old_scholar")).toBe(true);
-    expect(getNpcDef("old_scholar")).toMatchObject({
-      npcId: "old_scholar",
-      name: "Old Scholar",
-      race: "human",
-      importance: "story",
-      presentation: { glyph: "S", color: "#ffb000" },
-      defaultDialogueId: "old_scholar.default",
-    });
+  it("exposes authored NPC character sheets", () => {
+    const defs = getAllNpcDefs();
+
+    expect(defs.length).toBeGreaterThan(0);
+    for (const def of defs) {
+      expect(hasNpcDef(def.npcId)).toBe(true);
+      expect(getNpcDef(def.npcId)).toEqual(def);
+    }
   });
 
   it("returns a fallback for unknown NPC definitions", () => {
@@ -30,10 +29,14 @@ describe("npcRegistry", () => {
   });
 
   it("protects registry definitions from external mutation", () => {
-    const firstRead = getNpcDef("old_scholar");
-    firstRead.presentation!.color = "#000000";
+    const authored = getAllNpcDefs()[0];
+    const firstRead = getNpcDef(authored.npcId);
+    firstRead.name = "Changed outside the registry.";
+    if (firstRead.presentation) {
+      firstRead.presentation.color = "#000000";
+    }
 
-    expect(getNpcDef("old_scholar").presentation!.color).toBe("#ffb000");
+    expect(getNpcDef(authored.npcId)).toEqual(authored);
   });
 });
 

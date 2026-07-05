@@ -76,9 +76,11 @@ describe("validateTileCatalog", () => {
 
 describe("TileRegistry", () => {
   it("exposes the authored floor and wall tiles", () => {
+    const unknownTileId = nextUnknownTileId();
+
     expect(hasTileDef(0)).toBe(true);
     expect(hasTileDef(1)).toBe(true);
-    expect(hasTileDef(2)).toBe(false);
+    expect(hasTileDef(unknownTileId)).toBe(false);
 
     expect(getTileDef(0)).toEqual(
       expect.objectContaining({ name: "floor", walkable: true }),
@@ -89,13 +91,14 @@ describe("TileRegistry", () => {
   });
 
   it("falls back to the floor tile for unknown ids", () => {
-    expect(getTileDef(99).name).toBe("floor");
+    expect(getTileDef(nextUnknownTileId()).name).toBe("floor");
   });
 
   it("returns a detached tile definition map", () => {
     const defs = getAllTileDefs();
 
-    expect([...defs.keys()].sort()).toEqual([0, 1]);
+    expect(defs.has(0)).toBe(true);
+    expect([...defs.keys()]).toEqual([...defs.keys()].sort((a, b) => a - b));
 
     const floor = defs.get(0);
     expect(floor).toBeDefined();
@@ -103,3 +106,7 @@ describe("TileRegistry", () => {
     expect(getTileDef(0).name).toBe("floor");
   });
 });
+
+function nextUnknownTileId(): number {
+  return Math.max(...getAllTileDefs().keys()) + 1;
+}

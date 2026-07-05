@@ -62,6 +62,10 @@ function createSnapshot(zones: ZoneData[]): ContentCatalogSnapshot {
   } as ContentCatalogSnapshot;
 }
 
+const shippedZoneIds = Object.keys(
+  createRuntimeContentCatalogSnapshot().zones,
+).sort((a, b) => a.localeCompare(b));
+
 describe("listEditorZones", () => {
   it("sorts zones by id and counts placements, defaulting missing arrays to 0", () => {
     const snapshot = createSnapshot([
@@ -132,7 +136,7 @@ describe("setTileAt", () => {
 describe("placement editing", () => {
   const zone = createZone({
     playerStart: { x: 1, y: 1 },
-    npcs: [{ npcId: "old_scholar", x: 2, y: 2 }],
+    npcs: [{ npcId: "npc_a", x: 2, y: 2 }],
     items: [{ itemId: "old_coin", x: 3, y: 3, quantity: 1 }],
     transitions: [
       { x: 4, y: 4, targetZoneId: "other", targetX: 0, targetY: 0 },
@@ -145,21 +149,21 @@ describe("placement editing", () => {
   });
 
   it("places an NPC, replacing any spawn on the same cell", () => {
-    const withDialogue = placeNpcAt(zone, 2, 2, "old_wizard", "greet");
+    const withDialogue = placeNpcAt(zone, 2, 2, "npc_b", "greet");
     expect(withDialogue.npcs).toEqual([
-      { npcId: "old_wizard", dialogueId: "greet", x: 2, y: 2 },
+      { npcId: "npc_b", dialogueId: "greet", x: 2, y: 2 },
     ]);
 
-    const withoutDialogue = placeNpcAt(zone, 7, 7, "old_wizard");
+    const withoutDialogue = placeNpcAt(zone, 7, 7, "npc_b");
     expect(withoutDialogue.npcs).toEqual([
-      { npcId: "old_scholar", x: 2, y: 2 },
-      { npcId: "old_wizard", x: 7, y: 7 },
+      { npcId: "npc_a", x: 2, y: 2 },
+      { npcId: "npc_b", x: 7, y: 7 },
     ]);
   });
 
   it("places an item stack, replacing any stack on the same cell", () => {
-    expect(placeItemAt(zone, 3, 3, "chalk_piece", 5).items).toEqual([
-      { itemId: "chalk_piece", x: 3, y: 3, quantity: 5 },
+    expect(placeItemAt(zone, 3, 3, "item_a", 5).items).toEqual([
+      { itemId: "item_a", x: 3, y: 3, quantity: 5 },
     ]);
   });
 
@@ -192,7 +196,7 @@ describe("validateNewZone", () => {
   const base = { zoneId: "cave", name: "Cave", width: 6, height: 5 };
 
   it("accepts a fresh slug id with a valid grid", () => {
-    expect(validateNewZone(base, ["test_zone"])).toEqual([]);
+    expect(validateNewZone(base, ["existing_zone"])).toEqual([]);
   });
 
   it("rejects blank, malformed, or duplicate ids", () => {
@@ -277,14 +281,14 @@ describe("entry dialogue editing", () => {
 
 describe("zoneContentPath", () => {
   it("builds the zone JSON path from the zone id", () => {
-    expect(zoneContentPath("test_zone")).toBe(
-      "src/content/zones/test_zone.json",
+    expect(zoneContentPath("custom_zone")).toBe(
+      "src/content/zones/custom_zone.json",
     );
   });
 });
 
 describe("serializeZoneData", () => {
-  it.each(["test_zone", "test_zone_2"])(
+  it.each(shippedZoneIds)(
     "round-trips the shipped %s.json byte-for-byte",
     (zoneId) => {
       const raw = readShippedZone(zoneId);
@@ -296,9 +300,9 @@ describe("serializeZoneData", () => {
 
   it("keeps each tiles row on a single line and never explodes a tile", () => {
     const serialized = serializeZoneData(
-      JSON.parse(readShippedZone("test_zone")) as ZoneData,
+      JSON.parse(readShippedZone(shippedZoneIds[0])) as ZoneData,
     );
-    expect(serialized).toContain("    [1, 1, 1, 1, 1, 1, 1, 1, 1, 1],");
+    expect(serialized).toMatch(/^\s+\[\d+(, \d+)+\],?$/m);
     // No tile number ever sits alone on its own line.
     expect(serialized).not.toMatch(/^\s+\d+,?$/m);
   });
@@ -307,8 +311,7 @@ describe("serializeZoneData", () => {
 describe("zone draft cross-content validation", () => {
   it("flags a paint that walls a tile a global NPC's schedule walks onto", () => {
     const snapshot = createRuntimeContentCatalogSnapshot();
-    // young_page's 18:00 schedule enters test_zone_2 at (2, 6).
-    const target = { zoneId: "test_zone_2", x: 2, y: 6 };
+    const target = findScheduleTarget(snapshot);
     const draft = setTileAt(
       cloneZoneData(snapshot.zones[target.zoneId]),
       target.x,
@@ -327,7 +330,7 @@ describe("zone draft cross-content validation", () => {
     expect(
       diagnostics.some(
         (diagnostic) =>
-          diagnostic.contentId === "young_page" &&
+          diagnostic.contentId === target.npcId &&
           /non-walkable/i.test(diagnostic.message),
       ),
     ).toBe(true);
@@ -335,13 +338,66 @@ describe("zone draft cross-content validation", () => {
 
   it("stays clean when the schedule target keeps its walkable tile", () => {
     const snapshot = createRuntimeContentCatalogSnapshot();
+    const target = findScheduleTarget(snapshot);
     const diagnostics = validateAllContent(
       snapshot,
       createRuntimeContentValidationContext(),
     );
 
     expect(
-      diagnostics.some((diagnostic) => diagnostic.contentId === "young_page"),
+      diagnostics.some((diagnostic) => diagnostic.contentId === target.npcId),
     ).toBe(false);
   });
 });
+
+function findScheduleTarget(snapshot: ContentCatalogSnapshot): {
+  npcId: string;
+  zoneId: string;
+  x: number;
+  y: number;
+} {
+  for (const presence of snapshot.npcPresence) {
+    for (const entry of presence.schedule) {
+      const zone = entry.zoneId ? snapshot.zones[entry.zoneId] : undefined;
+      if (
+        zone &&
+        entry.x >= 0 &&
+        entry.x < zone.width &&
+        entry.y >= 0 &&
+        entry.y < zone.height &&
+        getAllTileDefs().get(zone.tiles[entry.y][entry.x])?.walkable === true
+      ) {
+        return {
+          npcId: presence.npcId,
+          zoneId: zone.zoneId,
+          x: entry.x,
+          y: entry.y,
+        };
+      }
+    }
+  }
+
+  const npcId = snapshot.npcs[0]?.npcId;
+  const zone = Object.values(snapshot.zones)[0];
+  if (!npcId || !zone) {
+    throw new Error("expected at least one authored NPC and zone");
+  }
+
+  snapshot.npcPresence.push({
+    npcId,
+    schedule: [
+      {
+        time: "08:00",
+        zoneId: zone.zoneId,
+        x: zone.playerStart.x,
+        y: zone.playerStart.y,
+      },
+    ],
+  });
+  return {
+    npcId,
+    zoneId: zone.zoneId,
+    x: zone.playerStart.x,
+    y: zone.playerStart.y,
+  };
+}

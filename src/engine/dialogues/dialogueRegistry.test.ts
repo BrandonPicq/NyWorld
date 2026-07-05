@@ -8,29 +8,19 @@ import {
 } from "./dialogueRegistry";
 
 describe("dialogueRegistry", () => {
-  it("exposes known dialogue definitions", () => {
-    expect(hasDialogue("old_scholar.test_fields")).toBe(true);
-    expect(getDialogue("old_scholar.test_fields")).toEqual([
-      {
-        speaker: "Old Scholar",
-        text: "Greetings, apprentice. I am researching the history of these ancient fields.",
-        pitch: 0.75,
-      },
-      {
-        speaker: "Old Scholar",
-        text: "They say that to the East, beyond the threshold, lies a colder land.",
-        pitch: 0.75,
-      },
-    ]);
+  it("exposes authored dialogue definitions", () => {
+    const dialogue = getFirstEditableDialogue();
+
+    expect(hasDialogue(dialogue.dialogueId)).toBe(true);
+    expect(getDialogue(dialogue.dialogueId)).toEqual(dialogue.nodes);
   });
 
   it("protects dialogue nodes from external mutation", () => {
-    const firstRead = getDialogue("old_wizard.default");
+    const dialogue = getFirstEditableDialogue();
+    const firstRead = getDialogue(dialogue.dialogueId);
     firstRead[0].text = "Changed outside the registry.";
 
-    expect(getDialogue("old_wizard.default")[0].text).toBe(
-      "Hocus Pocus! I am an adjacent Wizard.",
-    );
+    expect(getDialogue(dialogue.dialogueId)).toEqual(dialogue.nodes);
   });
 
   it("returns fallback dialogue for unknown ids", () => {
@@ -46,22 +36,19 @@ describe("dialogueRegistry", () => {
   });
 
   it("exposes detached editable dialogue files without the runtime fallback", () => {
+    const dialogue = getFirstEditableDialogue();
     const firstRead = getDialogueFiles();
 
-    expect(firstRead.old_wizard["old_wizard.default"]).toEqual([
-      {
-        speaker: "Old Wizard",
-        text: "Hocus Pocus! I am an adjacent Wizard.",
-        pitch: 1.2,
-      },
-    ]);
+    expect(firstRead[dialogue.stem][dialogue.dialogueId]).toEqual(
+      dialogue.nodes,
+    );
     expect(firstRead.unknown_npc).toBeUndefined();
 
-    firstRead.old_wizard["old_wizard.default"][0].text =
+    firstRead[dialogue.stem][dialogue.dialogueId][0].text =
       "Changed outside the registry.";
 
-    expect(getDialogueFiles().old_wizard["old_wizard.default"][0].text).toBe(
-      "Hocus Pocus! I am an adjacent Wizard.",
+    expect(getDialogueFiles()[dialogue.stem][dialogue.dialogueId]).toEqual(
+      dialogue.nodes,
     );
   });
 });
@@ -113,6 +100,26 @@ describe("validateDialogueFile", () => {
     ]);
   });
 });
+
+function getFirstEditableDialogue() {
+  const files = getDialogueFiles();
+
+  for (const stem of Object.keys(files).sort((a, b) => a.localeCompare(b))) {
+    const dialogueIds = Object.keys(files[stem]).sort((a, b) =>
+      a.localeCompare(b),
+    );
+    const dialogueId = dialogueIds[0];
+    if (dialogueId) {
+      return {
+        stem,
+        dialogueId,
+        nodes: files[stem][dialogueId].map((node) => ({ ...node })),
+      };
+    }
+  }
+
+  throw new Error("expected at least one editable dialogue file");
+}
 
 describe("validateDialogueRegistry", () => {
   it("reports duplicate dialogue ids across files", () => {

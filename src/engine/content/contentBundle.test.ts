@@ -1,8 +1,11 @@
 import { describe, expect, it } from "vitest";
 import gameConfigData from "../../content/game.json";
+import { getAllItemIds } from "../items/itemRegistry";
 import { getTileDef } from "../TileRegistry";
+import type { ZoneData } from "../ZoneTypes";
 import {
   defaultContentBundle,
+  type GameContentConfig,
   getDefaultZoneData,
   getNewGameConfig,
   getSafeRespawn,
@@ -12,9 +15,17 @@ import {
   validateGameConfig,
 } from "./contentBundle";
 
+const authoredZones = import.meta.glob<ZoneData>("../../content/zones/*.json", {
+  eager: true,
+  import: "default",
+});
+const authoredZoneIds = Object.values(authoredZones)
+  .map((zone) => zone.zoneId)
+  .sort((a, b) => a.localeCompare(b));
+
 function createGameConfigContext() {
   return {
-    itemIds: new Set(["academy_notebook", "travel_ration", "chalk_piece"]),
+    itemIds: new Set(getAllItemIds()),
     zones: resolveAllZonesFromBundle(defaultContentBundle),
   };
 }
@@ -102,8 +113,9 @@ describe("validateGameConfig", () => {
   });
 
   it("rejects an unwalkable safe respawn", () => {
+    const blocked = findBlockedCoordinate();
     const config = gameConfigWith({
-      safeRespawn: { zoneId: "test_zone", x: 0, y: 0 },
+      safeRespawn: { zoneId: blocked.zoneId, x: blocked.x, y: blocked.y },
     });
 
     expect(validateGameConfig(config, createGameConfigContext())).toEqual([
@@ -129,11 +141,9 @@ describe("validateGameConfig", () => {
 
 describe("contentBundle", () => {
   it("discovers authored zone content", () => {
-    expect(Object.keys(defaultContentBundle.zones).sort()).toEqual([
-      "test_zone",
-      "test_zone_2",
-      "test_zone_3",
-    ]);
+    expect(Object.keys(defaultContentBundle.zones).sort()).toEqual(
+      authoredZoneIds,
+    );
   });
 
   it("resolves the configured default zone", () => {
@@ -156,17 +166,21 @@ describe("contentBundle", () => {
   });
 
   it("resolves zones into runtime maps", () => {
-    const map = resolveZoneFromBundle(defaultContentBundle, "test_zone");
+    const zoneId = defaultContentBundle.game.defaultZoneId;
+    const zoneData = getZoneData(defaultContentBundle, zoneId)!;
+    const map = resolveZoneFromBundle(defaultContentBundle, zoneId);
 
-    expect(map?.zoneId).toBe("test_zone");
-    expect(map?.isWalkable(5, 4)).toBe(true);
+    expect(map?.zoneId).toBe(zoneId);
+    expect(map?.isWalkable(zoneData.playerStart.x, zoneData.playerStart.y))
+      .toBe(true);
   });
 
   it("returns independent zone data and map instances", () => {
-    const firstZoneData = getZoneData(defaultContentBundle, "test_zone");
-    const secondZoneData = getZoneData(defaultContentBundle, "test_zone");
-    const firstMap = resolveZoneFromBundle(defaultContentBundle, "test_zone");
-    const secondMap = resolveZoneFromBundle(defaultContentBundle, "test_zone");
+    const zoneId = defaultContentBundle.game.defaultZoneId;
+    const firstZoneData = getZoneData(defaultContentBundle, zoneId);
+    const secondZoneData = getZoneData(defaultContentBundle, zoneId);
+    const firstMap = resolveZoneFromBundle(defaultContentBundle, zoneId);
+    const secondMap = resolveZoneFromBundle(defaultContentBundle, zoneId);
 
     expect(firstZoneData).not.toBe(secondZoneData);
     expect(firstZoneData?.tiles).not.toBe(secondZoneData?.tiles);
@@ -174,23 +188,30 @@ describe("contentBundle", () => {
   });
 
   it("exposes a detached new-game config", () => {
+    const authoredNewGame = (gameConfigData as GameContentConfig).newGame;
     const first = getNewGameConfig(defaultContentBundle);
 
-    expect(first).toMatchObject({
-      startingCurrency: 1550,
-      maxEnergy: 100,
-      startingInventory: [
-        { itemId: "academy_notebook", quantity: 1 },
-        { itemId: "travel_ration", quantity: 3 },
-        { itemId: "chalk_piece", quantity: 2 },
-      ],
-    });
+    expect(first).toEqual(authoredNewGame);
 
-    first.startingInventory[0].quantity = 99;
+    first.startingInventory.push({ itemId: "debug_item", quantity: 99 });
     first.attributes.strength = 99;
 
     const second = getNewGameConfig(defaultContentBundle);
-    expect(second.startingInventory[0].quantity).toBe(1);
-    expect(second.attributes.strength).toBe(10);
+    expect(second.startingInventory).toEqual(authoredNewGame.startingInventory);
+    expect(second.attributes.strength).toBe(authoredNewGame.attributes.strength);
   });
 });
+
+function findBlockedCoordinate(): { zoneId: string; x: number; y: number } {
+  for (const zone of Object.values(defaultContentBundle.zones)) {
+    for (let y = 0; y < zone.tiles.length; y++) {
+      for (let x = 0; x < zone.tiles[y].length; x++) {
+        if (!getTileDef(zone.tiles[y][x]).walkable) {
+          return { zoneId: zone.zoneId, x, y };
+        }
+      }
+    }
+  }
+
+  throw new Error("expected shipped zones to contain a blocked tile");
+}

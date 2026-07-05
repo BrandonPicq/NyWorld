@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import slimeData from "../../content/enemies/slime.json";
 import { createNpcStats } from "../stats/npcStats";
+import type { EnemyDef } from "./EnemyDef";
 import {
   getAllEnemyDefs,
   getEnemyDef,
@@ -9,6 +10,17 @@ import {
   validateEnemyDef,
   validateEnemyRegistry,
 } from "./enemyRegistry";
+
+const authoredEnemies = import.meta.glob<EnemyDef>(
+  "../../content/enemies/*.json",
+  {
+    eager: true,
+    import: "default",
+  },
+);
+const authoredEnemyIds = Object.values(authoredEnemies)
+  .map((enemy) => enemy.npcId)
+  .sort((a, b) => a.localeCompare(b));
 
 const draftEnemyContext = {
   npcIds: new Set(["slime", "draft_beast"]),
@@ -148,6 +160,15 @@ describe("enemyRegistry", () => {
     const defs = getAllEnemyDefs();
     const ids = defs.map((def) => def.npcId);
 
-    expect(ids).toEqual(["goblin", "kobold", "slime"]);
+    expect([...ids].sort((a, b) => a.localeCompare(b))).toEqual(
+      authoredEnemyIds,
+    );
+    expect(ids).toEqual(expect.arrayContaining(["goblin", "kobold", "slime"]));
+
+    defs[0].loot.push({ itemId: "mutated", quantity: 99 });
+    expect(getEnemyDef(defs[0].npcId)?.loot).not.toContainEqual({
+      itemId: "mutated",
+      quantity: 99,
+    });
   });
 });

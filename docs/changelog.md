@@ -4,6 +4,13 @@ This file tracks meaningful project changes by commit-oriented slices.
 
 Keep entries short and practical. When a slice is committed, its changelog section should stay aligned with the commit title so the project history remains easy to read after restores or bisects.
 
+## 2026-07-05 - [TEST]: Make content catalog tests tolerate growth
+
+- Derive expected authored zones, enemies, NPC states, and zone serializer coverage from runtime content instead of fixed id lists.
+- Replace tutorial-specific registry, dialogue, presence, item, runtime context, and content audit expectations with authored-content fixtures.
+- Keep core tutorial checks for baseline enemies, actions, tiles, and gameplay fixtures without blocking additional authored content.
+- Make game config serializer and bundle tests follow the authored data instead of specific starter item ids.
+
 ## 2026-07-05 - [ADD]: Add Yuria NPC
 
 - Add Yuria as a story NPC with custom map presentation.

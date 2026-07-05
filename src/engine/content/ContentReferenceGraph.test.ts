@@ -211,14 +211,15 @@ describe("buildContentReferenceGraph", () => {
 
 describe("runtime content catalog", () => {
   it("finds shipped usages of a dialogue id", () => {
-    const graph = buildContentReferenceGraph(
-      createRuntimeContentCatalogSnapshot(),
-    );
+    const graph = buildContentReferenceGraph(createRuntimeContentCatalogSnapshot());
+    const dialogueRef = graph.references.find(
+      (reference) => reference.to.type === "dialogue",
+    )?.to;
 
-    const usages = graph.getReferencesTo({
-      type: "dialogue",
-      id: "old_wizard.default",
-    });
+    expect(dialogueRef).toBeDefined();
+    const usages = graph.getReferencesTo(
+      dialogueRef ?? { type: "dialogue", id: "missing" },
+    );
 
     expect(usages.length).toBeGreaterThan(0);
   });

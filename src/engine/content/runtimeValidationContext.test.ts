@@ -1,25 +1,52 @@
 import { describe, expect, it } from "vitest";
 
+import { getAllCombatActionDefs } from "../combat/combatActionRegistry";
+import { getAllDialogueIds } from "../dialogues/dialogueRegistry";
+import { getAllEnemyDefs } from "../enemies/enemyRegistry";
+import { getAllItemIds } from "../items/itemRegistry";
+import { getAllNpcDefs } from "../npcs/npcRegistry";
+import { getAllQuestDefs } from "../quests/questRegistry";
+import { getAllTileDefs } from "../TileRegistry";
+import { defaultContentBundle } from "./contentBundle";
 import { createRuntimeContentValidationContext } from "./runtimeValidationContext";
 
 describe("createRuntimeContentValidationContext", () => {
   it("collects every shipped content id family", () => {
     const context = createRuntimeContentValidationContext();
 
-    expect(context.itemIds.has("travel_ration")).toBe(true);
-    expect(context.npcIds.has("old_wizard")).toBe(true);
-    expect(context.dialogueIds.size).toBeGreaterThan(0);
-    expect(context.enemyIds.has("slime")).toBe(true);
-    expect(context.questIds.has("slay_the_slime")).toBe(true);
-    expect(context.combatActionIds.has("strike")).toBe(true);
-    expect(context.tileDefs.get(0)?.walkable).toBe(true);
-    expect(context.zones.has("test_zone")).toBe(true);
-    expect(context.zones.has("test_zone_2")).toBe(true);
+    expect([...context.itemIds].sort()).toEqual(getAllItemIds().sort());
+    expect([...context.npcIds].sort()).toEqual(
+      getAllNpcDefs()
+        .map((npc) => npc.npcId)
+        .sort(),
+    );
+    expect([...context.dialogueIds].sort()).toEqual(getAllDialogueIds().sort());
+    expect([...context.enemyIds].sort()).toEqual(
+      getAllEnemyDefs()
+        .map((enemy) => enemy.npcId)
+        .sort(),
+    );
+    expect([...context.questIds].sort()).toEqual(
+      getAllQuestDefs()
+        .map((quest) => quest.questId)
+        .sort(),
+    );
+    expect([...context.combatActionIds].sort()).toEqual(
+      getAllCombatActionDefs()
+        .map((action) => action.actionId)
+        .sort(),
+    );
+    expect([...context.tileDefs.keys()].sort((a, b) => a - b)).toEqual(
+      [...getAllTileDefs().keys()].sort((a, b) => a - b),
+    );
+    expect([...context.zones.keys()].sort()).toEqual(
+      Object.keys(defaultContentBundle.zones).sort(),
+    );
   });
 
   it("resolves zones into walkability-aware maps", () => {
     const context = createRuntimeContentValidationContext();
-    const zone = context.zones.get("test_zone");
+    const zone = context.zones.values().next().value;
 
     expect(zone).toBeDefined();
     expect(typeof zone!.isWalkable).toBe("function");

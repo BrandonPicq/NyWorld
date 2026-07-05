@@ -8,6 +8,15 @@ import {
   validateCombatActionRegistry,
 } from "./combatActionRegistry";
 
+const CORE_COMBAT_ACTION_IDS = [
+  "strike",
+  "cast",
+  "guard",
+  "focus",
+  "flee",
+  "use_item",
+] as const;
+
 describe("validateCombatActionDef", () => {
   it("accepts the shipped strike definition", () => {
     expect(validateCombatActionDef(strikeData)).toEqual([]);
@@ -113,15 +122,19 @@ describe("validateCombatActionRegistry", () => {
 });
 
 describe("combatActionRegistry", () => {
-  it("loads the core combat action definitions in display order", () => {
-    expect(getAllCombatActionDefs().map((def) => def.actionId)).toEqual([
-      "strike",
-      "cast",
-      "guard",
-      "focus",
-      "flee",
-      "use_item",
-    ]);
+  it("loads the core combat action definitions in authored display order", () => {
+    const defs = getAllCombatActionDefs();
+    const ids = defs.map((def) => def.actionId);
+    const orders = defs.map((def) => def.order);
+
+    expect(ids).toEqual(expect.arrayContaining([...CORE_COMBAT_ACTION_IDS]));
+    expect(orders).toEqual([...orders].sort((a, b) => a - b));
+
+    for (let i = 1; i < CORE_COMBAT_ACTION_IDS.length; i++) {
+      expect(ids.indexOf(CORE_COMBAT_ACTION_IDS[i - 1])).toBeLessThan(
+        ids.indexOf(CORE_COMBAT_ACTION_IDS[i]),
+      );
+    }
   });
 
   it("exposes concise and detailed help for every action", () => {

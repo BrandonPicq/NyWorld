@@ -112,10 +112,17 @@ describe("serializeGameConfig", () => {
       new URL("../../content/game.json", import.meta.url),
       "utf8",
     );
-    const serialized = serializeGameConfig(JSON.parse(raw) as GameContentConfig);
-    expect(serialized).toContain(
-      '      { "itemId": "academy_notebook", "quantity": 1 },',
-    );
+    const config = JSON.parse(raw) as GameContentConfig;
+    const serialized = serializeGameConfig(config);
+    const firstStack = config.newGame.startingInventory[0];
+
+    if (firstStack) {
+      expect(serialized).toContain(
+        `      { "itemId": ${JSON.stringify(firstStack.itemId)}, "quantity": ${JSON.stringify(firstStack.quantity)} }`,
+      );
+    } else {
+      expect(serialized).toContain('"startingInventory": []');
+    }
   });
 });
 

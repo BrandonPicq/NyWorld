@@ -8,40 +8,33 @@ import {
 } from "./npcPresenceRegistry";
 
 describe("npcPresenceRegistry", () => {
-  it("exposes known NPC presence definitions", () => {
-    expect(hasNpcPresenceDef("young_page")).toBe(true);
-    expect(getNpcPresenceDef("young_page")).toMatchObject({
-      npcId: "young_page",
-      schedule: [
-        {
-          time: "08:00",
-          zoneId: "test_zone",
-          x: 6,
-          y: 3,
-          dialogueId: "young_page.quest_start",
-        },
-        {
-          time: "18:00",
-          zoneId: "test_zone_2",
-          x: 2,
-          y: 6,
-          dialogueId: "young_page.evening",
-        },
-      ],
-    });
+  it("exposes authored NPC presence definitions", () => {
+    for (const def of getAllNpcPresenceDefs()) {
+      expect(hasNpcPresenceDef(def.npcId)).toBe(true);
+      expect(getNpcPresenceDef(def.npcId)).toEqual(def);
+      expect(def.schedule.length).toBeGreaterThan(0);
+    }
   });
 
   it("protects registry definitions from external mutation", () => {
-    const firstRead = getNpcPresenceDef("young_page")!;
+    const authored = getAllNpcPresenceDefs()[0];
+    if (!authored) {
+      expect(getAllNpcPresenceDefs()).toEqual([]);
+      return;
+    }
+
+    const firstRead = getNpcPresenceDef(authored.npcId)!;
     firstRead.schedule[0].x = 99;
 
-    expect(getNpcPresenceDef("young_page")!.schedule[0].x).toBe(6);
+    expect(getNpcPresenceDef(authored.npcId)).toEqual(authored);
   });
 
-  it("returns all registered presence definitions", () => {
-    expect(getAllNpcPresenceDefs().map((def) => def.npcId)).toContain(
-      "young_page",
-    );
+  it("returns detached copies of all registered presence definitions", () => {
+    const firstRead = getAllNpcPresenceDefs();
+    const secondRead = getAllNpcPresenceDefs();
+
+    expect(firstRead).toEqual(secondRead);
+    expect(firstRead).not.toBe(secondRead);
   });
 });
 
