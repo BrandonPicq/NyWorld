@@ -2,6 +2,7 @@ import {
   createGameMapFromZoneData,
   type ContentCatalogSnapshot,
   type ContentValidationContext,
+  type DialogueNodeData,
   type ItemSpawnData,
   type NpcSpawnData,
   type ZoneData,
@@ -312,4 +313,45 @@ export function erasePlacementsAt(
   }
 
   return changed ? result : zone;
+}
+
+/** Appends a blank entry-dialogue line (neutral pitch) to the zone. */
+export function addEntryDialogueNode(zone: ZoneData): ZoneData {
+  const nodes = zone.entryDialogue ?? [];
+  return {
+    ...zone,
+    entryDialogue: [...nodes, { speaker: "", text: "", pitch: 1 }],
+  };
+}
+
+/** Patches one field of the entry-dialogue line at `index`. */
+export function updateEntryDialogueNode(
+  zone: ZoneData,
+  index: number,
+  patch: Partial<DialogueNodeData>,
+): ZoneData {
+  const nodes = zone.entryDialogue ?? [];
+  if (index < 0 || index >= nodes.length) {
+    return zone;
+  }
+  const entryDialogue = nodes.map((node, nodeIndex) =>
+    nodeIndex === index ? { ...node, ...patch } : node,
+  );
+  return { ...zone, entryDialogue };
+}
+
+/** Removes the entry-dialogue line at `index`, dropping the key when empty. */
+export function removeEntryDialogueNode(
+  zone: ZoneData,
+  index: number,
+): ZoneData {
+  const nodes = zone.entryDialogue ?? [];
+  if (index < 0 || index >= nodes.length) {
+    return zone;
+  }
+  const entryDialogue = nodes.filter((_, nodeIndex) => nodeIndex !== index);
+  return {
+    ...zone,
+    entryDialogue: entryDialogue.length > 0 ? entryDialogue : undefined,
+  };
 }

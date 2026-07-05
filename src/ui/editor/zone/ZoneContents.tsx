@@ -2,16 +2,15 @@ import type { ReactNode } from "react";
 import type { ZoneData } from "../../../engine";
 
 /**
- * Read-only listing of a zone's authored placements.
+ * Read-only listing of a zone's spatial placements.
  *
- * Tile painting (slice 8) edits the grid; NPC spawns, item stacks, transitions,
- * and entry dialogue stay read-only here until placement editing lands.
+ * NPC spawns, item stacks, and transitions are edited on the canvas, so they
+ * stay read-only here. Entry dialogue is edited in EntryDialogueEditor.
  */
 export function ZoneContents({ zone }: { zone: ZoneData }) {
   const npcs = zone.npcs ?? [];
   const items = zone.items ?? [];
   const transitions = zone.transitions ?? [];
-  const entryDialogue = zone.entryDialogue ?? [];
 
   return (
     <>
@@ -75,19 +74,6 @@ export function ZoneContents({ zone }: { zone: ZoneData }) {
                   {transition.targetY})
                 </span>
               </div>
-            </li>
-          ))}
-        </ul>
-      </ZoneSection>
-
-      <ZoneSection count={entryDialogue.length} title="Entry Dialogue">
-        <ul className="editor-zone-row-list">
-          {entryDialogue.map((node, index) => (
-            <li className="editor-zone-row" key={index}>
-              <div className="editor-zone-row__head">
-                <strong>{node.speaker}</strong>
-              </div>
-              <p className="editor-zone-row__meta">{node.text}</p>
             </li>
           ))}
         </ul>

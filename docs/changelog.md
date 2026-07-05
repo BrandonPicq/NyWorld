@@ -4,6 +4,12 @@ This file tracks meaningful project changes by commit-oriented slices.
 
 Keep entries short and practical. When a slice is committed, its changelog section should stay aligned with the commit title so the project history remains easy to read after restores or bisects.
 
+## 2026-07-05 - [ADD]: Edit zone entry dialogue in the editor
+
+- Make a zone's entry-dialogue lines editable (speaker / text / pitch) on the same draft, with add and delete.
+- Drive edits through the existing live validation so a blank speaker or text blocks saving until filled.
+- Add `addEntryDialogueNode`/`updateEntryDialogueNode`/`removeEntryDialogueNode` helpers with tests; move the read-only dialogue list out of ZoneContents.
+
 ## 2026-07-05 - [ADD]: Create new zones from the editor
 
 - Add a "New Zone" form to the Zones tab (zoneId, name, width, height) with live validation: a fresh slug id and a grid of at least 3x3.

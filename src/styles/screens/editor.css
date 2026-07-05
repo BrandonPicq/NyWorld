@@ -351,6 +351,10 @@
   padding-top: var(--space-3);
 }
 
+.editor-dialogue-node {
+  gap: var(--space-2);
+}
+
 .editor-zone-entry__name {
   color: var(--color-text);
 }

@@ -8,6 +8,7 @@ import { ScrollRegion } from "../../components/ScrollRegion";
 import { TerminalButton } from "../../components/TerminalButton";
 import { TerminalPanel } from "../../components/TerminalPanel";
 import { EditorZoneCanvas } from "./EditorZoneCanvas";
+import { EntryDialogueEditor } from "./EntryDialogueEditor";
 import { ZoneContents } from "./ZoneContents";
 import { ZonePlacementControls } from "./ZonePlacementControls";
 import { usePlacementSelection } from "./usePlacementSelection";
@@ -122,6 +123,7 @@ export function ZoneDraftEditor({ zone, snapshot }: ZoneDraftEditorProps) {
           </section>
 
           <ZoneContents zone={draft} />
+          <EntryDialogueEditor onUpdate={updateDraft} zone={draft} />
         </ScrollRegion>
       </TerminalPanel>
     </>

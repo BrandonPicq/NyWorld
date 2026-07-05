@@ -9,6 +9,7 @@ import {
   type ZoneData,
 } from "../../../engine";
 import {
+  addEntryDialogueNode,
   cloneZoneData,
   createBlankZone,
   createZoneDraftSnapshot,
@@ -18,9 +19,11 @@ import {
   placeItemAt,
   placeNpcAt,
   placeTransitionAt,
+  removeEntryDialogueNode,
   serializeZoneData,
   setPlayerStart,
   setTileAt,
+  updateEntryDialogueNode,
   validateNewZone,
   zoneContentPath,
 } from "./zoneEditorModel";
@@ -240,6 +243,35 @@ describe("createBlankZone", () => {
     ]);
     // The player start sits on a floor tile.
     expect(zone.tiles[zone.playerStart.y][zone.playerStart.x]).toBe(0);
+  });
+});
+
+describe("entry dialogue editing", () => {
+  it("adds a blank line, patches fields, and removes lines", () => {
+    const zone = createZone({ playerStart: { x: 1, y: 1 } });
+
+    const added = addEntryDialogueNode(zone);
+    expect(added.entryDialogue).toEqual([
+      { speaker: "", text: "", pitch: 1 },
+    ]);
+
+    const patched = updateEntryDialogueNode(added, 0, {
+      speaker: "Narrator",
+      text: "Hello.",
+      pitch: 0.8,
+    });
+    expect(patched.entryDialogue).toEqual([
+      { speaker: "Narrator", text: "Hello.", pitch: 0.8 },
+    ]);
+
+    // Removing the last line drops the key entirely.
+    expect(removeEntryDialogueNode(patched, 0).entryDialogue).toBeUndefined();
+  });
+
+  it("ignores out-of-range indexes", () => {
+    const zone = addEntryDialogueNode(createZone({ playerStart: { x: 1, y: 1 } }));
+    expect(updateEntryDialogueNode(zone, 5, { speaker: "x" })).toBe(zone);
+    expect(removeEntryDialogueNode(zone, -1)).toBe(zone);
   });
 });
 
