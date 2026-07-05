@@ -4,6 +4,14 @@ This file tracks meaningful project changes by commit-oriented slices.
 
 Keep entries short and practical. When a slice is committed, its changelog section should stay aligned with the commit title so the project history remains easy to read after restores or bisects.
 
+## 2026-07-04 - [FIX]: Require trusted request headers for editor saves
+
+- Require a custom editor header on the save endpoint so cross-origin pages trigger an unapproved CORS preflight.
+- Reject save requests whose Origin header does not match the dev server host.
+- Reject opaque or malformed request origins.
+- Record the request trust rules in the editor persistence ADR.
+- Add header validation tests for same-origin, originless, cross-origin, and malformed cases.
+
 ## 2026-07-04 - [ADD]: Editable item catalog in the editor
 
 - Add an editable item draft panel to the dev content editor.

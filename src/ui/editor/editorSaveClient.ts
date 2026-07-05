@@ -19,6 +19,7 @@ export async function saveEditorContent(
       method: "POST",
       headers: {
         "Content-Type": "application/json",
+        "X-NyWarudo-Editor": "save",
       },
       body: JSON.stringify({ path, content }),
     });

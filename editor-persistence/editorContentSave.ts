@@ -7,6 +7,54 @@ const SAVE_ENDPOINT = "/__editor/save";
 const CONTENT_ROOT = "src/content";
 const MAX_BODY_BYTES = 2 * 1024 * 1024;
 
+/**
+ * Custom header the editor client must send with every save request.
+ *
+ * A cross-origin page cannot attach a custom header without triggering a CORS
+ * preflight, and the save endpoint never approves preflights, so this blocks
+ * drive-by POSTs from other sites open in the same browser.
+ */
+export const EDITOR_REQUEST_HEADER = "x-nywarudo-editor";
+export const EDITOR_REQUEST_HEADER_VALUE = "save";
+
+export type EditorRequestHeadersResult =
+  | { ok: true }
+  | { ok: false; reason: string };
+
+/**
+ * Validates that a save request comes from the editor UI itself.
+ *
+ * The custom marker header is the primary defense; the Origin/Host comparison
+ * is belt-and-braces for clients that send an Origin header.
+ */
+export function validateEditorRequestHeaders(headers: {
+  origin?: string;
+  host?: string;
+  editorMarker?: string;
+}): EditorRequestHeadersResult {
+  if (headers.editorMarker !== EDITOR_REQUEST_HEADER_VALUE) {
+    return { ok: false, reason: "Missing editor request header." };
+  }
+
+  if (headers.origin !== undefined) {
+    let originHost: string;
+    try {
+      originHost = new URL(headers.origin).host;
+    } catch {
+      return { ok: false, reason: "Invalid request origin." };
+    }
+
+    if (!headers.host || originHost !== headers.host) {
+      return {
+        ok: false,
+        reason: "Cross-origin editor saves are not allowed.",
+      };
+    }
+  }
+
+  return { ok: true };
+}
+
 export type EditorContentPathResult =
   | {
       ok: true;
@@ -95,6 +143,16 @@ export function editorContentSavePlugin(): Plugin {
           return;
         }
 
+        const headerCheck = validateEditorRequestHeaders({
+          origin: readSingleHeader(req.headers.origin),
+          host: readSingleHeader(req.headers.host),
+          editorMarker: readSingleHeader(req.headers[EDITOR_REQUEST_HEADER]),
+        });
+        if (!headerCheck.ok) {
+          sendJson(res, 403, { error: headerCheck.reason });
+          return;
+        }
+
         try {
           const payload = parseSaveRequest(await readRequestBody(req));
           if (!payload.ok) {
@@ -180,6 +238,12 @@ async function readRequestBody(req: IncomingMessage): Promise<string> {
   }
 
   return Buffer.concat(chunks).toString("utf8");
+}
+
+function readSingleHeader(
+  value: string | string[] | undefined,
+): string | undefined {
+  return Array.isArray(value) ? value[0] : value;
 }
 
 function sendJson(

@@ -33,6 +33,9 @@ Regles retenues pour l'implementation future :
   `src/content` ou contiennent une traversee de repertoire ;
 - le contenu sauvegarde reste du JSON normal dans le repository, versionne par
   git ;
+- les requetes de sauvegarde doivent porter une en-tete custom (ce qui force un
+  preflight CORS jamais approuve pour les pages tierces) et toute en-tete
+  Origin presente doit correspondre au Host du dev server ;
 - Vite peut recharger le contenu modifie via son comportement de dev server et
   HMR.
 
