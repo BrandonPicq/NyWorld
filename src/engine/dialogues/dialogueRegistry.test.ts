@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  getDialogueFiles,
   getDialogue,
   hasDialogue,
   validateDialogueFile,
@@ -42,6 +43,26 @@ describe("dialogueRegistry", () => {
         pitch: 1,
       },
     ]);
+  });
+
+  it("exposes detached editable dialogue files without the runtime fallback", () => {
+    const firstRead = getDialogueFiles();
+
+    expect(firstRead.old_wizard["old_wizard.default"]).toEqual([
+      {
+        speaker: "Old Wizard",
+        text: "Hocus Pocus! I am an adjacent Wizard.",
+        pitch: 1.2,
+      },
+    ]);
+    expect(firstRead.unknown_npc).toBeUndefined();
+
+    firstRead.old_wizard["old_wizard.default"][0].text =
+      "Changed outside the registry.";
+
+    expect(getDialogueFiles().old_wizard["old_wizard.default"][0].text).toBe(
+      "Hocus Pocus! I am an adjacent Wizard.",
+    );
   });
 });
 

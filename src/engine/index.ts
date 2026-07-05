@@ -191,6 +191,7 @@ export type { ItemMapPresentation } from "./items/itemMapPresentation";
 export {
   getAllDialogueIds,
   getDialogue,
+  getDialogueFiles,
   hasDialogue,
   validateDialogueFile,
   validateDialogueRegistry,

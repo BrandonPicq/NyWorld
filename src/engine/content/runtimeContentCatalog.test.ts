@@ -11,4 +11,16 @@ describe("createRuntimeContentCatalogSnapshot", () => {
     const second = createRuntimeContentCatalogSnapshot();
     expect(second.game.newGame.startingInventory[0].quantity).toBe(1);
   });
+
+  it("returns detached dialogue file data", () => {
+    const first = createRuntimeContentCatalogSnapshot();
+
+    first.dialogueFiles.old_wizard["old_wizard.default"][0].text =
+      "Changed outside the snapshot.";
+
+    const second = createRuntimeContentCatalogSnapshot();
+    expect(
+      second.dialogueFiles.old_wizard["old_wizard.default"][0].text,
+    ).toBe("Hocus Pocus! I am an adjacent Wizard.");
+  });
 });

@@ -41,7 +41,7 @@ export function validateAllContent(
         [...snapshot.tiles].map(([tileId, def]) => [String(tileId), def]),
       ),
     ),
-    ...validateDialogueRegistry([snapshot.dialogues]),
+    ...validateDialogueRegistry(Object.values(snapshot.dialogueFiles)),
     ...validateNpcRegistry(snapshot.npcs, context),
     ...validateNpcPresenceRegistry(snapshot.npcPresence, context),
     ...validateEnemyRegistry(snapshot.enemies, context),

@@ -2,6 +2,7 @@ import { getAllCombatActionDefs } from "../combat/combatActionRegistry";
 import {
   getAllDialogueIds,
   getDialogue,
+  getDialogueFiles,
 } from "../dialogues/dialogueRegistry";
 import { getAllEnemyDefs } from "../enemies/enemyRegistry";
 import { getAllItemIds, getItemDef } from "../items/itemRegistry";
@@ -49,6 +50,7 @@ export function createRuntimeContentCatalogSnapshot(
         getDialogue(dialogueId),
       ]),
     ),
+    dialogueFiles: getDialogueFiles(),
     tiles: getAllTileDefs(),
   };
 }

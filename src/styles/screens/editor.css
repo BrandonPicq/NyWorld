@@ -309,6 +309,12 @@
   font-size: 0.8rem;
 }
 
+.editor-reference-list li strong {
+  color: var(--color-text-soft);
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
 .editor-reference-link {
   border: 0;
   padding: 0;
@@ -345,6 +351,18 @@
   grid-template-columns: minmax(0, 44rem);
   grid-template-rows: minmax(0, 1fr);
   justify-content: center;
+}
+
+.editor-dialogue-layout {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: minmax(14rem, 0.75fr) minmax(22rem, 1.25fr) minmax(
+      18rem,
+      1fr
+    );
+  grid-template-rows: minmax(0, 1fr);
+  gap: var(--space-3);
 }
 
 .editor-zone-entry {
@@ -529,6 +547,7 @@
 @media (max-width: 1100px) {
   .editor-grid,
   .editor-zone-layout,
+  .editor-dialogue-layout,
   .editor-reference-columns {
     grid-template-columns: 1fr;
   }
@@ -536,6 +555,7 @@
   /* Stacked single-column layout scrolls the page naturally (see layout.css). */
   .editor-grid,
   .editor-zone-layout,
+  .editor-dialogue-layout,
   .editor-game-layout {
     flex: none;
     grid-template-rows: none;

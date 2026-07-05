@@ -14,14 +14,16 @@ const fallback: DialogueNodeData[] = [
   },
 ];
 
+const dialogueFiles = getSortedContentModules(
+  import.meta.glob<unknown>("../../content/dialogues/*.json", {
+    eager: true,
+    import: "default",
+  }),
+);
+
 const dialogueMaps = [
   { "unknown_npc.default": fallback },
-  ...getSortedContentModules(
-    import.meta.glob<unknown>("../../content/dialogues/*.json", {
-      eager: true,
-      import: "default",
-    }),
-  ),
+  ...dialogueFiles.map((file) => file.dialogues),
 ];
 
 const registry = buildRegistry(dialogueMaps);
@@ -38,6 +40,21 @@ export function hasDialogue(dialogueId: string): boolean {
  */
 export function getAllDialogueIds(): string[] {
   return Object.keys(registry).sort();
+}
+
+/**
+ * Returns the editable dialogue files keyed by file stem.
+ *
+ * The synthetic runtime fallback is intentionally excluded: it is available to
+ * `getDialogue()` for resilience, but it is not owned by a JSON content file.
+ */
+export function getDialogueFiles(): Record<string, DialogueDefMap> {
+  return Object.fromEntries(
+    dialogueFiles.map((file) => [
+      file.stem,
+      cloneDialogueMap(file.dialogues as DialogueDefMap),
+    ]),
+  );
 }
 
 /**
@@ -205,10 +222,28 @@ function buildRegistry(files: readonly unknown[]): DialogueDefMap {
   return nextRegistry;
 }
 
-function getSortedContentModules(modules: Record<string, unknown>): unknown[] {
+function getSortedContentModules(
+  modules: Record<string, unknown>,
+): { stem: string; dialogues: unknown }[] {
   return Object.entries(modules)
     .sort(([a], [b]) => a.localeCompare(b))
-    .map(([, module]) => module);
+    .map(([path, module]) => ({
+      stem: getFileStem(path),
+      dialogues: module,
+    }));
+}
+
+function getFileStem(path: string): string {
+  return path.split("/").pop()?.replace(/\.json$/, "") ?? path;
+}
+
+function cloneDialogueMap(dialogues: DialogueDefMap): DialogueDefMap {
+  return Object.fromEntries(
+    Object.entries(dialogues).map(([dialogueId, nodes]) => [
+      dialogueId,
+      nodes.map((node) => ({ ...node })),
+    ]),
+  );
 }
 
 function addDialogueError(

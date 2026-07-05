@@ -70,6 +70,7 @@ export interface ContentCatalogSnapshot {
   quests: QuestDef[];
   combatActions: CombatActionDef[];
   dialogues: DialogueDefMap;
+  dialogueFiles: Record<string, DialogueDefMap>;
   tiles: ReadonlyMap<TileId, TileDef>;
 }
 

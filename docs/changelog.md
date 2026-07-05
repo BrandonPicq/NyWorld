@@ -4,6 +4,14 @@ This file tracks meaningful project changes by commit-oriented slices.
 
 Keep entries short and practical. When a slice is committed, its changelog section should stay aligned with the commit title so the project history remains easy to read after restores or bisects.
 
+## 2026-07-05 - [ADD]: Edit and create dialogues in the editor
+
+- Track editable dialogue files separately from the flattened runtime dialogue registry, excluding the synthetic fallback from file saves.
+- Add a Dialogues tab for creating dialogue files, adding dialogue ids, editing speaker/text/pitch nodes, and saving the owning JSON file.
+- Block dialogue deletion while incoming content references still exist, with references listed beside the selected dialogue.
+- Validate dialogue drafts against the whole content bundle with draft dialogue ids substituted into the validation context.
+- Share the dialogue-node editor between reusable dialogues and zone entry dialogue.
+
 ## 2026-07-05 - [ADD]: Undo and redo for zone edits
 
 - Back the zone draft with a past/present/future history stack; add Undo and Redo controls.

@@ -92,6 +92,11 @@ function createSyntheticSnapshot(): ContentCatalogSnapshot {
     dialogues: {
       "hero.greeting": [{ speaker: "Hero", text: "Hello.", pitch: 1 }],
     },
+    dialogueFiles: {
+      hero: {
+        "hero.greeting": [{ speaker: "Hero", text: "Hello.", pitch: 1 }],
+      },
+    },
     tiles: new Map([
       [0, { name: "floor", walkable: true, glyph: ".", color: "#333333" }],
       [1, { name: "wall", walkable: false, glyph: "#", color: "#666666" }],

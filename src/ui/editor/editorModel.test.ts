@@ -88,6 +88,7 @@ function createSnapshot(): ContentCatalogSnapshot {
     quests: [],
     combatActions: [],
     dialogues: {},
+    dialogueFiles: {},
     tiles: new Map([
       [1, { name: "wall", walkable: false, glyph: "#", color: "#666666" }],
       [0, { name: "floor", walkable: true, glyph: ".", color: "#333333" }],

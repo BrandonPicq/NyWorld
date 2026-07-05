@@ -2,6 +2,8 @@ import { useMemo, useState } from "react";
 import { createRuntimeContentCatalogSnapshot } from "../../engine";
 import { TerminalButton } from "../components/TerminalButton";
 import { ContentTab } from "./ContentTab";
+import { DialogueTab } from "./dialogues/DialogueTab";
+import { useDialogueDraft } from "./dialogues/useDialogueDraft";
 import { GameConfigPanel } from "./GameConfigPanel";
 import { useItemDraft } from "./useItemDraft";
 import { ZoneEditorPanel } from "./zone/ZoneEditorPanel";
@@ -10,12 +12,13 @@ type ContentEditorScreenProps = {
   onBack: () => void;
 };
 
-type EditorTab = "content" | "zones" | "game";
+type EditorTab = "content" | "zones" | "dialogues" | "game";
 
 export function ContentEditorScreen({ onBack }: ContentEditorScreenProps) {
   const baseSnapshot = useMemo(() => createRuntimeContentCatalogSnapshot(), []);
   const [tab, setTab] = useState<EditorTab>("content");
-  const draft = useItemDraft(baseSnapshot);
+  const itemDraft = useItemDraft(baseSnapshot);
+  const dialogueDraft = useDialogueDraft(baseSnapshot);
 
   return (
     <main
@@ -57,14 +60,23 @@ export function ContentEditorScreen({ onBack }: ContentEditorScreenProps) {
           >
             Game
           </TerminalButton>
+          <TerminalButton
+            className="editor-tab"
+            isSelected={tab === "dialogues"}
+            onClick={() => setTab("dialogues")}
+          >
+            Dialogues
+          </TerminalButton>
         </nav>
 
         {tab === "zones" ? (
           <ZoneEditorPanel snapshot={baseSnapshot} />
         ) : tab === "game" ? (
           <GameConfigPanel snapshot={baseSnapshot} />
+        ) : tab === "dialogues" ? (
+          <DialogueTab draft={dialogueDraft} />
         ) : (
-          <ContentTab draft={draft} />
+          <ContentTab draft={itemDraft} />
         )}
       </div>
     </main>
