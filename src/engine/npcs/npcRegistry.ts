@@ -2,6 +2,10 @@ import type { ContentDiagnostic } from "../content/ContentDiagnostic";
 import { formatContentDiagnostic } from "../content/ContentDiagnostic";
 import { CONTENT_TYPES } from "../content/contentTypes";
 import type { ContentValidationContext } from "../content/ContentValidationContext";
+import {
+  NPC_IMPORTANCE_OPTIONS,
+  NPC_RACE_OPTIONS,
+} from "../content/editingMetadata";
 import { getAllDialogueIds } from "../dialogues/dialogueRegistry";
 import type { NpcDef, NpcDefMap, NpcImportance, NpcRace } from "./NpcDef";
 
@@ -267,14 +271,14 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 
 function isNpcRace(value: unknown): value is NpcRace {
   return (
-    value === "human" ||
-    value === "elf" ||
-    value === "dwarf" ||
-    value === "orc" ||
-    value === "unknown"
+    typeof value === "string" &&
+    (NPC_RACE_OPTIONS as readonly string[]).includes(value)
   );
 }
 
 function isNpcImportance(value: unknown): value is NpcImportance {
-  return value === "common" || value === "notable" || value === "story";
+  return (
+    typeof value === "string" &&
+    (NPC_IMPORTANCE_OPTIONS as readonly string[]).includes(value)
+  );
 }

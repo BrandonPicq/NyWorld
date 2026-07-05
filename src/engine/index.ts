@@ -56,7 +56,11 @@ export {
 } from "./content/ContentDiagnostic";
 export { CONTENT_TYPES } from "./content/contentTypes";
 export type { ContentTypeName } from "./content/contentTypes";
-export { ITEM_CATEGORY_OPTIONS } from "./content/editingMetadata";
+export {
+  ITEM_CATEGORY_OPTIONS,
+  NPC_IMPORTANCE_OPTIONS,
+  NPC_RACE_OPTIONS,
+} from "./content/editingMetadata";
 export {
   createRuntimeContentValidationContext,
 } from "./content/runtimeValidationContext";

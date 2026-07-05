@@ -5,6 +5,8 @@ import { ContentTab } from "./ContentTab";
 import { DialogueTab } from "./dialogues/DialogueTab";
 import { useDialogueDraft } from "./dialogues/useDialogueDraft";
 import { GameConfigPanel } from "./GameConfigPanel";
+import { NpcTab } from "./npcs/NpcTab";
+import { useNpcDraft } from "./npcs/useNpcDraft";
 import { useItemDraft } from "./useItemDraft";
 import { ZoneEditorPanel } from "./zone/ZoneEditorPanel";
 
@@ -12,13 +14,14 @@ type ContentEditorScreenProps = {
   onBack: () => void;
 };
 
-type EditorTab = "content" | "zones" | "dialogues" | "game";
+type EditorTab = "content" | "zones" | "game" | "dialogues" | "npcs";
 
 export function ContentEditorScreen({ onBack }: ContentEditorScreenProps) {
   const baseSnapshot = useMemo(() => createRuntimeContentCatalogSnapshot(), []);
   const [tab, setTab] = useState<EditorTab>("content");
   const itemDraft = useItemDraft(baseSnapshot);
   const dialogueDraft = useDialogueDraft(baseSnapshot);
+  const npcDraft = useNpcDraft(baseSnapshot);
   const shellClasses = ["editor-shell", tab === "zones" && "editor-shell--zones"]
     .filter(Boolean)
     .join(" ");
@@ -70,6 +73,13 @@ export function ContentEditorScreen({ onBack }: ContentEditorScreenProps) {
           >
             Dialogues
           </TerminalButton>
+          <TerminalButton
+            className="editor-tab"
+            isSelected={tab === "npcs"}
+            onClick={() => setTab("npcs")}
+          >
+            NPCs
+          </TerminalButton>
         </nav>
 
         {tab === "zones" ? (
@@ -78,6 +88,8 @@ export function ContentEditorScreen({ onBack }: ContentEditorScreenProps) {
           <GameConfigPanel snapshot={baseSnapshot} />
         ) : tab === "dialogues" ? (
           <DialogueTab draft={dialogueDraft} />
+        ) : tab === "npcs" ? (
+          <NpcTab draft={npcDraft} />
         ) : (
           <ContentTab draft={itemDraft} />
         )}

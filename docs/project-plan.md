@@ -72,6 +72,7 @@ Fondations posees (juillet 2026) :
 - edition dev-only des placements d'une zone : selecteur de mode (depart joueur, PNJ, objet, transition, gomme), pose au clic, validation live sur l'ensemble du contenu et sauvegarde JSON ; les schedules restent en lecture seule.
 - creation de zone, edition du dialogue d'entree, et onglet Game (defaultZoneId / safeRespawn de game.json) depuis l'editeur, avec validation live et diffs JSON minimaux.
 - edition dev-only des fichiers de dialogues reutilisables : creation de fichiers, ajout de sequences, edition des lignes speaker/text/pitch, suppression bloquee par les references entrantes, validation live du bundle.
+- edition dev-only des fiches PNJ : creation de fichiers PNJ, champs race/importance/presentation/dialogue par defaut, validation live du bundle, et raccourci de creation du dialogue par defaut.
 
 Etapes restantes :
 
