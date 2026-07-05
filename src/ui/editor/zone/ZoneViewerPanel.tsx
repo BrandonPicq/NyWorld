@@ -1,6 +1,7 @@
 import { useMemo, useState, type ReactNode } from "react";
 import type { ContentCatalogSnapshot, ZoneData } from "../../../engine";
 import { createZoneEditRenderSnapshot } from "../../../rendering/zoneEditRenderSnapshot";
+import { ScrollRegion } from "../../components/ScrollRegion";
 import { TerminalButton } from "../../components/TerminalButton";
 import { TerminalPanel } from "../../components/TerminalPanel";
 import { EditorZoneCanvas } from "./EditorZoneCanvas";
@@ -36,7 +37,7 @@ export function ZoneViewerPanel({ snapshot }: ZoneViewerPanelProps) {
         {zones.length === 0 ? (
           <p className="editor-empty">No zones authored.</p>
         ) : (
-          <div className="editor-scroll" role="list">
+          <ScrollRegion className="editor-scroll" role="list">
             {zones.map((zone) => (
               <TerminalButton
                 className="editor-entry-button editor-zone-entry"
@@ -51,7 +52,7 @@ export function ZoneViewerPanel({ snapshot }: ZoneViewerPanelProps) {
                 </span>
               </TerminalButton>
             ))}
-          </div>
+          </ScrollRegion>
         )}
       </TerminalPanel>
 
@@ -59,12 +60,12 @@ export function ZoneViewerPanel({ snapshot }: ZoneViewerPanelProps) {
         <h2 className="editor-panel__title">Preview</h2>
         {selectedZone && renderSnapshot ? (
           <div className="editor-zone-preview__body">
-            <div className="editor-zone-canvas-frame">
+            <ScrollRegion className="editor-zone-canvas-frame">
               <EditorZoneCanvas
                 ariaLabel={`Zone ${selectedZone.name} preview`}
                 renderSnapshot={renderSnapshot}
               />
-            </div>
+            </ScrollRegion>
             <p className="editor-zone-dimensions">
               {selectedZone.width} × {selectedZone.height} tiles · start (
               {selectedZone.playerStart.x}, {selectedZone.playerStart.y})
@@ -78,9 +79,9 @@ export function ZoneViewerPanel({ snapshot }: ZoneViewerPanelProps) {
       <TerminalPanel className="editor-panel editor-zone-details">
         <h2 className="editor-panel__title">Contents</h2>
         {selectedZone ? (
-          <div className="editor-scroll">
+          <ScrollRegion className="editor-scroll">
             <ZoneDetails zone={selectedZone} />
-          </div>
+          </ScrollRegion>
         ) : (
           <p className="editor-empty">No zone selected.</p>
         )}

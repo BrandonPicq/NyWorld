@@ -30,6 +30,7 @@ import {
   refsEqual,
   serializeItemCatalog,
 } from "./editorModel";
+import { ScrollRegion } from "../components/ScrollRegion";
 import { ZoneViewerPanel } from "./zone/ZoneViewerPanel";
 
 type ContentEditorScreenProps = {
@@ -221,7 +222,10 @@ export function ContentEditorScreen({ onBack }: ContentEditorScreenProps) {
   }
 
   return (
-    <main className="app-shell editor-screen" aria-labelledby="editor-heading">
+    <main
+      className="app-shell app-shell--bounded editor-screen"
+      aria-labelledby="editor-heading"
+    >
       <div className="editor-shell">
         <header className="editor-header">
           <div>
@@ -356,7 +360,7 @@ function ContentTab({
       <div className="editor-grid">
         <TerminalPanel className="editor-panel editor-browser">
           <h2 className="editor-panel__title">Content</h2>
-          <div className="editor-scroll" role="list">
+          <ScrollRegion className="editor-scroll" role="list">
             {browserGroups.map((group) => (
               <section className="editor-family" key={group.type}>
                 <div className="editor-family__header">
@@ -377,7 +381,7 @@ function ContentTab({
                 </div>
               </section>
             ))}
-          </div>
+          </ScrollRegion>
         </TerminalPanel>
 
         <TerminalPanel className="editor-panel editor-problems">
@@ -385,7 +389,7 @@ function ContentTab({
           {diagnosticGroups.length === 0 ? (
             <p className="editor-empty">No content problems.</p>
           ) : (
-            <div className="editor-scroll">
+            <ScrollRegion className="editor-scroll">
               {diagnosticGroups.map((group) => (
                 <section
                   className="editor-diagnostic-group"
@@ -409,46 +413,48 @@ function ContentTab({
                   </ul>
                 </section>
               ))}
-            </div>
+            </ScrollRegion>
           )}
         </TerminalPanel>
 
         <TerminalPanel className="editor-panel editor-reference">
           <h2 className="editor-panel__title">Editor</h2>
-          {itemEditor}
+          <ScrollRegion className="editor-scroll">
+            {itemEditor}
 
-          <h2 className="editor-panel__title">References</h2>
-          <div className="editor-selected-ref">
-            <span>{selectedRef.type}</span>
-            <strong>{selectedRef.id}</strong>
-          </div>
+            <h2 className="editor-panel__title">References</h2>
+            <div className="editor-selected-ref">
+              <span>{selectedRef.type}</span>
+              <strong>{selectedRef.id}</strong>
+            </div>
 
-          <div className="editor-impact">
-            <p>
-              Rename impact: {selectedImpact.references.length} references
-            </p>
-            <p>
-              Save persistence:{" "}
-              {selectedImpact.appearsInSaves ? "yes" : "no"}
-            </p>
-          </div>
+            <div className="editor-impact">
+              <p>
+                Rename impact: {selectedImpact.references.length} references
+              </p>
+              <p>
+                Save persistence:{" "}
+                {selectedImpact.appearsInSaves ? "yes" : "no"}
+              </p>
+            </div>
 
-          <div className="editor-reference-columns">
-            <ReferenceList
-              emptyLabel="No incoming references."
-              onSelectRef={setSelectedRef}
-              references={incomingRefs}
-              title="Incoming"
-              useTarget={false}
-            />
-            <ReferenceList
-              emptyLabel="No outgoing references."
-              onSelectRef={setSelectedRef}
-              references={outgoingRefs}
-              title="Outgoing"
-              useTarget
-            />
-          </div>
+            <div className="editor-reference-columns">
+              <ReferenceList
+                emptyLabel="No incoming references."
+                onSelectRef={setSelectedRef}
+                references={incomingRefs}
+                title="Incoming"
+                useTarget={false}
+              />
+              <ReferenceList
+                emptyLabel="No outgoing references."
+                onSelectRef={setSelectedRef}
+                references={outgoingRefs}
+                title="Outgoing"
+                useTarget
+              />
+            </div>
+          </ScrollRegion>
         </TerminalPanel>
       </div>
     </>

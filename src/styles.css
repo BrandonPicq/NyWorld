@@ -1,5 +1,6 @@
 @import "./styles/tokens.css";
 @import "./styles/base.css";
+@import "./styles/layout.css";
 @import "./styles/components/terminal.css";
 @import "./styles/screens/title.css";
 @import "./styles/screens/game-screen.css";

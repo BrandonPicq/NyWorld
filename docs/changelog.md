@@ -4,6 +4,13 @@ This file tracks meaningful project changes by commit-oriented slices.
 
 Keep entries short and practical. When a slice is committed, its changelog section should stay aligned with the commit title so the project history remains easy to read after restores or bisects.
 
+## 2026-07-05 - [ADD]: Independent panel scrolling in the editor
+
+- Add reusable layout primitives: `app-shell--bounded` pins a screen to the viewport and a `ScrollRegion` block owns its own scrollbar.
+- Bound both editor tabs to the viewport so the header and tabs stay fixed while each panel scrolls on its own instead of scrolling the whole page.
+- Scroll a large zone preview inside its frame rather than stretching the layout.
+- Fall back to natural single-column page scrolling below 1100px.
+
 ## 2026-07-05 - [ADD]: Read-only zone viewer in the editor
 
 - Add a Zones tab to the dev content editor for previewing authored zones.

@@ -4,10 +4,18 @@
   place-items: stretch;
 }
 
+/*
+ * The editor is a viewport-bounded assortment of scroll regions: the header and
+ * tabs stay fixed while each panel scrolls on its own (see app-shell--bounded
+ * and .scroll-region in styles/layout.css). The shell stacks that fixed chrome
+ * above a single flex-filling body (the Content grid or the Zones layout).
+ */
 .editor-shell {
   width: min(100%, 88rem);
+  min-height: 0;
   margin: 0 auto;
-  display: grid;
+  display: flex;
+  flex-direction: column;
   gap: var(--space-3);
 }
 
@@ -56,16 +64,18 @@
 }
 
 .editor-grid {
+  flex: 1;
   min-height: 0;
   display: grid;
   grid-template-columns: minmax(15rem, 0.85fr) minmax(20rem, 1.1fr) minmax(22rem, 1.25fr);
+  grid-template-rows: minmax(0, 1fr);
   gap: var(--space-3);
 }
 
 .editor-panel {
   width: 100%;
   min-width: 0;
-  min-height: 36rem;
+  min-height: 0;
   display: flex;
   flex-direction: column;
   gap: var(--space-3);
@@ -78,12 +88,12 @@
   text-transform: uppercase;
 }
 
+/* Grid styling only; scroll behavior comes from the shared .scroll-region. */
 .editor-scroll {
-  min-height: 0;
-  overflow: auto;
   display: grid;
   gap: var(--space-3);
   padding-right: 0.2rem;
+  align-content: start;
 }
 
 .editor-family,
@@ -317,12 +327,14 @@
 }
 
 .editor-zone-layout {
+  flex: 1;
   min-height: 0;
   display: grid;
   grid-template-columns: minmax(14rem, 0.7fr) minmax(20rem, 1.4fr) minmax(
       18rem,
       1fr
     );
+  grid-template-rows: minmax(0, 1fr);
   gap: var(--space-3);
 }
 
@@ -343,14 +355,15 @@
 }
 
 .editor-zone-preview__body {
+  flex: 1;
   min-height: 0;
-  display: grid;
+  display: flex;
+  flex-direction: column;
   gap: var(--space-2);
 }
 
+/* Border/padding only; sizing and scroll come from the shared .scroll-region. */
 .editor-zone-canvas-frame {
-  min-height: 0;
-  overflow: auto;
   border: 1px solid var(--color-border-muted);
   padding: var(--space-2);
   background: var(--color-panel-background);
@@ -428,8 +441,24 @@
     grid-template-columns: 1fr;
   }
 
-  .editor-panel {
+  /* Stacked single-column layout scrolls the page naturally (see layout.css). */
+  .editor-grid,
+  .editor-zone-layout {
+    flex: none;
+    grid-template-rows: none;
+  }
+
+  .editor-shell {
     min-height: auto;
+  }
+
+  .editor-zone-preview__body {
+    flex: none;
+  }
+
+  .editor-zone-canvas-frame {
+    flex: none;
+    max-height: 70dvh;
   }
 }
 
