@@ -12,8 +12,13 @@ import {
   cloneZoneData,
   createZoneDraftSnapshot,
   createZoneDraftValidationContext,
+  erasePlacementsAt,
   listEditorZones,
+  placeItemAt,
+  placeNpcAt,
+  placeTransitionAt,
   serializeZoneData,
+  setPlayerStart,
   setTileAt,
   zoneContentPath,
 } from "./zoneEditorModel";
@@ -116,6 +121,65 @@ describe("setTileAt", () => {
     expect(setTileAt(zone, 3, 0, 5)).toBe(zone);
     expect(setTileAt(zone, 0, 2, 5)).toBe(zone);
     expect(setTileAt(zone, -1, 0, 5)).toBe(zone);
+  });
+});
+
+describe("placement editing", () => {
+  const zone = createZone({
+    playerStart: { x: 1, y: 1 },
+    npcs: [{ npcId: "old_scholar", x: 2, y: 2 }],
+    items: [{ itemId: "old_coin", x: 3, y: 3, quantity: 1 }],
+    transitions: [
+      { x: 4, y: 4, targetZoneId: "other", targetX: 0, targetY: 0 },
+    ],
+  });
+
+  it("moves the player start and no-ops when unchanged", () => {
+    expect(setPlayerStart(zone, 5, 6).playerStart).toEqual({ x: 5, y: 6 });
+    expect(setPlayerStart(zone, 1, 1)).toBe(zone);
+  });
+
+  it("places an NPC, replacing any spawn on the same cell", () => {
+    const withDialogue = placeNpcAt(zone, 2, 2, "old_wizard", "greet");
+    expect(withDialogue.npcs).toEqual([
+      { npcId: "old_wizard", dialogueId: "greet", x: 2, y: 2 },
+    ]);
+
+    const withoutDialogue = placeNpcAt(zone, 7, 7, "old_wizard");
+    expect(withoutDialogue.npcs).toEqual([
+      { npcId: "old_scholar", x: 2, y: 2 },
+      { npcId: "old_wizard", x: 7, y: 7 },
+    ]);
+  });
+
+  it("places an item stack, replacing any stack on the same cell", () => {
+    expect(placeItemAt(zone, 3, 3, "chalk_piece", 5).items).toEqual([
+      { itemId: "chalk_piece", x: 3, y: 3, quantity: 5 },
+    ]);
+  });
+
+  it("places a transition, replacing any transition on the same cell", () => {
+    expect(placeTransitionAt(zone, 4, 4, "dest", 2, 3).transitions).toEqual([
+      { x: 4, y: 4, targetZoneId: "dest", targetX: 2, targetY: 3 },
+    ]);
+  });
+
+  it("erases every placement on a cell and no-ops on an empty cell", () => {
+    const erased = erasePlacementsAt(
+      placeItemAt(zone, 2, 2, "old_coin", 1),
+      2,
+      2,
+    );
+    expect(erased.npcs).toEqual([]);
+    expect(erased.items).toEqual([{ itemId: "old_coin", x: 3, y: 3, quantity: 1 }]);
+
+    expect(erasePlacementsAt(zone, 9, 9)).toBe(zone);
+  });
+
+  it("does not introduce empty arrays when erasing", () => {
+    const tilesOnly = createZone({ playerStart: { x: 1, y: 1 } });
+    expect(erasePlacementsAt(tilesOnly, 0, 0)).toBe(tilesOnly);
+    expect(erasePlacementsAt(tilesOnly, 0, 0).items).toBeUndefined();
   });
 });
 

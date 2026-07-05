@@ -69,6 +69,7 @@ Fondations posees (juillet 2026) :
 - premiere boucle d'edition dev-only pour le catalogue d'objets : brouillon en memoire, validation live, controles de references et sauvegarde JSON.
 - onglet zones dev-only en lecture seule : rendu Canvas de la zone selectionnee (via `createZoneEditRenderSnapshot`) et inspection des placements PNJ/objets, transitions et dialogue d'entree.
 - edition dev-only des tuiles d'une zone : palette de tuiles, peinture au clic et au glisser sur le canvas, validation live (mur sous le depart, un PNJ, un objet ou une transition) et sauvegarde JSON via l'endpoint editeur.
+- edition dev-only des placements d'une zone : selecteur de mode (depart joueur, PNJ, objet, transition, gomme), pose au clic, validation live sur l'ensemble du contenu et sauvegarde JSON ; les schedules restent en lecture seule.
 
 Etapes restantes :
 

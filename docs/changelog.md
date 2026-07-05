@@ -4,6 +4,13 @@ This file tracks meaningful project changes by commit-oriented slices.
 
 Keep entries short and practical. When a slice is committed, its changelog section should stay aligned with the commit title so the project history remains easy to read after restores or bisects.
 
+## 2026-07-05 - [ADD]: Edit zone placements in the editor
+
+- Add a placement mode selector (inspect / tiles / player / NPC / item / transition / erase); a canvas click applies the active mode at that cell.
+- Place the player start, NPC spawns (npcId + optional dialogueId), item stacks (itemId + quantity), and transitions (target zone + coordinates); erase removes any placement on a cell.
+- Add pure, tested draft helpers (`setPlayerStart`/`placeNpcAt`/`placeItemAt`/`placeTransitionAt`/`erasePlacementsAt`) driven through the existing whole-bundle live validation and save gating.
+- Split placement UI into `usePlacementSelection` and `ZonePlacementControls`; NPC schedules stay read-only.
+
 ## 2026-07-05 - [UPDATE]: Adjust the Test Zone 2 layout
 
 - Add interior wall pillars to the Test Zone 2 grid (throwaway test content); the schedule targets stay walkable.

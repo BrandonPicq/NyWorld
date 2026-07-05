@@ -3,12 +3,14 @@ import {
   type ContentCatalogSnapshot,
   type ZoneData,
 } from "../../../engine";
+import type { GridCell } from "../../../rendering/canvasCellMapping";
 import { ScrollRegion } from "../../components/ScrollRegion";
 import { TerminalButton } from "../../components/TerminalButton";
 import { TerminalPanel } from "../../components/TerminalPanel";
 import { EditorZoneCanvas } from "./EditorZoneCanvas";
 import { ZoneContents } from "./ZoneContents";
-import { ZoneTilePalette } from "./ZoneTilePalette";
+import { ZonePlacementControls } from "./ZonePlacementControls";
+import { usePlacementSelection } from "./usePlacementSelection";
 import { useZoneDraft } from "./useZoneDraft";
 
 type ZoneDraftEditorProps = {
@@ -17,7 +19,7 @@ type ZoneDraftEditorProps = {
 };
 
 /**
- * Tile-painting editor for one zone: palette + paintable canvas + live
+ * Zone editor for one zone: a placement mode selector + paintable canvas + live
  * validation + save. Mount behind `key={zoneId}` so switching zones starts a
  * fresh draft.
  */
@@ -27,10 +29,7 @@ export function ZoneDraftEditor({ zone, snapshot }: ZoneDraftEditorProps) {
     draft,
     diagnostics,
     errorCount,
-    tiles,
-    activeTileId,
-    setActiveTileId,
-    paintCell,
+    updateDraft,
     hasUnsavedChanges,
     canSave,
     isSaving,
@@ -38,23 +37,30 @@ export function ZoneDraftEditor({ zone, snapshot }: ZoneDraftEditorProps) {
     resetDraft,
     saveDraft,
   } = useZoneDraft(zone, snapshot);
+  const placement = usePlacementSelection(snapshot);
 
   const warningCount = diagnostics.length - errorCount;
+
+  function handleCell(cell: GridCell, kind: "down" | "move"): void {
+    if (kind === "move" && !placement.paintsOnDrag) {
+      return;
+    }
+    const edit = placement.buildEdit(cell);
+    if (edit) {
+      updateDraft(edit);
+    }
+  }
 
   return (
     <>
       <TerminalPanel className="editor-panel editor-zone-preview">
-        <h2 className="editor-panel__title">Paint</h2>
+        <h2 className="editor-panel__title">Edit</h2>
         <div className="editor-zone-preview__body">
-          <ZoneTilePalette
-            activeTileId={activeTileId}
-            onSelect={setActiveTileId}
-            tiles={tiles}
-          />
+          <ZonePlacementControls placement={placement} />
           <ScrollRegion className="editor-zone-canvas-frame">
             <EditorZoneCanvas
-              ariaLabel={`Zone ${draft.name} paint surface`}
-              onCellPointer={(cell) => paintCell(cell)}
+              ariaLabel={`Zone ${draft.name} edit surface`}
+              onCellPointer={handleCell}
               renderSnapshot={renderSnapshot}
             />
           </ScrollRegion>

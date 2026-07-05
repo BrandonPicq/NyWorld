@@ -2,7 +2,10 @@ import {
   createGameMapFromZoneData,
   type ContentCatalogSnapshot,
   type ContentValidationContext,
+  type ItemSpawnData,
+  type NpcSpawnData,
   type ZoneData,
+  type ZoneTransitionData,
 } from "../../../engine";
 
 /**
@@ -135,4 +138,106 @@ export function setTileAt(
       : currentRow,
   );
   return { ...zone, tiles };
+}
+
+/** Moves the player start; no-ops (same reference) when unchanged. */
+export function setPlayerStart(zone: ZoneData, x: number, y: number): ZoneData {
+  if (zone.playerStart.x === x && zone.playerStart.y === y) {
+    return zone;
+  }
+  return { ...zone, playerStart: { x, y } };
+}
+
+/** Places an NPC spawn at (x, y), replacing any existing spawn on that cell. */
+export function placeNpcAt(
+  zone: ZoneData,
+  x: number,
+  y: number,
+  npcId: string,
+  dialogueId?: string,
+): ZoneData {
+  const spawn: NpcSpawnData = dialogueId
+    ? { npcId, dialogueId, x, y }
+    : { npcId, x, y };
+  const others = (zone.npcs ?? []).filter((npc) => npc.x !== x || npc.y !== y);
+  return { ...zone, npcs: [...others, spawn] };
+}
+
+/** Places an item stack at (x, y), replacing any existing stack on that cell. */
+export function placeItemAt(
+  zone: ZoneData,
+  x: number,
+  y: number,
+  itemId: string,
+  quantity: number,
+): ZoneData {
+  const stack: ItemSpawnData = { itemId, x, y, quantity };
+  const others = (zone.items ?? []).filter(
+    (item) => item.x !== x || item.y !== y,
+  );
+  return { ...zone, items: [...others, stack] };
+}
+
+/** Places a transition at (x, y), replacing any existing one on that cell. */
+export function placeTransitionAt(
+  zone: ZoneData,
+  x: number,
+  y: number,
+  targetZoneId: string,
+  targetX: number,
+  targetY: number,
+): ZoneData {
+  const transition: ZoneTransitionData = {
+    x,
+    y,
+    targetZoneId,
+    targetX,
+    targetY,
+  };
+  const others = (zone.transitions ?? []).filter(
+    (existing) => existing.x !== x || existing.y !== y,
+  );
+  return { ...zone, transitions: [...others, transition] };
+}
+
+/**
+ * Removes any NPC spawn, item stack, and transition on (x, y).
+ *
+ * Only the arrays that actually shrink are rebuilt, and undefined arrays stay
+ * undefined, so an erase never introduces empty placement arrays. The player
+ * start is never erased.
+ */
+export function erasePlacementsAt(
+  zone: ZoneData,
+  x: number,
+  y: number,
+): ZoneData {
+  const result: ZoneData = { ...zone };
+  let changed = false;
+
+  if (zone.npcs) {
+    const npcs = zone.npcs.filter((npc) => npc.x !== x || npc.y !== y);
+    if (npcs.length !== zone.npcs.length) {
+      result.npcs = npcs;
+      changed = true;
+    }
+  }
+  if (zone.items) {
+    const items = zone.items.filter((item) => item.x !== x || item.y !== y);
+    if (items.length !== zone.items.length) {
+      result.items = items;
+      changed = true;
+    }
+  }
+  if (zone.transitions) {
+    const transitions = zone.transitions.filter(
+      (transition) => transition.x !== x || transition.y !== y,
+    );
+    if (transitions.length !== zone.transitions.length) {
+      result.transitions = transitions;
+      changed = true;
+    }
+  }
+
+  return changed ? result : zone;
 }

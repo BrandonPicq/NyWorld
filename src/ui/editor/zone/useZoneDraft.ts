@@ -1,14 +1,11 @@
 import { useMemo, useState } from "react";
 import {
   createRuntimeContentValidationContext,
-  getAllTileDefs,
   validateAllContent,
   type ContentCatalogSnapshot,
   type ContentDiagnostic,
-  type TileDef,
   type ZoneData,
 } from "../../../engine";
-import type { GridCell } from "../../../rendering/canvasCellMapping";
 import type { GridRenderSnapshot } from "../../../rendering/renderSnapshot";
 import { createZoneEditRenderSnapshot } from "../../../rendering/zoneEditRenderSnapshot";
 import { saveEditorContent } from "../editorSaveClient";
@@ -18,30 +15,22 @@ import {
   createZoneDraftSnapshot,
   createZoneDraftValidationContext,
   serializeZoneData,
-  setTileAt,
   zoneContentPath,
 } from "./zoneEditorModel";
 
-export interface ZonePaletteTile {
-  id: number;
-  def: TileDef;
-}
-
 /**
- * Tile-painting draft state for one zone.
+ * Edit-draft state for one zone: the working copy, whole-bundle validation, and
+ * save. Placement selection (which edit a click performs) lives separately.
  *
  * Callers mount this behind a `key={zoneId}` so switching zones remounts with a
- * fresh draft (unsaved tile edits are discarded on switch — a noted follow-up).
+ * fresh draft (unsaved edits are discarded on switch — a noted follow-up).
  */
 export interface ZoneDraftController {
   renderSnapshot: GridRenderSnapshot;
   draft: ZoneData;
   diagnostics: ContentDiagnostic[];
   errorCount: number;
-  tiles: ZonePaletteTile[];
-  activeTileId: number;
-  setActiveTileId: (id: number) => void;
-  paintCell: (cell: GridCell) => void;
+  updateDraft: (updater: (zone: ZoneData) => ZoneData) => void;
   hasUnsavedChanges: boolean;
   canSave: boolean;
   isSaving: boolean;
@@ -55,13 +44,6 @@ export function useZoneDraft(
   snapshot: ContentCatalogSnapshot,
 ): ZoneDraftController {
   const context = useMemo(() => createRuntimeContentValidationContext(), []);
-  const tiles = useMemo<ZonePaletteTile[]>(
-    () =>
-      [...getAllTileDefs().entries()]
-        .sort(([a], [b]) => a - b)
-        .map(([id, def]) => ({ id, def })),
-    [],
-  );
 
   const [draft, setDraft] = useState<ZoneData>(() => cloneZoneData(zone));
   const [savedJson, setSavedJson] = useState(() => serializeZoneData(zone));
@@ -69,9 +51,6 @@ export function useZoneDraft(
     state: "idle",
     message: "",
   });
-  const [activeTileId, setActiveTileId] = useState<number>(
-    () => tiles[0]?.id ?? 0,
-  );
 
   // Validate against the whole bundle so cross-zone breakage shows up too — for
   // example painting a wall where a global NPC's schedule walks into this zone.
@@ -103,9 +82,9 @@ export function useZoneDraft(
         }
       : saveStatus;
 
-  function paintCell(cell: GridCell): void {
-    setDraft((prev) => setTileAt(prev, cell.x, cell.y, activeTileId));
-    // Clear a lingering "saved"/"error" message once painting resumes; the
+  function updateDraft(updater: (zone: ZoneData) => ZoneData): void {
+    setDraft((prev) => updater(prev));
+    // Clear a lingering "saved"/"error" message once editing resumes; the
     // functional update bails out (same reference) while already idle, so a
     // drag does not churn state after the first cell.
     setSaveStatus((prev) =>
@@ -135,7 +114,10 @@ export function useZoneDraft(
 
     const content = serialized;
     setSaveStatus({ state: "saving", message: "Saving..." });
-    const result = await saveEditorContent(zoneContentPath(zone.zoneId), content);
+    const result = await saveEditorContent(
+      zoneContentPath(zone.zoneId),
+      content,
+    );
     if (!result.ok) {
       setSaveStatus({ state: "error", message: result.error });
       return;
@@ -150,10 +132,7 @@ export function useZoneDraft(
     draft,
     diagnostics,
     errorCount,
-    tiles,
-    activeTileId,
-    setActiveTileId,
-    paintCell,
+    updateDraft,
     hasUnsavedChanges,
     canSave,
     isSaving,

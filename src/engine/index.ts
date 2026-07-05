@@ -153,6 +153,7 @@ export type {
   ZoneTransitionData,
   NpcSpawnData,
   NpcScheduleEntryData,
+  ItemSpawnData,
   DialogueNodeData,
 } from "./ZoneTypes";
 export {

@@ -1,5 +1,5 @@
 import { TerminalButton } from "../../components/TerminalButton";
-import type { ZonePaletteTile } from "./useZoneDraft";
+import type { ZonePaletteTile } from "./usePlacementSelection";
 
 type ZoneTilePaletteProps = {
   tiles: ZonePaletteTile[];
