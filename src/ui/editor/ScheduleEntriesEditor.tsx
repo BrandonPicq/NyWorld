@@ -9,6 +9,8 @@ type ScheduleEntriesEditorProps = {
   dialogueIds: readonly string[];
   addLabel?: string;
   emptyLabel?: string;
+  /** Label for the empty zone option: "(this zone)" for spawns, a prompt for presence. */
+  zonePlaceholderLabel?: string;
   onAdd: () => void;
   onUpdate: (index: number, patch: Partial<NpcScheduleEntryData>) => void;
   onRemove: (index: number) => void;
@@ -28,6 +30,7 @@ export function ScheduleEntriesEditor({
   dialogueIds,
   addLabel = "Add schedule entry",
   emptyLabel = "No schedule.",
+  zonePlaceholderLabel = "(this zone)",
   onAdd,
   onUpdate,
   onRemove,
@@ -68,7 +71,7 @@ export function ScheduleEntriesEditor({
                     }
                     value={entry.zoneId ?? ""}
                   >
-                    <option value="">(this zone)</option>
+                    <option value="">{zonePlaceholderLabel}</option>
                     {zoneIds.map((zoneId) => (
                       <option key={zoneId} value={zoneId}>
                         {zoneId}

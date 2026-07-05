@@ -4,6 +4,13 @@ This file tracks meaningful project changes by commit-oriented slices.
 
 Keep entries short and practical. When a slice is committed, its changelog section should stay aligned with the commit title so the project history remains easy to read after restores or bisects.
 
+## 2026-07-06 - [ADD]: Edit global NPC presence in the editor
+
+- Add a Presence tab listing every NPC with its presence status, creating a presence for one that lacks it, editing its schedule with the shared `ScheduleEntriesEditor`, and deleting a presence file through the dev-only editor endpoint.
+- Validate presence drafts against the whole content bundle by substituting the draft presence list into the catalog snapshot; the validation context needs no substitution.
+- Add pure presence model helpers (list/create/upsert/update/remove, schedule entry edits, draft snapshot, default position), with tests.
+- Give `ScheduleEntriesEditor` a configurable empty-zone label so presence prompts for a required zone.
+
 ## 2026-07-06 - [ADD]: Edit NPC schedules in the zone editor
 
 - Add a shared `ScheduleEntriesEditor` for editing an NPC schedule (time, zone, coordinates, optional dialogue), flagging a malformed `HH:mm` time inline.

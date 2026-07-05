@@ -9,6 +9,8 @@ import { useEnemyDraft } from "./enemies/useEnemyDraft";
 import { GameConfigPanel } from "./GameConfigPanel";
 import { NpcTab } from "./npcs/NpcTab";
 import { useNpcDraft } from "./npcs/useNpcDraft";
+import { PresenceTab } from "./presence/PresenceTab";
+import { useNpcPresenceDraft } from "./presence/useNpcPresenceDraft";
 import { useItemDraft } from "./useItemDraft";
 import { ZoneEditorPanel } from "./zone/ZoneEditorPanel";
 
@@ -22,6 +24,7 @@ type EditorTab =
   | "game"
   | "dialogues"
   | "npcs"
+  | "presence"
   | "enemies";
 
 export function ContentEditorScreen({ onBack }: ContentEditorScreenProps) {
@@ -30,6 +33,7 @@ export function ContentEditorScreen({ onBack }: ContentEditorScreenProps) {
   const itemDraft = useItemDraft(baseSnapshot);
   const dialogueDraft = useDialogueDraft(baseSnapshot);
   const npcDraft = useNpcDraft(baseSnapshot);
+  const presenceDraft = useNpcPresenceDraft(baseSnapshot);
   const enemyDraft = useEnemyDraft(baseSnapshot);
   const shellClasses = ["editor-shell", tab === "zones" && "editor-shell--zones"]
     .filter(Boolean)
@@ -91,6 +95,13 @@ export function ContentEditorScreen({ onBack }: ContentEditorScreenProps) {
           </TerminalButton>
           <TerminalButton
             className="editor-tab"
+            isSelected={tab === "presence"}
+            onClick={() => setTab("presence")}
+          >
+            Presence
+          </TerminalButton>
+          <TerminalButton
+            className="editor-tab"
             isSelected={tab === "enemies"}
             onClick={() => setTab("enemies")}
           >
@@ -106,6 +117,8 @@ export function ContentEditorScreen({ onBack }: ContentEditorScreenProps) {
           <DialogueTab draft={dialogueDraft} />
         ) : tab === "npcs" ? (
           <NpcTab draft={npcDraft} />
+        ) : tab === "presence" ? (
+          <PresenceTab draft={presenceDraft} />
         ) : tab === "enemies" ? (
           <EnemyTab draft={enemyDraft} />
         ) : (
