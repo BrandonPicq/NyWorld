@@ -59,60 +59,68 @@ export function ZoneDraftEditor({ zone, snapshot }: ZoneDraftEditorProps) {
   return (
     <>
       <TerminalPanel className="editor-panel editor-zone-preview">
-        <h2 className="editor-panel__title">Edit</h2>
-        <div className="editor-zone-preview__body">
-          <ZonePlacementControls placement={placement} />
-          <ScrollRegion className="editor-zone-canvas-frame">
-            <EditorZoneCanvas
-              ariaLabel={`Zone ${draft.name} edit surface`}
-              onCellPointer={handleCell}
-              renderSnapshot={renderSnapshot}
-            />
-          </ScrollRegion>
-          <div className="editor-zone-save">
-            <p className="editor-zone-dimensions">
-              {draft.width} × {draft.height} tiles · start (
-              {draft.playerStart.x}, {draft.playerStart.y})
-            </p>
-            <div className="editor-actions">
-              <TerminalButton
-                className="editor-action-button"
-                disabled={!canUndo || isSaving}
-                onClick={undo}
-              >
-                Undo
-              </TerminalButton>
-              <TerminalButton
-                className="editor-action-button"
-                disabled={!canRedo || isSaving}
-                onClick={redo}
-              >
-                Redo
-              </TerminalButton>
-            </div>
-            <div className="editor-actions">
-              <TerminalButton
-                className="editor-action-button"
-                disabled={!canSave}
-                onClick={saveDraft}
-              >
-                Save Zone
-              </TerminalButton>
-              <TerminalButton
-                className="editor-action-button"
-                disabled={!hasUnsavedChanges || isSaving}
-                onClick={resetDraft}
-              >
-                Reset
-              </TerminalButton>
-            </div>
-            <p
-              aria-live="polite"
-              className={`editor-save-status editor-save-status--${saveStatus.state}`}
-            >
-              {saveStatus.message}
-            </p>
+        <div className="editor-zone-workbench-header">
+          <h2 className="editor-panel__title">Edit</h2>
+          <p className="editor-zone-dimensions">
+            {draft.width} × {draft.height} tiles · start ({draft.playerStart.x},{" "}
+            {draft.playerStart.y})
+          </p>
+        </div>
+        <div className="editor-zone-workbench">
+          <div className="editor-zone-map-area">
+            <ScrollRegion className="editor-zone-canvas-frame">
+              <EditorZoneCanvas
+                ariaLabel={`Zone ${draft.name} edit surface`}
+                cellSize={48}
+                onCellPointer={handleCell}
+                renderSnapshot={renderSnapshot}
+              />
+            </ScrollRegion>
           </div>
+          <aside className="editor-zone-toolbox" aria-label="Zone edit tools">
+            <ZonePlacementControls placement={placement} />
+            <div className="editor-zone-save">
+              <h3 className="editor-zone-toolbox__title">Draft</h3>
+              <div className="editor-actions">
+                <TerminalButton
+                  className="editor-action-button"
+                  disabled={!canUndo || isSaving}
+                  onClick={undo}
+                >
+                  Undo
+                </TerminalButton>
+                <TerminalButton
+                  className="editor-action-button"
+                  disabled={!canRedo || isSaving}
+                  onClick={redo}
+                >
+                  Redo
+                </TerminalButton>
+              </div>
+              <div className="editor-actions">
+                <TerminalButton
+                  className="editor-action-button"
+                  disabled={!canSave}
+                  onClick={saveDraft}
+                >
+                  Save Zone
+                </TerminalButton>
+                <TerminalButton
+                  className="editor-action-button"
+                  disabled={!hasUnsavedChanges || isSaving}
+                  onClick={resetDraft}
+                >
+                  Reset
+                </TerminalButton>
+              </div>
+              <p
+                aria-live="polite"
+                className={`editor-save-status editor-save-status--${saveStatus.state}`}
+              >
+                {saveStatus.message}
+              </p>
+            </div>
+          </aside>
         </div>
       </TerminalPanel>
 

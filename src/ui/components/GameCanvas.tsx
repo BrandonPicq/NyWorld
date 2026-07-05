@@ -5,6 +5,7 @@ import type { GridRenderSnapshot } from "../../rendering/renderSnapshot";
 
 type GameCanvasProps = {
   ariaLabel?: string;
+  cellSize?: number;
   className?: string;
   renderSnapshot: GridRenderSnapshot;
   /**
@@ -17,6 +18,7 @@ type GameCanvasProps = {
 
 export function GameCanvas({
   ariaLabel,
+  cellSize = 32,
   className,
   renderSnapshot,
   onCellPointer,
@@ -29,7 +31,7 @@ export function GameCanvas({
     const canvas = canvasRef.current;
     if (!canvas) return;
 
-    const renderer = new GridRenderer(canvas);
+    const renderer = new GridRenderer(canvas, cellSize);
     renderer.setDimensions(renderSnapshot.width, renderSnapshot.height);
     rendererRef.current = renderer;
 
@@ -37,7 +39,7 @@ export function GameCanvas({
       renderer.destroy();
       rendererRef.current = null;
     };
-  }, [renderSnapshot.height, renderSnapshot.width]);
+  }, [cellSize, renderSnapshot.height, renderSnapshot.width]);
 
   useEffect(() => {
     rendererRef.current?.render(renderSnapshot);

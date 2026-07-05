@@ -4,6 +4,7 @@ import { GameCanvas } from "../../components/GameCanvas";
 
 type EditorZoneCanvasProps = {
   ariaLabel: string;
+  cellSize?: number;
   renderSnapshot: GridRenderSnapshot;
   onCellPointer?: (cell: GridCell, kind: "down" | "move") => void;
 };
@@ -17,12 +18,14 @@ type EditorZoneCanvasProps = {
  */
 export function EditorZoneCanvas({
   ariaLabel,
+  cellSize,
   renderSnapshot,
   onCellPointer,
 }: EditorZoneCanvasProps) {
   return (
     <GameCanvas
       ariaLabel={ariaLabel}
+      cellSize={cellSize}
       className="editor-zone-canvas"
       renderSnapshot={renderSnapshot}
       onCellPointer={onCellPointer}

@@ -4,6 +4,12 @@ This file tracks meaningful project changes by commit-oriented slices.
 
 Keep entries short and practical. When a slice is committed, its changelog section should stay aligned with the commit title so the project history remains easy to read after restores or bisects.
 
+## 2026-07-05 - [UPDATE]: Make the zone editor map-first
+
+- Widen the Zones tab shell and rebalance its rails around a dominant map workbench.
+- Move placement controls, draft actions, and save status into a compact toolbox beside the map.
+- Render the zone editor canvas with a larger authoring cell size while leaving the game canvas default unchanged.
+
 ## 2026-07-05 - [UPDATE]: Wrap editor identifier labels at separators
 
 - Add a reusable identifier label helper that inserts safe wrap points after `_`, `.`, `-`, and `:` separators.

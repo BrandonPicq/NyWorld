@@ -19,13 +19,16 @@ export function ContentEditorScreen({ onBack }: ContentEditorScreenProps) {
   const [tab, setTab] = useState<EditorTab>("content");
   const itemDraft = useItemDraft(baseSnapshot);
   const dialogueDraft = useDialogueDraft(baseSnapshot);
+  const shellClasses = ["editor-shell", tab === "zones" && "editor-shell--zones"]
+    .filter(Boolean)
+    .join(" ");
 
   return (
     <main
       className="app-shell app-shell--bounded editor-screen"
       aria-labelledby="editor-heading"
     >
-      <div className="editor-shell">
+      <div className={shellClasses}>
         <header className="editor-header">
           <div>
             <p className="terminal-kicker">NYWARUDO // DEV CONTENT</p>
