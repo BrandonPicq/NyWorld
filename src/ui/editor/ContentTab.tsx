@@ -1,0 +1,198 @@
+import {
+  formatContentDiagnostic,
+  type ItemDef,
+} from "../../engine";
+import { ScrollRegion } from "../components/ScrollRegion";
+import { TerminalButton } from "../components/TerminalButton";
+import { TerminalPanel } from "../components/TerminalPanel";
+import { refsEqual } from "./editorModel";
+import { ItemDraftEditor } from "./ItemDraftEditor";
+import { ReferenceList } from "./ReferenceList";
+import type { ItemDraftController } from "./useItemDraft";
+
+type ContentTabProps = {
+  draft: ItemDraftController;
+};
+
+export function ContentTab({ draft }: ContentTabProps) {
+  const {
+    browserGroups,
+    diagnosticGroups,
+    selectedRef,
+    setSelectedRef,
+    selectedImpact,
+    incomingRefs,
+    outgoingRefs,
+    errorCount,
+    warningCount,
+    itemDraftErrorCount,
+    totalEntries,
+    hasUnsavedChanges,
+    updateSelectedItem,
+  } = draft;
+
+  return (
+    <>
+      <section className="editor-summary" aria-label="Content summary">
+        <span>{browserGroups.length} families</span>
+        <span>{totalEntries} entries</span>
+        <span>{errorCount} errors</span>
+        <span>{warningCount} warnings</span>
+        <span>{itemDraftErrorCount} item draft errors</span>
+        <span>{hasUnsavedChanges ? "unsaved" : "saved"}</span>
+      </section>
+
+      <div className="editor-grid">
+        <TerminalPanel className="editor-panel editor-browser">
+          <h2 className="editor-panel__title">Content</h2>
+          <ScrollRegion className="editor-scroll" role="list">
+            {browserGroups.map((group) => (
+              <section className="editor-family" key={group.type}>
+                <div className="editor-family__header">
+                  <h3>{group.label}</h3>
+                  <span>{group.entries.length}</span>
+                </div>
+                <div className="editor-entry-list">
+                  {group.entries.map((entry) => (
+                    <TerminalButton
+                      className="editor-entry-button"
+                      isSelected={refsEqual(entry.ref, selectedRef)}
+                      key={`${entry.ref.type}:${entry.ref.id}`}
+                      onClick={() => setSelectedRef(entry.ref)}
+                    >
+                      {entry.label}
+                    </TerminalButton>
+                  ))}
+                </div>
+              </section>
+            ))}
+          </ScrollRegion>
+        </TerminalPanel>
+
+        <TerminalPanel className="editor-panel editor-problems">
+          <h2 className="editor-panel__title">Problems</h2>
+          {diagnosticGroups.length === 0 ? (
+            <p className="editor-empty">No content problems.</p>
+          ) : (
+            <ScrollRegion className="editor-scroll">
+              {diagnosticGroups.map((group) => (
+                <section
+                  className="editor-diagnostic-group"
+                  key={group.contentType}
+                >
+                  <div className="editor-family__header">
+                    <h3>{group.contentType}</h3>
+                    <span>
+                      {group.errorCount}E / {group.warningCount}W
+                    </span>
+                  </div>
+                  <ul className="editor-diagnostic-list">
+                    {group.diagnostics.map((diagnostic, index) => (
+                      <li
+                        className={`editor-diagnostic editor-diagnostic--${diagnostic.severity}`}
+                        key={`${group.contentType}-${diagnostic.path}-${index}`}
+                      >
+                        {formatContentDiagnostic(diagnostic)}
+                      </li>
+                    ))}
+                  </ul>
+                </section>
+              ))}
+            </ScrollRegion>
+          )}
+        </TerminalPanel>
+
+        <TerminalPanel className="editor-panel editor-reference">
+          <h2 className="editor-panel__title">Editor</h2>
+          <ScrollRegion className="editor-scroll">
+            <ItemDraftEditor
+              canSave={draft.canSaveItems}
+              isSaving={draft.isSaving}
+              item={draft.selectedItem}
+              itemDiagnostics={draft.selectedItemDiagnostics}
+              itemIdDraft={draft.itemIdDraft}
+              onApplyItemId={draft.renameSelectedItem}
+              onCategoryChange={(category) =>
+                updateSelectedItem((item) => ({ ...item, category }))
+              }
+              onDefaultQuantityChange={(value) =>
+                updateSelectedItem((item) => ({
+                  ...item,
+                  defaultQuantity: parseNumberDraft(value),
+                }))
+              }
+              onDescriptionChange={(description) =>
+                updateSelectedItem((item) => ({ ...item, description }))
+              }
+              onEffectChange={(field, value) =>
+                updateSelectedItem((item) => updateItemEffect(item, field, value))
+              }
+              onItemIdDraftChange={draft.setItemIdDraft}
+              onNameChange={(name) =>
+                updateSelectedItem((item) => ({ ...item, name }))
+              }
+              onReset={draft.resetItemDraft}
+              onSave={draft.saveItemDraft}
+              saveStatus={draft.saveStatus}
+              selectedRef={selectedRef}
+              hasUnsavedChanges={hasUnsavedChanges}
+            />
+
+            <h2 className="editor-panel__title">References</h2>
+            <div className="editor-selected-ref">
+              <span>{selectedRef.type}</span>
+              <strong>{selectedRef.id}</strong>
+            </div>
+
+            <div className="editor-impact">
+              <p>Rename impact: {selectedImpact.references.length} references</p>
+              <p>
+                Save persistence: {selectedImpact.appearsInSaves ? "yes" : "no"}
+              </p>
+            </div>
+
+            <div className="editor-reference-columns">
+              <ReferenceList
+                emptyLabel="No incoming references."
+                onSelectRef={setSelectedRef}
+                references={incomingRefs}
+                title="Incoming"
+                useTarget={false}
+              />
+              <ReferenceList
+                emptyLabel="No outgoing references."
+                onSelectRef={setSelectedRef}
+                references={outgoingRefs}
+                title="Outgoing"
+                useTarget
+              />
+            </div>
+          </ScrollRegion>
+        </TerminalPanel>
+      </div>
+    </>
+  );
+}
+
+function parseNumberDraft(value: string): number {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : 0;
+}
+
+function updateItemEffect(
+  item: ItemDef,
+  field: keyof NonNullable<ItemDef["effects"]>,
+  value: string,
+): ItemDef {
+  const effects = { ...(item.effects ?? {}) };
+  if (!value.trim()) {
+    delete effects[field];
+  } else {
+    effects[field] = parseNumberDraft(value);
+  }
+
+  return {
+    ...item,
+    effects: Object.keys(effects).length > 0 ? effects : undefined,
+  };
+}

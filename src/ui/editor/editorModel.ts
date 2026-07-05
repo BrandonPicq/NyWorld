@@ -9,6 +9,13 @@ import type {
 } from "../../engine";
 import { CONTENT_TYPES } from "../../engine";
 
+/** Save lifecycle state shared between the editor screen and its panels. */
+export type SaveStatus =
+  | { state: "idle"; message: string }
+  | { state: "saving"; message: string }
+  | { state: "saved"; message: string }
+  | { state: "error"; message: string };
+
 export interface ContentBrowserEntry {
   ref: ContentRef;
   label: string;

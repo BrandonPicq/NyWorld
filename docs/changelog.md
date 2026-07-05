@@ -4,6 +4,13 @@ This file tracks meaningful project changes by commit-oriented slices.
 
 Keep entries short and practical. When a slice is committed, its changelog section should stay aligned with the commit title so the project history remains easy to read after restores or bisects.
 
+## 2026-07-05 - [REFACTOR]: Split the content editor screen into panels
+
+- Extract `ContentTab`, `ItemDraftEditor`, and `ReferenceList` into their own files under `src/ui/editor/`.
+- Lift the content/item draft state into a `useItemDraft` hook so unsaved edits still survive tab switches.
+- Shrink `ContentEditorScreen` to snapshot creation plus tab orchestration (742 to 62 lines).
+- No behavior change; the editor model tests pass unchanged.
+
 ## 2026-07-05 - [ADD]: Independent panel scrolling in the editor
 
 - Add reusable layout primitives: `app-shell--bounded` pins a screen to the viewport and a `ScrollRegion` block owns its own scrollbar.
