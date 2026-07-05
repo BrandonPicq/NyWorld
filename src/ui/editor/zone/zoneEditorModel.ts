@@ -1,4 +1,9 @@
-import type { ContentCatalogSnapshot, ZoneData } from "../../../engine";
+import {
+  createGameMapFromZoneData,
+  type ContentCatalogSnapshot,
+  type ContentValidationContext,
+  type ZoneData,
+} from "../../../engine";
 
 /**
  * Summary row for the editor zone list.
@@ -43,6 +48,39 @@ export function zoneContentPath(zoneId: string): string {
 /** Deep copy so draft edits never mutate the shared catalog snapshot. */
 export function cloneZoneData(zone: ZoneData): ZoneData {
   return structuredClone(zone);
+}
+
+/**
+ * Swaps the draft zone into a catalog snapshot so a whole-bundle audit sees the
+ * edit — the same injected-draft pattern the item editor uses.
+ */
+export function createZoneDraftSnapshot(
+  snapshot: ContentCatalogSnapshot,
+  draft: ZoneData,
+): ContentCatalogSnapshot {
+  return {
+    ...snapshot,
+    zones: { ...snapshot.zones, [draft.zoneId]: draft },
+  };
+}
+
+/**
+ * Builds a validation context whose zone map reflects the draft, so cross-zone
+ * checks (e.g. a global NPC schedule walking into this zone) run against the
+ * painted tiles rather than the shipped map.
+ */
+export function createZoneDraftValidationContext(
+  context: ContentValidationContext,
+  draft: ZoneData,
+): ContentValidationContext {
+  const zones = new Map(context.zones);
+  try {
+    zones.set(draft.zoneId, createGameMapFromZoneData(draft));
+  } catch {
+    // A structurally broken draft keeps the shipped map; validateAllContent
+    // still surfaces the structural error through validateZoneData.
+  }
+  return { ...context, zones };
 }
 
 const TILES_PLACEHOLDER = "__NYWARUDO_TILES__";

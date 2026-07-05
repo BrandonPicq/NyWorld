@@ -1,12 +1,30 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
-import type { ContentCatalogSnapshot, ZoneData } from "../../../engine";
 import {
+  createRuntimeContentCatalogSnapshot,
+  createRuntimeContentValidationContext,
+  getAllTileDefs,
+  validateAllContent,
+  type ContentCatalogSnapshot,
+  type ZoneData,
+} from "../../../engine";
+import {
+  cloneZoneData,
+  createZoneDraftSnapshot,
+  createZoneDraftValidationContext,
   listEditorZones,
   serializeZoneData,
   setTileAt,
   zoneContentPath,
 } from "./zoneEditorModel";
+
+function firstBlockedTileId(): number {
+  const blocked = [...getAllTileDefs().entries()].find(
+    ([, def]) => !def.walkable,
+  );
+  if (!blocked) throw new Error("expected a non-walkable tile in the catalog");
+  return blocked[0];
+}
 
 function readShippedZone(zoneId: string): string {
   return readFileSync(
@@ -127,5 +145,47 @@ describe("serializeZoneData", () => {
     expect(serialized).toContain("    [1, 1, 1, 1, 1, 1, 1, 1, 1, 1],");
     // No tile number ever sits alone on its own line.
     expect(serialized).not.toMatch(/^\s+\d+,?$/m);
+  });
+});
+
+describe("zone draft cross-content validation", () => {
+  it("flags a paint that walls a tile a global NPC's schedule walks onto", () => {
+    const snapshot = createRuntimeContentCatalogSnapshot();
+    // young_page's 18:00 schedule enters test_zone_2 at (2, 6).
+    const target = { zoneId: "test_zone_2", x: 2, y: 6 };
+    const draft = setTileAt(
+      cloneZoneData(snapshot.zones[target.zoneId]),
+      target.x,
+      target.y,
+      firstBlockedTileId(),
+    );
+
+    const diagnostics = validateAllContent(
+      createZoneDraftSnapshot(snapshot, draft),
+      createZoneDraftValidationContext(
+        createRuntimeContentValidationContext(),
+        draft,
+      ),
+    );
+
+    expect(
+      diagnostics.some(
+        (diagnostic) =>
+          diagnostic.contentId === "young_page" &&
+          /non-walkable/i.test(diagnostic.message),
+      ),
+    ).toBe(true);
+  });
+
+  it("stays clean when the schedule target keeps its walkable tile", () => {
+    const snapshot = createRuntimeContentCatalogSnapshot();
+    const diagnostics = validateAllContent(
+      snapshot,
+      createRuntimeContentValidationContext(),
+    );
+
+    expect(
+      diagnostics.some((diagnostic) => diagnostic.contentId === "young_page"),
+    ).toBe(false);
   });
 });

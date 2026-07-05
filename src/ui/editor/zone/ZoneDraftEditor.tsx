@@ -1,4 +1,8 @@
-import { formatContentDiagnostic, type ZoneData } from "../../../engine";
+import {
+  formatContentDiagnostic,
+  type ContentCatalogSnapshot,
+  type ZoneData,
+} from "../../../engine";
 import { ScrollRegion } from "../../components/ScrollRegion";
 import { TerminalButton } from "../../components/TerminalButton";
 import { TerminalPanel } from "../../components/TerminalPanel";
@@ -9,6 +13,7 @@ import { useZoneDraft } from "./useZoneDraft";
 
 type ZoneDraftEditorProps = {
   zone: ZoneData;
+  snapshot: ContentCatalogSnapshot;
 };
 
 /**
@@ -16,7 +21,7 @@ type ZoneDraftEditorProps = {
  * validation + save. Mount behind `key={zoneId}` so switching zones starts a
  * fresh draft.
  */
-export function ZoneDraftEditor({ zone }: ZoneDraftEditorProps) {
+export function ZoneDraftEditor({ zone, snapshot }: ZoneDraftEditorProps) {
   const {
     renderSnapshot,
     draft,
@@ -32,7 +37,7 @@ export function ZoneDraftEditor({ zone }: ZoneDraftEditorProps) {
     saveStatus,
     resetDraft,
     saveDraft,
-  } = useZoneDraft(zone);
+  } = useZoneDraft(zone, snapshot);
 
   const warningCount = diagnostics.length - errorCount;
 

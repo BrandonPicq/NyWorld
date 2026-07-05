@@ -51,7 +51,11 @@ export function ZoneEditorPanel({ snapshot }: ZoneEditorPanelProps) {
       </TerminalPanel>
 
       {selectedZone ? (
-        <ZoneDraftEditor key={selectedZone.zoneId} zone={selectedZone} />
+        <ZoneDraftEditor
+          key={selectedZone.zoneId}
+          snapshot={snapshot}
+          zone={selectedZone}
+        />
       ) : (
         <>
           <TerminalPanel className="editor-panel editor-zone-preview">

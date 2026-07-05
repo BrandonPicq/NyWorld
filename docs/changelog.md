@@ -4,6 +4,12 @@ This file tracks meaningful project changes by commit-oriented slices.
 
 Keep entries short and practical. When a slice is committed, its changelog section should stay aligned with the commit title so the project history remains easy to read after restores or bisects.
 
+## 2026-07-05 - [FIX]: Validate zone tile edits against the whole content bundle
+
+- Validate a zone paint draft with `validateAllContent` (draft zone swapped into both the snapshot and the validation context) instead of only the zone's own data.
+- Surface and block saves on cross-content breakage a paint can cause — e.g. walling a tile a global NPC's schedule walks onto.
+- Add `createZoneDraftSnapshot`/`createZoneDraftValidationContext` plus a test that painting over young_page's schedule target is flagged.
+
 ## 2026-07-05 - [FIX]: Keep zone tile rows compact when the editor saves
 
 - Serialize zone drafts as standard 2-space JSON but keep each `tiles` row on a single line, so a save no longer explodes the grid into ~100 lines.

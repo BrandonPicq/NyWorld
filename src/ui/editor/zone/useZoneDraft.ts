@@ -1,8 +1,9 @@
 import { useMemo, useState } from "react";
 import {
-  createRuntimeZoneValidationContext,
+  createRuntimeContentValidationContext,
   getAllTileDefs,
-  validateZoneData,
+  validateAllContent,
+  type ContentCatalogSnapshot,
   type ContentDiagnostic,
   type TileDef,
   type ZoneData,
@@ -14,6 +15,8 @@ import { saveEditorContent } from "../editorSaveClient";
 import type { SaveStatus } from "../editorModel";
 import {
   cloneZoneData,
+  createZoneDraftSnapshot,
+  createZoneDraftValidationContext,
   serializeZoneData,
   setTileAt,
   zoneContentPath,
@@ -47,8 +50,11 @@ export interface ZoneDraftController {
   saveDraft: () => Promise<void>;
 }
 
-export function useZoneDraft(zone: ZoneData): ZoneDraftController {
-  const context = useMemo(() => createRuntimeZoneValidationContext(), []);
+export function useZoneDraft(
+  zone: ZoneData,
+  snapshot: ContentCatalogSnapshot,
+): ZoneDraftController {
+  const context = useMemo(() => createRuntimeContentValidationContext(), []);
   const tiles = useMemo<ZonePaletteTile[]>(
     () =>
       [...getAllTileDefs().entries()]
@@ -67,9 +73,15 @@ export function useZoneDraft(zone: ZoneData): ZoneDraftController {
     () => tiles[0]?.id ?? 0,
   );
 
+  // Validate against the whole bundle so cross-zone breakage shows up too — for
+  // example painting a wall where a global NPC's schedule walks into this zone.
   const diagnostics = useMemo(
-    () => validateZoneData(draft, context),
-    [draft, context],
+    () =>
+      validateAllContent(
+        createZoneDraftSnapshot(snapshot, draft),
+        createZoneDraftValidationContext(context, draft),
+      ),
+    [snapshot, draft, context],
   );
   const errorCount = diagnostics.filter(
     (diagnostic) => diagnostic.severity === "error",
