@@ -10,6 +10,7 @@ import {
 } from "../../../engine";
 import {
   cloneZoneData,
+  createBlankZone,
   createZoneDraftSnapshot,
   createZoneDraftValidationContext,
   erasePlacementsAt,
@@ -20,6 +21,7 @@ import {
   serializeZoneData,
   setPlayerStart,
   setTileAt,
+  validateNewZone,
   zoneContentPath,
 } from "./zoneEditorModel";
 
@@ -180,6 +182,64 @@ describe("placement editing", () => {
     const tilesOnly = createZone({ playerStart: { x: 1, y: 1 } });
     expect(erasePlacementsAt(tilesOnly, 0, 0)).toBe(tilesOnly);
     expect(erasePlacementsAt(tilesOnly, 0, 0).items).toBeUndefined();
+  });
+});
+
+describe("validateNewZone", () => {
+  const base = { zoneId: "cave", name: "Cave", width: 6, height: 5 };
+
+  it("accepts a fresh slug id with a valid grid", () => {
+    expect(validateNewZone(base, ["test_zone"])).toEqual([]);
+  });
+
+  it("rejects blank, malformed, or duplicate ids", () => {
+    expect(validateNewZone({ ...base, zoneId: "" }, [])).toContain(
+      "Zone id is required.",
+    );
+    expect(validateNewZone({ ...base, zoneId: "Bad Id" }, [])).toContain(
+      "Zone id must be lowercase letters, digits, or underscores.",
+    );
+    expect(validateNewZone(base, ["cave"])).toContain(
+      'Zone "cave" already exists.',
+    );
+  });
+
+  it("requires a name and a grid of at least 3x3", () => {
+    expect(validateNewZone({ ...base, name: " " }, [])).toContain(
+      "Name is required.",
+    );
+    expect(validateNewZone({ ...base, width: 2 }, [])).toContain(
+      "Width must be an integer of at least 3.",
+    );
+    expect(validateNewZone({ ...base, height: 2.5 }, [])).toContain(
+      "Height must be an integer of at least 3.",
+    );
+  });
+});
+
+describe("createBlankZone", () => {
+  it("builds a floor-filled grid with a wall border and a walkable start", () => {
+    const zone = createBlankZone(
+      { zoneId: "cave", name: "Cave", width: 4, height: 3 },
+      0,
+      1,
+    );
+
+    expect(zone).toMatchObject({
+      version: "0.1",
+      zoneId: "cave",
+      name: "Cave",
+      width: 4,
+      height: 3,
+      playerStart: { x: 1, y: 1 },
+    });
+    expect(zone.tiles).toEqual([
+      [1, 1, 1, 1],
+      [1, 0, 0, 1],
+      [1, 1, 1, 1],
+    ]);
+    // The player start sits on a floor tile.
+    expect(zone.tiles[zone.playerStart.y][zone.playerStart.x]).toBe(0);
   });
 });
 

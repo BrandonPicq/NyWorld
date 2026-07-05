@@ -48,6 +48,78 @@ export function zoneContentPath(zoneId: string): string {
   return `src/content/zones/${zoneId}.json`;
 }
 
+export interface NewZoneInput {
+  zoneId: string;
+  name: string;
+  width: number;
+  height: number;
+}
+
+/**
+ * Validates the fields of a new zone before it is created.
+ *
+ * Returns a message per problem (empty when the input is ready to create): the
+ * id must be a fresh slug and the grid must be at least 3x3 so the wall border
+ * leaves a walkable interior for the player start.
+ */
+export function validateNewZone(
+  input: NewZoneInput,
+  existingZoneIds: readonly string[],
+): string[] {
+  const errors: string[] = [];
+  const zoneId = input.zoneId.trim();
+
+  if (!zoneId) {
+    errors.push("Zone id is required.");
+  } else if (!/^[a-z0-9_]+$/.test(zoneId)) {
+    errors.push("Zone id must be lowercase letters, digits, or underscores.");
+  } else if (existingZoneIds.includes(zoneId)) {
+    errors.push(`Zone "${zoneId}" already exists.`);
+  }
+
+  if (!input.name.trim()) {
+    errors.push("Name is required.");
+  }
+  if (!Number.isInteger(input.width) || input.width < 3) {
+    errors.push("Width must be an integer of at least 3.");
+  }
+  if (!Number.isInteger(input.height) || input.height < 3) {
+    errors.push("Height must be an integer of at least 3.");
+  }
+
+  return errors;
+}
+
+/**
+ * Builds a blank zone: a floor-filled grid with a wall border and the player
+ * start on the first interior tile. Callers pass the floor/wall tile ids so the
+ * fill stays content-driven rather than hardcoded.
+ */
+export function createBlankZone(
+  input: NewZoneInput,
+  floorTileId: number,
+  wallTileId: number,
+): ZoneData {
+  const { width, height } = input;
+  const tiles = Array.from({ length: height }, (_, y) =>
+    Array.from({ length: width }, (_, x) =>
+      x === 0 || y === 0 || x === width - 1 || y === height - 1
+        ? wallTileId
+        : floorTileId,
+    ),
+  );
+
+  return {
+    version: "0.1",
+    zoneId: input.zoneId.trim(),
+    name: input.name.trim(),
+    width,
+    height,
+    playerStart: { x: 1, y: 1 },
+    tiles,
+  };
+}
+
 /** Deep copy so draft edits never mutate the shared catalog snapshot. */
 export function cloneZoneData(zone: ZoneData): ZoneData {
   return structuredClone(zone);

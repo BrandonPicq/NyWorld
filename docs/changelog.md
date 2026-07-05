@@ -4,6 +4,12 @@ This file tracks meaningful project changes by commit-oriented slices.
 
 Keep entries short and practical. When a slice is committed, its changelog section should stay aligned with the commit title so the project history remains easy to read after restores or bisects.
 
+## 2026-07-05 - [ADD]: Create new zones from the editor
+
+- Add a "New Zone" form to the Zones tab (zoneId, name, width, height) with live validation: a fresh slug id and a grid of at least 3x3.
+- Generate a floor-filled grid with a wall border and a walkable player start via `createBlankZone`, saved through the dev editor endpoint.
+- The dev server's `import.meta.glob` picks the new file up on reload; add `createBlankZone`/`validateNewZone` tests.
+
 ## 2026-07-05 - [ADD]: Edit zone placements in the editor
 
 - Add a placement mode selector (inspect / tiles / player / NPC / item / transition / erase); a canvas click applies the active mode at that cell.

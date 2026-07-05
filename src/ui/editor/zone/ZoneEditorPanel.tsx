@@ -3,6 +3,7 @@ import type { ContentCatalogSnapshot, ZoneData } from "../../../engine";
 import { ScrollRegion } from "../../components/ScrollRegion";
 import { TerminalButton } from "../../components/TerminalButton";
 import { TerminalPanel } from "../../components/TerminalPanel";
+import { ZoneCreateForm } from "./ZoneCreateForm";
 import { ZoneDraftEditor } from "./ZoneDraftEditor";
 import { listEditorZones } from "./zoneEditorModel";
 
@@ -48,6 +49,7 @@ export function ZoneEditorPanel({ snapshot }: ZoneEditorPanelProps) {
             ))}
           </ScrollRegion>
         )}
+        <ZoneCreateForm existingZoneIds={zones.map((zone) => zone.zoneId)} />
       </TerminalPanel>
 
       {selectedZone ? (
