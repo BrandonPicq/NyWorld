@@ -26,12 +26,17 @@
   display: flex;
 }
 
+.scroll-region-frame[data-scrollable="true"] {
+  --scroll-region-indicator-space: 0.75rem;
+}
+
 /* A block that grows to fill remaining space and scrolls on its own. */
 .scroll-region {
   flex: 1;
   min-height: 0;
   min-width: 0;
   overflow: auto;
+  padding-inline-end: var(--scroll-region-indicator-space, 0);
   scrollbar-width: none;
   -ms-overflow-style: none;
 }
@@ -44,7 +49,7 @@
 .scroll-region__indicator {
   position: absolute;
   top: 0;
-  right: 0.15rem;
+  right: 0.35rem;
   bottom: 0;
   width: 2px;
   pointer-events: none;

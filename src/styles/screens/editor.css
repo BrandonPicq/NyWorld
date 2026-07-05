@@ -92,7 +92,7 @@
 .editor-scroll {
   display: grid;
   gap: var(--space-3);
-  padding-right: 0.2rem;
+  padding-right: calc(0.2rem + var(--scroll-region-indicator-space, 0px));
   align-content: start;
 }
 
