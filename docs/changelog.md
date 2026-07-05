@@ -4,6 +4,12 @@ This file tracks meaningful project changes by commit-oriented slices.
 
 Keep entries short and practical. When a slice is committed, its changelog section should stay aligned with the commit title so the project history remains easy to read after restores or bisects.
 
+## 2026-07-05 - [UPDATE]: Use subtle custom scroll indicators
+
+- Hide native scrollbars on shared scroll regions while preserving normal wheel, touchpad, keyboard, and pointer scrolling.
+- Add a thin custom scroll indicator that appears only when a region has overflow.
+- Reuse the shared `ScrollRegion` path so editor panels inherit the same quieter scroll treatment.
+
 ## 2026-07-05 - [ADD]: Edit and create dialogues in the editor
 
 - Track editable dialogue files separately from the flattened runtime dialogue registry, excluding the synthetic fallback from file saves.
