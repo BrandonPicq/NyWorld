@@ -132,6 +132,7 @@ describe("contentBundle", () => {
     expect(Object.keys(defaultContentBundle.zones).sort()).toEqual([
       "test_zone",
       "test_zone_2",
+      "test_zone_3",
     ]);
   });
 

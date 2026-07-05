@@ -4,8 +4,10 @@ import type {
   ContentRef,
   ContentTypeName,
   ContentValidationContext,
+  GameContentConfig,
   ItemDef,
   ItemDefMap,
+  NewGameStartingStack,
 } from "../../engine";
 import { CONTENT_TYPES } from "../../engine";
 

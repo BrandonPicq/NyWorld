@@ -4,6 +4,10 @@ This file tracks meaningful project changes by commit-oriented slices.
 
 Keep entries short and practical. When a slice is committed, its changelog section should stay aligned with the commit title so the project history remains easy to read after restores or bisects.
 
+## 2026-07-05 - [TEST]: Track test_zone_3 in zone discovery
+
+- Update the zone-discovery test to expect the authored `test_zone_3`, restoring a green suite.
+
 ## 2026-07-05 - [ADD]: Edit zone entry dialogue in the editor
 
 - Make a zone's entry-dialogue lines editable (speaker / text / pitch) on the same draft, with add and delete.
