@@ -120,8 +120,9 @@ putting React concerns inside the engine. Stable content-type names already
 live in `engine/content/contentTypes.ts` (ADR 0005 records the wider
 decisions and deferrals).
 
-The prose `effects` strings in combat action files duplicate the authored
-tuning numbers; the editor should eventually generate that prose from data.
+The numeric `effects` lines in combat action files are now derived from the
+authored `tuning` at build time; `formula` and `details` still restate tuning
+numbers by hand and could be derived later too.
 
 ## NPCs And Dialogue
 
@@ -181,9 +182,13 @@ Combat action files own the player-facing texts (name, summary, formula,
 effects, details) and a `tuning` block with the gameplay numbers the combat
 system reads: SP gains, MP costs, and the Guard/Focus damage multipliers.
 
-The prose `effects` strings currently repeat the tuning numbers (for example
-"Gain 5 SP."). Keep both in sync when rebalancing; a future editor should
-generate the prose from the tuning values instead.
+The registry derives the numeric effect lines from `tuning` at build time and
+prepends them to the authored `effects`: an `spGain` of 5 renders "Gain 5 SP."
+and an `mpCost` of 10 renders "Costs 10 MP." Do not author those numeric lines
+in `effects` — keep only the qualitative prose there, so a rebalance in `tuning`
+updates the help text automatically. Multiplier tuning has no derived line and
+stays authored prose. The `formula` and `details` strings still restate tuning
+numbers by hand.
 
 ## Quests
 

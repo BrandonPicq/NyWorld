@@ -6,7 +6,6 @@
   "summary": "Spend MP to launch a magical attack.",
   "formula": "Magic QTE + MAG vs MDF, then final damage rolls between 75% and 125%.",
   "effects": [
-    "Costs 10 MP.",
     "Uses Spirit for QTE pressure.",
     "Benefits from the next Focus damage boost."
   ],

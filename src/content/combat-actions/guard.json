@@ -6,7 +6,6 @@
   "summary": "Brace for the enemy response and reduce incoming damage.",
   "formula": "The next enemy damage is halved after variance, with minimum 1 damage if the hit lands.",
   "effects": [
-    "Gain 10 SP.",
     "Reduces the next enemy hit.",
     "Consumes the current turn."
   ],

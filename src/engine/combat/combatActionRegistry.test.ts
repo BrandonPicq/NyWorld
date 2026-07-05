@@ -112,6 +112,31 @@ describe("deriveCombatActionEffects", () => {
   });
 });
 
+describe("composed combat action effects", () => {
+  it("prepends derived numeric lines so help text matches the original prose", () => {
+    expect(getCombatActionDef("strike").effects).toEqual([
+      "Gain 5 SP.",
+      "Uses Agility for QTE pressure.",
+      "Benefits from the next Focus damage boost.",
+    ]);
+    expect(getCombatActionDef("cast").effects).toEqual([
+      "Costs 10 MP.",
+      "Uses Spirit for QTE pressure.",
+      "Benefits from the next Focus damage boost.",
+    ]);
+    expect(getCombatActionDef("guard").effects).toEqual([
+      "Gain 10 SP.",
+      "Reduces the next enemy hit.",
+      "Consumes the current turn.",
+    ]);
+    expect(getCombatActionDef("focus").effects).toEqual([
+      "Gain 5 SP.",
+      "Boosts the next offensive action.",
+      "Consumes the current turn.",
+    ]);
+  });
+});
+
 describe("validateCombatActionRegistry", () => {
   it("reports duplicate action ids and shared menu orders", () => {
     const otherAction = { ...strikeData, actionId: "cast" };

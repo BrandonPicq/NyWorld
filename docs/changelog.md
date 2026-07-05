@@ -4,6 +4,12 @@ This file tracks meaningful project changes by commit-oriented slices.
 
 Keep entries short and practical. When a slice is committed, its changelog section should stay aligned with the commit title so the project history remains easy to read after restores or bisects.
 
+## 2026-07-06 - [UPDATE]: Drop derived numeric lines from combat action content
+
+- Remove the hand-authored "Gain N SP." / "Costs N MP." effect lines from the strike, cast, guard, and focus combat-action JSONs now that the registry derives them from `tuning`.
+- Add a byte-identity test asserting the composed effect lists still match the original help text.
+- Document that numeric combat-action effect lines are derived from tuning and must not be authored in `effects`.
+
 ## 2026-07-06 - [UPDATE]: Derive combat-action effect lines from tuning
 
 - Add a pure `deriveCombatActionEffects(tuning)` that emits the exact SP/MP effect lines the combat-action JSONs used to hand-author, with unit tests.

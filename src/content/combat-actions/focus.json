@@ -6,7 +6,6 @@
   "summary": "Prepare your next offensive action for higher damage.",
   "formula": "Next successful Strike or Cast damage is multiplied by 1.5 before variance.",
   "effects": [
-    "Gain 5 SP.",
     "Boosts the next offensive action.",
     "Consumes the current turn."
   ],
