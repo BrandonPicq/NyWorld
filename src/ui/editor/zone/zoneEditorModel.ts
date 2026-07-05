@@ -4,6 +4,7 @@ import {
   type ContentValidationContext,
   type DialogueNodeData,
   type ItemSpawnData,
+  type NpcScheduleEntryData,
   type NpcSpawnData,
   type ZoneData,
   type ZoneTransitionData,
@@ -313,6 +314,109 @@ export function erasePlacementsAt(
   }
 
   return changed ? result : zone;
+}
+
+/**
+ * True when `time` is a valid `HH:mm` 24-hour label.
+ *
+ * Mirrors the schedule system's `parseScheduleTime` contract so the editor can
+ * flag a bad time inline without importing the engine system into the UI.
+ */
+export function isValidScheduleTime(time: string): boolean {
+  const match = /^(\d{2}):(\d{2})$/.exec(time);
+  if (!match) {
+    return false;
+  }
+  const hour = Number(match[1]);
+  const minute = Number(match[2]);
+  return hour >= 0 && hour <= 23 && minute >= 0 && minute <= 59;
+}
+
+/**
+ * Applies `transform` to the schedule of the NPC spawn at (spawnX, spawnY).
+ *
+ * Spawns are keyed by their cell like `placeNpcAt`, so at most one spawn matches.
+ * A transform that returns the same array reference (a no-op edit) yields the
+ * same zone reference; an empty result drops the `schedule` key entirely.
+ */
+function updateSpawnSchedule(
+  zone: ZoneData,
+  spawnX: number,
+  spawnY: number,
+  transform: (schedule: NpcScheduleEntryData[]) => NpcScheduleEntryData[],
+): ZoneData {
+  const npcs = zone.npcs;
+  if (!npcs) {
+    return zone;
+  }
+  const index = npcs.findIndex((npc) => npc.x === spawnX && npc.y === spawnY);
+  if (index === -1) {
+    return zone;
+  }
+
+  const spawn = npcs[index];
+  const currentSchedule = spawn.schedule ?? [];
+  const nextSchedule = transform(currentSchedule);
+  if (nextSchedule === currentSchedule) {
+    return zone;
+  }
+
+  const nextSpawn: NpcSpawnData = { ...spawn };
+  if (nextSchedule.length > 0) {
+    nextSpawn.schedule = nextSchedule;
+  } else {
+    delete nextSpawn.schedule;
+  }
+  const nextNpcs = npcs.map((npc, npcIndex) =>
+    npcIndex === index ? nextSpawn : npc,
+  );
+  return { ...zone, npcs: nextNpcs };
+}
+
+/**
+ * Appends a schedule entry to the spawn at (spawnX, spawnY), defaulting to the
+ * spawn's own cell at 08:00 so the new entry starts valid and in-bounds.
+ */
+export function addNpcScheduleEntry(
+  zone: ZoneData,
+  spawnX: number,
+  spawnY: number,
+): ZoneData {
+  return updateSpawnSchedule(zone, spawnX, spawnY, (schedule) => [
+    ...schedule,
+    { time: "08:00", x: spawnX, y: spawnY },
+  ]);
+}
+
+/** Patches one field of schedule entry `index` on the spawn at (spawnX, spawnY). */
+export function updateNpcScheduleEntry(
+  zone: ZoneData,
+  spawnX: number,
+  spawnY: number,
+  index: number,
+  patch: Partial<NpcScheduleEntryData>,
+): ZoneData {
+  return updateSpawnSchedule(zone, spawnX, spawnY, (schedule) =>
+    index < 0 || index >= schedule.length
+      ? schedule
+      : schedule.map((entry, entryIndex) =>
+          entryIndex === index ? { ...entry, ...patch } : entry,
+        ),
+  );
+}
+
+/** Removes schedule entry `index` from the spawn at (spawnX, spawnY). */
+export function removeNpcScheduleEntry(
+  zone: ZoneData,
+  spawnX: number,
+  spawnY: number,
+  index: number,
+): ZoneData {
+  return updateSpawnSchedule(zone, spawnX, spawnY, (schedule) =>
+    index < 0 || index >= schedule.length
+      ? schedule
+      : schedule.filter((_, entryIndex) => entryIndex !== index),
+  );
 }
 
 /** Appends a blank entry-dialogue line (neutral pitch) to the zone. */

@@ -10,20 +10,24 @@ import {
 } from "../../../engine";
 import {
   addEntryDialogueNode,
+  addNpcScheduleEntry,
   cloneZoneData,
   createBlankZone,
   createZoneDraftSnapshot,
   createZoneDraftValidationContext,
   erasePlacementsAt,
+  isValidScheduleTime,
   listEditorZones,
   placeItemAt,
   placeNpcAt,
   placeTransitionAt,
   removeEntryDialogueNode,
+  removeNpcScheduleEntry,
   serializeZoneData,
   setPlayerStart,
   setTileAt,
   updateEntryDialogueNode,
+  updateNpcScheduleEntry,
   validateNewZone,
   zoneContentPath,
 } from "./zoneEditorModel";
@@ -276,6 +280,63 @@ describe("entry dialogue editing", () => {
     const zone = addEntryDialogueNode(createZone({ playerStart: { x: 1, y: 1 } }));
     expect(updateEntryDialogueNode(zone, 5, { speaker: "x" })).toBe(zone);
     expect(removeEntryDialogueNode(zone, -1)).toBe(zone);
+  });
+});
+
+describe("isValidScheduleTime", () => {
+  it("accepts HH:mm 24-hour labels and rejects everything else", () => {
+    expect(isValidScheduleTime("00:00")).toBe(true);
+    expect(isValidScheduleTime("08:00")).toBe(true);
+    expect(isValidScheduleTime("23:59")).toBe(true);
+
+    expect(isValidScheduleTime("8:00")).toBe(false);
+    expect(isValidScheduleTime("24:00")).toBe(false);
+    expect(isValidScheduleTime("12:60")).toBe(false);
+    expect(isValidScheduleTime("")).toBe(false);
+    expect(isValidScheduleTime("morning")).toBe(false);
+  });
+});
+
+describe("npc schedule editing", () => {
+  const zone = createZone({
+    npcs: [
+      { npcId: "npc_a", x: 2, y: 2 },
+      {
+        npcId: "npc_b",
+        x: 5,
+        y: 5,
+        schedule: [{ time: "08:00", x: 5, y: 5 }],
+      },
+    ],
+  });
+
+  it("adds a default entry to the addressed spawn only", () => {
+    const next = addNpcScheduleEntry(zone, 2, 2);
+    expect(next.npcs?.[0].schedule).toEqual([{ time: "08:00", x: 2, y: 2 }]);
+    // The other spawn's schedule is untouched.
+    expect(next.npcs?.[1].schedule).toEqual([{ time: "08:00", x: 5, y: 5 }]);
+  });
+
+  it("patches a field of one schedule entry", () => {
+    const next = updateNpcScheduleEntry(zone, 5, 5, 0, {
+      time: "18:30",
+      zoneId: "other",
+      dialogueId: "greet",
+    });
+    expect(next.npcs?.[1].schedule).toEqual([
+      { time: "18:30", zoneId: "other", dialogueId: "greet", x: 5, y: 5 },
+    ]);
+  });
+
+  it("removes an entry and drops the schedule key when it empties", () => {
+    const next = removeNpcScheduleEntry(zone, 5, 5, 0);
+    expect(next.npcs?.[1].schedule).toBeUndefined();
+  });
+
+  it("no-ops (same reference) for an unknown cell or out-of-range index", () => {
+    expect(addNpcScheduleEntry(zone, 9, 9)).toBe(zone);
+    expect(updateNpcScheduleEntry(zone, 5, 5, 3, { time: "09:00" })).toBe(zone);
+    expect(removeNpcScheduleEntry(zone, 2, 2, 0)).toBe(zone);
   });
 });
 

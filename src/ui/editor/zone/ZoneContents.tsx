@@ -1,13 +1,32 @@
 import type { ReactNode } from "react";
 import type { ZoneData } from "../../../engine";
+import { ScheduleEntriesEditor } from "../ScheduleEntriesEditor";
+import {
+  addNpcScheduleEntry,
+  removeNpcScheduleEntry,
+  updateNpcScheduleEntry,
+} from "./zoneEditorModel";
+
+type ZoneContentsProps = {
+  zone: ZoneData;
+  zoneIds: readonly string[];
+  dialogueIds: readonly string[];
+  onUpdate: (updater: (zone: ZoneData) => ZoneData) => void;
+};
 
 /**
- * Read-only listing of a zone's spatial placements.
+ * Listing of a zone's spatial placements.
  *
- * NPC spawns, item stacks, and transitions are edited on the canvas, so they
- * stay read-only here. Entry dialogue is edited in EntryDialogueEditor.
+ * NPC spawns, item stacks, and transitions are placed on the canvas, so their
+ * positions stay read-only here. Per-spawn schedules are editable; entry
+ * dialogue is edited in EntryDialogueEditor.
  */
-export function ZoneContents({ zone }: { zone: ZoneData }) {
+export function ZoneContents({
+  zone,
+  zoneIds,
+  dialogueIds,
+  onUpdate,
+}: ZoneContentsProps) {
   const npcs = zone.npcs ?? [];
   const items = zone.items ?? [];
   const transitions = zone.transitions ?? [];
@@ -29,18 +48,33 @@ export function ZoneContents({ zone }: { zone: ZoneData }) {
                   dialogue: {npc.dialogueId}
                 </p>
               )}
-              {npc.schedule && npc.schedule.length > 0 && (
-                <ul className="editor-zone-schedule">
-                  {npc.schedule.map((entry, scheduleIndex) => (
-                    <li key={scheduleIndex}>
-                      {entry.time} →{" "}
-                      {entry.zoneId ? `${entry.zoneId} ` : ""}({entry.x},{" "}
-                      {entry.y})
-                      {entry.dialogueId ? ` · ${entry.dialogueId}` : ""}
-                    </li>
-                  ))}
-                </ul>
-              )}
+              <ScheduleEntriesEditor
+                dialogueIds={dialogueIds}
+                entries={npc.schedule ?? []}
+                onAdd={() =>
+                  onUpdate((current) =>
+                    addNpcScheduleEntry(current, npc.x, npc.y),
+                  )
+                }
+                onRemove={(entryIndex) =>
+                  onUpdate((current) =>
+                    removeNpcScheduleEntry(current, npc.x, npc.y, entryIndex),
+                  )
+                }
+                onUpdate={(entryIndex, patch) =>
+                  onUpdate((current) =>
+                    updateNpcScheduleEntry(
+                      current,
+                      npc.x,
+                      npc.y,
+                      entryIndex,
+                      patch,
+                    ),
+                  )
+                }
+                title="Schedule"
+                zoneIds={zoneIds}
+              />
             </li>
           ))}
         </ul>

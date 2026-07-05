@@ -150,7 +150,12 @@ export function ZoneDraftEditor({ zone, snapshot }: ZoneDraftEditorProps) {
             )}
           </section>
 
-          <ZoneContents zone={draft} />
+          <ZoneContents
+            dialogueIds={placement.dialogueIds}
+            onUpdate={updateDraft}
+            zone={draft}
+            zoneIds={placement.zoneIds}
+          />
           <EntryDialogueEditor onUpdate={updateDraft} zone={draft} />
         </ScrollRegion>
       </TerminalPanel>

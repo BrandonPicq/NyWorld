@@ -4,6 +4,12 @@ This file tracks meaningful project changes by commit-oriented slices.
 
 Keep entries short and practical. When a slice is committed, its changelog section should stay aligned with the commit title so the project history remains easy to read after restores or bisects.
 
+## 2026-07-06 - [ADD]: Edit NPC schedules in the zone editor
+
+- Add a shared `ScheduleEntriesEditor` for editing an NPC schedule (time, zone, coordinates, optional dialogue), flagging a malformed `HH:mm` time inline.
+- Make the Zones tab NPC spawn panel add, edit, and remove schedule entries per spawn, driven through the existing undo/redo history and whole-bundle live validation.
+- Add pure `addNpcScheduleEntry`/`updateNpcScheduleEntry`/`removeNpcScheduleEntry` helpers keyed by spawn cell, plus an `isValidScheduleTime` helper, with tests.
+
 ## 2026-07-06 - [ADD]: Create and edit enemy profiles in the editor
 
 - Add an Enemies editor tab for attaching combat profiles to existing NPCs, editing raw stat sections, toggling combatability, and managing loot.
