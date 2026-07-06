@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import {
+  buildContentReferenceGraph,
   CONTENT_TYPES,
   validateEnemyDef,
   type ContentCatalogSnapshot,
@@ -239,7 +240,12 @@ export function useEnemyDraft(
     if (!selectedEnemy || !canDeleteSelectedEnemy) {
       return;
     }
-    if (selectedEnemyReferences.length > 0) {
+    // Re-check references against a fresh graph: the shared graph is deferred,
+    // so a reference added this tick must still block the delete.
+    const freshReferences = buildContentReferenceGraph(
+      combined.snapshot,
+    ).getReferencesTo({ type: CONTENT_TYPES.enemy, id: selectedEnemy.npcId });
+    if (freshReferences.length > 0) {
       setSaveStatus({
         state: "error",
         message: `Enemy "${selectedEnemy.npcId}" is still referenced.`,

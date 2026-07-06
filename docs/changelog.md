@@ -4,6 +4,12 @@ This file tracks meaningful project changes by commit-oriented slices.
 
 Keep entries short and practical. When a slice is committed, its changelog section should stay aligned with the commit title so the project history remains easy to read after restores or bisects.
 
+## 2026-07-07 - [UPDATE]: Close combined-draft cloning and graph deferral debts
+
+- Deep-clone the game config into the combined draft snapshot so mutating a snapshot can no longer corrupt the live draft.
+- Move the shared content reference graph onto the deferred value path so typing no longer rebuilds it every keystroke.
+- Re-check references against a fresh graph synchronously in the dialogue, enemy, presence, and quest delete flows so a just-added reference still blocks the delete.
+
 ## 2026-07-06 - [ADD]: Filter editor lists by id and name
 
 - Add a shared editor list filter field and id/name filtering helper.

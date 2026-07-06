@@ -73,7 +73,8 @@ export function createCombinedDraftSnapshot(
   for (const zone of contents.zones ?? []) {
     snapshot = createZoneDraftSnapshot(snapshot, zone);
   }
-  snapshot = { ...snapshot, game: contents.game };
+  // Clone the game config so mutating the snapshot cannot corrupt the draft.
+  snapshot = { ...snapshot, game: structuredClone(contents.game) };
   return snapshot;
 }
 

@@ -202,20 +202,25 @@ export function useEditorDrafts(base: ContentCatalogSnapshot): EditorDrafts {
     [baseContext, base, contents],
   );
 
-  // Defer the whole-bundle validation off the typing path; keep snapshot,
-  // context, and reference graph live so saves and deletes re-check the truth.
+  // Defer the whole-bundle validation and reference graph off the typing path.
+  // The live `combinedSnapshot`/`combinedContext` stay available so saves and
+  // deletes re-check the truth synchronously rather than a deferred tick.
   const deferredContents = useDeferredValue(contents);
+  const deferredSnapshot = useMemo(
+    () => createCombinedDraftSnapshot(base, deferredContents),
+    [base, deferredContents],
+  );
   const diagnostics = useMemo(
     () =>
       validateAllContent(
-        createCombinedDraftSnapshot(base, deferredContents),
+        deferredSnapshot,
         createCombinedDraftValidationContext(baseContext, base, deferredContents),
       ),
-    [base, baseContext, deferredContents],
+    [base, baseContext, deferredContents, deferredSnapshot],
   );
   const graph = useMemo(
-    () => buildContentReferenceGraph(combinedSnapshot),
-    [combinedSnapshot],
+    () => buildContentReferenceGraph(deferredSnapshot),
+    [deferredSnapshot],
   );
   const errorCount = diagnostics.filter(
     (diagnostic) => diagnostic.severity === "error",

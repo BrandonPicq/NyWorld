@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
+  buildContentReferenceGraph,
+  CONTENT_TYPES,
   createRuntimeContentCatalogSnapshot,
   createRuntimeContentValidationContext,
   validateAllContent,
@@ -90,5 +92,56 @@ describe("createCombinedDraftSnapshot", () => {
     expect(
       diagnostics.filter((diagnostic) => diagnostic.severity === "error"),
     ).toEqual([]);
+  });
+
+  it("clones the game config so mutating the snapshot cannot corrupt the draft", () => {
+    const contents = contentsWith({});
+    const snapshot = createCombinedDraftSnapshot(base, contents);
+
+    snapshot.game.newGame.startingInventory[0].quantity = 999;
+
+    const fresh = createCombinedDraftSnapshot(base, contents);
+    expect(fresh.game.newGame.startingInventory[0].quantity).not.toBe(999);
+  });
+});
+
+describe("createCombinedDraftSnapshot reference graph", () => {
+  const dialogueId = "combined_hero.default";
+
+  function dialogueFilesWithHero() {
+    return {
+      ...cloneDialogueFiles(base.dialogueFiles),
+      combined_hero: {
+        [dialogueId]: [
+          { speaker: "Combined Hero", text: "Hello.", pitch: 1 },
+        ],
+      },
+    };
+  }
+
+  it("reports no references before an NPC points at a fresh dialogue", () => {
+    const contents = contentsWith({ dialogueFiles: dialogueFilesWithHero() });
+    const graph = buildContentReferenceGraph(
+      createCombinedDraftSnapshot(base, contents),
+    );
+    expect(
+      graph.getReferencesTo({ type: CONTENT_TYPES.dialogue, id: dialogueId }),
+    ).toEqual([]);
+  });
+
+  it("blocks a delete the moment a draft reference is added", () => {
+    // Mirrors the synchronous delete re-check: a graph freshly built from the
+    // live combined snapshot must see a just-added reference.
+    const contents = contentsWith({
+      dialogueFiles: dialogueFilesWithHero(),
+      npcs: [...base.npcs, newNpc],
+    });
+    const graph = buildContentReferenceGraph(
+      createCombinedDraftSnapshot(base, contents),
+    );
+    expect(
+      graph.getReferencesTo({ type: CONTENT_TYPES.dialogue, id: dialogueId })
+        .length,
+    ).toBeGreaterThan(0);
   });
 });
