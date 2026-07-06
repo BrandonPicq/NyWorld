@@ -108,7 +108,7 @@ export function usePlacementSelection(
     [snapshot],
   );
 
-  const [mode, setMode] = useState<ZonePlacementMode>("tiles");
+  const [mode, setMode] = useState<ZonePlacementMode>("inspect");
   const [activeTileId, setActiveTileId] = useState(() => tiles[0]?.id ?? 0);
   const [npcId, setNpcId] = useState(() => npcs[0]?.npcId ?? "");
   const [dialogueId, setDialogueId] = useState("");

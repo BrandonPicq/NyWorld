@@ -4,6 +4,10 @@ This file tracks meaningful project changes by commit-oriented slices.
 
 Keep entries short and practical. When a slice is committed, its changelog section should stay aligned with the commit title so the project history remains easy to read after restores or bisects.
 
+## 2026-07-07 - [UPDATE]: Default the zone editor to inspect mode
+
+- Start zone editing in inspect mode so the first map click selects and reads placements instead of painting tiles.
+
 ## 2026-07-07 - [UPDATE]: Trim the Test Zone entry dialogue
 
 - Drop the second entry-dialogue line (Old Sage energy tip) from test_zone, keeping the single welcome line.
