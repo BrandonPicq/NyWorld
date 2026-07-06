@@ -430,14 +430,47 @@
   text-transform: uppercase;
 }
 
-/* Border/padding only; sizing and scroll come from the shared .scroll-region. */
+/*
+ * The edit panel fills the workbench column so the map row is bounded by the
+ * layout, not by the canvas. Without this the canvas would be sized to fit its
+ * own container while the container sized to fit the canvas, and the auto-fit
+ * ResizeObserver would oscillate on resize.
+ */
+.editor-zone-edit-panel {
+  height: 100%;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  gap: var(--space-3);
+}
+
+/*
+ * A bounded box with a constant padding. The inner canvas container owns the
+ * scroll, so this frame never toggles a scroll-indicator gap (which used to
+ * feed back into the auto-fit measurement and shake the map).
+ */
 .editor-zone-canvas-frame {
   border: 1px solid var(--color-border-muted);
   padding: var(--space-2);
   background: var(--color-panel-background);
+  display: flex;
+  min-height: 0;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.editor-zone-canvas-container {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.editor-zone-canvas-container::-webkit-scrollbar {
+  width: 0;
+  height: 0;
 }
 
 .editor-zone-canvas {
+  /* Center in the frame; margin auto stays reachable when the map overflows. */
+  margin: auto;
   display: block;
   cursor: crosshair;
   /* Let pointer drags paint without the frame scrolling on touch/trackpad. */
@@ -643,9 +676,13 @@
     padding-top: var(--space-3);
   }
 
+  .editor-zone-edit-panel {
+    height: auto;
+    grid-template-rows: auto auto auto;
+  }
+
   .editor-zone-canvas-frame {
-    flex: none;
-    max-height: 70dvh;
+    height: 60dvh;
   }
 }
 

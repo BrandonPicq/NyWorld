@@ -85,7 +85,7 @@ export function ZoneDraftEditor({ controller, snapshot }: ZoneDraftEditorProps) 
   return (
     <>
       <ScrollRegion className="workbench__main">
-        <TerminalPanel className="editor-panel">
+        <TerminalPanel className="editor-panel editor-zone-edit-panel">
           <div className="editor-zone-workbench-header">
             <h2 className="editor-panel__title">Edit</h2>
             <p className="editor-zone-dimensions">
@@ -93,7 +93,7 @@ export function ZoneDraftEditor({ controller, snapshot }: ZoneDraftEditorProps) 
               {draft.playerStart.y})
             </p>
           </div>
-          <ScrollRegion className="editor-zone-canvas-frame">
+          <div className="editor-zone-canvas-frame">
             <EditorZoneCanvas
               ariaLabel={`Zone ${draft.name} edit surface`}
               cellSize={48}
@@ -101,7 +101,7 @@ export function ZoneDraftEditor({ controller, snapshot }: ZoneDraftEditorProps) 
               onCellHover={handleHover}
               renderSnapshot={renderSnapshot}
             />
-          </ScrollRegion>
+          </div>
 
           <div className="workbench__statusbar" data-testid="zone-cell-readout">
             <span className="workbench__statusbar-coords">
