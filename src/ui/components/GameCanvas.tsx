@@ -32,6 +32,8 @@ export function GameCanvas({
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const rendererRef = useRef<GridRenderer | null>(null);
   const pressedRef = useRef(false);
+  const snapshotRef = useRef(renderSnapshot);
+  snapshotRef.current = renderSnapshot;
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -40,6 +42,11 @@ export function GameCanvas({
     const renderer = new GridRenderer(canvas, cellSize);
     renderer.setDimensions(renderSnapshot.width, renderSnapshot.height);
     rendererRef.current = renderer;
+    // Resizing the canvas wipes it; repaint immediately so a cellSize-only
+    // change (editor auto-fit) does not leave the map black until the next
+    // snapshot arrives. The ref keeps the snapshot out of the deps: widening
+    // them would recreate the renderer on every game tick.
+    renderer.render(snapshotRef.current);
 
     return () => {
       renderer.destroy();

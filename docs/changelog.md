@@ -4,6 +4,11 @@ This file tracks meaningful project changes by commit-oriented slices.
 
 Keep entries short and practical. When a slice is committed, its changelog section should stay aligned with the commit title so the project history remains easy to read after restores or bisects.
 
+## 2026-07-06 - [FIX]: Repaint the zone map after auto-fit resizes
+
+- Repaint the canvas with the current snapshot whenever the grid renderer is recreated, so a cell-size-only change no longer leaves the map black.
+- Zone switches in the editor triggered the auto-fit to resize the canvas (which wipes it) without a matching redraw; the game screen path is unaffected.
+
 ## 2026-07-06 - [FIX]: Wrap editor tab panels to prevent grid overlapping
 
 - Introduce `.editor-tab-content` flex wrapper container to properly group tab headers, summaries, and workbenches inside the main content row of the editor shell grid.
