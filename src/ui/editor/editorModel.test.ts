@@ -20,6 +20,7 @@ import {
   createItemDraftValidationContext,
   draftHasBlockingErrors,
   groupDiagnosticsByContentType,
+  hasAnyUnsavedEditorChanges,
   serializeGameConfig,
 } from "./editorModel";
 
@@ -260,6 +261,26 @@ describe("draftHasBlockingErrors", () => {
       },
     };
     expect(draftHasBlockingErrors(broken, context)).toBe(true);
+  });
+});
+
+describe("hasAnyUnsavedEditorChanges", () => {
+  it("reports whether any editor family is dirty", () => {
+    expect(
+      hasAnyUnsavedEditorChanges({
+        content: false,
+        zones: false,
+        game: false,
+      }),
+    ).toBe(false);
+
+    expect(
+      hasAnyUnsavedEditorChanges({
+        content: false,
+        zones: true,
+        game: false,
+      }),
+    ).toBe(true);
   });
 });
 

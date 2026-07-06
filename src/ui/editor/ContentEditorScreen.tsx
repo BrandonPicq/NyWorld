@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { createRuntimeContentCatalogSnapshot } from "../../engine";
 import { TerminalButton } from "../components/TerminalButton";
 import { ActionsTab } from "./actions/ActionsTab";
@@ -27,10 +27,45 @@ type EditorTab =
   | "actions"
   | "quests";
 
+const EDITOR_TABS: { id: EditorTab; label: string }[] = [
+  { id: "content", label: "Content" },
+  { id: "zones", label: "Zones" },
+  { id: "game", label: "Game" },
+  { id: "dialogues", label: "Dialogues" },
+  { id: "npcs", label: "NPCs" },
+  { id: "presence", label: "Presence" },
+  { id: "enemies", label: "Enemies" },
+  { id: "actions", label: "Actions" },
+  { id: "quests", label: "Quests" },
+];
+
 export function ContentEditorScreen({ onBack }: ContentEditorScreenProps) {
   const baseSnapshot = useMemo(() => createRuntimeContentCatalogSnapshot(), []);
   const [tab, setTab] = useState<EditorTab>("content");
   const drafts = useEditorDrafts(baseSnapshot);
+
+  useEffect(() => {
+    if (!drafts.hasAnyUnsavedChanges) {
+      return;
+    }
+
+    function handleBeforeUnload(event: BeforeUnloadEvent): void {
+      event.preventDefault();
+      event.returnValue = "";
+    }
+
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+  }, [drafts.hasAnyUnsavedChanges]);
+
+  function handleBack(): void {
+    if (
+      !drafts.hasAnyUnsavedChanges ||
+      window.confirm("Leave the editor? Unsaved changes will be lost.")
+    ) {
+      onBack();
+    }
+  }
 
   return (
     <main
@@ -45,75 +80,24 @@ export function ContentEditorScreen({ onBack }: ContentEditorScreenProps) {
               Content Editor
             </h1>
           </div>
-          <TerminalButton className="editor-header__back" onClick={onBack}>
+          <TerminalButton className="editor-header__back" onClick={handleBack}>
             Back
           </TerminalButton>
         </header>
 
         <nav className="editor-tabs" aria-label="Editor sections">
-          <TerminalButton
-            className="editor-tab"
-            isSelected={tab === "content"}
-            onClick={() => setTab("content")}
-          >
-            Content
-          </TerminalButton>
-          <TerminalButton
-            className="editor-tab"
-            isSelected={tab === "zones"}
-            onClick={() => setTab("zones")}
-          >
-            Zones
-          </TerminalButton>
-          <TerminalButton
-            className="editor-tab"
-            isSelected={tab === "game"}
-            onClick={() => setTab("game")}
-          >
-            Game
-          </TerminalButton>
-          <TerminalButton
-            className="editor-tab"
-            isSelected={tab === "dialogues"}
-            onClick={() => setTab("dialogues")}
-          >
-            Dialogues
-          </TerminalButton>
-          <TerminalButton
-            className="editor-tab"
-            isSelected={tab === "npcs"}
-            onClick={() => setTab("npcs")}
-          >
-            NPCs
-          </TerminalButton>
-          <TerminalButton
-            className="editor-tab"
-            isSelected={tab === "presence"}
-            onClick={() => setTab("presence")}
-          >
-            Presence
-          </TerminalButton>
-          <TerminalButton
-            className="editor-tab"
-            isSelected={tab === "enemies"}
-            onClick={() => setTab("enemies")}
-          >
-            Enemies
-          </TerminalButton>
-          <TerminalButton
-            className="editor-tab"
-            isSelected={tab === "actions"}
-            onClick={() => setTab("actions")}
-          >
-            Actions
-          </TerminalButton>
-          <TerminalButton
-            className="editor-tab"
-            isSelected={tab === "quests"}
-            onClick={() => setTab("quests")}
-          >
-            Quests
-          </TerminalButton>
+          {EDITOR_TABS.map((entry) => (
+            <EditorTabButton
+              hasUnsavedChanges={tabHasUnsavedChanges(
+                entry.id,
+                drafts.unsavedChanges,
+              )}
+              isSelected={tab === entry.id}
+              key={entry.id}
+              label={entry.label}
+              onClick={() => setTab(entry.id)}
+            />
+          ))}
         </nav>
 
         <div className="editor-tab-content">
@@ -152,4 +136,56 @@ export function ContentEditorScreen({ onBack }: ContentEditorScreenProps) {
       </div>
     </main>
   );
+}
+
+function EditorTabButton({
+  label,
+  isSelected,
+  hasUnsavedChanges,
+  onClick,
+}: {
+  label: string;
+  isSelected: boolean;
+  hasUnsavedChanges: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <TerminalButton
+      aria-label={hasUnsavedChanges ? `${label} (unsaved)` : label}
+      className="editor-tab"
+      isSelected={isSelected}
+      onClick={onClick}
+    >
+      <span className="editor-tab__label">{label}</span>
+      {hasUnsavedChanges ? (
+        <span aria-hidden="true" className="editor-tab__dirty" />
+      ) : null}
+    </TerminalButton>
+  );
+}
+
+function tabHasUnsavedChanges(
+  tab: EditorTab,
+  changes: ReturnType<typeof useEditorDrafts>["unsavedChanges"],
+): boolean {
+  switch (tab) {
+    case "content":
+      return changes.item;
+    case "zones":
+      return changes.zone;
+    case "game":
+      return changes.game;
+    case "dialogues":
+      return changes.dialogue;
+    case "npcs":
+      return changes.npc;
+    case "presence":
+      return changes.presence;
+    case "enemies":
+      return changes.enemy;
+    case "actions":
+      return changes.action;
+    case "quests":
+      return changes.quest;
+  }
 }

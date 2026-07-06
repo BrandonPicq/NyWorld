@@ -4,6 +4,12 @@ This file tracks meaningful project changes by commit-oriented slices.
 
 Keep entries short and practical. When a slice is committed, its changelog section should stay aligned with the commit title so the project history remains easy to read after restores or bisects.
 
+## 2026-07-06 - [ADD]: Mark unsaved tabs and guard editor exit
+
+- Add unsaved indicators to editor tab buttons for each content family.
+- Track aggregate unsaved state across all editor drafts, including zone drafts kept open across zone switches.
+- Register a browser exit guard and confirm the Back action while any editor draft has unsaved changes.
+
 ## 2026-07-06 - [ADD]: Pick coordinates on the map from editor forms
 
 - Add a shared map coordinate picker modal that renders zones from the combined draft snapshot, so unsaved zone edits are visible while choosing coordinates.

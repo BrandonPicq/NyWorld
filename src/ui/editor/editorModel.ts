@@ -160,6 +160,13 @@ export function draftHasBlockingErrors(
   );
 }
 
+/** True when at least one editor content family has unsaved draft changes. */
+export function hasAnyUnsavedEditorChanges(
+  changes: object,
+): boolean {
+  return Object.values(changes).some((value) => value === true);
+}
+
 export function refsEqual(a: ContentRef, b: ContentRef): boolean {
   return a.type === b.type && a.id === b.id;
 }

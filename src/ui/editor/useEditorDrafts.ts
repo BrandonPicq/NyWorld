@@ -18,7 +18,11 @@ import {
   type EditorDraftContents,
 } from "./combinedDraftModel";
 import type { CombinedDraftView } from "./editorDraftTypes";
-import { serializeGameConfig, serializeItemCatalog } from "./editorModel";
+import {
+  hasAnyUnsavedEditorChanges,
+  serializeGameConfig,
+  serializeItemCatalog,
+} from "./editorModel";
 import {
   createActionDraftState,
   useActionDraft,
@@ -63,6 +67,19 @@ import {
   type ZoneDraftController,
   type ZoneHistory,
 } from "./zone/useZoneDraft";
+import { serializeZoneData } from "./zone/zoneEditorModel";
+
+export interface EditorUnsavedChanges {
+  item: boolean;
+  dialogue: boolean;
+  npc: boolean;
+  presence: boolean;
+  enemy: boolean;
+  action: boolean;
+  quest: boolean;
+  zone: boolean;
+  game: boolean;
+}
 
 export interface EditorDrafts {
   item: ItemDraftController;
@@ -75,6 +92,8 @@ export interface EditorDrafts {
   zone: ZoneDraftController;
   game: GameConfigController;
   combined: CombinedDraftView;
+  unsavedChanges: EditorUnsavedChanges;
+  hasAnyUnsavedChanges: boolean;
 }
 
 /**
@@ -282,6 +301,18 @@ export function useEditorDrafts(base: ContentCatalogSnapshot): EditorDrafts {
     },
     combined,
   );
+  const unsavedChanges: EditorUnsavedChanges = {
+    item: item.hasUnsavedChanges,
+    dialogue: dialogue.hasUnsavedChanges,
+    npc: npc.hasUnsavedChanges,
+    presence: presence.hasUnsavedChanges,
+    enemy: enemy.hasUnsavedChanges,
+    action: action.hasUnsavedChanges,
+    quest: quest.hasUnsavedChanges,
+    zone: hasAnyUnsavedZoneDraft(base, zoneHistories, savedZoneJson),
+    game: game.hasUnsavedChanges,
+  };
+  const hasAnyUnsavedChanges = hasAnyUnsavedEditorChanges(unsavedChanges);
 
   return {
     item,
@@ -294,5 +325,20 @@ export function useEditorDrafts(base: ContentCatalogSnapshot): EditorDrafts {
     zone,
     game,
     combined,
+    unsavedChanges,
+    hasAnyUnsavedChanges,
   };
+}
+
+function hasAnyUnsavedZoneDraft(
+  base: ContentCatalogSnapshot,
+  histories: Record<string, ZoneHistory>,
+  savedJson: Record<string, string>,
+): boolean {
+  return Object.entries(histories).some(([zoneId, history]) => {
+    const baseZone = base.zones[zoneId];
+    const saved =
+      savedJson[zoneId] ?? (baseZone ? serializeZoneData(baseZone) : "");
+    return serializeZoneData(history.present) !== saved;
+  });
 }
