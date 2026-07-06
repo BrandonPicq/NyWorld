@@ -1,5 +1,6 @@
 import {
   createGameMapFromZoneData,
+  getTileDef,
   type ContentCatalogSnapshot,
   type ContentValidationContext,
   type DialogueNodeData,
@@ -9,6 +10,8 @@ import {
   type ZoneData,
   type ZoneTransitionData,
 } from "../../../engine";
+import type { GridCell } from "../../../rendering/canvasCellMapping";
+
 
 /**
  * Summary row for the editor zone list.
@@ -459,3 +462,68 @@ export function removeEntryDialogueNode(
     entryDialogue: entryDialogue.length > 0 ? entryDialogue : undefined,
   };
 }
+
+export interface ZoneCellDescription {
+  x: number;
+  y: number;
+  tileName: string;
+  tileGlyph: string;
+  walkable: boolean;
+  whatSitsThere: string | null;
+}
+
+/**
+ * Returns a description of what is located at (x, y) in the zone.
+ * Includes the coordinates, tile name, glyph, walkable status, and any
+ * entity (player start, NPC, item, or transition) sitting on the cell.
+ */
+export function describeZoneCell(
+  zone: ZoneData,
+  cell: GridCell,
+): ZoneCellDescription | null {
+  const { x, y } = cell;
+  if (x < 0 || x >= zone.width || y < 0 || y >= zone.height) {
+    return null;
+  }
+  const row = zone.tiles[y];
+  if (!row) {
+    return null;
+  }
+  const tileId = row[x];
+  if (tileId === undefined) {
+    return null;
+  }
+  const tileDef = getTileDef(tileId);
+
+  let whatSitsThere: string | null = null;
+  if (zone.playerStart.x === x && zone.playerStart.y === y) {
+    whatSitsThere = "Player Start";
+  } else {
+    const npc = (zone.npcs ?? []).find((n) => n.x === x && n.y === y);
+    if (npc) {
+      whatSitsThere = `NPC: ${npc.npcId}`;
+    } else {
+      const item = (zone.items ?? []).find((i) => i.x === x && i.y === y);
+      if (item) {
+        whatSitsThere = `Item: ${item.itemId} (x${item.quantity})`;
+      } else {
+        const transition = (zone.transitions ?? []).find(
+          (t) => t.x === x && t.y === y,
+        );
+        if (transition) {
+          whatSitsThere = `Transition: ${transition.targetZoneId} (${transition.targetX}, ${transition.targetY})`;
+        }
+      }
+    }
+  }
+
+  return {
+    x,
+    y,
+    tileName: tileDef.name,
+    tileGlyph: tileDef.glyph,
+    walkable: tileDef.walkable,
+    whatSitsThere,
+  };
+}
+

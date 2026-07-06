@@ -15,6 +15,7 @@ import {
   createBlankZone,
   createZoneDraftSnapshot,
   createZoneDraftValidationContext,
+  describeZoneCell,
   erasePlacementsAt,
   isValidScheduleTime,
   listEditorZones,
@@ -462,3 +463,63 @@ function findScheduleTarget(snapshot: ContentCatalogSnapshot): {
     y: zone.playerStart.y,
   };
 }
+
+describe("describeZoneCell", () => {
+  const zone = createZone({
+    width: 5,
+    height: 5,
+    tiles: [
+      [0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0],
+    ],
+    playerStart: { x: 1, y: 1 },
+    npcs: [{ npcId: "npc_a", x: 2, y: 2 }],
+    items: [{ itemId: "potion", x: 3, y: 3, quantity: 5 }],
+    transitions: [
+      { x: 4, y: 4, targetZoneId: "other_zone", targetX: 10, targetY: 20 },
+    ],
+  });
+
+  it("describes a basic tile with no placement", () => {
+    const desc = describeZoneCell(zone, { x: 0, y: 0 });
+    expect(desc).toEqual({
+      x: 0,
+      y: 0,
+      tileName: expect.any(String),
+      tileGlyph: expect.any(String),
+      walkable: expect.any(Boolean),
+      whatSitsThere: null,
+    });
+  });
+
+  it("describes player start position", () => {
+    const desc = describeZoneCell(zone, { x: 1, y: 1 });
+    expect(desc?.whatSitsThere).toBe("Player Start");
+  });
+
+  it("describes npc spawn position", () => {
+    const desc = describeZoneCell(zone, { x: 2, y: 2 });
+    expect(desc?.whatSitsThere).toBe("NPC: npc_a");
+  });
+
+  it("describes item spawn position", () => {
+    const desc = describeZoneCell(zone, { x: 3, y: 3 });
+    expect(desc?.whatSitsThere).toBe("Item: potion (x5)");
+  });
+
+  it("describes transition position", () => {
+    const desc = describeZoneCell(zone, { x: 4, y: 4 });
+    expect(desc?.whatSitsThere).toBe("Transition: other_zone (10, 20)");
+  });
+
+  it("returns null for out-of-bounds cells", () => {
+    expect(describeZoneCell(zone, { x: -1, y: 0 })).toBeNull();
+    expect(describeZoneCell(zone, { x: 5, y: 0 })).toBeNull();
+    expect(describeZoneCell(zone, { x: 0, y: -1 })).toBeNull();
+    expect(describeZoneCell(zone, { x: 0, y: 5 })).toBeNull();
+  });
+});
+

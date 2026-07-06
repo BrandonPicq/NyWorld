@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import {
   formatContentDiagnostic,
   type ContentCatalogSnapshot,
@@ -12,6 +13,7 @@ import { ZoneContents } from "./ZoneContents";
 import { ZonePlacementControls } from "./ZonePlacementControls";
 import { usePlacementSelection } from "./usePlacementSelection";
 import type { ZoneDraftController } from "./useZoneDraft";
+import { describeZoneCell } from "./zoneEditorModel";
 
 type ZoneDraftEditorProps = {
   controller: ZoneDraftController;
@@ -43,13 +45,30 @@ export function ZoneDraftEditor({ controller, snapshot }: ZoneDraftEditorProps) 
   } = controller;
   const placement = usePlacementSelection(snapshot);
 
+  const [hoveredCell, setHoveredCell] = useState<GridCell | null>(null);
+  const [pinnedCell, setPinnedCell] = useState<GridCell | null>(null);
+
+  useEffect(() => {
+    setHoveredCell(null);
+    setPinnedCell(null);
+  }, [draft?.zoneId, placement.mode]);
+
   if (!draft || !renderSnapshot) {
     return null;
   }
 
   const warningCount = diagnostics.length - errorCount;
 
+  const activeReadoutCell = hoveredCell || pinnedCell;
+  const cellDescription = activeReadoutCell ? describeZoneCell(draft, activeReadoutCell) : null;
+
   function handleCell(cell: GridCell, kind: "down" | "move"): void {
+    if (placement.mode === "inspect") {
+      if (kind === "down") {
+        setPinnedCell(cell);
+      }
+      return;
+    }
     if (kind === "move" && !placement.paintsOnDrag) {
       return;
     }
@@ -57,6 +76,10 @@ export function ZoneDraftEditor({ controller, snapshot }: ZoneDraftEditorProps) 
     if (edit) {
       updateDraft(edit);
     }
+  }
+
+  function handleHover(cell: GridCell | null): void {
+    setHoveredCell(cell);
   }
 
   return (
@@ -76,12 +99,42 @@ export function ZoneDraftEditor({ controller, snapshot }: ZoneDraftEditorProps) 
                 ariaLabel={`Zone ${draft.name} edit surface`}
                 cellSize={48}
                 onCellPointer={handleCell}
+                onCellHover={handleHover}
                 renderSnapshot={renderSnapshot}
               />
             </ScrollRegion>
           </div>
           <aside className="editor-zone-toolbox" aria-label="Zone edit tools">
-            <ZonePlacementControls placement={placement} />
+            <div className="editor-zone-controls-wrapper">
+              <ZonePlacementControls placement={placement} />
+              {cellDescription && (
+                <div className="editor-zone-readout" data-testid="zone-cell-readout">
+                  <h3 className="editor-zone-toolbox__title">Cell Info</h3>
+                  <div className="editor-readout-details">
+                    <div className="editor-readout-coords">
+                      ({cellDescription.x}, {cellDescription.y})
+                    </div>
+                    <div className="editor-readout-tile">
+                      Tile: <span className="editor-readout-glyph">{cellDescription.tileGlyph}</span> {cellDescription.tileName}
+                    </div>
+                    <div className="editor-readout-walkable">
+                      <span
+                        className={`editor-tile-swatch__badge editor-tile-swatch__badge--${
+                          cellDescription.walkable ? "walkable" : "blocked"
+                        }`}
+                      >
+                        {cellDescription.walkable ? "walkable" : "blocked"}
+                      </span>
+                    </div>
+                    {cellDescription.whatSitsThere && (
+                      <div className="editor-readout-contents">
+                        {cellDescription.whatSitsThere}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
             <div className="editor-zone-save">
               <h3 className="editor-zone-toolbox__title">Draft</h3>
               <div className="editor-actions">

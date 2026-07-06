@@ -4,6 +4,14 @@ This file tracks meaningful project changes by commit-oriented slices.
 
 Keep entries short and practical. When a slice is committed, its changelog section should stay aligned with the commit title so the project history remains easy to read after restores or bisects.
 
+## 2026-07-06 - [ADD]: Show hovered cell info in the zone editor
+
+- Add an optional `onCellHover` prop to `GameCanvas` and forward it in `EditorZoneCanvas` to support hover coordinates reporting without mouse button clicks.
+- Add `hoveredCell` and `pinnedCell` states to `ZoneDraftEditor` to track the currently hovered or pinned grid coordinates.
+- Implement click-to-pin behavior on the map canvas when the editor is in "inspect" mode, letting the pin survive pointer leave events.
+- Implement a pure, unit-tested `describeZoneCell(zone, cell)` helper in `zoneEditorModel.ts` to derive the cell readout details including coordinates, tile name, tile glyph, walkable badge, and placements (player start, NPC id, item stack, transition target).
+- Render the compact cell info readout block in the zone editor toolbox under placement controls.
+
 ## 2026-07-06 - [ADD]: Edit quest objectives in the editor
 
 - Make quest objectives editable: add, remove, reorder, and switch between the four types (fetch_item, visit_coordinate, stat_threshold, defeat_npc) with per-type sub-forms and editable objective ids.

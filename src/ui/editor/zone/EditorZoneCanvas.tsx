@@ -7,6 +7,7 @@ type EditorZoneCanvasProps = {
   cellSize?: number;
   renderSnapshot: GridRenderSnapshot;
   onCellPointer?: (cell: GridCell, kind: "down" | "move") => void;
+  onCellHover?: (cell: GridCell | null) => void;
 };
 
 /**
@@ -21,6 +22,7 @@ export function EditorZoneCanvas({
   cellSize,
   renderSnapshot,
   onCellPointer,
+  onCellHover,
 }: EditorZoneCanvasProps) {
   return (
     <GameCanvas
@@ -29,6 +31,7 @@ export function EditorZoneCanvas({
       className="editor-zone-canvas"
       renderSnapshot={renderSnapshot}
       onCellPointer={onCellPointer}
+      onCellHover={onCellHover}
     />
   );
 }

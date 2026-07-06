@@ -14,6 +14,11 @@ type GameCanvasProps = {
    * game screen omits it and is unaffected.
    */
   onCellPointer?: (cell: GridCell, kind: "down" | "move") => void;
+  /**
+   * When provided, fires when the pointer moves over grid cells without being pressed,
+   * reporting the active grid cell or null if outside.
+   */
+  onCellHover?: (cell: GridCell | null) => void;
 };
 
 export function GameCanvas({
@@ -22,6 +27,7 @@ export function GameCanvas({
   className,
   renderSnapshot,
   onCellPointer,
+  onCellHover,
 }: GameCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const rendererRef = useRef<GridRenderer | null>(null);
@@ -59,9 +65,10 @@ export function GameCanvas({
     );
   }
 
-  const pointerHandlers = onCellPointer
+  const pointerHandlers = onCellPointer || onCellHover
     ? {
         onPointerDown: (event: ReactPointerEvent<HTMLCanvasElement>) => {
+          if (!onCellPointer) return;
           const cell = cellFromEvent(event);
           if (!cell) return;
           pressedRef.current = true;
@@ -75,9 +82,15 @@ export function GameCanvas({
           onCellPointer(cell, "down");
         },
         onPointerMove: (event: ReactPointerEvent<HTMLCanvasElement>) => {
-          if (!pressedRef.current) return;
-          const cell = cellFromEvent(event);
-          if (cell) onCellPointer(cell, "move");
+          if (pressedRef.current) {
+            if (!onCellPointer) return;
+            const cell = cellFromEvent(event);
+            if (cell) onCellPointer(cell, "move");
+          } else {
+            if (!onCellHover) return;
+            const cell = cellFromEvent(event);
+            onCellHover(cell);
+          }
         },
         onPointerUp: (event: ReactPointerEvent<HTMLCanvasElement>) => {
           if (!pressedRef.current) return;
@@ -88,6 +101,11 @@ export function GameCanvas({
         },
         onPointerCancel: () => {
           pressedRef.current = false;
+        },
+        onPointerLeave: () => {
+          if (onCellHover) {
+            onCellHover(null);
+          }
         },
       }
     : undefined;
