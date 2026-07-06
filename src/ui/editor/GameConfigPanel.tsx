@@ -32,10 +32,12 @@ export function GameConfigPanel({ draft }: GameConfigPanelProps) {
   } = draft;
 
   return (
-    <div className="editor-game-layout">
-      <TerminalPanel className="editor-panel">
-        <h2 className="editor-panel__title">Game Config</h2>
-        <ScrollRegion className="editor-scroll">
+    <div className="workbench">
+      <ScrollRegion className="workbench__rail" />
+
+      <ScrollRegion className="workbench__main">
+        <TerminalPanel className="editor-panel">
+          <h2 className="editor-panel__title">Game Config</h2>
           <section className="editor-item-form">
             <label className="editor-field">
               <span>Default Zone</span>
@@ -119,10 +121,15 @@ export function GameConfigPanel({ draft }: GameConfigPanelProps) {
               {saveStatus.message}
             </p>
           </section>
+        </TerminalPanel>
+      </ScrollRegion>
 
+      <ScrollRegion className="workbench__inspector">
+        <TerminalPanel className="editor-panel">
+          <h2 className="editor-panel__title">Problems</h2>
           <section className="editor-zone-section">
             <div className="editor-family__header">
-              <h3>Problems</h3>
+              <h3>Diagnostics</h3>
               <span>
                 {errorCount}E / {warningCount}W
               </span>
@@ -142,8 +149,8 @@ export function GameConfigPanel({ draft }: GameConfigPanelProps) {
               </ul>
             )}
           </section>
-        </ScrollRegion>
-      </TerminalPanel>
+        </TerminalPanel>
+      </ScrollRegion>
     </div>
   );
 }

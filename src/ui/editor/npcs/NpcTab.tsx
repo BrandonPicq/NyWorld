@@ -28,10 +28,10 @@ export function NpcTab({ draft }: NpcTabProps) {
         <span>{draft.hasUnsavedChanges ? "unsaved" : "saved"}</span>
       </section>
 
-      <div className="editor-npc-layout">
-        <TerminalPanel className="editor-panel editor-npc-list">
-          <h2 className="editor-panel__title">NPCs</h2>
-          <ScrollRegion className="editor-scroll">
+      <div className="workbench">
+        <ScrollRegion className="workbench__rail">
+          <TerminalPanel className="editor-panel editor-npc-list">
+            <h2 className="editor-panel__title">NPCs</h2>
             <div className="editor-entry-list">
               {draft.npcs.map((npc) => (
                 <TerminalButton
@@ -113,23 +113,23 @@ export function NpcTab({ draft }: NpcTabProps) {
                 </TerminalButton>
               </div>
             </section>
-          </ScrollRegion>
-        </TerminalPanel>
+          </TerminalPanel>
+        </ScrollRegion>
 
-        <TerminalPanel className="editor-panel editor-npc-editor">
-          <h2 className="editor-panel__title">Sheet</h2>
-          <ScrollRegion className="editor-scroll">
+        <ScrollRegion className="workbench__main">
+          <TerminalPanel className="editor-panel editor-npc-editor">
+            <h2 className="editor-panel__title">Sheet</h2>
             {draft.selectedNpc ? (
               <NpcSheetForm draft={draft} npc={draft.selectedNpc} />
             ) : (
               <p className="editor-empty">No NPC selected.</p>
             )}
-          </ScrollRegion>
-        </TerminalPanel>
+          </TerminalPanel>
+        </ScrollRegion>
 
-        <TerminalPanel className="editor-panel editor-npc-problems">
-          <h2 className="editor-panel__title">Problems</h2>
-          <ScrollRegion className="editor-scroll">
+        <ScrollRegion className="workbench__inspector">
+          <TerminalPanel className="editor-panel editor-npc-problems">
+            <h2 className="editor-panel__title">Problems</h2>
             <section className="editor-zone-section">
               <div className="editor-family__header">
                 <h3>Selected NPC</h3>
@@ -155,8 +155,8 @@ export function NpcTab({ draft }: NpcTabProps) {
               references={draft.selectedNpcReferences}
               title="Incoming References"
             />
-          </ScrollRegion>
-        </TerminalPanel>
+          </TerminalPanel>
+        </ScrollRegion>
       </div>
     </>
   );

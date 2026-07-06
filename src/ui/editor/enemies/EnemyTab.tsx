@@ -36,10 +36,10 @@ export function EnemyTab({ draft }: EnemyTabProps) {
         <span>{draft.hasUnsavedChanges ? "unsaved" : "saved"}</span>
       </section>
 
-      <div className="editor-enemy-layout">
-        <TerminalPanel className="editor-panel editor-enemy-list">
-          <h2 className="editor-panel__title">NPCs</h2>
-          <ScrollRegion className="editor-scroll">
+      <div className="workbench">
+        <ScrollRegion className="workbench__rail">
+          <TerminalPanel className="editor-panel editor-enemy-list">
+            <h2 className="editor-panel__title">NPCs</h2>
             <div className="editor-entry-list">
               {draft.npcs.map((npc) => (
                 <TerminalButton
@@ -65,12 +65,12 @@ export function EnemyTab({ draft }: EnemyTabProps) {
                 </TerminalButton>
               ))}
             </div>
-          </ScrollRegion>
-        </TerminalPanel>
+          </TerminalPanel>
+        </ScrollRegion>
 
-        <TerminalPanel className="editor-panel editor-enemy-editor">
-          <h2 className="editor-panel__title">Profile</h2>
-          <ScrollRegion className="editor-scroll">
+        <ScrollRegion className="workbench__main">
+          <TerminalPanel className="editor-panel editor-enemy-editor">
+            <h2 className="editor-panel__title">Profile</h2>
             {draft.selectedNpc ? (
               draft.selectedEnemy ? (
                 <EnemyProfileForm draft={draft} enemy={draft.selectedEnemy} />
@@ -80,12 +80,12 @@ export function EnemyTab({ draft }: EnemyTabProps) {
             ) : (
               <p className="editor-empty">No NPC selected.</p>
             )}
-          </ScrollRegion>
-        </TerminalPanel>
+          </TerminalPanel>
+        </ScrollRegion>
 
-        <TerminalPanel className="editor-panel editor-enemy-problems">
-          <h2 className="editor-panel__title">Problems</h2>
-          <ScrollRegion className="editor-scroll">
+        <ScrollRegion className="workbench__inspector">
+          <TerminalPanel className="editor-panel editor-enemy-problems">
+            <h2 className="editor-panel__title">Problems</h2>
             <section className="editor-zone-section">
               <div className="editor-family__header">
                 <h3>Selected Profile</h3>
@@ -111,8 +111,8 @@ export function EnemyTab({ draft }: EnemyTabProps) {
               references={draft.selectedEnemyReferences}
               title="Incoming References"
             />
-          </ScrollRegion>
-        </TerminalPanel>
+          </TerminalPanel>
+        </ScrollRegion>
       </div>
     </>
   );

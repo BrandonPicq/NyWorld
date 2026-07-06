@@ -4,6 +4,14 @@ This file tracks meaningful project changes by commit-oriented slices.
 
 Keep entries short and practical. When a slice is committed, its changelog section should stay aligned with the commit title so the project history remains easy to read after restores or bisects.
 
+## 2026-07-06 - [REFACTOR]: Move the remaining tabs onto the workbench shell
+
+- Migrate dialogues, NPCs, presence, enemies, and quests tabs onto the `.workbench` primitives, placing entity selections in the rail column, forms in the main column, and diagnostics/references in the inspector column.
+- Migrate actions tab to the new layout placing the fixed 5-item action list in the rail.
+- Migrate content and game config tabs onto the new layout using main and inspector columns, leaving the rail column empty to maintain grid symmetry.
+- Remove obsolete tab layout classes (`.editor-dialogue-layout`, `.editor-npc-layout`, `.editor-enemy-layout`, `.editor-game-layout`, and `.editor-grid`) from the CSS stylesheet.
+- Keep the selection list button styles uniform and prevent label text truncation using the 22b block format.
+
 ## 2026-07-06 - [UPDATE]: Auto-fit the zone map to the available space
 
 - Add a pure unit-tested `computeFitCellSize(containerWidth, containerHeight, gridWidth, gridHeight, options)` helper to calculate fitting cell size within `[20, 64]` pixel bounds.

@@ -28,10 +28,10 @@ export function PresenceTab({ draft }: PresenceTabProps) {
         <span>{draft.hasUnsavedChanges ? "unsaved" : "saved"}</span>
       </section>
 
-      <div className="editor-enemy-layout">
-        <TerminalPanel className="editor-panel editor-enemy-list">
-          <h2 className="editor-panel__title">NPCs</h2>
-          <ScrollRegion className="editor-scroll">
+      <div className="workbench">
+        <ScrollRegion className="workbench__rail">
+          <TerminalPanel className="editor-panel editor-enemy-list">
+            <h2 className="editor-panel__title">NPCs</h2>
             <div className="editor-entry-list">
               {draft.npcs.map((npc) => (
                 <TerminalButton
@@ -55,12 +55,12 @@ export function PresenceTab({ draft }: PresenceTabProps) {
                 </TerminalButton>
               ))}
             </div>
-          </ScrollRegion>
-        </TerminalPanel>
+          </TerminalPanel>
+        </ScrollRegion>
 
-        <TerminalPanel className="editor-panel editor-enemy-editor">
-          <h2 className="editor-panel__title">Presence</h2>
-          <ScrollRegion className="editor-scroll">
+        <ScrollRegion className="workbench__main">
+          <TerminalPanel className="editor-panel editor-enemy-editor">
+            <h2 className="editor-panel__title">Presence</h2>
             {draft.selectedNpc ? (
               draft.selectedPresence ? (
                 <PresenceForm
@@ -73,12 +73,12 @@ export function PresenceTab({ draft }: PresenceTabProps) {
             ) : (
               <p className="editor-empty">No NPC selected.</p>
             )}
-          </ScrollRegion>
-        </TerminalPanel>
+          </TerminalPanel>
+        </ScrollRegion>
 
-        <TerminalPanel className="editor-panel editor-enemy-problems">
-          <h2 className="editor-panel__title">Problems</h2>
-          <ScrollRegion className="editor-scroll">
+        <ScrollRegion className="workbench__inspector">
+          <TerminalPanel className="editor-panel editor-enemy-problems">
+            <h2 className="editor-panel__title">Problems</h2>
             <section className="editor-zone-section">
               <div className="editor-family__header">
                 <h3>Selected Presence</h3>
@@ -104,8 +104,8 @@ export function PresenceTab({ draft }: PresenceTabProps) {
               references={draft.selectedPresenceReferences}
               title="Incoming References"
             />
-          </ScrollRegion>
-        </TerminalPanel>
+          </TerminalPanel>
+        </ScrollRegion>
       </div>
     </>
   );

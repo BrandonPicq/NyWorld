@@ -43,69 +43,73 @@ export function ContentTab({ draft }: ContentTabProps) {
         <span>{hasUnsavedChanges ? "unsaved" : "saved"}</span>
       </section>
 
-      <div className="editor-grid">
-        <TerminalPanel className="editor-panel editor-browser">
-          <h2 className="editor-panel__title">Content</h2>
-          <ScrollRegion className="editor-scroll" role="list">
-            {browserGroups.map((group) => (
-              <section className="editor-family" key={group.type}>
-                <div className="editor-family__header">
-                  <h3>{group.label}</h3>
-                  <span>{group.entries.length}</span>
-                </div>
-                <div className="editor-entry-list">
-                  {group.entries.map((entry) => (
-                    <TerminalButton
-                      className="editor-entry-button"
-                      isSelected={refsEqual(entry.ref, selectedRef)}
-                      key={`${entry.ref.type}:${entry.ref.id}`}
-                      onClick={() => setSelectedRef(entry.ref)}
-                    >
-                      <IdentifierLabel value={entry.label} />
-                    </TerminalButton>
-                  ))}
-                </div>
-              </section>
-            ))}
-          </ScrollRegion>
-        </TerminalPanel>
+      <div className="workbench">
+        <ScrollRegion className="workbench__rail" />
 
-        <TerminalPanel className="editor-panel editor-problems">
-          <h2 className="editor-panel__title">Problems</h2>
-          {diagnosticGroups.length === 0 ? (
-            <p className="editor-empty">No content problems.</p>
-          ) : (
-            <ScrollRegion className="editor-scroll">
-              {diagnosticGroups.map((group) => (
-                <section
-                  className="editor-diagnostic-group"
-                  key={group.contentType}
-                >
+        <div className="workbench__main">
+          <TerminalPanel className="editor-panel editor-browser" style={{ flex: 1, minHeight: 0 }}>
+            <h2 className="editor-panel__title">Content</h2>
+            <ScrollRegion className="editor-scroll" role="list">
+              {browserGroups.map((group) => (
+                <section className="editor-family" key={group.type}>
                   <div className="editor-family__header">
-                    <h3>{group.contentType}</h3>
-                    <span>
-                      {group.errorCount}E / {group.warningCount}W
-                    </span>
+                    <h3>{group.label}</h3>
+                    <span>{group.entries.length}</span>
                   </div>
-                  <ul className="editor-diagnostic-list">
-                    {group.diagnostics.map((diagnostic, index) => (
-                      <li
-                        className={`editor-diagnostic editor-diagnostic--${diagnostic.severity}`}
-                        key={`${group.contentType}-${diagnostic.path}-${index}`}
+                  <div className="editor-entry-list">
+                    {group.entries.map((entry) => (
+                      <TerminalButton
+                        className="editor-entry-button"
+                        isSelected={refsEqual(entry.ref, selectedRef)}
+                        key={`${entry.ref.type}:${entry.ref.id}`}
+                        onClick={() => setSelectedRef(entry.ref)}
                       >
-                        {formatContentDiagnostic(diagnostic)}
-                      </li>
+                        <IdentifierLabel value={entry.label} />
+                      </TerminalButton>
                     ))}
-                  </ul>
+                  </div>
                 </section>
               ))}
             </ScrollRegion>
-          )}
-        </TerminalPanel>
+          </TerminalPanel>
 
-        <TerminalPanel className="editor-panel editor-reference">
-          <h2 className="editor-panel__title">Editor</h2>
-          <ScrollRegion className="editor-scroll">
+          <TerminalPanel className="editor-panel editor-problems" style={{ flex: 1, minHeight: 0 }}>
+            <h2 className="editor-panel__title">Problems</h2>
+            {diagnosticGroups.length === 0 ? (
+              <p className="editor-empty">No content problems.</p>
+            ) : (
+              <ScrollRegion className="editor-scroll">
+                {diagnosticGroups.map((group) => (
+                  <section
+                    className="editor-diagnostic-group"
+                    key={group.contentType}
+                  >
+                    <div className="editor-family__header">
+                      <h3>{group.contentType}</h3>
+                      <span>
+                        {group.errorCount}E / {group.warningCount}W
+                      </span>
+                    </div>
+                    <ul className="editor-diagnostic-list">
+                      {group.diagnostics.map((diagnostic, index) => (
+                        <li
+                          className={`editor-diagnostic editor-diagnostic--${diagnostic.severity}`}
+                          key={`${group.contentType}-${diagnostic.path}-${index}`}
+                        >
+                          {formatContentDiagnostic(diagnostic)}
+                        </li>
+                      ))}
+                    </ul>
+                  </section>
+                ))}
+              </ScrollRegion>
+            )}
+          </TerminalPanel>
+        </div>
+
+        <ScrollRegion className="workbench__inspector">
+          <TerminalPanel className="editor-panel editor-reference">
+            <h2 className="editor-panel__title">Editor</h2>
             <ItemDraftEditor
               canSave={draft.canSaveItems}
               isSaving={draft.isSaving}
@@ -168,8 +172,8 @@ export function ContentTab({ draft }: ContentTabProps) {
                 useTarget
               />
             </div>
-          </ScrollRegion>
-        </TerminalPanel>
+          </TerminalPanel>
+        </ScrollRegion>
       </div>
     </>
   );

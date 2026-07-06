@@ -44,10 +44,10 @@ export function QuestTab({ draft }: QuestTabProps) {
         <span>{draft.hasUnsavedChanges ? "unsaved" : "saved"}</span>
       </section>
 
-      <div className="editor-enemy-layout">
-        <TerminalPanel className="editor-panel editor-enemy-list">
-          <h2 className="editor-panel__title">Quests</h2>
-          <ScrollRegion className="editor-scroll">
+      <div className="workbench">
+        <ScrollRegion className="workbench__rail">
+          <TerminalPanel className="editor-panel editor-enemy-list">
+            <h2 className="editor-panel__title">Quests</h2>
             <div className="editor-entry-list">
               {draft.quests.map((quest) => (
                 <TerminalButton
@@ -66,24 +66,24 @@ export function QuestTab({ draft }: QuestTabProps) {
                 </TerminalButton>
               ))}
             </div>
-          </ScrollRegion>
-          <NewQuestForm draft={draft} />
-        </TerminalPanel>
+            <NewQuestForm draft={draft} />
+          </TerminalPanel>
+        </ScrollRegion>
 
-        <TerminalPanel className="editor-panel editor-enemy-editor">
-          <h2 className="editor-panel__title">Quest</h2>
-          <ScrollRegion className="editor-scroll">
+        <ScrollRegion className="workbench__main">
+          <TerminalPanel className="editor-panel editor-enemy-editor">
+            <h2 className="editor-panel__title">Quest</h2>
             {draft.selectedQuest ? (
               <QuestForm draft={draft} quest={draft.selectedQuest} />
             ) : (
               <p className="editor-empty">No quest selected.</p>
             )}
-          </ScrollRegion>
-        </TerminalPanel>
+          </TerminalPanel>
+        </ScrollRegion>
 
-        <TerminalPanel className="editor-panel editor-enemy-problems">
-          <h2 className="editor-panel__title">Problems</h2>
-          <ScrollRegion className="editor-scroll">
+        <ScrollRegion className="workbench__inspector">
+          <TerminalPanel className="editor-panel editor-enemy-problems">
+            <h2 className="editor-panel__title">Problems</h2>
             <section className="editor-zone-section">
               <div className="editor-family__header">
                 <h3>Selected Quest</h3>
@@ -105,8 +105,8 @@ export function QuestTab({ draft }: QuestTabProps) {
               )}
             </section>
             <QuestReferences references={draft.selectedQuestReferences} />
-          </ScrollRegion>
-        </TerminalPanel>
+          </TerminalPanel>
+        </ScrollRegion>
       </div>
     </>
   );

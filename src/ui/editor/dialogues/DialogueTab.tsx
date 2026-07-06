@@ -33,10 +33,10 @@ export function DialogueTab({ draft }: DialogueTabProps) {
         <span>{draft.hasUnsavedChanges ? "unsaved" : "saved"}</span>
       </section>
 
-      <div className="editor-dialogue-layout">
-        <TerminalPanel className="editor-panel editor-dialogue-files">
-          <h2 className="editor-panel__title">Files</h2>
-          <ScrollRegion className="editor-scroll">
+      <div className="workbench">
+        <ScrollRegion className="workbench__rail">
+          <TerminalPanel className="editor-panel editor-dialogue-files">
+            <h2 className="editor-panel__title">Files</h2>
             <div className="editor-entry-list">
               {draft.files.map((file) => (
                 <TerminalButton
@@ -82,12 +82,12 @@ export function DialogueTab({ draft }: DialogueTabProps) {
                 Create File
               </TerminalButton>
             </section>
-          </ScrollRegion>
-        </TerminalPanel>
+          </TerminalPanel>
+        </ScrollRegion>
 
-        <TerminalPanel className="editor-panel editor-dialogue-editor">
-          <h2 className="editor-panel__title">Dialogues</h2>
-          <ScrollRegion className="editor-scroll">
+        <ScrollRegion className="workbench__main">
+          <TerminalPanel className="editor-panel editor-dialogue-editor">
+            <h2 className="editor-panel__title">Dialogues</h2>
             {draft.selectedFile ? (
               <>
                 <section className="editor-zone-section">
@@ -202,12 +202,12 @@ export function DialogueTab({ draft }: DialogueTabProps) {
             ) : (
               <p className="editor-empty">No dialogue file selected.</p>
             )}
-          </ScrollRegion>
-        </TerminalPanel>
+          </TerminalPanel>
+        </ScrollRegion>
 
-        <TerminalPanel className="editor-panel editor-dialogue-problems">
-          <h2 className="editor-panel__title">Problems</h2>
-          <ScrollRegion className="editor-scroll">
+        <ScrollRegion className="workbench__inspector">
+          <TerminalPanel className="editor-panel editor-dialogue-problems">
+            <h2 className="editor-panel__title">Problems</h2>
             <section className="editor-zone-section">
               <div className="editor-family__header">
                 <h3>Selected File</h3>
@@ -233,8 +233,8 @@ export function DialogueTab({ draft }: DialogueTabProps) {
               references={draft.selectedDialogueReferences}
               title="Incoming References"
             />
-          </ScrollRegion>
-        </TerminalPanel>
+          </TerminalPanel>
+        </ScrollRegion>
       </div>
     </>
   );

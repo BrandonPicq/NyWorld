@@ -31,10 +31,10 @@ export function ActionsTab({ draft }: ActionsTabProps) {
         <span>{draft.hasUnsavedChanges ? "unsaved" : "saved"}</span>
       </section>
 
-      <div className="editor-enemy-layout">
-        <TerminalPanel className="editor-panel editor-enemy-list">
-          <h2 className="editor-panel__title">Actions</h2>
-          <ScrollRegion className="editor-scroll">
+      <div className="workbench">
+        <ScrollRegion className="workbench__rail">
+          <TerminalPanel className="editor-panel editor-enemy-list">
+            <h2 className="editor-panel__title">Actions</h2>
             <div className="editor-entry-list">
               {draft.actions.map((action) => (
                 <TerminalButton
@@ -55,23 +55,23 @@ export function ActionsTab({ draft }: ActionsTabProps) {
                 </TerminalButton>
               ))}
             </div>
-          </ScrollRegion>
-        </TerminalPanel>
+          </TerminalPanel>
+        </ScrollRegion>
 
-        <TerminalPanel className="editor-panel editor-enemy-editor">
-          <h2 className="editor-panel__title">Action</h2>
-          <ScrollRegion className="editor-scroll">
+        <ScrollRegion className="workbench__main">
+          <TerminalPanel className="editor-panel editor-enemy-editor">
+            <h2 className="editor-panel__title">Action</h2>
             {draft.selectedAction ? (
               <ActionForm action={draft.selectedAction} draft={draft} />
             ) : (
               <p className="editor-empty">No action selected.</p>
             )}
-          </ScrollRegion>
-        </TerminalPanel>
+          </TerminalPanel>
+        </ScrollRegion>
 
-        <TerminalPanel className="editor-panel editor-enemy-problems">
-          <h2 className="editor-panel__title">Problems</h2>
-          <ScrollRegion className="editor-scroll">
+        <ScrollRegion className="workbench__inspector">
+          <TerminalPanel className="editor-panel editor-enemy-problems">
+            <h2 className="editor-panel__title">Problems</h2>
             <section className="editor-zone-section">
               <div className="editor-family__header">
                 <h3>Selected Action</h3>
@@ -92,8 +92,8 @@ export function ActionsTab({ draft }: ActionsTabProps) {
                 </ul>
               )}
             </section>
-          </ScrollRegion>
-        </TerminalPanel>
+          </TerminalPanel>
+        </ScrollRegion>
       </div>
     </>
   );

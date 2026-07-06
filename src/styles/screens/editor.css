@@ -65,14 +65,6 @@
   background: var(--color-panel-background);
 }
 
-.editor-grid {
-  flex: 1;
-  min-height: 0;
-  display: grid;
-  grid-template-columns: minmax(15rem, 0.85fr) minmax(20rem, 1.1fr) minmax(22rem, 1.25fr);
-  grid-template-rows: minmax(0, 1fr);
-  gap: var(--space-3);
-}
 
 .editor-panel {
   width: 100%;
@@ -338,62 +330,6 @@
   outline-offset: var(--focus-ring-offset);
 }
 
-.editor-zone-layout {
-  flex: 1;
-  min-height: 0;
-  display: grid;
-  grid-template-columns: minmax(13rem, 0.5fr) minmax(34rem, 2.35fr) minmax(
-      18rem,
-      0.85fr
-    );
-  grid-template-rows: minmax(0, 1fr);
-  gap: var(--space-3);
-}
-
-.editor-game-layout {
-  flex: 1;
-  min-height: 0;
-  display: grid;
-  grid-template-columns: minmax(0, 44rem);
-  grid-template-rows: minmax(0, 1fr);
-  justify-content: center;
-}
-
-.editor-dialogue-layout {
-  flex: 1;
-  min-height: 0;
-  display: grid;
-  grid-template-columns: minmax(14rem, 0.75fr) minmax(22rem, 1.25fr) minmax(
-      18rem,
-      1fr
-    );
-  grid-template-rows: minmax(0, 1fr);
-  gap: var(--space-3);
-}
-
-.editor-npc-layout {
-  flex: 1;
-  min-height: 0;
-  display: grid;
-  grid-template-columns: minmax(14rem, 0.75fr) minmax(24rem, 1.2fr) minmax(
-      18rem,
-      1fr
-    );
-  grid-template-rows: minmax(0, 1fr);
-  gap: var(--space-3);
-}
-
-.editor-enemy-layout {
-  flex: 1;
-  min-height: 0;
-  display: grid;
-  grid-template-columns: minmax(14rem, 0.7fr) minmax(28rem, 1.35fr) minmax(
-      18rem,
-      0.95fr
-    );
-  grid-template-rows: minmax(0, 1fr);
-  gap: var(--space-3);
-}
 
 .editor-enemy-stat-section,
 .editor-enemy-balance-hint {
@@ -666,27 +602,7 @@
 }
 
 @media (max-width: 1100px) {
-  .editor-grid,
-  .editor-zone-layout,
-  .editor-dialogue-layout,
-  .editor-npc-layout,
-  .editor-enemy-layout,
   .editor-reference-columns {
-    grid-template-columns: 1fr;
-  }
-
-  /* Stacked single-column layout scrolls the page naturally (see layout.css). */
-  .editor-grid,
-  .editor-zone-layout,
-  .editor-dialogue-layout,
-  .editor-npc-layout,
-  .editor-enemy-layout,
-  .editor-game-layout {
-    flex: none;
-    grid-template-rows: none;
-  }
-
-  .editor-game-layout {
     grid-template-columns: 1fr;
   }
 
