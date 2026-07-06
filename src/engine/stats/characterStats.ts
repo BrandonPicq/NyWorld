@@ -5,6 +5,7 @@ import type {
   StatResources,
   Stats,
 } from "../components";
+import { QUEST_STAT_NAME_OPTIONS } from "../content/editingMetadata";
 
 export type StatPath =
   | `resources.${keyof StatResources & string}`
@@ -35,39 +36,6 @@ const INITIAL_SKILLS: CharacterSkills = {
   scholarship: 1,
   speech: 1,
 };
-
-const STAT_PATHS = [
-  "resources.hp",
-  "resources.maxHp",
-  "resources.mp",
-  "resources.maxMp",
-  "resources.sp",
-  "resources.maxSp",
-  "resources.energy",
-  "resources.maxEnergy",
-  "attributes.strength",
-  "attributes.vitality",
-  "attributes.agility",
-  "attributes.intelligence",
-  "attributes.spirit",
-  "attributes.willpower",
-  "attributes.perception",
-  "attributes.charisma",
-  "combat.attack",
-  "combat.magicAttack",
-  "combat.defense",
-  "combat.magicDefense",
-  "skills.melee",
-  "skills.ranged",
-  "skills.guard",
-  "skills.evasion",
-  "skills.spellcasting",
-  "skills.focus",
-  "skills.athletics",
-  "skills.scholarship",
-  "skills.speech",
-  "progression.academicProgress",
-] as const satisfies readonly StatPath[];
 
 /**
  * Authored overrides for a fresh playthrough's starting stats.
@@ -230,7 +198,7 @@ export function getStatValue(stats: Stats, statPath: string): number | undefined
 }
 
 export function isStatPath(value: string): value is StatPath {
-  return (STAT_PATHS as readonly string[]).includes(value);
+  return (QUEST_STAT_NAME_OPTIONS as readonly string[]).includes(value);
 }
 
 function clamp(value: number, min: number, max: number): number {

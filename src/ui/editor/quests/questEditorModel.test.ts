@@ -6,18 +6,25 @@ import {
   type QuestDef,
 } from "../../../engine";
 import {
+  addObjective,
   addQuestOverride,
   addRewardItem,
+  createObjective,
   createQuestDef,
   createQuestDraftSnapshot,
   createQuestDraftValidationContext,
   listQuestDefs,
+  moveObjective,
+  nextObjectiveId,
   questContentPath,
+  removeObjectiveAt,
   removeQuestOverride,
   removeRewardItem,
+  setObjectiveType,
   setQuestOverride,
   setQuestTrigger,
   setRewardCurrency,
+  updateObjectiveAt,
   updateQuestDef,
   upsertQuestDef,
   validateNewQuestId,
@@ -109,6 +116,74 @@ describe("quest editing helpers", () => {
     expect(questContentPath("lost_ring")).toBe(
       "src/content/quests/lost_ring.json",
     );
+  });
+});
+
+describe("quest objective editing", () => {
+  it("adds objectives with unique ids and switches type keeping id/description", () => {
+    const one = addObjective(sampleQuest(), "fetch_item");
+    expect(one.objectives).toHaveLength(1);
+    expect(one.objectives[0]).toMatchObject({
+      type: "fetch_item",
+      id: "objective_1",
+      quantity: 1,
+    });
+
+    const two = addObjective(one, "defeat_npc");
+    expect(nextObjectiveId(two)).toBe("objective_3");
+
+    const described = updateObjectiveAt(one, 0, { description: "Collect it" });
+    const switched = setObjectiveType(described, 0, "visit_coordinate");
+    expect(switched.objectives[0]).toMatchObject({
+      type: "visit_coordinate",
+      id: "objective_1",
+      description: "Collect it",
+      x: 0,
+      y: 0,
+    });
+  });
+
+  it("patches a field, removes, and reorders objectives", () => {
+    const base = addObjective(addObjective(sampleQuest(), "fetch_item"), "defeat_npc");
+    const patched = updateObjectiveAt(base, 0, { quantity: 3 });
+    expect(patched.objectives[0]).toMatchObject({ quantity: 3 });
+
+    const moved = moveObjective(base, 0, 1);
+    expect(moved.objectives.map((objective) => objective.type)).toEqual([
+      "defeat_npc",
+      "fetch_item",
+    ]);
+
+    const removed = removeObjectiveAt(base, 0);
+    expect(removed.objectives.map((objective) => objective.type)).toEqual([
+      "defeat_npc",
+    ]);
+  });
+
+  it("defaults a stat_threshold objective to an accepted stat name", () => {
+    const objective = createObjective("stat_threshold", "obj");
+    const quest = updateObjectiveAt(
+      { ...sampleQuest(), objectives: [objective] },
+      0,
+      { threshold: 5 },
+    );
+    // The default stat name must pass quest stat-path validation (no error).
+    expect(
+      validateAllContent(
+        createQuestDraftSnapshot(
+          createRuntimeContentCatalogSnapshot(),
+          [quest],
+        ),
+        createQuestDraftValidationContext(
+          createRuntimeContentValidationContext(),
+          [quest],
+        ),
+      ).some(
+        (diagnostic) =>
+          diagnostic.contentId === "sample" &&
+          /statName/i.test(diagnostic.path),
+      ),
+    ).toBe(false);
   });
 });
 

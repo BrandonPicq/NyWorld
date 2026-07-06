@@ -1,9 +1,20 @@
-import type {
-  ContentCatalogSnapshot,
-  ContentValidationContext,
-  QuestDef,
-  QuestNpcOverride,
+import {
+  QUEST_STAT_NAME_OPTIONS,
+  type ContentCatalogSnapshot,
+  type ContentValidationContext,
+  type QuestDef,
+  type QuestNpcOverride,
+  type QuestObjective,
 } from "../../../engine";
+
+export type QuestObjectiveType = QuestObjective["type"];
+
+export const QUEST_OBJECTIVE_TYPE_OPTIONS: readonly QuestObjectiveType[] = [
+  "fetch_item",
+  "visit_coordinate",
+  "stat_threshold",
+  "defeat_npc",
+];
 
 const QUEST_ID_PATTERN = /^[a-z0-9_]+$/;
 
@@ -228,5 +239,111 @@ export function removeRewardItem(quest: QuestDef, index: number): QuestDef {
   } else {
     delete next.rewards.items;
   }
+  return next;
+}
+
+/** Builds a default objective of `type`, keeping the given id and description. */
+export function createObjective(
+  type: QuestObjectiveType,
+  id: string,
+  description = "",
+): QuestObjective {
+  switch (type) {
+    case "fetch_item":
+      return { type, id, itemId: "", quantity: 1, description };
+    case "visit_coordinate":
+      return { type, id, zoneId: "", x: 0, y: 0, description };
+    case "stat_threshold":
+      return {
+        type,
+        id,
+        statName: QUEST_STAT_NAME_OPTIONS[0],
+        threshold: 1,
+        description,
+      };
+    case "defeat_npc":
+      return { type, id, npcId: "", quantity: 1, description };
+  }
+}
+
+/** A fresh `objective_N` id unique within the quest. */
+export function nextObjectiveId(quest: QuestDef): string {
+  const used = new Set(quest.objectives.map((objective) => objective.id));
+  let index = quest.objectives.length + 1;
+  let candidate = `objective_${index}`;
+  while (used.has(candidate)) {
+    index += 1;
+    candidate = `objective_${index}`;
+  }
+  return candidate;
+}
+
+export function addObjective(
+  quest: QuestDef,
+  type: QuestObjectiveType,
+): QuestDef {
+  const next = cloneQuestDef(quest);
+  next.objectives.push(createObjective(type, nextObjectiveId(quest)));
+  return next;
+}
+
+/** Patches fields of the objective at `index`; the caller passes valid fields. */
+export function updateObjectiveAt(
+  quest: QuestDef,
+  index: number,
+  patch: Record<string, unknown>,
+): QuestDef {
+  const next = cloneQuestDef(quest);
+  if (index < 0 || index >= next.objectives.length) {
+    return next;
+  }
+  next.objectives[index] = {
+    ...next.objectives[index],
+    ...patch,
+  } as QuestObjective;
+  return next;
+}
+
+/** Switches an objective's type, rebuilding defaults but keeping id + description. */
+export function setObjectiveType(
+  quest: QuestDef,
+  index: number,
+  type: QuestObjectiveType,
+): QuestDef {
+  const next = cloneQuestDef(quest);
+  const existing = next.objectives[index];
+  if (!existing) {
+    return next;
+  }
+  next.objectives[index] = createObjective(type, existing.id, existing.description);
+  return next;
+}
+
+export function removeObjectiveAt(quest: QuestDef, index: number): QuestDef {
+  const next = cloneQuestDef(quest);
+  next.objectives = next.objectives.filter(
+    (_, objectiveIndex) => objectiveIndex !== index,
+  );
+  return next;
+}
+
+/** Moves the objective at `index` by `delta` positions, clamped in range. */
+export function moveObjective(
+  quest: QuestDef,
+  index: number,
+  delta: number,
+): QuestDef {
+  const target = index + delta;
+  if (
+    index < 0 ||
+    index >= quest.objectives.length ||
+    target < 0 ||
+    target >= quest.objectives.length
+  ) {
+    return cloneQuestDef(quest);
+  }
+  const next = cloneQuestDef(quest);
+  const [moved] = next.objectives.splice(index, 1);
+  next.objectives.splice(target, 0, moved);
   return next;
 }

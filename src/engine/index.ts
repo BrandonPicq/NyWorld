@@ -61,6 +61,7 @@ export {
   ITEM_CATEGORY_OPTIONS,
   NPC_IMPORTANCE_OPTIONS,
   NPC_RACE_OPTIONS,
+  QUEST_STAT_NAME_OPTIONS,
 } from "./content/editingMetadata";
 export {
   createRuntimeContentValidationContext,

@@ -4,6 +4,12 @@ This file tracks meaningful project changes by commit-oriented slices.
 
 Keep entries short and practical. When a slice is committed, its changelog section should stay aligned with the commit title so the project history remains easy to read after restores or bisects.
 
+## 2026-07-06 - [ADD]: Edit quest objectives in the editor
+
+- Make quest objectives editable: add, remove, reorder, and switch between the four types (fetch_item, visit_coordinate, stat_threshold, defeat_npc) with per-type sub-forms and editable objective ids.
+- Add `QUEST_STAT_NAME_OPTIONS` to the editing metadata as the single source of truth for stat paths, consumed by both the objective stat picker and `isStatPath` runtime validation.
+- Add objective model helpers (create/add/update/type-switch/remove/reorder) with tests; rely on the existing validator for duplicate ids and coordinate bounds/walkability.
+
 ## 2026-07-06 - [ADD]: Create and edit quest sheets in the editor
 
 - Add a Quests editor tab: create a quest (slug id + name), edit its name, description, target NPC, start/complete dialogue triggers, NPC dialogue overrides, and rewards (currency + item list); objectives stay read-only.
