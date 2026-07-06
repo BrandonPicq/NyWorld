@@ -11,9 +11,12 @@ type ScheduleEntriesEditorProps = {
   emptyLabel?: string;
   /** Label for the empty zone option: "(this zone)" for spawns, a prompt for presence. */
   zonePlaceholderLabel?: string;
+  /** Zone used when an entry omits zoneId, e.g. a zone-local spawn schedule. */
+  fallbackZoneId?: string;
   onAdd: () => void;
   onUpdate: (index: number, patch: Partial<NpcScheduleEntryData>) => void;
   onRemove: (index: number) => void;
+  onPickCoordinate?: (index: number, zoneId: string) => void;
 };
 
 /**
@@ -31,9 +34,11 @@ export function ScheduleEntriesEditor({
   addLabel = "Add schedule entry",
   emptyLabel = "No schedule.",
   zonePlaceholderLabel = "(this zone)",
+  fallbackZoneId = "",
   onAdd,
   onUpdate,
   onRemove,
+  onPickCoordinate,
 }: ScheduleEntriesEditorProps) {
   return (
     <section className="editor-zone-section">
@@ -46,92 +51,111 @@ export function ScheduleEntriesEditor({
         <p className="editor-empty">{emptyLabel}</p>
       ) : (
         <ul className="editor-zone-row-list">
-          {entries.map((entry, index) => (
-            <li className="editor-zone-row editor-schedule-entry" key={index}>
-              <div className="editor-form-row">
+          {entries.map((entry, index) => {
+            const resolvedZoneId = entry.zoneId ?? fallbackZoneId;
+            const canPickCoordinate =
+              !!onPickCoordinate &&
+              resolvedZoneId !== "" &&
+              zoneIds.includes(resolvedZoneId);
+
+            return (
+              <li className="editor-zone-row editor-schedule-entry" key={index}>
+                <div className="editor-form-row">
+                  <label className="editor-field">
+                    <span>Time (HH:mm)</span>
+                    <input
+                      aria-invalid={!isValidScheduleTime(entry.time)}
+                      onChange={(event) =>
+                        onUpdate(index, { time: event.target.value })
+                      }
+                      placeholder="08:00"
+                      type="text"
+                      value={entry.time}
+                    />
+                  </label>
+                  <label className="editor-field">
+                    <span>Zone</span>
+                    <select
+                      onChange={(event) =>
+                        onUpdate(index, {
+                          zoneId: event.target.value || undefined,
+                        })
+                      }
+                      value={entry.zoneId ?? ""}
+                    >
+                      <option value="">{zonePlaceholderLabel}</option>
+                      {zoneIds.map((zoneId) => (
+                        <option key={zoneId} value={zoneId}>
+                          {zoneId}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                </div>
+                <div className="editor-form-row">
+                  <label className="editor-field">
+                    <span>X</span>
+                    <input
+                      min={0}
+                      onChange={(event) =>
+                        onUpdate(index, {
+                          x: coordinate(event.target.value, entry.x),
+                        })
+                      }
+                      step={1}
+                      type="number"
+                      value={entry.x}
+                    />
+                  </label>
+                  <label className="editor-field">
+                    <span>Y</span>
+                    <input
+                      min={0}
+                      onChange={(event) =>
+                        onUpdate(index, {
+                          y: coordinate(event.target.value, entry.y),
+                        })
+                      }
+                      step={1}
+                      type="number"
+                      value={entry.y}
+                    />
+                  </label>
+                  <TerminalButton
+                    className="editor-compact-button"
+                    disabled={!canPickCoordinate}
+                    onClick={() => onPickCoordinate?.(index, resolvedZoneId)}
+                  >
+                    Pick on Map
+                  </TerminalButton>
+                  <TerminalButton
+                    className="editor-compact-button"
+                    onClick={() => onRemove(index)}
+                  >
+                    Delete
+                  </TerminalButton>
+                </div>
                 <label className="editor-field">
-                  <span>Time (HH:mm)</span>
-                  <input
-                    aria-invalid={!isValidScheduleTime(entry.time)}
-                    onChange={(event) =>
-                      onUpdate(index, { time: event.target.value })
-                    }
-                    placeholder="08:00"
-                    type="text"
-                    value={entry.time}
-                  />
-                </label>
-                <label className="editor-field">
-                  <span>Zone</span>
+                  <span>Dialogue (optional)</span>
                   <select
                     onChange={(event) =>
                       onUpdate(index, {
-                        zoneId: event.target.value || undefined,
+                        dialogueId: event.target.value || undefined,
                       })
                     }
-                    value={entry.zoneId ?? ""}
+                    value={entry.dialogueId ?? ""}
                   >
-                    <option value="">{zonePlaceholderLabel}</option>
-                    {zoneIds.map((zoneId) => (
-                      <option key={zoneId} value={zoneId}>
-                        {zoneId}
+                    <option value="">(default)</option>
+                    {dialogueIds.map((dialogueId) => (
+                      <option key={dialogueId} value={dialogueId}>
+                        {dialogueId}
                       </option>
                     ))}
                   </select>
                 </label>
-              </div>
-              <div className="editor-form-row">
-                <label className="editor-field">
-                  <span>X</span>
-                  <input
-                    min={0}
-                    onChange={(event) =>
-                      onUpdate(index, { x: coordinate(event.target.value, entry.x) })
-                    }
-                    step={1}
-                    type="number"
-                    value={entry.x}
-                  />
-                </label>
-                <label className="editor-field">
-                  <span>Y</span>
-                  <input
-                    min={0}
-                    onChange={(event) =>
-                      onUpdate(index, { y: coordinate(event.target.value, entry.y) })
-                    }
-                    step={1}
-                    type="number"
-                    value={entry.y}
-                  />
-                </label>
-                <TerminalButton
-                  className="editor-compact-button"
-                  onClick={() => onRemove(index)}
-                >
-                  Delete
-                </TerminalButton>
-              </div>
-              <label className="editor-field">
-                <span>Dialogue (optional)</span>
-                <select
-                  onChange={(event) =>
-                    onUpdate(index, {
-                      dialogueId: event.target.value || undefined,
-                    })
-                  }
-                  value={entry.dialogueId ?? ""}
-                >
-                  <option value="">(default)</option>
-                  {dialogueIds.map((dialogueId) => (
-                    <option key={dialogueId} value={dialogueId}>
-                      {dialogueId}
-                    </option>
-                  ))}
-                </select>
-              </label>
-            </li>
-          ))}
+              </li>
+            );
+          })}
         </ul>
       )}
 

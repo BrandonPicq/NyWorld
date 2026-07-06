@@ -118,21 +118,33 @@ export function ContentEditorScreen({ onBack }: ContentEditorScreenProps) {
 
         <div className="editor-tab-content">
           {tab === "zones" ? (
-            <ZoneEditorPanel draft={drafts.zone} snapshot={baseSnapshot} />
+            <ZoneEditorPanel
+              draft={drafts.zone}
+              snapshot={drafts.combined.snapshot}
+            />
           ) : tab === "game" ? (
-            <GameConfigPanel draft={drafts.game} />
+            <GameConfigPanel
+              draft={drafts.game}
+              snapshot={drafts.combined.snapshot}
+            />
           ) : tab === "dialogues" ? (
             <DialogueTab draft={drafts.dialogue} />
           ) : tab === "npcs" ? (
             <NpcTab draft={drafts.npc} />
           ) : tab === "presence" ? (
-            <PresenceTab draft={drafts.presence} />
+            <PresenceTab
+              draft={drafts.presence}
+              snapshot={drafts.combined.snapshot}
+            />
           ) : tab === "enemies" ? (
             <EnemyTab draft={drafts.enemy} />
           ) : tab === "actions" ? (
             <ActionsTab draft={drafts.action} />
           ) : tab === "quests" ? (
-            <QuestTab draft={drafts.quest} />
+            <QuestTab
+              draft={drafts.quest}
+              snapshot={drafts.combined.snapshot}
+            />
           ) : (
             <ContentTab draft={drafts.item} />
           )}

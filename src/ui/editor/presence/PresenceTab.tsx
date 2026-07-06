@@ -1,21 +1,34 @@
+import { useState } from "react";
 import {
   formatContentDiagnostic,
+  type ContentCatalogSnapshot,
   type ContentReference,
   type NpcPresenceDef,
 } from "../../../engine";
+import type { GridCell } from "../../../rendering/canvasCellMapping";
 import { IdentifierLabel } from "../../components/IdentifierLabel";
 import { ScrollRegion } from "../../components/ScrollRegion";
 import { TerminalButton } from "../../components/TerminalButton";
 import { TerminalPanel } from "../../components/TerminalPanel";
 import { formatContentRef } from "../editorModel";
+import { MapCoordinatePicker } from "../MapCoordinatePicker";
 import { ScheduleEntriesEditor } from "../ScheduleEntriesEditor";
 import type { NpcPresenceDraftController } from "./useNpcPresenceDraft";
 
 type PresenceTabProps = {
   draft: NpcPresenceDraftController;
+  snapshot: ContentCatalogSnapshot;
 };
 
-export function PresenceTab({ draft }: PresenceTabProps) {
+type CoordinatePickerRequest = {
+  title: string;
+  zoneId: string;
+  onPick: (cell: GridCell) => void;
+};
+
+export function PresenceTab({ draft, snapshot }: PresenceTabProps) {
+  const [coordinatePicker, setCoordinatePicker] =
+    useState<CoordinatePickerRequest | null>(null);
   const presenceCount = draft.npcs.filter((npc) => npc.hasPresence).length;
 
   return (
@@ -65,6 +78,7 @@ export function PresenceTab({ draft }: PresenceTabProps) {
               draft.selectedPresence ? (
                 <PresenceForm
                   draft={draft}
+                  onPickCoordinate={setCoordinatePicker}
                   presence={draft.selectedPresence}
                 />
               ) : (
@@ -107,6 +121,16 @@ export function PresenceTab({ draft }: PresenceTabProps) {
           </TerminalPanel>
         </ScrollRegion>
       </div>
+
+      {coordinatePicker ? (
+        <MapCoordinatePicker
+          onClose={() => setCoordinatePicker(null)}
+          onPick={coordinatePicker.onPick}
+          snapshot={snapshot}
+          title={coordinatePicker.title}
+          zoneId={coordinatePicker.zoneId}
+        />
+      ) : null}
     </>
   );
 }
@@ -140,9 +164,11 @@ function CreatePresence({ draft }: { draft: NpcPresenceDraftController }) {
 
 function PresenceForm({
   draft,
+  onPickCoordinate,
   presence,
 }: {
   draft: NpcPresenceDraftController;
+  onPickCoordinate: (request: CoordinatePickerRequest) => void;
   presence: NpcPresenceDef;
 }) {
   return (
@@ -164,6 +190,14 @@ function PresenceForm({
         emptyLabel="No schedule entries (a presence needs at least one)."
         entries={presence.schedule}
         onAdd={draft.addScheduleEntry}
+        onPickCoordinate={(index, zoneId) =>
+          onPickCoordinate({
+            title: `Pick presence coordinate for ${presence.npcId}`,
+            zoneId,
+            onPick: (cell) =>
+              draft.updateScheduleEntry(index, { x: cell.x, y: cell.y }),
+          })
+        }
         onRemove={draft.removeScheduleEntry}
         onUpdate={draft.updateScheduleEntry}
         title="Schedule"

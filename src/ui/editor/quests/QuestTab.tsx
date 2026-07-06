@@ -2,15 +2,18 @@ import { useState } from "react";
 import {
   formatContentDiagnostic,
   QUEST_STAT_NAME_OPTIONS,
+  type ContentCatalogSnapshot,
   type ContentReference,
   type QuestDef,
   type QuestObjective,
 } from "../../../engine";
+import type { GridCell } from "../../../rendering/canvasCellMapping";
 import { IdentifierLabel } from "../../components/IdentifierLabel";
 import { ScrollRegion } from "../../components/ScrollRegion";
 import { TerminalButton } from "../../components/TerminalButton";
 import { TerminalPanel } from "../../components/TerminalPanel";
 import { formatContentRef } from "../editorModel";
+import { MapCoordinatePicker } from "../MapCoordinatePicker";
 import {
   addObjective,
   addQuestOverride,
@@ -32,9 +35,16 @@ import type { QuestDraftController } from "./useQuestDraft";
 
 type QuestTabProps = {
   draft: QuestDraftController;
+  snapshot: ContentCatalogSnapshot;
 };
 
-export function QuestTab({ draft }: QuestTabProps) {
+type CoordinatePickerRequest = {
+  index: number;
+  zoneId: string;
+  onPick: (cell: GridCell) => void;
+};
+
+export function QuestTab({ draft, snapshot }: QuestTabProps) {
   return (
     <>
       <section className="editor-summary" aria-label="Quest summary">
@@ -74,7 +84,11 @@ export function QuestTab({ draft }: QuestTabProps) {
           <TerminalPanel className="editor-panel editor-enemy-editor">
             <h2 className="editor-panel__title">Quest</h2>
             {draft.selectedQuest ? (
-              <QuestForm draft={draft} quest={draft.selectedQuest} />
+              <QuestForm
+                draft={draft}
+                quest={draft.selectedQuest}
+                snapshot={snapshot}
+              />
             ) : (
               <p className="editor-empty">No quest selected.</p>
             )}
@@ -152,9 +166,11 @@ function NewQuestForm({ draft }: { draft: QuestDraftController }) {
 function QuestForm({
   draft,
   quest,
+  snapshot,
 }: {
   draft: QuestDraftController;
   quest: QuestDef;
+  snapshot: ContentCatalogSnapshot;
 }) {
   const update = draft.updateSelectedQuest;
 
@@ -243,7 +259,7 @@ function QuestForm({
 
       <QuestOverridesEditor draft={draft} quest={quest} />
       <QuestRewardsEditor draft={draft} quest={quest} />
-      <QuestObjectivesEditor draft={draft} quest={quest} />
+      <QuestObjectivesEditor draft={draft} quest={quest} snapshot={snapshot} />
 
       <div className="editor-actions">
         <TerminalButton
@@ -516,11 +532,15 @@ function QuestRewardsEditor({
 function QuestObjectivesEditor({
   draft,
   quest,
+  snapshot,
 }: {
   draft: QuestDraftController;
   quest: QuestDef;
+  snapshot: ContentCatalogSnapshot;
 }) {
   const [newType, setNewType] = useState<QuestObjectiveType>("fetch_item");
+  const [coordinatePicker, setCoordinatePicker] =
+    useState<CoordinatePickerRequest | null>(null);
   const update = draft.updateSelectedQuest;
 
   return (
@@ -578,6 +598,19 @@ function QuestObjectivesEditor({
               <ObjectiveTypeFields
                 draft={draft}
                 index={index}
+                onPickCoordinate={(zoneId) =>
+                  setCoordinatePicker({
+                    index,
+                    zoneId,
+                    onPick: (cell) =>
+                      update((current) =>
+                        updateObjectiveAt(current, index, {
+                          x: cell.x,
+                          y: cell.y,
+                        }),
+                      ),
+                  })
+                }
                 objective={objective}
               />
 
@@ -659,6 +692,15 @@ function QuestObjectivesEditor({
           Add Objective
         </TerminalButton>
       </div>
+      {coordinatePicker ? (
+        <MapCoordinatePicker
+          onClose={() => setCoordinatePicker(null)}
+          onPick={coordinatePicker.onPick}
+          snapshot={snapshot}
+          title={`Pick objective coordinate ${coordinatePicker.index + 1}`}
+          zoneId={coordinatePicker.zoneId}
+        />
+      ) : null}
     </section>
   );
 }
@@ -666,10 +708,12 @@ function QuestObjectivesEditor({
 function ObjectiveTypeFields({
   draft,
   index,
+  onPickCoordinate,
   objective,
 }: {
   draft: QuestDraftController;
   index: number;
+  onPickCoordinate: (zoneId: string) => void;
   objective: QuestObjective;
 }) {
   const update = draft.updateSelectedQuest;
@@ -763,6 +807,13 @@ function ObjectiveTypeFields({
             value={objective.y}
           />
         </label>
+        <TerminalButton
+          className="editor-compact-button"
+          disabled={draft.isSaving || !draft.zoneIds.includes(objective.zoneId)}
+          onClick={() => onPickCoordinate(objective.zoneId)}
+        >
+          Pick on Map
+        </TerminalButton>
       </div>
     );
   }

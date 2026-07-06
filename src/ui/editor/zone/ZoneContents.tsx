@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import type { ZoneData } from "../../../engine";
+import type { GridCell } from "../../../rendering/canvasCellMapping";
 import { ScheduleEntriesEditor } from "../ScheduleEntriesEditor";
 import {
   addNpcScheduleEntry,
@@ -12,6 +13,11 @@ type ZoneContentsProps = {
   zoneIds: readonly string[];
   dialogueIds: readonly string[];
   onUpdate: (updater: (zone: ZoneData) => ZoneData) => void;
+  onPickScheduleCoordinate?: (request: {
+    title: string;
+    zoneId: string;
+    onPick: (cell: GridCell) => void;
+  }) => void;
 };
 
 /**
@@ -26,6 +32,7 @@ export function ZoneContents({
   zoneIds,
   dialogueIds,
   onUpdate,
+  onPickScheduleCoordinate,
 }: ZoneContentsProps) {
   const npcs = zone.npcs ?? [];
   const items = zone.items ?? [];
@@ -51,10 +58,27 @@ export function ZoneContents({
               <ScheduleEntriesEditor
                 dialogueIds={dialogueIds}
                 entries={npc.schedule ?? []}
+                fallbackZoneId={zone.zoneId}
                 onAdd={() =>
                   onUpdate((current) =>
                     addNpcScheduleEntry(current, npc.x, npc.y),
                   )
+                }
+                onPickCoordinate={(entryIndex, zoneId) =>
+                  onPickScheduleCoordinate?.({
+                    title: `Pick schedule coordinate for ${npc.npcId}`,
+                    zoneId,
+                    onPick: (cell) =>
+                      onUpdate((current) =>
+                        updateNpcScheduleEntry(
+                          current,
+                          npc.x,
+                          npc.y,
+                          entryIndex,
+                          { x: cell.x, y: cell.y },
+                        ),
+                      ),
+                  })
                 }
                 onRemove={(entryIndex) =>
                   onUpdate((current) =>

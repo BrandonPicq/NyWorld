@@ -7,6 +7,7 @@ import type { GridCell } from "../../../rendering/canvasCellMapping";
 import { ScrollRegion } from "../../components/ScrollRegion";
 import { TerminalButton } from "../../components/TerminalButton";
 import { TerminalPanel } from "../../components/TerminalPanel";
+import { MapCoordinatePicker } from "../MapCoordinatePicker";
 import { EditorZoneCanvas } from "./EditorZoneCanvas";
 import { EntryDialogueEditor } from "./EntryDialogueEditor";
 import { ZoneContents } from "./ZoneContents";
@@ -18,6 +19,12 @@ import { describeZoneCell } from "./zoneEditorModel";
 type ZoneDraftEditorProps = {
   controller: ZoneDraftController;
   snapshot: ContentCatalogSnapshot;
+};
+
+type CoordinatePickerRequest = {
+  title: string;
+  zoneId: string;
+  onPick: (cell: GridCell) => void;
 };
 
 /**
@@ -47,6 +54,8 @@ export function ZoneDraftEditor({ controller, snapshot }: ZoneDraftEditorProps) 
 
   const [hoveredCell, setHoveredCell] = useState<GridCell | null>(null);
   const [pinnedCell, setPinnedCell] = useState<GridCell | null>(null);
+  const [coordinatePicker, setCoordinatePicker] =
+    useState<CoordinatePickerRequest | null>(null);
 
   useEffect(() => {
     setHoveredCell(null);
@@ -80,6 +89,20 @@ export function ZoneDraftEditor({ controller, snapshot }: ZoneDraftEditorProps) 
 
   function handleHover(cell: GridCell | null): void {
     setHoveredCell(cell);
+  }
+
+  function openTransitionTargetPicker(): void {
+    if (!snapshot.zones[placement.targetZoneId]) {
+      return;
+    }
+    setCoordinatePicker({
+      title: `Pick transition target in ${placement.targetZoneId}`,
+      zoneId: placement.targetZoneId,
+      onPick: (cell) => {
+        placement.setTargetX(cell.x);
+        placement.setTargetY(cell.y);
+      },
+    });
   }
 
   return (
@@ -145,7 +168,10 @@ export function ZoneDraftEditor({ controller, snapshot }: ZoneDraftEditorProps) 
 
       <ScrollRegion className="workbench__inspector">
         <TerminalPanel className="editor-panel">
-          <ZonePlacementControls placement={placement} />
+          <ZonePlacementControls
+            placement={placement}
+            onPickTransitionTarget={openTransitionTargetPicker}
+          />
 
           <div className="editor-zone-save">
             <h3 className="editor-zone-toolbox__title">Draft</h3>
@@ -214,6 +240,7 @@ export function ZoneDraftEditor({ controller, snapshot }: ZoneDraftEditorProps) 
 
           <ZoneContents
             dialogueIds={placement.dialogueIds}
+            onPickScheduleCoordinate={setCoordinatePicker}
             onUpdate={updateDraft}
             zone={draft}
             zoneIds={placement.zoneIds}
@@ -221,6 +248,16 @@ export function ZoneDraftEditor({ controller, snapshot }: ZoneDraftEditorProps) 
           <EntryDialogueEditor onUpdate={updateDraft} zone={draft} />
         </TerminalPanel>
       </ScrollRegion>
+
+      {coordinatePicker ? (
+        <MapCoordinatePicker
+          onClose={() => setCoordinatePicker(null)}
+          onPick={coordinatePicker.onPick}
+          snapshot={snapshot}
+          title={coordinatePicker.title}
+          zoneId={coordinatePicker.zoneId}
+        />
+      ) : null}
     </>
   );
 }

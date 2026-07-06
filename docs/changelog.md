@@ -4,6 +4,12 @@ This file tracks meaningful project changes by commit-oriented slices.
 
 Keep entries short and practical. When a slice is committed, its changelog section should stay aligned with the commit title so the project history remains easy to read after restores or bisects.
 
+## 2026-07-06 - [ADD]: Pick coordinates on the map from editor forms
+
+- Add a shared map coordinate picker modal that renders zones from the combined draft snapshot, so unsaved zone edits are visible while choosing coordinates.
+- Add "Pick on Map" controls for schedule entries, transition targets, quest visit-coordinate objectives, and the game safe respawn point.
+- Reuse the zone hover readout inside the picker and keep existing validators responsible for accepting or rejecting picked cells.
+
 ## 2026-07-06 - [FIX]: Stop the zone map shaking on resize
 
 - Bound the zone edit panel to the workbench column with a grid so the map row no longer sizes itself to the canvas it is measuring, breaking the auto-fit feedback loop.

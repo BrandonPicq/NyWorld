@@ -20,8 +20,10 @@ const MODES: { mode: ZonePlacementMode; label: string }[] = [
  */
 export function ZonePlacementControls({
   placement,
+  onPickTransitionTarget,
 }: {
   placement: ZonePlacement;
+  onPickTransitionTarget?: () => void;
 }) {
   return (
     <div className="editor-placement">
@@ -41,12 +43,21 @@ export function ZonePlacementControls({
           </TerminalButton>
         ))}
       </div>
-      <ModeControls placement={placement} />
+      <ModeControls
+        placement={placement}
+        onPickTransitionTarget={onPickTransitionTarget}
+      />
     </div>
   );
 }
 
-function ModeControls({ placement }: { placement: ZonePlacement }) {
+function ModeControls({
+  placement,
+  onPickTransitionTarget,
+}: {
+  placement: ZonePlacement;
+  onPickTransitionTarget?: () => void;
+}) {
   switch (placement.mode) {
     case "tiles":
       return (
@@ -171,6 +182,16 @@ function ModeControls({ placement }: { placement: ZonePlacement }) {
                 value={placement.targetY}
               />
             </label>
+            <TerminalButton
+              className="editor-compact-button"
+              disabled={
+                !onPickTransitionTarget ||
+                !placement.zoneIds.includes(placement.targetZoneId)
+              }
+              onClick={onPickTransitionTarget}
+            >
+              Pick on Map
+            </TerminalButton>
           </div>
           <p className="editor-placement-hint">
             Click a walkable tile to place the transition source.
