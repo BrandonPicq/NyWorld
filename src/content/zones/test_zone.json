@@ -23,11 +23,6 @@
       "speaker": "Narrator",
       "text": "Welcome to the test fields of NyWarudo.",
       "pitch": 1
-    },
-    {
-      "speaker": "Old Sage",
-      "text": "Watch your steps, traveler. Each movement consumes your vital Energy.",
-      "pitch": 0.7
     }
   ],
   "transitions": [
