@@ -4,6 +4,12 @@ This file tracks meaningful project changes by commit-oriented slices.
 
 Keep entries short and practical. When a slice is committed, its changelog section should stay aligned with the commit title so the project history remains easy to read after restores or bisects.
 
+## 2026-07-07 - [DOCS]: Propose playtest content source architecture
+
+- Compare full registry ownership inversion, a dev-only content overlay, and engine-level provider injection for editor playtesting.
+- Recommend a dev-only content overlay while keeping zones and game config on the injectable content bundle.
+- Define playtest save isolation and validation gating before implementation.
+
 ## 2026-07-07 - [UPDATE]: Default the zone editor to inspect mode
 
 - Start zone editing in inspect mode so the first map click selects and reads placements instead of painting tiles.
