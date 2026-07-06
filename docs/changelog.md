@@ -4,6 +4,12 @@ This file tracks meaningful project changes by commit-oriented slices.
 
 Keep entries short and practical. When a slice is committed, its changelog section should stay aligned with the commit title so the project history remains easy to read after restores or bisects.
 
+## 2026-07-06 - [UPDATE]: Auto-fit the zone map to the available space
+
+- Add a pure unit-tested `computeFitCellSize(containerWidth, containerHeight, gridWidth, gridHeight, options)` helper to calculate fitting cell size within `[20, 64]` pixel bounds.
+- Integrate `ResizeObserver` and debounce/throttle logic with `requestAnimationFrame` inside `EditorZoneCanvas` to measure container dimensions and scale the canvas dynamically.
+- Remove obsolete `min-height` constraint from `.editor-zone-canvas-frame` in the CSS sheet, letting the grid row size the frame.
+
 ## 2026-07-06 - [REFACTOR]: Give the editor a stable workbench layout
 
 - Restructure the content editor shell into a full-viewport CSS grid with fixed header, tab bar, and flex-filling content row.

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { pointerToCell } from "./canvasCellMapping";
+import { pointerToCell, computeFitCellSize } from "./canvasCellMapping";
 
 const box = { left: 100, top: 50, width: 320, height: 256 };
 
@@ -33,5 +33,28 @@ describe("pointerToCell", () => {
   it("returns null for a degenerate box or grid", () => {
     expect(pointerToCell({ ...box, width: 0 }, 10, 8, 140, 90)).toBeNull();
     expect(pointerToCell(box, 0, 8, 140, 90)).toBeNull();
+  });
+});
+
+describe("computeFitCellSize", () => {
+  it("computes cell size and clamps it", () => {
+    // container: 320x256, grid: 10x8. Fit cell sizes: 320/10 = 32, 256/8 = 32. Clamps to [20, 64] -> 32
+    expect(computeFitCellSize(320, 256, 10, 8, { min: 20, max: 64 })).toBe(32);
+
+    // clamps to max: container: 1000x800, grid: 10x8 -> sizes: 100, 100. Clamps to max 64 -> 64
+    expect(computeFitCellSize(1000, 800, 10, 8, { min: 20, max: 64 })).toBe(64);
+
+    // clamps to min: container: 100x80, grid: 10x8 -> sizes: 10, 10. Clamps to min 20 -> 20
+    expect(computeFitCellSize(100, 80, 10, 8, { min: 20, max: 64 })).toBe(20);
+
+    // non-square fit: container: 400x200, grid: 10x10 -> width-based: 40, height-based: 20 -> min is 20 -> 20
+    expect(computeFitCellSize(400, 200, 10, 10, { min: 10, max: 50 })).toBe(20);
+  });
+
+  it("handles degenerate sizes gracefully by returning min", () => {
+    expect(computeFitCellSize(0, 256, 10, 8, { min: 20, max: 64 })).toBe(20);
+    expect(computeFitCellSize(320, 0, 10, 8, { min: 20, max: 64 })).toBe(20);
+    expect(computeFitCellSize(320, 256, 0, 8, { min: 20, max: 64 })).toBe(20);
+    expect(computeFitCellSize(320, 256, 10, 0, { min: 20, max: 64 })).toBe(20);
   });
 });

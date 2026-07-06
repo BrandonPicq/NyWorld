@@ -45,3 +45,24 @@ export function pointerToCell(
 
   return { x, y };
 }
+
+/**
+ * Calculates the cell size (in pixels) that best fits the grid inside the container.
+ * Clamps the computed value to [options.min, options.max].
+ */
+export function computeFitCellSize(
+  containerWidth: number,
+  containerHeight: number,
+  gridWidth: number,
+  gridHeight: number,
+  options: { min: number; max: number },
+): number {
+  const { min, max } = options;
+  if (gridWidth <= 0 || gridHeight <= 0 || containerWidth <= 0 || containerHeight <= 0) {
+    return min;
+  }
+  const size = Math.floor(
+    Math.min(containerWidth / gridWidth, containerHeight / gridHeight),
+  );
+  return Math.min(Math.max(size, min), max);
+}
