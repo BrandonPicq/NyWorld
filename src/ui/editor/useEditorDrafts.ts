@@ -10,6 +10,7 @@ import {
   type ItemDefMap,
   type NpcDef,
   type NpcPresenceDef,
+  type QuestDef,
 } from "../../engine";
 import {
   createCombinedDraftSnapshot,
@@ -42,6 +43,11 @@ import {
   type NpcPresenceDraftController,
 } from "./presence/useNpcPresenceDraft";
 import {
+  createQuestDraftState,
+  useQuestDraft,
+  type QuestDraftController,
+} from "./quests/useQuestDraft";
+import {
   createGameConfigDraftState,
   useGameConfigDraft,
   type GameConfigController,
@@ -65,6 +71,7 @@ export interface EditorDrafts {
   presence: NpcPresenceDraftController;
   enemy: EnemyDraftController;
   action: ActionDraftController;
+  quest: QuestDraftController;
   zone: ZoneDraftController;
   game: GameConfigController;
   combined: CombinedDraftView;
@@ -120,6 +127,12 @@ export function useEditorDrafts(base: ContentCatalogSnapshot): EditorDrafts {
   const [savedActions, setSavedActions] = useState<CombatActionDef[]>(() =>
     createActionDraftState(base),
   );
+  const [draftQuests, setDraftQuests] = useState<QuestDef[]>(() =>
+    createQuestDraftState(base),
+  );
+  const [savedQuests, setSavedQuests] = useState<QuestDef[]>(() =>
+    createQuestDraftState(base),
+  );
   const [gameDraft, setGameDraft] = useState<GameContentConfig>(() =>
     createGameConfigDraftState(base),
   );
@@ -144,6 +157,7 @@ export function useEditorDrafts(base: ContentCatalogSnapshot): EditorDrafts {
       enemies: draftEnemies,
       items: draftItems,
       actions: draftActions,
+      quests: draftQuests,
       game: gameDraft,
       zones: activeZoneDrafts(zoneHistories),
     }),
@@ -154,6 +168,7 @@ export function useEditorDrafts(base: ContentCatalogSnapshot): EditorDrafts {
       draftEnemies,
       draftItems,
       draftActions,
+      draftQuests,
       gameDraft,
       zoneHistories,
     ],
@@ -242,6 +257,13 @@ export function useEditorDrafts(base: ContentCatalogSnapshot): EditorDrafts {
     },
     combined,
   );
+  const quest = useQuestDraft(
+    {
+      draft: { value: draftQuests, set: setDraftQuests },
+      saved: { value: savedQuests, set: setSavedQuests },
+    },
+    combined,
+  );
   const zone = useZoneDraft(
     base,
     {
@@ -261,5 +283,16 @@ export function useEditorDrafts(base: ContentCatalogSnapshot): EditorDrafts {
     combined,
   );
 
-  return { item, dialogue, npc, presence, enemy, action, zone, game, combined };
+  return {
+    item,
+    dialogue,
+    npc,
+    presence,
+    enemy,
+    action,
+    quest,
+    zone,
+    game,
+    combined,
+  };
 }

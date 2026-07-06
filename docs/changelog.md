@@ -4,6 +4,13 @@ This file tracks meaningful project changes by commit-oriented slices.
 
 Keep entries short and practical. When a slice is committed, its changelog section should stay aligned with the commit title so the project history remains easy to read after restores or bisects.
 
+## 2026-07-06 - [ADD]: Create and edit quest sheets in the editor
+
+- Add a Quests editor tab: create a quest (slug id + name), edit its name, description, target NPC, start/complete dialogue triggers, NPC dialogue overrides, and rewards (currency + item list); objectives stay read-only.
+- Route quest drafts through the shared combined snapshot so quest validation and its pickers see unsaved items, NPCs, dialogues, and zones from other tabs.
+- Surface that quest ids are persisted in saves and cannot be renamed; block deletion while a quest is referenced and warn that deleting orphans save-state entries.
+- Extend the combined draft model with quests and add quest model helpers with tests.
+
 ## 2026-07-06 - [REFACTOR]: Share editor draft state across tabs
 
 - Lift every editor family's draft and saved state into one `useEditorDrafts` owner that derives a single combined snapshot, validation context, deferred diagnostics, and reference graph shared by all tabs.

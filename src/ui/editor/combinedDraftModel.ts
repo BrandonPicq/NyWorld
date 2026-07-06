@@ -8,8 +8,10 @@ import type {
   ItemDefMap,
   NpcDef,
   NpcPresenceDef,
+  QuestDef,
   ZoneData,
 } from "../../engine";
+import { cloneQuestDefs, createQuestDraftValidationContext } from "./quests/questEditorModel";
 import {
   createActionDraftSnapshot,
 } from "./actions/actionEditorModel";
@@ -45,6 +47,7 @@ export interface EditorDraftContents {
   enemies: readonly EnemyDef[];
   items: ItemDefMap;
   actions: readonly CombatActionDef[];
+  quests: readonly QuestDef[];
   game: GameContentConfig;
   zones?: readonly ZoneData[];
 }
@@ -66,6 +69,7 @@ export function createCombinedDraftSnapshot(
   snapshot = createEnemyDraftSnapshot(snapshot, contents.enemies);
   snapshot = createItemDraftSnapshot(snapshot, contents.items);
   snapshot = createActionDraftSnapshot(snapshot, contents.actions);
+  snapshot = { ...snapshot, quests: cloneQuestDefs(contents.quests) };
   for (const zone of contents.zones ?? []) {
     snapshot = createZoneDraftSnapshot(snapshot, zone);
   }
@@ -96,6 +100,7 @@ export function createCombinedDraftValidationContext(
   };
   context = createEnemyDraftValidationContext(context, contents.enemies);
   context = createItemDraftValidationContext(context, contents.items);
+  context = createQuestDraftValidationContext(context, contents.quests);
   for (const zone of contents.zones ?? []) {
     context = createZoneDraftValidationContext(context, zone);
   }

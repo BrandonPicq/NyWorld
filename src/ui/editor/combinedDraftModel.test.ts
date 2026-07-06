@@ -32,6 +32,7 @@ function contentsWith(
     enemies: base.enemies,
     items: base.items,
     actions: base.combatActions,
+    quests: base.quests,
     game: base.game,
     ...overrides,
   };

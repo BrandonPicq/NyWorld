@@ -8,6 +8,7 @@ import { EnemyTab } from "./enemies/EnemyTab";
 import { GameConfigPanel } from "./GameConfigPanel";
 import { NpcTab } from "./npcs/NpcTab";
 import { PresenceTab } from "./presence/PresenceTab";
+import { QuestTab } from "./quests/QuestTab";
 import { useEditorDrafts } from "./useEditorDrafts";
 import { ZoneEditorPanel } from "./zone/ZoneEditorPanel";
 
@@ -23,7 +24,8 @@ type EditorTab =
   | "npcs"
   | "presence"
   | "enemies"
-  | "actions";
+  | "actions"
+  | "quests";
 
 export function ContentEditorScreen({ onBack }: ContentEditorScreenProps) {
   const baseSnapshot = useMemo(() => createRuntimeContentCatalogSnapshot(), []);
@@ -108,6 +110,13 @@ export function ContentEditorScreen({ onBack }: ContentEditorScreenProps) {
           >
             Actions
           </TerminalButton>
+          <TerminalButton
+            className="editor-tab"
+            isSelected={tab === "quests"}
+            onClick={() => setTab("quests")}
+          >
+            Quests
+          </TerminalButton>
         </nav>
 
         {tab === "zones" ? (
@@ -124,6 +133,8 @@ export function ContentEditorScreen({ onBack }: ContentEditorScreenProps) {
           <EnemyTab draft={drafts.enemy} />
         ) : tab === "actions" ? (
           <ActionsTab draft={drafts.action} />
+        ) : tab === "quests" ? (
+          <QuestTab draft={drafts.quest} />
         ) : (
           <ContentTab draft={drafts.item} />
         )}
