@@ -116,25 +116,27 @@ export function ContentEditorScreen({ onBack }: ContentEditorScreenProps) {
           </TerminalButton>
         </nav>
 
-        {tab === "zones" ? (
-          <ZoneEditorPanel draft={drafts.zone} snapshot={baseSnapshot} />
-        ) : tab === "game" ? (
-          <GameConfigPanel draft={drafts.game} />
-        ) : tab === "dialogues" ? (
-          <DialogueTab draft={drafts.dialogue} />
-        ) : tab === "npcs" ? (
-          <NpcTab draft={drafts.npc} />
-        ) : tab === "presence" ? (
-          <PresenceTab draft={drafts.presence} />
-        ) : tab === "enemies" ? (
-          <EnemyTab draft={drafts.enemy} />
-        ) : tab === "actions" ? (
-          <ActionsTab draft={drafts.action} />
-        ) : tab === "quests" ? (
-          <QuestTab draft={drafts.quest} />
-        ) : (
-          <ContentTab draft={drafts.item} />
-        )}
+        <div className="editor-tab-content">
+          {tab === "zones" ? (
+            <ZoneEditorPanel draft={drafts.zone} snapshot={baseSnapshot} />
+          ) : tab === "game" ? (
+            <GameConfigPanel draft={drafts.game} />
+          ) : tab === "dialogues" ? (
+            <DialogueTab draft={drafts.dialogue} />
+          ) : tab === "npcs" ? (
+            <NpcTab draft={drafts.npc} />
+          ) : tab === "presence" ? (
+            <PresenceTab draft={drafts.presence} />
+          ) : tab === "enemies" ? (
+            <EnemyTab draft={drafts.enemy} />
+          ) : tab === "actions" ? (
+            <ActionsTab draft={drafts.action} />
+          ) : tab === "quests" ? (
+            <QuestTab draft={drafts.quest} />
+          ) : (
+            <ContentTab draft={drafts.item} />
+          )}
+        </div>
       </div>
     </main>
   );

@@ -43,11 +43,9 @@ export function ContentTab({ draft }: ContentTabProps) {
         <span>{hasUnsavedChanges ? "unsaved" : "saved"}</span>
       </section>
 
-      <div className="workbench">
-        <ScrollRegion className="workbench__rail" />
-
+      <div className="workbench workbench--content-layout">
         <div className="workbench__main">
-          <TerminalPanel className="editor-panel editor-browser" style={{ flex: 1, minHeight: 0 }}>
+          <TerminalPanel className="editor-panel editor-browser" style={{ flex: 2, minHeight: 0 }}>
             <h2 className="editor-panel__title">Content</h2>
             <ScrollRegion className="editor-scroll" role="list">
               {browserGroups.map((group) => (

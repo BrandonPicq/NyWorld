@@ -32,9 +32,7 @@ export function GameConfigPanel({ draft }: GameConfigPanelProps) {
   } = draft;
 
   return (
-    <div className="workbench">
-      <ScrollRegion className="workbench__rail" />
-
+    <div className="workbench workbench--game-layout">
       <ScrollRegion className="workbench__main">
         <TerminalPanel className="editor-panel">
           <h2 className="editor-panel__title">Game Config</h2>

@@ -4,6 +4,18 @@ This file tracks meaningful project changes by commit-oriented slices.
 
 Keep entries short and practical. When a slice is committed, its changelog section should stay aligned with the commit title so the project history remains easy to read after restores or bisects.
 
+## 2026-07-06 - [FIX]: Wrap editor tab panels to prevent grid overlapping
+
+- Introduce `.editor-tab-content` flex wrapper container to properly group tab headers, summaries, and workbenches inside the main content row of the editor shell grid.
+- Prevent grid row overflow by changing `.workbench` height from `100%` to flex-grow (`flex: 1`) so it fills the remaining tab viewport space dynamically.
+- Constrain the `.scroll-region-frame` height inside `.workbench` to `100%` and `min-height: 0` to prevent inner column elements from overflowing the grid columns layout.
+- Prevent `.editor-panel` from flex-shrinking below its content height by default (`flex-shrink: 0`) to ensure the panels expand to wrap all input fields and render their borders/backgrounds correctly inside flex scroll containers.
+- Set the `editor-browser` flex-grow value to `2` inside `ContentTab.tsx` so the Content panel is twice as tall as the Problems panel.
+- Introduce `.workbench--content-layout` and `.workbench--game-layout` modifier classes in `editor.css` to handle 2-column configurations.
+- Configure Content tab with `.workbench--content-layout` (`minmax(20rem, 24rem) minmax(0, 1fr)`) to keep the left list narrow and make the right editor details panel large.
+- Configure Game tab with `.workbench--game-layout` (`minmax(0, 1fr) minmax(18rem, 22rem)`) to keep the left config panel large and the right diagnostics list narrow.
+- Remove empty rail placeholder components from `ContentTab.tsx` and `GameConfigPanel.tsx` to let these custom layouts take full advantage of the screen.
+
 ## 2026-07-06 - [REFACTOR]: Move the remaining tabs onto the workbench shell
 
 - Migrate dialogues, NPCs, presence, enemies, and quests tabs onto the `.workbench` primitives, placing entity selections in the rail column, forms in the main column, and diagnostics/references in the inspector column.
