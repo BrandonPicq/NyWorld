@@ -4,6 +4,12 @@ This file tracks meaningful project changes by commit-oriented slices.
 
 Keep entries short and practical. When a slice is committed, its changelog section should stay aligned with the commit title so the project history remains easy to read after restores or bisects.
 
+## 2026-07-06 - [ADD]: Preview scheduled NPC positions by time of day
+
+- Export a pure NPC schedule-position helper for editor previews.
+- Add scheduled zone render previews that move zone NPCs, hide NPCs scheduled into another zone, and show global presence entering the edited zone.
+- Add a zone editor schedule-preview toggle and time slider, disabling placement edits while preview mode is active.
+
 ## 2026-07-06 - [ADD]: Navigate to content from diagnostics
 
 - Add shared clickable diagnostic rendering for the content, zones, game config, and quest problem panels.

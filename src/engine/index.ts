@@ -168,6 +168,7 @@ export {
   DIRECTION_DELTA,
   MovementSystem,
   NpcScheduleSystem,
+  getScheduledNpcPositionAt,
   parseScheduleTime,
 } from "./systems";
 export type { Direction, ScheduledNpcPosition } from "./systems";

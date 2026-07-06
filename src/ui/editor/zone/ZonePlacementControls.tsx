@@ -19,9 +19,11 @@ const MODES: { mode: ZonePlacementMode; label: string }[] = [
  * presentation of the mode buttons and their inputs.
  */
 export function ZonePlacementControls({
+  disabled = false,
   placement,
   onPickTransitionTarget,
 }: {
+  disabled?: boolean;
   placement: ZonePlacement;
   onPickTransitionTarget?: () => void;
 }) {
@@ -35,6 +37,7 @@ export function ZonePlacementControls({
         {MODES.map(({ mode, label }) => (
           <TerminalButton
             className="editor-mode-button"
+            disabled={disabled}
             isSelected={placement.mode === mode}
             key={mode}
             onClick={() => placement.setMode(mode)}
@@ -44,17 +47,25 @@ export function ZonePlacementControls({
         ))}
       </div>
       <ModeControls
+        disabled={disabled}
         placement={placement}
         onPickTransitionTarget={onPickTransitionTarget}
       />
+      {disabled ? (
+        <p className="editor-placement-hint">
+          Scheduled preview is inspect-only.
+        </p>
+      ) : null}
     </div>
   );
 }
 
 function ModeControls({
+  disabled,
   placement,
   onPickTransitionTarget,
 }: {
+  disabled: boolean;
   placement: ZonePlacement;
   onPickTransitionTarget?: () => void;
 }) {
@@ -63,6 +74,7 @@ function ModeControls({
       return (
         <ZoneTilePalette
           activeTileId={placement.activeTileId}
+          disabled={disabled}
           onSelect={placement.setActiveTileId}
           tiles={placement.tiles}
         />
@@ -79,6 +91,7 @@ function ModeControls({
           <label className="editor-field">
             <span>NPC</span>
             <select
+              disabled={disabled}
               onChange={(event) => placement.setNpcId(event.target.value)}
               value={placement.npcId}
             >
@@ -92,6 +105,7 @@ function ModeControls({
           <label className="editor-field">
             <span>Dialogue (optional)</span>
             <select
+              disabled={disabled}
               onChange={(event) => placement.setDialogueId(event.target.value)}
               value={placement.dialogueId}
             >
@@ -114,6 +128,7 @@ function ModeControls({
           <label className="editor-field">
             <span>Item</span>
             <select
+              disabled={disabled}
               onChange={(event) => placement.setItemId(event.target.value)}
               value={placement.itemId}
             >
@@ -127,6 +142,7 @@ function ModeControls({
           <label className="editor-field">
             <span>Quantity</span>
             <input
+              disabled={disabled}
               min={1}
               onChange={(event) =>
                 placement.setQuantity(clampInt(event.target.value, 1))
@@ -147,6 +163,7 @@ function ModeControls({
           <label className="editor-field">
             <span>Target zone</span>
             <select
+              disabled={disabled}
               onChange={(event) => placement.setTargetZoneId(event.target.value)}
               value={placement.targetZoneId}
             >
@@ -161,6 +178,7 @@ function ModeControls({
             <label className="editor-field">
               <span>Target X</span>
               <input
+                disabled={disabled}
                 min={0}
                 onChange={(event) =>
                   placement.setTargetX(clampInt(event.target.value, 0))
@@ -173,6 +191,7 @@ function ModeControls({
             <label className="editor-field">
               <span>Target Y</span>
               <input
+                disabled={disabled}
                 min={0}
                 onChange={(event) =>
                   placement.setTargetY(clampInt(event.target.value, 0))
@@ -185,6 +204,7 @@ function ModeControls({
             <TerminalButton
               className="editor-compact-button"
               disabled={
+                disabled ||
                 !onPickTransitionTarget ||
                 !placement.zoneIds.includes(placement.targetZoneId)
               }

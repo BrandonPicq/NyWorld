@@ -65,4 +65,53 @@ describe("createZoneEditRenderSnapshot", () => {
       },
     ]);
   });
+
+  it("hides a zone-local scheduled NPC when the active entry targets another zone", () => {
+    const snapshot = createZoneEditRenderSnapshot(
+      createZone({
+        npcs: [
+          {
+            npcId: "traveler",
+            x: 0,
+            y: 0,
+            schedule: [
+              { time: "08:00", zoneId: "other_zone", x: 1, y: 1 },
+            ],
+          },
+        ],
+      }),
+      { minutesOfDay: 8 * 60, presence: [] },
+    );
+
+    expect(snapshot.entities).toEqual([]);
+  });
+
+  it("shows global presence whose active entry targets the edited zone", () => {
+    const snapshot = createZoneEditRenderSnapshot(
+      createZone(),
+      {
+        minutesOfDay: 12 * 60,
+        presence: [
+          {
+            npcId: "visitor",
+            schedule: [
+              { time: "08:00", zoneId: "other_zone", x: 0, y: 0 },
+              { time: "12:00", zoneId: "test_zone", x: 1, y: 1 },
+            ],
+          },
+        ],
+      },
+    );
+
+    expect(snapshot.entities).toEqual([
+      {
+        x: 1,
+        y: 1,
+        glyph: "n",
+        color: "#cdd6f4",
+        npcId: "visitor",
+        name: "Unknown NPC",
+      },
+    ]);
+  });
 });

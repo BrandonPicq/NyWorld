@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import type { ContentCatalogSnapshot } from "../../../engine";
 import type { GridCell } from "../../../rendering/canvasCellMapping";
+import { createZoneEditRenderSnapshot } from "../../../rendering/zoneEditRenderSnapshot";
 import { ScrollRegion } from "../../components/ScrollRegion";
 import { TerminalButton } from "../../components/TerminalButton";
 import { TerminalPanel } from "../../components/TerminalPanel";
@@ -62,6 +63,9 @@ export function ZoneDraftEditor({
   const [pinnedCell, setPinnedCell] = useState<GridCell | null>(null);
   const [coordinatePicker, setCoordinatePicker] =
     useState<CoordinatePickerRequest | null>(null);
+  const [isSchedulePreviewEnabled, setSchedulePreviewEnabled] =
+    useState(false);
+  const [previewMinutes, setPreviewMinutes] = useState(8 * 60);
 
   useEffect(() => {
     setHoveredCell(null);
@@ -73,12 +77,18 @@ export function ZoneDraftEditor({
   }
 
   const warningCount = diagnostics.length - errorCount;
+  const activeRenderSnapshot = isSchedulePreviewEnabled
+    ? createZoneEditRenderSnapshot(draft, {
+        minutesOfDay: previewMinutes,
+        presence: snapshot.npcPresence,
+      })
+    : renderSnapshot;
 
   const activeReadoutCell = hoveredCell || pinnedCell;
   const cellDescription = activeReadoutCell ? describeZoneCell(draft, activeReadoutCell) : null;
 
   function handleCell(cell: GridCell, kind: "down" | "move"): void {
-    if (placement.mode === "inspect") {
+    if (isSchedulePreviewEnabled || placement.mode === "inspect") {
       if (kind === "down") {
         setPinnedCell(cell);
       }
@@ -128,7 +138,7 @@ export function ZoneDraftEditor({
               cellSize={48}
               onCellPointer={handleCell}
               onCellHover={handleHover}
-              renderSnapshot={renderSnapshot}
+              renderSnapshot={activeRenderSnapshot}
             />
           </div>
 
@@ -174,7 +184,39 @@ export function ZoneDraftEditor({
 
       <ScrollRegion className="workbench__inspector">
         <TerminalPanel className="editor-panel">
+          <section className="editor-zone-section">
+            <div className="editor-family__header">
+              <h3>Schedule Preview</h3>
+              <span>{formatClock(previewMinutes)}</span>
+            </div>
+            <label className="editor-checkbox-field">
+              <input
+                checked={isSchedulePreviewEnabled}
+                onChange={(event) =>
+                  setSchedulePreviewEnabled(event.target.checked)
+                }
+                type="checkbox"
+              />
+              <span>Preview NPC schedules</span>
+            </label>
+            <label className="editor-field">
+              <span>Time of Day</span>
+              <input
+                disabled={!isSchedulePreviewEnabled}
+                max={23 * 60 + 45}
+                min={0}
+                onChange={(event) =>
+                  setPreviewMinutes(Number(event.target.value))
+                }
+                step={15}
+                type="range"
+                value={previewMinutes}
+              />
+            </label>
+          </section>
+
           <ZonePlacementControls
+            disabled={isSchedulePreviewEnabled}
             placement={placement}
             onPickTransitionTarget={openTransitionTargetPicker}
           />
@@ -260,4 +302,11 @@ export function ZoneDraftEditor({
       ) : null}
     </>
   );
+}
+
+function formatClock(minutesOfDay: number): string {
+  const minutes = Math.max(0, Math.min(23 * 60 + 59, minutesOfDay));
+  const hour = Math.floor(minutes / 60);
+  const minute = minutes % 60;
+  return `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}`;
 }

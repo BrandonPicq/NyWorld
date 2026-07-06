@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 import { encodeWorldDateTime } from "../time/WorldCalendar";
-import { NpcScheduleSystem, parseScheduleTime } from "./NpcScheduleSystem";
+import {
+  NpcScheduleSystem,
+  getScheduledNpcPositionAt,
+  parseScheduleTime,
+} from "./NpcScheduleSystem";
 
 const schedule = [
   { time: "08:00", x: 2, y: 1 },
@@ -55,6 +59,14 @@ describe("NpcScheduleSystem", () => {
     expect(NpcScheduleSystem.getActivePosition(schedule, evening)).toEqual({
       x: 1,
       y: 2,
+    });
+  });
+
+  it("resolves a schedule by minute-of-day through the editor helper", () => {
+    expect(getScheduledNpcPositionAt(schedule, 7 * 60 + 50)).toBeUndefined();
+    expect(getScheduledNpcPositionAt(schedule, 9 * 60)).toEqual({
+      x: 2,
+      y: 1,
     });
   });
 

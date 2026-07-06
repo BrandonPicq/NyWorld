@@ -20,6 +20,20 @@ export interface ScheduledNpcPosition {
 }
 
 /**
+ * Resolves the active schedule entry at a minute-of-day.
+ *
+ * This is the editor-friendly pure wrapper over the runtime schedule semantics:
+ * before the first reached entry there is no scheduled override, otherwise the
+ * latest reached entry wins.
+ */
+export function getScheduledNpcPositionAt(
+  schedule: NpcScheduleEntryData[] | undefined,
+  minutesOfDay: number,
+): ScheduledNpcPosition | undefined {
+  return NpcScheduleSystem.getActivePosition(schedule, minutesOfDay);
+}
+
+/**
  * Applies simple daily NPC schedule entries to currently spawned NPC entities.
  *
  * The system only moves or removes entities already present in the ECS world;

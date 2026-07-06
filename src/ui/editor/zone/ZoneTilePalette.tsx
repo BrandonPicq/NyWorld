@@ -4,6 +4,7 @@ import type { ZonePaletteTile } from "./usePlacementSelection";
 type ZoneTilePaletteProps = {
   tiles: ZonePaletteTile[];
   activeTileId: number;
+  disabled?: boolean;
   onSelect: (id: number) => void;
 };
 
@@ -16,6 +17,7 @@ type ZoneTilePaletteProps = {
 export function ZoneTilePalette({
   tiles,
   activeTileId,
+  disabled = false,
   onSelect,
 }: ZoneTilePaletteProps) {
   return (
@@ -24,6 +26,7 @@ export function ZoneTilePalette({
         <TerminalButton
           aria-label={`Tile ${id} ${def.name}`}
           className="editor-tile-swatch"
+          disabled={disabled}
           isSelected={id === activeTileId}
           key={id}
           onClick={() => onSelect(id)}
