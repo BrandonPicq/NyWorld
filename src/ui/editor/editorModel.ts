@@ -21,6 +21,7 @@ export type SaveStatus =
 export interface ContentBrowserEntry {
   ref: ContentRef;
   label: string;
+  searchName?: string;
 }
 
 export interface ContentBrowserGroup {
@@ -39,6 +40,10 @@ export interface DiagnosticGroup {
 export function buildContentBrowserGroups(
   snapshot: ContentCatalogSnapshot,
 ): ContentBrowserGroup[] {
+  const npcNamesById = new Map(
+    snapshot.npcs.map((npc) => [npc.npcId, npc.name]),
+  );
+
   return [
     {
       type: CONTENT_TYPES.game,
@@ -48,23 +53,27 @@ export function buildContentBrowserGroups(
     {
       type: CONTENT_TYPES.zone,
       label: "Zones",
-      entries: sortedKeys(snapshot.zones).map((id) =>
-        entry(CONTENT_TYPES.zone, id),
-      ),
+      entries: sortedKeys(snapshot.zones).map((id) => {
+        const zone = snapshot.zones[id];
+        return entry(CONTENT_TYPES.zone, id, zone?.name);
+      }),
     },
     {
       type: CONTENT_TYPES.item,
       label: "Items",
-      entries: sortedKeys(snapshot.items).map((id) =>
-        entry(CONTENT_TYPES.item, id),
-      ),
+      entries: sortedKeys(snapshot.items).map((id) => {
+        const item = snapshot.items[id];
+        return entry(CONTENT_TYPES.item, id, item?.name);
+      }),
     },
     {
       type: CONTENT_TYPES.tile,
       label: "Tiles",
       entries: [...snapshot.tiles.keys()]
         .sort((a, b) => a - b)
-        .map((id) => entry(CONTENT_TYPES.tile, String(id))),
+        .map((id) =>
+          entry(CONTENT_TYPES.tile, String(id), snapshot.tiles.get(id)?.name),
+        ),
     },
     {
       type: CONTENT_TYPES.dialogue,
@@ -77,9 +86,9 @@ export function buildContentBrowserGroups(
       type: CONTENT_TYPES.npc,
       label: "NPCs",
       entries: snapshot.npcs
-        .map((npc) => npc.npcId)
-        .sort((a, b) => a.localeCompare(b))
-        .map((id) => entry(CONTENT_TYPES.npc, id)),
+        .map((npc) => ({ id: npc.npcId, name: npc.name }))
+        .sort((a, b) => a.id.localeCompare(b.id))
+        .map((npc) => entry(CONTENT_TYPES.npc, npc.id, npc.name)),
     },
     {
       type: CONTENT_TYPES.npcPresence,
@@ -87,7 +96,7 @@ export function buildContentBrowserGroups(
       entries: snapshot.npcPresence
         .map((presence) => presence.npcId)
         .sort((a, b) => a.localeCompare(b))
-        .map((id) => entry(CONTENT_TYPES.npcPresence, id)),
+        .map((id) => entry(CONTENT_TYPES.npcPresence, id, npcNamesById.get(id))),
     },
     {
       type: CONTENT_TYPES.enemy,
@@ -95,23 +104,25 @@ export function buildContentBrowserGroups(
       entries: snapshot.enemies
         .map((enemy) => enemy.npcId)
         .sort((a, b) => a.localeCompare(b))
-        .map((id) => entry(CONTENT_TYPES.enemy, id)),
+        .map((id) => entry(CONTENT_TYPES.enemy, id, npcNamesById.get(id))),
     },
     {
       type: CONTENT_TYPES.quest,
       label: "Quests",
       entries: snapshot.quests
-        .map((quest) => quest.questId)
-        .sort((a, b) => a.localeCompare(b))
-        .map((id) => entry(CONTENT_TYPES.quest, id)),
+        .map((quest) => ({ id: quest.questId, name: quest.name }))
+        .sort((a, b) => a.id.localeCompare(b.id))
+        .map((quest) => entry(CONTENT_TYPES.quest, quest.id, quest.name)),
     },
     {
       type: CONTENT_TYPES.combatAction,
       label: "Combat Actions",
       entries: snapshot.combatActions
-        .map((action) => action.actionId)
-        .sort((a, b) => a.localeCompare(b))
-        .map((id) => entry(CONTENT_TYPES.combatAction, id)),
+        .map((action) => ({ id: action.actionId, name: action.name }))
+        .sort((a, b) => a.id.localeCompare(b.id))
+        .map((action) =>
+          entry(CONTENT_TYPES.combatAction, action.id, action.name),
+        ),
     },
   ];
 }
@@ -243,11 +254,20 @@ function formatStartingInventory(
   return `[\n${rows}\n    ]`;
 }
 
-function entry(type: ContentTypeName, id: string): ContentBrowserEntry {
-  return {
+function entry(
+  type: ContentTypeName,
+  id: string,
+  searchName?: string,
+): ContentBrowserEntry {
+  const browserEntry: ContentBrowserEntry = {
     ref: { type, id },
     label: id,
   };
+  if (searchName) {
+    browserEntry.searchName = searchName;
+  }
+
+  return browserEntry;
 }
 
 function sortedKeys(value: Record<string, unknown>): string[] {

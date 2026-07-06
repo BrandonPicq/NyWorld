@@ -1,3 +1,4 @@
+import { useState } from "react";
 import {
   formatContentDiagnostic,
 } from "../../../engine";
@@ -7,6 +8,8 @@ import { TerminalButton } from "../../components/TerminalButton";
 import { TerminalPanel } from "../../components/TerminalPanel";
 import { DialogueNodesEditor } from "../DialogueNodesEditor";
 import type { EditorContentNavigationTarget } from "../DiagnosticList";
+import { ListFilterField } from "../ListFilterField";
+import { filterByIdOrName } from "../listFilter";
 import { ReferenceList } from "../ReferenceList";
 import {
   addDialogueNode,
@@ -21,6 +24,17 @@ type DialogueTabProps = {
 };
 
 export function DialogueTab({ draft, onNavigate }: DialogueTabProps) {
+  const [fileFilter, setFileFilter] = useState("");
+  const [dialogueFilter, setDialogueFilter] = useState("");
+  const filteredFiles = filterByIdOrName(
+    draft.files.map((file) => ({ ...file, id: file.stem })),
+    fileFilter,
+  );
+  const filteredDialogueIds = filterByIdOrName(
+    draft.dialogueIds.map((dialogueId) => ({ id: dialogueId })),
+    dialogueFilter,
+  ).map((entry) => entry.id);
+
   return (
     <>
       <section className="editor-summary" aria-label="Dialogue summary">
@@ -38,8 +52,16 @@ export function DialogueTab({ draft, onNavigate }: DialogueTabProps) {
         <ScrollRegion className="workbench__rail">
           <TerminalPanel className="editor-panel editor-dialogue-files">
             <h2 className="editor-panel__title">Files</h2>
+            <ListFilterField
+              label="Filter"
+              onChange={setFileFilter}
+              value={fileFilter}
+            />
             <div className="editor-entry-list">
-              {draft.files.map((file) => (
+              {filteredFiles.length === 0 ? (
+                <p className="editor-empty">No matching files.</p>
+              ) : null}
+              {filteredFiles.map((file) => (
                 <TerminalButton
                   className="editor-entry-button"
                   isSelected={file.stem === draft.selectedStem}
@@ -96,11 +118,18 @@ export function DialogueTab({ draft, onNavigate }: DialogueTabProps) {
                     <h3>{draft.selectedStem}</h3>
                     <span>{draft.dialogueIds.length}</span>
                   </div>
+                  <ListFilterField
+                    label="Filter"
+                    onChange={setDialogueFilter}
+                    value={dialogueFilter}
+                  />
                   {draft.dialogueIds.length === 0 ? (
                     <p className="editor-empty">No dialogues.</p>
+                  ) : filteredDialogueIds.length === 0 ? (
+                    <p className="editor-empty">No matching dialogues.</p>
                   ) : (
                     <div className="editor-entry-list">
-                      {draft.dialogueIds.map((dialogueId) => (
+                      {filteredDialogueIds.map((dialogueId) => (
                         <TerminalButton
                           className="editor-entry-button"
                           isSelected={dialogueId === draft.selectedDialogueId}

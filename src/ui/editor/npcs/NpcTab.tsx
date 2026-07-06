@@ -1,3 +1,4 @@
+import { useState } from "react";
 import {
   formatContentDiagnostic,
   NPC_IMPORTANCE_OPTIONS,
@@ -11,6 +12,8 @@ import { ScrollRegion } from "../../components/ScrollRegion";
 import { TerminalButton } from "../../components/TerminalButton";
 import { TerminalPanel } from "../../components/TerminalPanel";
 import type { EditorContentNavigationTarget } from "../DiagnosticList";
+import { ListFilterField } from "../ListFilterField";
+import { filterByIdOrName } from "../listFilter";
 import { ReferenceList } from "../ReferenceList";
 import type { NpcDraftController } from "./useNpcDraft";
 
@@ -20,6 +23,12 @@ type NpcTabProps = {
 };
 
 export function NpcTab({ draft, onNavigate }: NpcTabProps) {
+  const [listFilter, setListFilter] = useState("");
+  const filteredNpcs = filterByIdOrName(
+    draft.npcs.map((npc) => ({ ...npc, id: npc.npcId, name: npc.name })),
+    listFilter,
+  );
+
   return (
     <>
       <section className="editor-summary" aria-label="NPC summary">
@@ -33,8 +42,16 @@ export function NpcTab({ draft, onNavigate }: NpcTabProps) {
         <ScrollRegion className="workbench__rail">
           <TerminalPanel className="editor-panel editor-npc-list">
             <h2 className="editor-panel__title">NPCs</h2>
+            <ListFilterField
+              label="Filter"
+              onChange={setListFilter}
+              value={listFilter}
+            />
             <div className="editor-entry-list">
-              {draft.npcs.map((npc) => (
+              {filteredNpcs.length === 0 ? (
+                <p className="editor-empty">No matching NPCs.</p>
+              ) : null}
+              {filteredNpcs.map((npc) => (
                 <TerminalButton
                   className="editor-entry-button"
                   isSelected={npc.npcId === draft.selectedNpcId}

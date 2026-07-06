@@ -1,9 +1,12 @@
+import { useState } from "react";
 import type { ContentCatalogSnapshot } from "../../../engine";
 import { IdentifierLabel } from "../../components/IdentifierLabel";
 import { ScrollRegion } from "../../components/ScrollRegion";
 import { TerminalButton } from "../../components/TerminalButton";
 import { TerminalPanel } from "../../components/TerminalPanel";
 import type { EditorContentNavigationTarget } from "../DiagnosticList";
+import { ListFilterField } from "../ListFilterField";
+import { filterByIdOrName } from "../listFilter";
 import { ZoneCreateForm } from "./ZoneCreateForm";
 import { ZoneDraftEditor } from "./ZoneDraftEditor";
 import type { ZoneDraftController } from "./useZoneDraft";
@@ -26,18 +29,30 @@ export function ZoneEditorPanel({
   onNavigate,
   snapshot,
 }: ZoneEditorPanelProps) {
+  const [listFilter, setListFilter] = useState("");
   const { zones, selectedZoneId, selectZone } = draft;
+  const filteredZones = filterByIdOrName(
+    zones.map((zone) => ({ ...zone, id: zone.zoneId, name: zone.name })),
+    listFilter,
+  );
 
   return (
     <div className="workbench">
       <ScrollRegion className="workbench__rail">
         <TerminalPanel className="editor-panel editor-zone-list">
           <h2 className="editor-panel__title">Zones</h2>
+          <ListFilterField
+            label="Filter"
+            onChange={setListFilter}
+            value={listFilter}
+          />
           {zones.length === 0 ? (
             <p className="editor-empty">No zones authored.</p>
+          ) : filteredZones.length === 0 ? (
+            <p className="editor-empty">No matching zones.</p>
           ) : (
             <div className="editor-entry-list" role="list">
-              {zones.map((zone) => (
+              {filteredZones.map((zone) => (
                 <TerminalButton
                   className="editor-entry-button editor-zone-entry"
                   isSelected={zone.zoneId === selectedZoneId}

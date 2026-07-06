@@ -1,3 +1,4 @@
+import { useState } from "react";
 import type { ItemDef } from "../../engine";
 import { IdentifierLabel } from "../components/IdentifierLabel";
 import { ScrollRegion } from "../components/ScrollRegion";
@@ -9,6 +10,8 @@ import {
 } from "./DiagnosticList";
 import { refsEqual } from "./editorModel";
 import { ItemDraftEditor } from "./ItemDraftEditor";
+import { ListFilterField } from "./ListFilterField";
+import { filterByIdOrName } from "./listFilter";
 import { ReferenceList } from "./ReferenceList";
 import type { ItemDraftController } from "./useItemDraft";
 
@@ -18,6 +21,7 @@ type ContentTabProps = {
 };
 
 export function ContentTab({ draft, onNavigate }: ContentTabProps) {
+  const [listFilter, setListFilter] = useState("");
   const {
     browserGroups,
     diagnosticGroups,
@@ -33,6 +37,19 @@ export function ContentTab({ draft, onNavigate }: ContentTabProps) {
     hasUnsavedChanges,
     updateSelectedItem,
   } = draft;
+  const filteredBrowserGroups = browserGroups
+    .map((group) => ({
+      ...group,
+      entries: filterByIdOrName(
+        group.entries.map((entry) => ({
+          ...entry,
+          id: entry.ref.id,
+          name: entry.searchName ?? entry.label,
+        })),
+        listFilter,
+      ),
+    }))
+    .filter((group) => group.entries.length > 0 || !listFilter.trim());
 
   return (
     <>
@@ -49,8 +66,16 @@ export function ContentTab({ draft, onNavigate }: ContentTabProps) {
         <div className="workbench__main">
           <TerminalPanel className="editor-panel editor-browser" style={{ flex: 2, minHeight: 0 }}>
             <h2 className="editor-panel__title">Content</h2>
+            <ListFilterField
+              label="Filter"
+              onChange={setListFilter}
+              value={listFilter}
+            />
             <ScrollRegion className="editor-scroll" role="list">
-              {browserGroups.map((group) => (
+              {filteredBrowserGroups.length === 0 ? (
+                <p className="editor-empty">No matching entries.</p>
+              ) : null}
+              {filteredBrowserGroups.map((group) => (
                 <section className="editor-family" key={group.type}>
                   <div className="editor-family__header">
                     <h3>{group.label}</h3>

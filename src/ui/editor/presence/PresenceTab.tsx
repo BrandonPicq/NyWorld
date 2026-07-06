@@ -10,6 +10,8 @@ import { ScrollRegion } from "../../components/ScrollRegion";
 import { TerminalButton } from "../../components/TerminalButton";
 import { TerminalPanel } from "../../components/TerminalPanel";
 import type { EditorContentNavigationTarget } from "../DiagnosticList";
+import { ListFilterField } from "../ListFilterField";
+import { filterByIdOrName } from "../listFilter";
 import { MapCoordinatePicker } from "../MapCoordinatePicker";
 import { ReferenceList } from "../ReferenceList";
 import { ScheduleEntriesEditor } from "../ScheduleEntriesEditor";
@@ -34,7 +36,12 @@ export function PresenceTab({
 }: PresenceTabProps) {
   const [coordinatePicker, setCoordinatePicker] =
     useState<CoordinatePickerRequest | null>(null);
+  const [listFilter, setListFilter] = useState("");
   const presenceCount = draft.npcs.filter((npc) => npc.hasPresence).length;
+  const filteredNpcs = filterByIdOrName(
+    draft.npcs.map((npc) => ({ ...npc, id: npc.npcId, name: npc.name })),
+    listFilter,
+  );
 
   return (
     <>
@@ -50,8 +57,16 @@ export function PresenceTab({
         <ScrollRegion className="workbench__rail">
           <TerminalPanel className="editor-panel editor-enemy-list">
             <h2 className="editor-panel__title">NPCs</h2>
+            <ListFilterField
+              label="Filter"
+              onChange={setListFilter}
+              value={listFilter}
+            />
             <div className="editor-entry-list">
-              {draft.npcs.map((npc) => (
+              {filteredNpcs.length === 0 ? (
+                <p className="editor-empty">No matching NPCs.</p>
+              ) : null}
+              {filteredNpcs.map((npc) => (
                 <TerminalButton
                   className="editor-entry-button"
                   isSelected={npc.npcId === draft.selectedNpcId}

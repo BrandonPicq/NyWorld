@@ -137,12 +137,20 @@ describe("buildContentBrowserGroups", () => {
     const groups = buildContentBrowserGroups(createSnapshot());
 
     expect(groups.find((group) => group.type === "zone")?.entries).toEqual([
-      { ref: { type: "zone", id: "zone_a" }, label: "zone_a" },
-      { ref: { type: "zone", id: "zone_b" }, label: "zone_b" },
+      {
+        ref: { type: "zone", id: "zone_a" },
+        label: "zone_a",
+        searchName: "Zone A",
+      },
+      {
+        ref: { type: "zone", id: "zone_b" },
+        label: "zone_b",
+        searchName: "Zone B",
+      },
     ]);
     expect(groups.find((group) => group.type === "tile")?.entries).toEqual([
-      { ref: { type: "tile", id: "0" }, label: "0" },
-      { ref: { type: "tile", id: "1" }, label: "1" },
+      { ref: { type: "tile", id: "0" }, label: "0", searchName: "floor" },
+      { ref: { type: "tile", id: "1" }, label: "1", searchName: "wall" },
     ]);
   });
 });

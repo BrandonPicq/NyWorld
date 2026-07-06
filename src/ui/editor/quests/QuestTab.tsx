@@ -16,6 +16,8 @@ import {
   type EditorContentNavigationTarget,
 } from "../DiagnosticList";
 import { formatContentRef } from "../editorModel";
+import { ListFilterField } from "../ListFilterField";
+import { filterByIdOrName } from "../listFilter";
 import { MapCoordinatePicker } from "../MapCoordinatePicker";
 import {
   addObjective,
@@ -49,6 +51,16 @@ type CoordinatePickerRequest = {
 };
 
 export function QuestTab({ draft, onNavigate, snapshot }: QuestTabProps) {
+  const [listFilter, setListFilter] = useState("");
+  const filteredQuests = filterByIdOrName(
+    draft.quests.map((quest) => ({
+      ...quest,
+      id: quest.questId,
+      name: quest.name,
+    })),
+    listFilter,
+  );
+
   return (
     <>
       <section className="editor-summary" aria-label="Quest summary">
@@ -62,8 +74,16 @@ export function QuestTab({ draft, onNavigate, snapshot }: QuestTabProps) {
         <ScrollRegion className="workbench__rail">
           <TerminalPanel className="editor-panel editor-enemy-list">
             <h2 className="editor-panel__title">Quests</h2>
+            <ListFilterField
+              label="Filter"
+              onChange={setListFilter}
+              value={listFilter}
+            />
             <div className="editor-entry-list">
-              {draft.quests.map((quest) => (
+              {filteredQuests.length === 0 ? (
+                <p className="editor-empty">No matching quests.</p>
+              ) : null}
+              {filteredQuests.map((quest) => (
                 <TerminalButton
                   className="editor-entry-button"
                   isSelected={quest.questId === draft.selectedQuestId}

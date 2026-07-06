@@ -1,3 +1,4 @@
+import { useState } from "react";
 import {
   formatContentDiagnostic,
   type EnemyDef,
@@ -7,6 +8,8 @@ import { ScrollRegion } from "../../components/ScrollRegion";
 import { TerminalButton } from "../../components/TerminalButton";
 import { TerminalPanel } from "../../components/TerminalPanel";
 import type { EditorContentNavigationTarget } from "../DiagnosticList";
+import { ListFilterField } from "../ListFilterField";
+import { filterByIdOrName } from "../listFilter";
 import { ReferenceList } from "../ReferenceList";
 import {
   addEnemyLootEntry,
@@ -25,7 +28,12 @@ type EnemyTabProps = {
 };
 
 export function EnemyTab({ draft, onNavigate }: EnemyTabProps) {
+  const [listFilter, setListFilter] = useState("");
   const profileCount = draft.npcs.filter((npc) => npc.hasProfile).length;
+  const filteredNpcs = filterByIdOrName(
+    draft.npcs.map((npc) => ({ ...npc, id: npc.npcId, name: npc.name })),
+    listFilter,
+  );
 
   return (
     <>
@@ -41,8 +49,16 @@ export function EnemyTab({ draft, onNavigate }: EnemyTabProps) {
         <ScrollRegion className="workbench__rail">
           <TerminalPanel className="editor-panel editor-enemy-list">
             <h2 className="editor-panel__title">NPCs</h2>
+            <ListFilterField
+              label="Filter"
+              onChange={setListFilter}
+              value={listFilter}
+            />
             <div className="editor-entry-list">
-              {draft.npcs.map((npc) => (
+              {filteredNpcs.length === 0 ? (
+                <p className="editor-empty">No matching NPCs.</p>
+              ) : null}
+              {filteredNpcs.map((npc) => (
                 <TerminalButton
                   className="editor-entry-button"
                   isSelected={npc.npcId === draft.selectedNpcId}

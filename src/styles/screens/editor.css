@@ -134,6 +134,10 @@
   gap: var(--space-1);
 }
 
+.editor-list-filter {
+  margin-bottom: var(--space-2);
+}
+
 .editor-entry-button {
   display: flex;
   flex-direction: column;
