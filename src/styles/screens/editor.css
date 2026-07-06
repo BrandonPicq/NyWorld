@@ -648,6 +648,11 @@
   overflow-wrap: anywhere;
 }
 
+.editor-zone-row--selected {
+  border-color: var(--color-accent);
+  border-left-width: 3px;
+}
+
 .editor-zone-row__head {
   display: flex;
   flex-wrap: wrap;

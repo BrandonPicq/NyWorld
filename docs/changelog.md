@@ -4,6 +4,12 @@ This file tracks meaningful project changes by commit-oriented slices.
 
 Keep entries short and practical. When a slice is committed, its changelog section should stay aligned with the commit title so the project history remains easy to read after restores or bisects.
 
+## 2026-07-07 - [ADD]: Inspect and delete map placements from inspect mode
+
+- Add findPlacementAt plus removeNpcAt/removeItemAt/removeTransitionAt pure helpers to the zone editor model, with describeZoneCell reusing findPlacementAt so the readout and selection cannot diverge.
+- Clicking a placement in inspect mode now selects and highlights its inspector row and offers an inline delete that flows through the undoable draft.
+- Deleting an NPC spawn drops its schedule with it; the player start is flagged as not deletable.
+
 ## 2026-07-07 - [UPDATE]: Close combined-draft cloning and graph deferral debts
 
 - Deep-clone the game config into the combined draft snapshot so mutating a snapshot can no longer corrupt the live draft.

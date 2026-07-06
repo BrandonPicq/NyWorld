@@ -17,13 +17,17 @@ import {
   createZoneDraftValidationContext,
   describeZoneCell,
   erasePlacementsAt,
+  findPlacementAt,
   isValidScheduleTime,
   listEditorZones,
   placeItemAt,
   placeNpcAt,
   placeTransitionAt,
   removeEntryDialogueNode,
+  removeItemAt,
+  removeNpcAt,
   removeNpcScheduleEntry,
+  removeTransitionAt,
   serializeZoneData,
   setPlayerStart,
   setTileAt,
@@ -520,6 +524,109 @@ describe("describeZoneCell", () => {
     expect(describeZoneCell(zone, { x: 5, y: 0 })).toBeNull();
     expect(describeZoneCell(zone, { x: 0, y: -1 })).toBeNull();
     expect(describeZoneCell(zone, { x: 0, y: 5 })).toBeNull();
+  });
+});
+
+describe("findPlacementAt", () => {
+  const zone = createZone({
+    width: 5,
+    height: 5,
+    tiles: [
+      [0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0],
+    ],
+    playerStart: { x: 1, y: 1 },
+    npcs: [
+      { npcId: "npc_a", x: 0, y: 0 },
+      { npcId: "npc_b", x: 2, y: 2 },
+    ],
+    items: [{ itemId: "potion", x: 3, y: 3, quantity: 5 }],
+    transitions: [
+      { x: 4, y: 4, targetZoneId: "other_zone", targetX: 10, targetY: 20 },
+    ],
+  });
+
+  it("finds the player start", () => {
+    expect(findPlacementAt(zone, { x: 1, y: 1 })).toEqual({
+      kind: "player",
+      index: 0,
+    });
+  });
+
+  it("finds an NPC spawn by its array index", () => {
+    expect(findPlacementAt(zone, { x: 2, y: 2 })).toEqual({
+      kind: "npc",
+      index: 1,
+    });
+  });
+
+  it("finds an item stack", () => {
+    expect(findPlacementAt(zone, { x: 3, y: 3 })).toEqual({
+      kind: "item",
+      index: 0,
+    });
+  });
+
+  it("finds a transition", () => {
+    expect(findPlacementAt(zone, { x: 4, y: 4 })).toEqual({
+      kind: "transition",
+      index: 0,
+    });
+  });
+
+  it("returns null for an empty cell", () => {
+    expect(findPlacementAt(zone, { x: 0, y: 4 })).toBeNull();
+  });
+});
+
+describe("per-placement removal", () => {
+  const zone = createZone({
+    width: 5,
+    height: 5,
+    tiles: [
+      [0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0],
+    ],
+    npcs: [
+      { npcId: "npc_a", x: 0, y: 0 },
+      { npcId: "npc_b", x: 2, y: 2 },
+    ],
+    items: [{ itemId: "potion", x: 3, y: 3, quantity: 5 }],
+    transitions: [
+      { x: 4, y: 4, targetZoneId: "other_zone", targetX: 10, targetY: 20 },
+    ],
+  });
+
+  it("removes only the NPC on the given cell", () => {
+    const next = removeNpcAt(zone, 2, 2);
+    expect(next.npcs).toEqual([{ npcId: "npc_a", x: 0, y: 0 }]);
+  });
+
+  it("removes the item on the given cell", () => {
+    expect(removeItemAt(zone, 3, 3).items).toEqual([]);
+  });
+
+  it("removes the transition on the given cell", () => {
+    expect(removeTransitionAt(zone, 4, 4).transitions).toEqual([]);
+  });
+
+  it("returns the same zone reference when nothing matches", () => {
+    expect(removeNpcAt(zone, 1, 1)).toBe(zone);
+    expect(removeItemAt(zone, 1, 1)).toBe(zone);
+    expect(removeTransitionAt(zone, 1, 1)).toBe(zone);
+  });
+
+  it("is a no-op on zones without the placement array", () => {
+    const bare = createZone({});
+    expect(removeNpcAt(bare, 0, 0)).toBe(bare);
+    expect(removeItemAt(bare, 0, 0)).toBe(bare);
+    expect(removeTransitionAt(bare, 0, 0)).toBe(bare);
   });
 });
 

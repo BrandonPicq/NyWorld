@@ -16,7 +16,7 @@ import { ZoneContents } from "./ZoneContents";
 import { ZonePlacementControls } from "./ZonePlacementControls";
 import { usePlacementSelection } from "./usePlacementSelection";
 import type { ZoneDraftController } from "./useZoneDraft";
-import { describeZoneCell } from "./zoneEditorModel";
+import { describeZoneCell, findPlacementAt } from "./zoneEditorModel";
 
 type ZoneDraftEditorProps = {
   controller: ZoneDraftController;
@@ -86,6 +86,13 @@ export function ZoneDraftEditor({
 
   const activeReadoutCell = hoveredCell || pinnedCell;
   const cellDescription = activeReadoutCell ? describeZoneCell(draft, activeReadoutCell) : null;
+
+  // In inspect mode, the pinned cell selects the placement sitting there so the
+  // inspector can focus and delete it. Preview mode stays inspect-only readout.
+  const selectedPlacement =
+    !isSchedulePreviewEnabled && placement.mode === "inspect" && pinnedCell
+      ? findPlacementAt(draft, pinnedCell)
+      : null;
 
   function handleCell(cell: GridCell, kind: "down" | "move"): void {
     if (isSchedulePreviewEnabled || placement.mode === "inspect") {
@@ -284,6 +291,7 @@ export function ZoneDraftEditor({
             dialogueIds={placement.dialogueIds}
             onPickScheduleCoordinate={setCoordinatePicker}
             onUpdate={updateDraft}
+            selectedPlacement={selectedPlacement}
             zone={draft}
             zoneIds={placement.zoneIds}
           />

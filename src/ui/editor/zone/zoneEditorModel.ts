@@ -319,6 +319,81 @@ export function erasePlacementsAt(
   return changed ? result : zone;
 }
 
+export type PlacementKind = "player" | "npc" | "item" | "transition";
+
+/** A placement occupying a cell: its kind and index in the matching array. */
+export interface PlacementSelection {
+  kind: PlacementKind;
+  index: number;
+}
+
+/**
+ * Finds the placement occupying `cell`, using the same precedence as
+ * `describeZoneCell`: player start, then NPC spawn, item stack, transition.
+ *
+ * Returns the placement's kind and its index in the matching array (index 0 for
+ * the singleton player start), or null when the cell holds no placement.
+ */
+export function findPlacementAt(
+  zone: ZoneData,
+  cell: GridCell,
+): PlacementSelection | null {
+  const { x, y } = cell;
+  if (zone.playerStart.x === x && zone.playerStart.y === y) {
+    return { kind: "player", index: 0 };
+  }
+  const npcIndex = (zone.npcs ?? []).findIndex((n) => n.x === x && n.y === y);
+  if (npcIndex !== -1) {
+    return { kind: "npc", index: npcIndex };
+  }
+  const itemIndex = (zone.items ?? []).findIndex((i) => i.x === x && i.y === y);
+  if (itemIndex !== -1) {
+    return { kind: "item", index: itemIndex };
+  }
+  const transitionIndex = (zone.transitions ?? []).findIndex(
+    (t) => t.x === x && t.y === y,
+  );
+  if (transitionIndex !== -1) {
+    return { kind: "transition", index: transitionIndex };
+  }
+  return null;
+}
+
+/** Removes the NPC spawn on (x, y); returns the same zone when none matches. */
+export function removeNpcAt(zone: ZoneData, x: number, y: number): ZoneData {
+  if (!zone.npcs) {
+    return zone;
+  }
+  const npcs = zone.npcs.filter((npc) => npc.x !== x || npc.y !== y);
+  return npcs.length === zone.npcs.length ? zone : { ...zone, npcs };
+}
+
+/** Removes the item stack on (x, y); returns the same zone when none matches. */
+export function removeItemAt(zone: ZoneData, x: number, y: number): ZoneData {
+  if (!zone.items) {
+    return zone;
+  }
+  const items = zone.items.filter((item) => item.x !== x || item.y !== y);
+  return items.length === zone.items.length ? zone : { ...zone, items };
+}
+
+/** Removes the transition on (x, y); returns the same zone when none matches. */
+export function removeTransitionAt(
+  zone: ZoneData,
+  x: number,
+  y: number,
+): ZoneData {
+  if (!zone.transitions) {
+    return zone;
+  }
+  const transitions = zone.transitions.filter(
+    (transition) => transition.x !== x || transition.y !== y,
+  );
+  return transitions.length === zone.transitions.length
+    ? zone
+    : { ...zone, transitions };
+}
+
 /**
  * True when `time` is a valid `HH:mm` 24-hour label.
  *
@@ -495,24 +570,28 @@ export function describeZoneCell(
   }
   const tileDef = getTileDef(tileId);
 
+  // Reuse findPlacementAt so the readout and inspect selection never diverge.
+  const placement = findPlacementAt(zone, cell);
   let whatSitsThere: string | null = null;
-  if (zone.playerStart.x === x && zone.playerStart.y === y) {
-    whatSitsThere = "Player Start";
-  } else {
-    const npc = (zone.npcs ?? []).find((n) => n.x === x && n.y === y);
-    if (npc) {
-      whatSitsThere = `NPC: ${npc.npcId}`;
-    } else {
-      const item = (zone.items ?? []).find((i) => i.x === x && i.y === y);
-      if (item) {
+  if (placement) {
+    switch (placement.kind) {
+      case "player":
+        whatSitsThere = "Player Start";
+        break;
+      case "npc": {
+        const npc = zone.npcs![placement.index];
+        whatSitsThere = `NPC: ${npc.npcId}`;
+        break;
+      }
+      case "item": {
+        const item = zone.items![placement.index];
         whatSitsThere = `Item: ${item.itemId} (x${item.quantity})`;
-      } else {
-        const transition = (zone.transitions ?? []).find(
-          (t) => t.x === x && t.y === y,
-        );
-        if (transition) {
-          whatSitsThere = `Transition: ${transition.targetZoneId} (${transition.targetX}, ${transition.targetY})`;
-        }
+        break;
+      }
+      case "transition": {
+        const transition = zone.transitions![placement.index];
+        whatSitsThere = `Transition: ${transition.targetZoneId} (${transition.targetX}, ${transition.targetY})`;
+        break;
       }
     }
   }
