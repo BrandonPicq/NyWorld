@@ -84,105 +84,111 @@ export function ZoneDraftEditor({ controller, snapshot }: ZoneDraftEditorProps) 
 
   return (
     <>
-      <TerminalPanel className="editor-panel editor-zone-preview">
-        <div className="editor-zone-workbench-header">
-          <h2 className="editor-panel__title">Edit</h2>
-          <p className="editor-zone-dimensions">
-            {draft.width} × {draft.height} tiles · start ({draft.playerStart.x},{" "}
-            {draft.playerStart.y})
-          </p>
-        </div>
-        <div className="editor-zone-workbench">
-          <div className="editor-zone-map-area">
-            <ScrollRegion className="editor-zone-canvas-frame">
-              <EditorZoneCanvas
-                ariaLabel={`Zone ${draft.name} edit surface`}
-                cellSize={48}
-                onCellPointer={handleCell}
-                onCellHover={handleHover}
-                renderSnapshot={renderSnapshot}
-              />
-            </ScrollRegion>
+      <ScrollRegion className="workbench__main">
+        <TerminalPanel className="editor-panel">
+          <div className="editor-zone-workbench-header">
+            <h2 className="editor-panel__title">Edit</h2>
+            <p className="editor-zone-dimensions">
+              {draft.width} × {draft.height} tiles · start ({draft.playerStart.x},{" "}
+              {draft.playerStart.y})
+            </p>
           </div>
-          <aside className="editor-zone-toolbox" aria-label="Zone edit tools">
-            <div className="editor-zone-controls-wrapper">
-              <ZonePlacementControls placement={placement} />
-              {cellDescription && (
-                <div className="editor-zone-readout" data-testid="zone-cell-readout">
-                  <h3 className="editor-zone-toolbox__title">Cell Info</h3>
-                  <div className="editor-readout-details">
-                    <div className="editor-readout-coords">
-                      ({cellDescription.x}, {cellDescription.y})
-                    </div>
-                    <div className="editor-readout-tile">
-                      Tile: <span className="editor-readout-glyph">{cellDescription.tileGlyph}</span> {cellDescription.tileName}
-                    </div>
-                    <div className="editor-readout-walkable">
-                      <span
-                        className={`editor-tile-swatch__badge editor-tile-swatch__badge--${
-                          cellDescription.walkable ? "walkable" : "blocked"
-                        }`}
-                      >
-                        {cellDescription.walkable ? "walkable" : "blocked"}
-                      </span>
-                    </div>
-                    {cellDescription.whatSitsThere && (
-                      <div className="editor-readout-contents">
-                        {cellDescription.whatSitsThere}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              )}
-            </div>
-            <div className="editor-zone-save">
-              <h3 className="editor-zone-toolbox__title">Draft</h3>
-              <div className="editor-actions">
-                <TerminalButton
-                  className="editor-action-button"
-                  disabled={!canUndo || isSaving}
-                  onClick={undo}
-                >
-                  Undo
-                </TerminalButton>
-                <TerminalButton
-                  className="editor-action-button"
-                  disabled={!canRedo || isSaving}
-                  onClick={redo}
-                >
-                  Redo
-                </TerminalButton>
-              </div>
-              <div className="editor-actions">
-                <TerminalButton
-                  className="editor-action-button"
-                  disabled={!canSave}
-                  onClick={saveDraft}
-                >
-                  Save Zone
-                </TerminalButton>
-                <TerminalButton
-                  className="editor-action-button"
-                  disabled={!hasUnsavedChanges || isSaving}
-                  onClick={resetDraft}
-                >
-                  Reset
-                </TerminalButton>
-              </div>
-              <p
-                aria-live="polite"
-                className={`editor-save-status editor-save-status--${saveStatus.state}`}
-              >
-                {saveStatus.message}
-              </p>
-            </div>
-          </aside>
-        </div>
-      </TerminalPanel>
+          <ScrollRegion className="editor-zone-canvas-frame">
+            <EditorZoneCanvas
+              ariaLabel={`Zone ${draft.name} edit surface`}
+              cellSize={48}
+              onCellPointer={handleCell}
+              onCellHover={handleHover}
+              renderSnapshot={renderSnapshot}
+            />
+          </ScrollRegion>
 
-      <TerminalPanel className="editor-panel editor-zone-details">
-        <h2 className="editor-panel__title">Contents</h2>
-        <ScrollRegion className="editor-scroll">
+          <div className="workbench__statusbar" data-testid="zone-cell-readout">
+            <span className="workbench__statusbar-coords">
+              {cellDescription ? `(${cellDescription.x}, ${cellDescription.y})` : "(—, —)"}
+            </span>
+            <span className="workbench__statusbar-sep">·</span>
+            <span className="workbench__statusbar-tile">
+              {cellDescription ? (
+                <>
+                  Tile: <span className="workbench__statusbar-glyph">{cellDescription.tileGlyph}</span> {cellDescription.tileName}
+                </>
+              ) : (
+                "—"
+              )}
+            </span>
+            <span className="workbench__statusbar-sep">·</span>
+            <span className="workbench__statusbar-walkable">
+              {cellDescription ? (
+                <span
+                  className={`workbench__statusbar-badge workbench__statusbar-badge--${
+                    cellDescription.walkable ? "walkable" : "blocked"
+                  }`}
+                >
+                  {cellDescription.walkable ? "walkable" : "blocked"}
+                </span>
+              ) : (
+                "—"
+              )}
+            </span>
+            {cellDescription && cellDescription.whatSitsThere && (
+              <>
+                <span className="workbench__statusbar-sep">·</span>
+                <span className="workbench__statusbar-contents">
+                  {cellDescription.whatSitsThere}
+                </span>
+              </>
+            )}
+          </div>
+        </TerminalPanel>
+      </ScrollRegion>
+
+      <ScrollRegion className="workbench__inspector">
+        <TerminalPanel className="editor-panel">
+          <ZonePlacementControls placement={placement} />
+
+          <div className="editor-zone-save">
+            <h3 className="editor-zone-toolbox__title">Draft</h3>
+            <div className="editor-actions">
+              <TerminalButton
+                className="editor-action-button"
+                disabled={!canUndo || isSaving}
+                onClick={undo}
+              >
+                Undo
+              </TerminalButton>
+              <TerminalButton
+                className="editor-action-button"
+                disabled={!canRedo || isSaving}
+                onClick={redo}
+              >
+                Redo
+              </TerminalButton>
+            </div>
+            <div className="editor-actions">
+              <TerminalButton
+                className="editor-action-button"
+                disabled={!canSave}
+                onClick={saveDraft}
+              >
+                Save Zone
+              </TerminalButton>
+              <TerminalButton
+                className="editor-action-button"
+                disabled={!hasUnsavedChanges || isSaving}
+                onClick={resetDraft}
+              >
+                Reset
+              </TerminalButton>
+            </div>
+            <p
+              aria-live="polite"
+              className={`editor-save-status editor-save-status--${saveStatus.state}`}
+            >
+              {saveStatus.message}
+            </p>
+          </div>
+
           <section className="editor-zone-section">
             <div className="editor-family__header">
               <h3>Problems</h3>
@@ -213,8 +219,8 @@ export function ZoneDraftEditor({ controller, snapshot }: ZoneDraftEditorProps) 
             zoneIds={placement.zoneIds}
           />
           <EntryDialogueEditor onUpdate={updateDraft} zone={draft} />
-        </ScrollRegion>
-      </TerminalPanel>
+        </TerminalPanel>
+      </ScrollRegion>
     </>
   );
 }

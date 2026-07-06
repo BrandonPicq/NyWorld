@@ -11,16 +11,14 @@
  * above a single flex-filling body (the Content grid or the Zones layout).
  */
 .editor-shell {
-  width: min(100%, 88rem);
+  width: 100%;
+  height: 100%;
   min-height: 0;
-  margin: 0 auto;
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-rows: auto auto minmax(0, 1fr);
   gap: var(--space-3);
-}
-
-.editor-shell--zones {
-  width: min(100%, 122rem);
+  box-sizing: border-box;
+  padding: var(--space-3);
 }
 
 .editor-header {
@@ -131,9 +129,13 @@
 }
 
 .editor-entry-button {
-  min-height: 2.35rem;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.2rem;
   padding: 0.45rem 0.65rem;
-  overflow-wrap: anywhere;
+  overflow: hidden;
+  text-align: left;
 }
 
 .editor-empty {
@@ -664,32 +666,6 @@
   font-size: 0.8rem;
 }
 
-@media (max-width: 1500px) {
-  .editor-zone-workbench {
-    grid-template-columns: 1fr;
-    grid-template-rows: minmax(0, 1fr) auto;
-  }
-
-  .editor-zone-toolbox {
-    grid-template-columns: minmax(0, 1fr) minmax(14rem, 0.65fr);
-    border-left: 0;
-    border-top: 1px solid var(--color-border-muted);
-    padding-left: 0;
-    padding-top: var(--space-3);
-  }
-
-  .editor-zone-save {
-    border-top: 0;
-    border-left: 1px solid var(--color-border-muted);
-    padding-top: 0;
-    padding-left: var(--space-3);
-  }
-
-  .editor-zone-canvas-frame {
-    min-height: min(32dvh, 25rem);
-  }
-}
-
 @media (max-width: 1100px) {
   .editor-grid,
   .editor-zone-layout,
@@ -716,7 +692,22 @@
   }
 
   .editor-shell {
+    height: auto;
+    display: flex;
+    flex-direction: column;
     min-height: auto;
+  }
+
+  .workbench {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto;
+    height: auto;
+  }
+
+  .workbench__rail,
+  .workbench__main,
+  .workbench__inspector {
+    height: auto;
   }
 
   .editor-zone-toolbox {
@@ -754,52 +745,72 @@
   }
 }
 
-.editor-zone-controls-wrapper {
+.workbench {
   display: grid;
+  grid-template-columns: minmax(14rem, 16rem) minmax(0, 1fr) minmax(18rem, 22rem);
+  grid-template-rows: minmax(0, 1fr);
   gap: var(--space-3);
-  align-content: start;
+  min-height: 0;
+  height: 100%;
 }
 
-.editor-zone-readout {
-  display: grid;
+.workbench__rail,
+.workbench__main,
+.workbench__inspector {
+  min-height: 0;
+  height: 100%;
+}
+
+.workbench__main {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.workbench__statusbar {
+  display: flex;
+  align-items: center;
   gap: var(--space-2);
+  min-height: 2.2rem;
   border-top: 1px solid var(--color-border-muted);
-  padding-top: var(--space-3);
-}
-
-.editor-readout-details {
-  display: grid;
-  gap: 0.35rem;
-  color: var(--color-text-soft);
+  padding-top: var(--space-2);
+  color: var(--color-text-muted);
   font-size: 0.85rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.editor-readout-coords {
+.workbench__statusbar-coords {
   color: var(--color-text-strong);
   font-weight: 500;
 }
 
-.editor-readout-tile {
+.workbench__statusbar-tile {
+  color: var(--color-text-soft);
   display: flex;
   align-items: center;
   gap: 0.5rem;
 }
 
-.editor-readout-glyph {
+.workbench__statusbar-glyph {
   color: var(--color-text-strong);
   font-weight: 700;
 }
 
-.editor-readout-walkable {
-  display: inline-flex;
+.workbench__statusbar-badge {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
 }
 
-.editor-readout-contents {
+.workbench__statusbar-badge--blocked {
+  color: var(--color-accent);
+}
+
+.workbench__statusbar-contents {
   color: var(--color-accent);
   font-family: var(--font-family-mono);
   font-size: 0.8rem;
-  padding: 0.25rem 0.5rem;
-  background: var(--color-button-background);
-  border: 1px solid var(--color-border-muted);
 }
 

@@ -4,6 +4,16 @@ This file tracks meaningful project changes by commit-oriented slices.
 
 Keep entries short and practical. When a slice is committed, its changelog section should stay aligned with the commit title so the project history remains easy to read after restores or bisects.
 
+## 2026-07-06 - [REFACTOR]: Give the editor a stable workbench layout
+
+- Restructure the content editor shell into a full-viewport CSS grid with fixed header, tab bar, and flex-filling content row.
+- Drop width constraints (88rem/122rem caps) to utilize full screen area with side padding on all workbench views.
+- Add `.workbench` layout primitives (rail, main content, inspector) with independent ScrollRegions, preventing overall page scrolling.
+- Migrate the Zones tab to the new layout: zone list in the rail; canvas map in the main section; painter tools, diagnostics, and placements in the inspector.
+- Relocate the hovered/pinned cell readout to a fixed-height status bar at the bottom of the map section, resolving layout reflows on hover.
+- Add structured placeholders `(—, —) · — · —` to the status bar when inactive to preserve vertical layout height.
+- Update `.editor-entry-button` style to prevent entry label clipping on overflow.
+
 ## 2026-07-06 - [ADD]: Show hovered cell info in the zone editor
 
 - Add an optional `onCellHover` prop to `GameCanvas` and forward it in `EditorZoneCanvas` to support hover coordinates reporting without mouse button clicks.

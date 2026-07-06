@@ -23,44 +23,50 @@ export function ZoneEditorPanel({ draft, snapshot }: ZoneEditorPanelProps) {
   const { zones, selectedZoneId, selectZone } = draft;
 
   return (
-    <div className="editor-zone-layout">
-      <TerminalPanel className="editor-panel editor-zone-list">
-        <h2 className="editor-panel__title">Zones</h2>
-        {zones.length === 0 ? (
-          <p className="editor-empty">No zones authored.</p>
-        ) : (
-          <ScrollRegion className="editor-scroll" role="list">
-            {zones.map((zone) => (
-              <TerminalButton
-                className="editor-entry-button editor-zone-entry"
-                isSelected={zone.zoneId === selectedZoneId}
-                key={zone.zoneId}
-                onClick={() => selectZone(zone.zoneId)}
-              >
-                <span className="editor-zone-entry__name">{zone.name}</span>
-                <span className="editor-zone-entry__meta">
-                  <IdentifierLabel value={zone.zoneId} /> · {zone.npcCount}N{" "}
-                  {zone.itemCount}I {zone.transitionCount}T
-                </span>
-              </TerminalButton>
-            ))}
-          </ScrollRegion>
-        )}
-        <ZoneCreateForm existingZoneIds={zones.map((zone) => zone.zoneId)} />
-      </TerminalPanel>
+    <div className="workbench">
+      <ScrollRegion className="workbench__rail">
+        <TerminalPanel className="editor-panel editor-zone-list">
+          <h2 className="editor-panel__title">Zones</h2>
+          {zones.length === 0 ? (
+            <p className="editor-empty">No zones authored.</p>
+          ) : (
+            <div className="editor-entry-list" role="list">
+              {zones.map((zone) => (
+                <TerminalButton
+                  className="editor-entry-button editor-zone-entry"
+                  isSelected={zone.zoneId === selectedZoneId}
+                  key={zone.zoneId}
+                  onClick={() => selectZone(zone.zoneId)}
+                >
+                  <span className="editor-zone-entry__name">{zone.name}</span>
+                  <span className="editor-zone-entry__meta">
+                    <IdentifierLabel value={zone.zoneId} /> · {zone.npcCount}N{" "}
+                    {zone.itemCount}I {zone.transitionCount}T
+                  </span>
+                </TerminalButton>
+              ))}
+            </div>
+          )}
+          <ZoneCreateForm existingZoneIds={zones.map((zone) => zone.zoneId)} />
+        </TerminalPanel>
+      </ScrollRegion>
 
       {draft.draft && draft.renderSnapshot ? (
         <ZoneDraftEditor controller={draft} snapshot={snapshot} />
       ) : (
         <>
-          <TerminalPanel className="editor-panel editor-zone-preview">
-            <h2 className="editor-panel__title">Paint</h2>
-            <p className="editor-empty">No zone selected.</p>
-          </TerminalPanel>
-          <TerminalPanel className="editor-panel editor-zone-details">
-            <h2 className="editor-panel__title">Contents</h2>
-            <p className="editor-empty">No zone selected.</p>
-          </TerminalPanel>
+          <ScrollRegion className="workbench__main">
+            <TerminalPanel className="editor-panel">
+              <h2 className="editor-panel__title">Paint</h2>
+              <p className="editor-empty">No zone selected.</p>
+            </TerminalPanel>
+          </ScrollRegion>
+          <ScrollRegion className="workbench__inspector">
+            <TerminalPanel className="editor-panel">
+              <h2 className="editor-panel__title">Contents</h2>
+              <p className="editor-empty">No zone selected.</p>
+            </TerminalPanel>
+          </ScrollRegion>
         </>
       )}
     </div>
