@@ -1,23 +1,11 @@
-import { useDeferredValue, useMemo, useState } from "react";
-import {
-  createRuntimeContentValidationContext,
-  formatContentDiagnostic,
-  validateAllContent,
-  type ContentCatalogSnapshot,
-  type GameContentConfig,
-} from "../../engine";
+import { formatContentDiagnostic } from "../../engine";
 import { ScrollRegion } from "../components/ScrollRegion";
 import { TerminalButton } from "../components/TerminalButton";
 import { TerminalPanel } from "../components/TerminalPanel";
-import { GAME_CONFIG_CONTENT_PATH, saveEditorContent } from "./editorSaveClient";
-import {
-  draftHasBlockingErrors,
-  serializeGameConfig,
-  type SaveStatus,
-} from "./editorModel";
+import type { GameConfigController } from "./useGameConfigDraft";
 
 type GameConfigPanelProps = {
-  snapshot: ContentCatalogSnapshot;
+  draft: GameConfigController;
 };
 
 /**
@@ -26,84 +14,22 @@ type GameConfigPanelProps = {
  * Only defaultZoneId and safeRespawn are editable here; the rest of the config
  * is preserved and the file is re-serialized with its inline inventory intact.
  */
-export function GameConfigPanel({ snapshot }: GameConfigPanelProps) {
-  const context = useMemo(() => createRuntimeContentValidationContext(), []);
-  const zoneIds = useMemo(
-    () => Object.keys(snapshot.zones).sort((a, b) => a.localeCompare(b)),
-    [snapshot],
-  );
-
-  const [draft, setDraft] = useState<GameContentConfig>(snapshot.game);
-  const [savedJson, setSavedJson] = useState(() =>
-    serializeGameConfig(snapshot.game),
-  );
-  const [saveStatus, setSaveStatus] = useState<SaveStatus>({
-    state: "idle",
-    message: "",
-  });
-
-  // Defer whole-bundle validation off the typing path; save stays live.
-  const deferredDraft = useDeferredValue(draft);
-  const diagnostics = useMemo(
-    () => validateAllContent({ ...snapshot, game: deferredDraft }, context),
-    [snapshot, deferredDraft, context],
-  );
-  const errorCount = diagnostics.filter(
-    (diagnostic) => diagnostic.severity === "error",
-  ).length;
-  const warningCount = diagnostics.length - errorCount;
-  const serialized = useMemo(() => serializeGameConfig(draft), [draft]);
-  const hasUnsavedChanges = serialized !== savedJson;
-  const isSaving = saveStatus.state === "saving";
-  const canSave = hasUnsavedChanges && errorCount === 0 && !isSaving;
-
-  const statusMessage =
-    saveStatus.state === "idle"
-      ? hasUnsavedChanges
-        ? "Unsaved changes."
-        : "No changes."
-      : saveStatus.message;
-
-  function setDefaultZone(zoneId: string): void {
-    setDraft((current) => ({ ...current, defaultZoneId: zoneId }));
-    setSaveStatus({ state: "idle", message: "" });
-  }
-
-  function setRespawn(patch: Partial<GameContentConfig["safeRespawn"]>): void {
-    setDraft((current) => ({
-      ...current,
-      safeRespawn: { ...current.safeRespawn, ...patch },
-    }));
-    setSaveStatus({ state: "idle", message: "" });
-  }
-
-  function reset(): void {
-    setDraft(snapshot.game);
-    setSavedJson(serializeGameConfig(snapshot.game));
-    setSaveStatus({ state: "idle", message: "" });
-  }
-
-  async function save(): Promise<void> {
-    if (!hasUnsavedChanges || isSaving) {
-      return;
-    }
-    // Re-validate the live draft: canSave/errorCount may lag behind typing.
-    if (draftHasBlockingErrors({ ...snapshot, game: draft }, context)) {
-      setSaveStatus({
-        state: "error",
-        message: "Resolve errors before saving.",
-      });
-      return;
-    }
-    setSaveStatus({ state: "saving", message: "Saving..." });
-    const result = await saveEditorContent(GAME_CONFIG_CONTENT_PATH, serialized);
-    if (!result.ok) {
-      setSaveStatus({ state: "error", message: result.error });
-      return;
-    }
-    setSavedJson(serialized);
-    setSaveStatus({ state: "saved", message: `Saved ${result.path}.` });
-  }
+export function GameConfigPanel({ draft }: GameConfigPanelProps) {
+  const {
+    draft: config,
+    zoneIds,
+    diagnostics,
+    errorCount,
+    warningCount,
+    hasUnsavedChanges,
+    canSave,
+    isSaving,
+    saveStatus,
+    setDefaultZone,
+    setRespawn,
+    reset,
+    save,
+  } = draft;
 
   return (
     <div className="editor-game-layout">
@@ -116,7 +42,7 @@ export function GameConfigPanel({ snapshot }: GameConfigPanelProps) {
               <select
                 disabled={isSaving}
                 onChange={(event) => setDefaultZone(event.target.value)}
-                value={draft.defaultZoneId}
+                value={config.defaultZoneId}
               >
                 {zoneIds.map((zoneId) => (
                   <option key={zoneId} value={zoneId}>
@@ -131,7 +57,7 @@ export function GameConfigPanel({ snapshot }: GameConfigPanelProps) {
               <select
                 disabled={isSaving}
                 onChange={(event) => setRespawn({ zoneId: event.target.value })}
-                value={draft.safeRespawn.zoneId}
+                value={config.safeRespawn.zoneId}
               >
                 {zoneIds.map((zoneId) => (
                   <option key={zoneId} value={zoneId}>
@@ -148,11 +74,11 @@ export function GameConfigPanel({ snapshot }: GameConfigPanelProps) {
                   disabled={isSaving}
                   min={0}
                   onChange={(event) =>
-                    setRespawn({ x: intOr(event.target.value, draft.safeRespawn.x) })
+                    setRespawn({ x: intOr(event.target.value, config.safeRespawn.x) })
                   }
                   step={1}
                   type="number"
-                  value={draft.safeRespawn.x}
+                  value={config.safeRespawn.x}
                 />
               </label>
               <label className="editor-field">
@@ -161,11 +87,11 @@ export function GameConfigPanel({ snapshot }: GameConfigPanelProps) {
                   disabled={isSaving}
                   min={0}
                   onChange={(event) =>
-                    setRespawn({ y: intOr(event.target.value, draft.safeRespawn.y) })
+                    setRespawn({ y: intOr(event.target.value, config.safeRespawn.y) })
                   }
                   step={1}
                   type="number"
-                  value={draft.safeRespawn.y}
+                  value={config.safeRespawn.y}
                 />
               </label>
             </div>
@@ -190,7 +116,7 @@ export function GameConfigPanel({ snapshot }: GameConfigPanelProps) {
               aria-live="polite"
               className={`editor-save-status editor-save-status--${saveStatus.state}`}
             >
-              {statusMessage}
+              {saveStatus.message}
             </p>
           </section>
 

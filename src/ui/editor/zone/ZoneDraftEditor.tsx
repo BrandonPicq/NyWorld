@@ -1,7 +1,6 @@
 import {
   formatContentDiagnostic,
   type ContentCatalogSnapshot,
-  type ZoneData,
 } from "../../../engine";
 import type { GridCell } from "../../../rendering/canvasCellMapping";
 import { ScrollRegion } from "../../components/ScrollRegion";
@@ -12,19 +11,19 @@ import { EntryDialogueEditor } from "./EntryDialogueEditor";
 import { ZoneContents } from "./ZoneContents";
 import { ZonePlacementControls } from "./ZonePlacementControls";
 import { usePlacementSelection } from "./usePlacementSelection";
-import { useZoneDraft } from "./useZoneDraft";
+import type { ZoneDraftController } from "./useZoneDraft";
 
 type ZoneDraftEditorProps = {
-  zone: ZoneData;
+  controller: ZoneDraftController;
   snapshot: ContentCatalogSnapshot;
 };
 
 /**
- * Zone editor for one zone: a placement mode selector + paintable canvas + live
- * validation + save. Mount behind `key={zoneId}` so switching zones starts a
- * fresh draft.
+ * Zone editor for the selected zone: a placement mode selector + paintable
+ * canvas + live whole-bundle validation + save. Selection and undo history are
+ * owned by the shared editor draft owner.
  */
-export function ZoneDraftEditor({ zone, snapshot }: ZoneDraftEditorProps) {
+export function ZoneDraftEditor({ controller, snapshot }: ZoneDraftEditorProps) {
   const {
     renderSnapshot,
     draft,
@@ -41,8 +40,12 @@ export function ZoneDraftEditor({ zone, snapshot }: ZoneDraftEditorProps) {
     redo,
     resetDraft,
     saveDraft,
-  } = useZoneDraft(zone, snapshot);
+  } = controller;
   const placement = usePlacementSelection(snapshot);
+
+  if (!draft || !renderSnapshot) {
+    return null;
+  }
 
   const warningCount = diagnostics.length - errorCount;
 

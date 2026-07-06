@@ -1,8 +1,6 @@
-import { useDeferredValue, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
-  buildContentReferenceGraph,
   CONTENT_TYPES,
-  createRuntimeContentValidationContext,
   validateAllContent,
   validateNpcDef,
   type ContentCatalogSnapshot,
@@ -11,14 +9,12 @@ import {
   type DialogueDefMap,
   type NpcDef,
 } from "../../../engine";
-import {
-  cloneDialogueFiles,
-} from "../dialogues/dialogueEditorModel";
 import { saveEditorContent } from "../editorSaveClient";
 import { draftHasBlockingErrors, type SaveStatus } from "../editorModel";
+import type { CombinedDraftView, DraftSlot } from "../editorDraftTypes";
+import type { DialogueDraftSlot } from "../dialogues/useDialogueDraft";
 import {
   addDefaultDialogueForNpc,
-  cloneNpcDefs,
   createDefaultDialogueId,
   createNpcDef,
   createNpcDraftSnapshot,
@@ -38,6 +34,13 @@ import {
   type EditorNpcEntry,
 } from "./npcEditorModel";
 
+export interface NpcDraftSlot {
+  npcs: DraftSlot<NpcDef[]>;
+  savedNpcs: DraftSlot<NpcDef[]>;
+  /** Shared with the Dialogues tab, so a new default dialogue is visible there. */
+  dialogue: DialogueDraftSlot;
+}
+
 export interface NpcListEntry extends EditorNpcEntry {
   hasUnsavedChanges: boolean;
 }
@@ -47,7 +50,6 @@ export interface NpcDraftController {
   selectedNpcId: string;
   selectedNpc: NpcDef | null;
   dialogueIds: string[];
-  diagnostics: ContentDiagnostic[];
   selectedNpcDiagnostics: ContentDiagnostic[];
   selectedNpcReferences: ContentReference[];
   errorCount: number;
@@ -77,80 +79,29 @@ export interface NpcDraftController {
 }
 
 export function useNpcDraft(
-  baseSnapshot: ContentCatalogSnapshot,
+  base: ContentCatalogSnapshot,
+  slot: NpcDraftSlot,
+  combined: CombinedDraftView,
 ): NpcDraftController {
-  const baseValidationContext = useMemo(
-    () => createRuntimeContentValidationContext(),
-    [],
-  );
-  const [draftNpcs, setDraftNpcs] = useState<NpcDef[]>(() =>
-    cloneNpcDefs(baseSnapshot.npcs),
-  );
-  const [savedNpcs, setSavedNpcs] = useState<NpcDef[]>(() =>
-    cloneNpcDefs(baseSnapshot.npcs),
-  );
-  const [draftDialogueFiles, setDraftDialogueFiles] = useState(() =>
-    cloneDialogueFiles(baseSnapshot.dialogueFiles),
-  );
-  const [savedDialogueFiles, setSavedDialogueFiles] = useState(() =>
-    cloneDialogueFiles(baseSnapshot.dialogueFiles),
-  );
-  const [selectedNpcId, setSelectedNpcId] = useState(
-    firstNpcId(baseSnapshot.npcs),
-  );
+  const draftNpcs = slot.npcs.value;
+  const setDraftNpcs = slot.npcs.set;
+  const savedNpcs = slot.savedNpcs.value;
+  const setSavedNpcs = slot.savedNpcs.set;
+  const draftDialogueFiles = slot.dialogue.draft.value;
+  const setDraftDialogueFiles = slot.dialogue.draft.set;
+  const setSavedDialogueFiles = slot.dialogue.saved.set;
+
+  const [selectedNpcId, setSelectedNpcId] = useState(firstNpcId(base.npcs));
   const [newNpcIdDraft, setNewNpcIdDraft] = useState("");
   const [newNpcNameDraft, setNewNpcNameDraft] = useState("");
   const [newNpcDialogueIdDraft, setNewNpcDialogueIdDraft] = useState(
-    firstDialogueId(baseSnapshot.dialogues),
+    firstDialogueId(base.dialogues),
   );
   const [saveStatus, setSaveStatus] = useState<SaveStatus>({
     state: "idle",
     message: "No changes.",
   });
 
-  const draftSnapshot = useMemo(
-    () => createNpcDraftSnapshot(baseSnapshot, draftNpcs, draftDialogueFiles),
-    [baseSnapshot, draftDialogueFiles, draftNpcs],
-  );
-  const validationContext = useMemo(
-    () =>
-      createNpcDraftValidationContext(
-        baseValidationContext,
-        baseSnapshot,
-        draftNpcs,
-        draftDialogueFiles,
-      ),
-    [baseSnapshot, baseValidationContext, draftDialogueFiles, draftNpcs],
-  );
-  // Defer whole-bundle validation off the typing path; graph and save stay live.
-  const deferredDraftNpcs = useDeferredValue(draftNpcs);
-  const deferredDraftDialogueFiles = useDeferredValue(draftDialogueFiles);
-  const diagnostics = useMemo(
-    () =>
-      validateAllContent(
-        createNpcDraftSnapshot(
-          baseSnapshot,
-          deferredDraftNpcs,
-          deferredDraftDialogueFiles,
-        ),
-        createNpcDraftValidationContext(
-          baseValidationContext,
-          baseSnapshot,
-          deferredDraftNpcs,
-          deferredDraftDialogueFiles,
-        ),
-      ),
-    [
-      baseSnapshot,
-      baseValidationContext,
-      deferredDraftNpcs,
-      deferredDraftDialogueFiles,
-    ],
-  );
-  const graph = useMemo(
-    () => buildContentReferenceGraph(draftSnapshot),
-    [draftSnapshot],
-  );
   const savedNpcJsonById = useMemo(
     () => serializeNpcDefsById(savedNpcs),
     [savedNpcs],
@@ -170,27 +121,23 @@ export function useNpcDraft(
   );
   const dialogueIds = useMemo(
     () =>
-      Object.keys(draftSnapshot.dialogues).sort((a, b) =>
+      Object.keys(combined.snapshot.dialogues).sort((a, b) =>
         a.localeCompare(b),
       ),
-    [draftSnapshot.dialogues],
+    [combined.snapshot.dialogues],
   );
   const selectedNpc =
     draftNpcs.find((npc) => npc.npcId === selectedNpcId) ?? null;
   const selectedNpcDiagnostics = selectedNpcId
-    ? diagnostics.filter(
+    ? combined.diagnostics.filter(
         (diagnostic) =>
           diagnostic.contentType === CONTENT_TYPES.npc &&
           diagnostic.contentId === selectedNpcId,
       )
     : [];
   const selectedNpcReferences = selectedNpcId
-    ? graph.getReferencesTo({ type: CONTENT_TYPES.npc, id: selectedNpcId })
+    ? combined.graph.getReferencesTo({ type: CONTENT_TYPES.npc, id: selectedNpcId })
     : [];
-  const errorCount = diagnostics.filter(
-    (diagnostic) => diagnostic.severity === "error",
-  ).length;
-  const warningCount = diagnostics.length - errorCount;
   const selectedNpcHasUnsavedChanges =
     selectedNpc !== null &&
     serializeNpcDef(selectedNpc) !== savedNpcJsonById.get(selectedNpc.npcId);
@@ -199,24 +146,17 @@ export function useNpcDraft(
     : "";
   const generatedDialogueAlreadyExists =
     generatedDefaultDialogueId !== "" &&
-    hasDialogueId(
-      baseSnapshot,
-      draftDialogueFiles,
-      generatedDefaultDialogueId,
-    );
+    hasDialogueId(base, draftDialogueFiles, generatedDefaultDialogueId);
   const newNpcIdErrors = validateNewNpcId(newNpcIdDraft, draftNpcs);
   const newNpcNameErrors = validateNewNpcName(newNpcNameDraft);
   const hasAnyUnsavedNpc = npcEntries.some((entry) => entry.hasUnsavedChanges);
-  const hasAnyUnsavedDialogue = hasUnsavedDialogueFiles(
-    draftDialogueFiles,
-    savedDialogueFiles,
-  );
-  const hasUnsavedChanges = hasAnyUnsavedNpc || hasAnyUnsavedDialogue;
+  const hasUnsavedChanges = hasAnyUnsavedNpc;
   const isSaving = saveStatus.state === "saving";
+  const dialogueExists = combined.context.dialogueIds.has(newNpcDialogueIdDraft);
   const canCreateNpcDraft =
     newNpcIdErrors.length === 0 &&
     newNpcNameErrors.length === 0 &&
-    validationContext.dialogueIds.has(newNpcDialogueIdDraft) &&
+    dialogueExists &&
     !isSaving;
   const canCreateNpcWithDefaultDialogue =
     newNpcIdErrors.length === 0 &&
@@ -227,7 +167,7 @@ export function useNpcDraft(
   const canSaveSelectedNpc =
     selectedNpc !== null &&
     selectedNpcHasUnsavedChanges &&
-    errorCount === 0 &&
+    combined.errorCount === 0 &&
     !isSaving;
   const displayStatus: SaveStatus =
     saveStatus.state === "idle"
@@ -245,11 +185,11 @@ export function useNpcDraft(
   }, [draftNpcs, selectedNpcId]);
 
   useEffect(() => {
-    if (validationContext.dialogueIds.has(newNpcDialogueIdDraft)) {
+    if (combined.context.dialogueIds.has(newNpcDialogueIdDraft)) {
       return;
     }
     setNewNpcDialogueIdDraft(dialogueIds[0] ?? "");
-  }, [dialogueIds, newNpcDialogueIdDraft, validationContext.dialogueIds]);
+  }, [combined.context.dialogueIds, dialogueIds, newNpcDialogueIdDraft]);
 
   function selectNpc(npcId: string): void {
     setSelectedNpcId(npcId);
@@ -268,7 +208,7 @@ export function useNpcDraft(
         message: firstCreationError(
           newNpcIdErrors,
           newNpcNameErrors,
-          validationContext.dialogueIds.has(newNpcDialogueIdDraft),
+          dialogueExists,
         ),
       });
       return;
@@ -289,11 +229,7 @@ export function useNpcDraft(
     if (!canCreateNpcWithDefaultDialogue) {
       setSaveStatus({
         state: "error",
-        message: firstCreationError(
-          newNpcIdErrors,
-          newNpcNameErrors,
-          false,
-        ),
+        message: firstCreationError(newNpcIdErrors, newNpcNameErrors, false),
       });
       return;
     }
@@ -306,13 +242,13 @@ export function useNpcDraft(
     const nextNpcs = upsertNpcDef(draftNpcs, npc);
     const nextDialogueFiles = addDefaultDialogueForNpc(draftDialogueFiles, npc);
     const nextSnapshot = createNpcDraftSnapshot(
-      baseSnapshot,
+      combined.snapshot,
       nextNpcs,
       nextDialogueFiles,
     );
     const nextContext = createNpcDraftValidationContext(
-      baseValidationContext,
-      baseSnapshot,
+      combined.context,
+      base,
       nextNpcs,
       nextDialogueFiles,
     );
@@ -388,8 +324,8 @@ export function useNpcDraft(
       return;
     }
     if (
-      draftHasBlockingErrors(draftSnapshot, validationContext) ||
-      validateNpcDef(selectedNpc, validationContext).length > 0
+      draftHasBlockingErrors(combined.snapshot, combined.context) ||
+      validateNpcDef(selectedNpc, combined.context).length > 0
     ) {
       setSaveStatus({
         state: "error",
@@ -424,11 +360,10 @@ export function useNpcDraft(
     selectedNpcId,
     selectedNpc,
     dialogueIds,
-    diagnostics,
     selectedNpcDiagnostics,
     selectedNpcReferences,
-    errorCount,
-    warningCount,
+    errorCount: combined.errorCount,
+    warningCount: combined.warningCount,
     hasUnsavedChanges,
     selectedNpcHasUnsavedChanges,
     canSaveSelectedNpc,
@@ -462,34 +397,6 @@ function firstNpcId(npcs: readonly NpcDef[]): string {
 
 function firstDialogueId(dialogues: DialogueDefMap): string {
   return Object.keys(dialogues).sort((a, b) => a.localeCompare(b))[0] ?? "";
-}
-
-function hasUnsavedDialogueFiles(
-  draftFiles: Record<string, DialogueDefMap>,
-  savedFiles: Record<string, DialogueDefMap>,
-): boolean {
-  const savedJsonByStem = new Map(
-    Object.entries(savedFiles).map(([stem, file]) => [
-      stem,
-      JSON.stringify(file, null, 2),
-    ]),
-  );
-  const allStems = new Set([
-    ...Object.keys(draftFiles),
-    ...Object.keys(savedFiles),
-  ]);
-
-  for (const stem of allStems) {
-    const draftFile = draftFiles[stem];
-    if (
-      !draftFile ||
-      JSON.stringify(draftFile, null, 2) !== savedJsonByStem.get(stem)
-    ) {
-      return true;
-    }
-  }
-
-  return false;
 }
 
 function firstCreationError(

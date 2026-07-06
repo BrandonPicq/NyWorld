@@ -1,9 +1,6 @@
-import { useDeferredValue, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
-  buildContentReferenceGraph,
   CONTENT_TYPES,
-  createRuntimeContentValidationContext,
-  validateAllContent,
   validateItemCatalog,
   type ContentCatalogSnapshot,
   type ContentRef,
@@ -19,21 +16,22 @@ import {
 import {
   buildContentBrowserGroups,
   cloneItemCatalog,
-  createItemDraftSnapshot,
-  createItemDraftValidationContext,
   draftHasBlockingErrors,
   groupDiagnosticsByContentType,
   serializeItemCatalog,
   type SaveStatus,
 } from "./editorModel";
+import type { CombinedDraftView, DraftSlot } from "./editorDraftTypes";
 
-/**
- * All content-tab state and behavior, lifted out of ContentEditorScreen.
- *
- * The hook is called at the screen level so the draft survives tab switches
- * (ContentTab unmounts on the Zones tab); the screen threads the returned
- * controller into ContentTab.
- */
+export interface ItemDraftSlot {
+  draft: DraftSlot<ItemDefMap>;
+  savedJson: DraftSlot<string>;
+}
+
+export function createItemDraftState(base: ContentCatalogSnapshot): ItemDefMap {
+  return cloneItemCatalog(base.items);
+}
+
 export interface ItemDraftController {
   browserGroups: ReturnType<typeof buildContentBrowserGroups>;
   diagnosticGroups: ReturnType<typeof groupDiagnosticsByContentType>;
@@ -61,46 +59,28 @@ export interface ItemDraftController {
 }
 
 export function useItemDraft(
-  baseSnapshot: ContentCatalogSnapshot,
+  base: ContentCatalogSnapshot,
+  slot: ItemDraftSlot,
+  combined: CombinedDraftView,
 ): ItemDraftController {
-  const baseValidationContext = useMemo(
-    () => createRuntimeContentValidationContext(),
-    [],
-  );
-  const [draftItems, setDraftItems] = useState<ItemDefMap>(() =>
-    cloneItemCatalog(baseSnapshot.items),
-  );
-  const [savedItemsJson, setSavedItemsJson] = useState(() =>
-    serializeItemCatalog(baseSnapshot.items),
-  );
+  const draftItems = slot.draft.value;
+  const setDraftItems = slot.draft.set;
+  const savedItemsJson = slot.savedJson.value;
+  const setSavedItemsJson = slot.savedJson.set;
+
   const [saveStatus, setSaveStatus] = useState<SaveStatus>({
     state: "idle",
     message: "No changes.",
   });
 
-  // Defer whole-bundle validation off the typing path; the reference graph and
-  // content browser (which drive selection) stay live.
-  const deferredDraftItems = useDeferredValue(draftItems);
-  const { diagnostics, diagnosticGroups } = useMemo(() => {
-    const snapshot = createItemDraftSnapshot(baseSnapshot, deferredDraftItems);
-    const validationContext = createItemDraftValidationContext(
-      baseValidationContext,
-      deferredDraftItems,
-    );
-    const nextDiagnostics = validateAllContent(snapshot, validationContext);
-
-    return {
-      diagnostics: nextDiagnostics,
-      diagnosticGroups: groupDiagnosticsByContentType(nextDiagnostics),
-    };
-  }, [baseSnapshot, baseValidationContext, deferredDraftItems]);
-  const { graph, browserGroups } = useMemo(() => {
-    const snapshot = createItemDraftSnapshot(baseSnapshot, draftItems);
-    return {
-      graph: buildContentReferenceGraph(snapshot),
-      browserGroups: buildContentBrowserGroups(snapshot),
-    };
-  }, [baseSnapshot, draftItems]);
+  const browserGroups = useMemo(
+    () => buildContentBrowserGroups(combined.snapshot),
+    [combined.snapshot],
+  );
+  const diagnosticGroups = useMemo(
+    () => groupDiagnosticsByContentType(combined.diagnostics),
+    [combined.diagnostics],
+  );
   const itemCatalogDiagnostics = useMemo(
     () => validateItemCatalog(draftItems),
     [draftItems],
@@ -111,9 +91,9 @@ export function useItemDraft(
   };
   const [selectedRef, setSelectedRef] = useState<ContentRef>(firstRef);
   const [itemIdDraft, setItemIdDraft] = useState(firstRef.id);
-  const selectedImpact = graph.getRenameImpact(selectedRef);
-  const incomingRefs = graph.getReferencesTo(selectedRef);
-  const outgoingRefs = graph.getReferencesFrom(selectedRef);
+  const selectedImpact = combined.graph.getRenameImpact(selectedRef);
+  const incomingRefs = combined.graph.getReferencesTo(selectedRef);
+  const outgoingRefs = combined.graph.getReferencesFrom(selectedRef);
   const selectedItem =
     selectedRef.type === CONTENT_TYPES.item ? draftItems[selectedRef.id] : null;
   const selectedItemDiagnostics = itemCatalogDiagnostics.filter(
@@ -124,10 +104,6 @@ export function useItemDraft(
     [draftItems],
   );
   const hasUnsavedChanges = serializedDraftItems !== savedItemsJson;
-  const errorCount = diagnostics.filter(
-    (diagnostic) => diagnostic.severity === "error",
-  ).length;
-  const warningCount = diagnostics.length - errorCount;
   const itemDraftErrorCount = itemCatalogDiagnostics.filter(
     (diagnostic) => diagnostic.severity === "error",
   ).length;
@@ -136,7 +112,8 @@ export function useItemDraft(
     0,
   );
   const isSaving = saveStatus.state === "saving";
-  const canSaveItems = hasUnsavedChanges && errorCount === 0 && !isSaving;
+  const canSaveItems =
+    hasUnsavedChanges && combined.errorCount === 0 && !isSaving;
 
   useEffect(() => {
     setItemIdDraft(selectedRef.id);
@@ -210,8 +187,8 @@ export function useItemDraft(
   }
 
   function resetItemDraft(): void {
-    setDraftItems(cloneItemCatalog(baseSnapshot.items));
-    setSavedItemsJson(serializeItemCatalog(baseSnapshot.items));
+    setDraftItems(cloneItemCatalog(base.items));
+    setSavedItemsJson(serializeItemCatalog(base.items));
     setSaveStatus({ state: "idle", message: "No changes." });
   }
 
@@ -221,12 +198,7 @@ export function useItemDraft(
       return;
     }
 
-    if (
-      draftHasBlockingErrors(
-        createItemDraftSnapshot(baseSnapshot, draftItems),
-        createItemDraftValidationContext(baseValidationContext, draftItems),
-      )
-    ) {
+    if (draftHasBlockingErrors(combined.snapshot, combined.context)) {
       setSaveStatus({
         state: "error",
         message: "Resolve errors before saving.",
@@ -254,8 +226,8 @@ export function useItemDraft(
     selectedImpact,
     incomingRefs,
     outgoingRefs,
-    errorCount,
-    warningCount,
+    errorCount: combined.errorCount,
+    warningCount: combined.warningCount,
     itemDraftErrorCount,
     totalEntries,
     hasUnsavedChanges,

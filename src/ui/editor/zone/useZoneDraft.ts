@@ -1,33 +1,53 @@
-import { useDeferredValue, useMemo, useState } from "react";
-import {
-  createRuntimeContentValidationContext,
-  validateAllContent,
-  type ContentCatalogSnapshot,
-  type ContentDiagnostic,
-  type ZoneData,
+import { useMemo, useState } from "react";
+import type {
+  ContentCatalogSnapshot,
+  ContentDiagnostic,
+  ZoneData,
 } from "../../../engine";
 import type { GridRenderSnapshot } from "../../../rendering/renderSnapshot";
 import { createZoneEditRenderSnapshot } from "../../../rendering/zoneEditRenderSnapshot";
 import { saveEditorContent } from "../editorSaveClient";
 import { draftHasBlockingErrors, type SaveStatus } from "../editorModel";
+import type { CombinedDraftView, DraftSlot } from "../editorDraftTypes";
 import {
   cloneZoneData,
-  createZoneDraftSnapshot,
-  createZoneDraftValidationContext,
+  listEditorZones,
   serializeZoneData,
   zoneContentPath,
+  type EditorZoneListEntry,
 } from "./zoneEditorModel";
 
+/** Undo/redo history for one zone's draft, kept per zone id in the owner. */
+export interface ZoneHistory {
+  past: ZoneData[];
+  present: ZoneData;
+  future: ZoneData[];
+}
+
+export interface ZoneDraftSlot {
+  selectedZoneId: string;
+  setSelectedZoneId: (zoneId: string) => void;
+  histories: DraftSlot<Record<string, ZoneHistory>>;
+  savedJson: DraftSlot<Record<string, string>>;
+}
+
 /**
- * Edit-draft state for one zone: the working copy, whole-bundle validation, and
- * save. Placement selection (which edit a click performs) lives separately.
+ * The current present draft of every zone that has been opened for editing.
  *
- * Callers mount this behind a `key={zoneId}` so switching zones remounts with a
- * fresh draft (unsaved edits are discarded on switch — a noted follow-up).
+ * Fed into the combined snapshot so cross-tab validation sees painted tiles.
  */
+export function activeZoneDrafts(
+  histories: Record<string, ZoneHistory>,
+): ZoneData[] {
+  return Object.values(histories).map((history) => history.present);
+}
+
 export interface ZoneDraftController {
-  renderSnapshot: GridRenderSnapshot;
-  draft: ZoneData;
+  zones: EditorZoneListEntry[];
+  selectedZoneId: string;
+  selectZone: (zoneId: string) => void;
+  draft: ZoneData | null;
+  renderSnapshot: GridRenderSnapshot | null;
   diagnostics: ContentDiagnostic[];
   errorCount: number;
   updateDraft: (updater: (zone: ZoneData) => ZoneData) => void;
@@ -43,55 +63,44 @@ export interface ZoneDraftController {
   saveDraft: () => Promise<void>;
 }
 
-interface ZoneHistory {
-  past: ZoneData[];
-  present: ZoneData;
-  future: ZoneData[];
-}
-
 export function useZoneDraft(
-  zone: ZoneData,
-  snapshot: ContentCatalogSnapshot,
+  base: ContentCatalogSnapshot,
+  slot: ZoneDraftSlot,
+  combined: CombinedDraftView,
 ): ZoneDraftController {
-  const context = useMemo(() => createRuntimeContentValidationContext(), []);
+  const { selectedZoneId, setSelectedZoneId } = slot;
+  const histories = slot.histories.value;
+  const setHistories = slot.histories.set;
+  const savedJsonMap = slot.savedJson.value;
+  const setSavedJsonMap = slot.savedJson.set;
 
-  const [history, setHistory] = useState<ZoneHistory>(() => ({
-    past: [],
-    present: cloneZoneData(zone),
-    future: [],
-  }));
-  const draft = history.present;
-  const [savedJson, setSavedJson] = useState(() => serializeZoneData(zone));
   const [saveStatus, setSaveStatus] = useState<SaveStatus>({
     state: "idle",
     message: "",
   });
 
-  // Validate against the whole bundle so cross-zone breakage shows up too — for
-  // example painting a wall where a global NPC's schedule walks into this zone.
-  // Deferred off the typing path; the render snapshot and save stay live.
-  const deferredDraft = useDeferredValue(draft);
-  const diagnostics = useMemo(
-    () =>
-      validateAllContent(
-        createZoneDraftSnapshot(snapshot, deferredDraft),
-        createZoneDraftValidationContext(context, deferredDraft),
-      ),
-    [snapshot, deferredDraft, context],
-  );
-  const errorCount = diagnostics.filter(
-    (diagnostic) => diagnostic.severity === "error",
-  ).length;
-  const renderSnapshot = useMemo(
-    () => createZoneEditRenderSnapshot(draft),
+  const zones = useMemo(() => listEditorZones(base), [base]);
+  const baseZone: ZoneData | undefined = base.zones[selectedZoneId];
+  const history = histories[selectedZoneId];
+  const draft = history?.present ?? baseZone ?? null;
+
+  const savedJson =
+    savedJsonMap[selectedZoneId] ??
+    (baseZone ? serializeZoneData(baseZone) : "");
+  const serialized = useMemo(
+    () => (draft ? serializeZoneData(draft) : ""),
     [draft],
   );
-  const serialized = useMemo(() => serializeZoneData(draft), [draft]);
-  const hasUnsavedChanges = serialized !== savedJson;
+  const renderSnapshot = useMemo(
+    () => (draft ? createZoneEditRenderSnapshot(draft) : null),
+    [draft],
+  );
+
+  const hasUnsavedChanges = draft !== null && serialized !== savedJson;
   const isSaving = saveStatus.state === "saving";
-  const canSave = hasUnsavedChanges && errorCount === 0 && !isSaving;
-  const canUndo = history.past.length > 0;
-  const canRedo = history.future.length > 0;
+  const canSave = hasUnsavedChanges && combined.errorCount === 0 && !isSaving;
+  const canUndo = (history?.past.length ?? 0) > 0;
+  const canRedo = (history?.future.length ?? 0) > 0;
 
   const displayStatus: SaveStatus =
     saveStatus.state === "idle"
@@ -101,81 +110,117 @@ export function useZoneDraft(
         }
       : saveStatus;
 
-  // Clear a lingering "saved"/"error" message once editing resumes; the
-  // functional update bails out (same reference) while already idle, so a drag
-  // does not churn state after the first cell.
   function markEditing(): void {
     setSaveStatus((prev) =>
       prev.state === "idle" ? prev : { state: "idle", message: "" },
     );
   }
 
+  /** Returns the current history for the selected zone, initializing it lazily. */
+  function currentHistory(
+    map: Record<string, ZoneHistory>,
+  ): ZoneHistory | null {
+    const existing = map[selectedZoneId];
+    if (existing) {
+      return existing;
+    }
+    if (!baseZone) {
+      return null;
+    }
+    return { past: [], present: cloneZoneData(baseZone), future: [] };
+  }
+
   function updateDraft(updater: (zone: ZoneData) => ZoneData): void {
-    setHistory((current) => {
+    setHistories((map) => {
+      const current = currentHistory(map);
+      if (!current) {
+        return map;
+      }
       const next = updater(current.present);
       if (next === current.present) {
-        return current;
+        return map;
       }
       return {
-        past: [...current.past, current.present],
-        present: next,
-        future: [],
+        ...map,
+        [selectedZoneId]: {
+          past: [...current.past, current.present],
+          present: next,
+          future: [],
+        },
       };
     });
     markEditing();
   }
 
   function undo(): void {
-    setHistory((current) => {
-      if (current.past.length === 0) {
-        return current;
+    setHistories((map) => {
+      const current = map[selectedZoneId];
+      if (!current || current.past.length === 0) {
+        return map;
       }
       return {
-        past: current.past.slice(0, -1),
-        present: current.past[current.past.length - 1],
-        future: [current.present, ...current.future],
+        ...map,
+        [selectedZoneId]: {
+          past: current.past.slice(0, -1),
+          present: current.past[current.past.length - 1],
+          future: [current.present, ...current.future],
+        },
       };
     });
     markEditing();
   }
 
   function redo(): void {
-    setHistory((current) => {
-      if (current.future.length === 0) {
-        return current;
+    setHistories((map) => {
+      const current = map[selectedZoneId];
+      if (!current || current.future.length === 0) {
+        return map;
       }
       return {
-        past: [...current.past, current.present],
-        present: current.future[0],
-        future: current.future.slice(1),
+        ...map,
+        [selectedZoneId]: {
+          past: [...current.past, current.present],
+          present: current.future[0],
+          future: current.future.slice(1),
+        },
       };
     });
     markEditing();
   }
 
   function resetDraft(): void {
+    if (!baseZone) {
+      return;
+    }
     // Reset is undoable: the current draft is pushed onto the history first.
-    setHistory((current) => ({
-      past: [...current.past, current.present],
-      present: cloneZoneData(zone),
-      future: [],
+    setHistories((map) => {
+      const current = currentHistory(map);
+      if (!current) {
+        return map;
+      }
+      return {
+        ...map,
+        [selectedZoneId]: {
+          past: [...current.past, current.present],
+          present: cloneZoneData(baseZone),
+          future: [],
+        },
+      };
+    });
+    setSavedJsonMap((map) => ({
+      ...map,
+      [selectedZoneId]: serializeZoneData(baseZone),
     }));
-    setSavedJson(serializeZoneData(zone));
     setSaveStatus({ state: "idle", message: "" });
   }
 
   async function saveDraft(): Promise<void> {
-    if (!hasUnsavedChanges) {
+    if (!draft || !hasUnsavedChanges) {
       setSaveStatus({ state: "idle", message: "" });
       return;
     }
 
-    if (
-      draftHasBlockingErrors(
-        createZoneDraftSnapshot(snapshot, draft),
-        createZoneDraftValidationContext(context, draft),
-      )
-    ) {
+    if (draftHasBlockingErrors(combined.snapshot, combined.context)) {
       setSaveStatus({
         state: "error",
         message: "Resolve errors before saving.",
@@ -186,7 +231,7 @@ export function useZoneDraft(
     const content = serialized;
     setSaveStatus({ state: "saving", message: "Saving..." });
     const result = await saveEditorContent(
-      zoneContentPath(zone.zoneId),
+      zoneContentPath(draft.zoneId),
       content,
     );
     if (!result.ok) {
@@ -194,15 +239,18 @@ export function useZoneDraft(
       return;
     }
 
-    setSavedJson(content);
+    setSavedJsonMap((map) => ({ ...map, [selectedZoneId]: content }));
     setSaveStatus({ state: "saved", message: `Saved ${result.path}.` });
   }
 
   return {
-    renderSnapshot,
+    zones,
+    selectedZoneId,
+    selectZone: setSelectedZoneId,
     draft,
-    diagnostics,
-    errorCount,
+    renderSnapshot,
+    diagnostics: combined.diagnostics,
+    errorCount: combined.errorCount,
     updateDraft,
     hasUnsavedChanges,
     canSave,

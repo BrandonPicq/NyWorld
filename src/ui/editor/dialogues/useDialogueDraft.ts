@@ -1,9 +1,6 @@
-import { useDeferredValue, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
-  buildContentReferenceGraph,
   CONTENT_TYPES,
-  createRuntimeContentValidationContext,
-  validateAllContent,
   validateDialogueFile,
   type ContentCatalogSnapshot,
   type ContentDiagnostic,
@@ -13,11 +10,11 @@ import {
 } from "../../../engine";
 import { saveEditorContent } from "../editorSaveClient";
 import { draftHasBlockingErrors, type SaveStatus } from "../editorModel";
+import type { CombinedDraftView, DraftSlot } from "../editorDraftTypes";
 import {
   addDialogueFile,
   addDialogueToFile,
   cloneDialogueFiles,
-  createDialogueDraftSnapshot,
   createDialogueDraftValidationContext,
   dialogueContentPath,
   listDialogueFiles,
@@ -30,6 +27,19 @@ import {
   type EditorDialogueFileEntry,
 } from "./dialogueEditorModel";
 
+export type DialogueFilesState = Record<string, DialogueDefMap>;
+
+export interface DialogueDraftSlot {
+  draft: DraftSlot<DialogueFilesState>;
+  saved: DraftSlot<DialogueFilesState>;
+}
+
+export function createDialogueDraftState(
+  base: ContentCatalogSnapshot,
+): DialogueFilesState {
+  return cloneDialogueFiles(base.dialogueFiles);
+}
+
 export interface DialogueFileListEntry extends EditorDialogueFileEntry {
   hasUnsavedChanges: boolean;
 }
@@ -41,7 +51,6 @@ export interface DialogueDraftController {
   selectedDialogueId: string;
   selectedDialogueNodes: DialogueNodeData[];
   dialogueIds: string[];
-  diagnostics: ContentDiagnostic[];
   selectedFileDiagnostics: ContentDiagnostic[];
   selectedDialogueDiagnostics: ContentDiagnostic[];
   selectedDialogueReferences: ContentReference[];
@@ -72,24 +81,20 @@ export interface DialogueDraftController {
 }
 
 export function useDialogueDraft(
-  baseSnapshot: ContentCatalogSnapshot,
+  base: ContentCatalogSnapshot,
+  slot: DialogueDraftSlot,
+  combined: CombinedDraftView,
 ): DialogueDraftController {
-  const baseValidationContext = useMemo(
-    () => createRuntimeContentValidationContext(),
-    [],
-  );
-  const [draftFiles, setDraftFiles] = useState(() =>
-    cloneDialogueFiles(baseSnapshot.dialogueFiles),
-  );
-  const [savedFiles, setSavedFiles] = useState(() =>
-    cloneDialogueFiles(baseSnapshot.dialogueFiles),
-  );
-  const firstStem = Object.keys(baseSnapshot.dialogueFiles).sort((a, b) =>
-    a.localeCompare(b),
-  )[0] ?? "";
+  const draftFiles = slot.draft.value;
+  const setDraftFiles = slot.draft.set;
+  const savedFiles = slot.saved.value;
+  const setSavedFiles = slot.saved.set;
+
+  const firstStem =
+    Object.keys(base.dialogueFiles).sort((a, b) => a.localeCompare(b))[0] ?? "";
   const [selectedStem, setSelectedStem] = useState(firstStem);
   const [selectedDialogueId, setSelectedDialogueId] = useState(
-    firstDialogueId(baseSnapshot.dialogueFiles[firstStem]),
+    firstDialogueId(base.dialogueFiles[firstStem]),
   );
   const [newFileStemDraft, setNewFileStemDraft] = useState("");
   const [newDialogueIdDraft, setNewDialogueIdDraft] = useState(
@@ -100,28 +105,6 @@ export function useDialogueDraft(
     message: "No changes.",
   });
 
-  const draftSnapshot = useMemo(
-    () => createDialogueDraftSnapshot(baseSnapshot, draftFiles),
-    [baseSnapshot, draftFiles],
-  );
-  // Defer whole-bundle validation off the typing path; graph and save stay live.
-  const deferredDraftFiles = useDeferredValue(draftFiles);
-  const diagnostics = useMemo(
-    () =>
-      validateAllContent(
-        createDialogueDraftSnapshot(baseSnapshot, deferredDraftFiles),
-        createDialogueDraftValidationContext(
-          baseValidationContext,
-          baseSnapshot,
-          deferredDraftFiles,
-        ),
-      ),
-    [baseSnapshot, baseValidationContext, deferredDraftFiles],
-  );
-  const graph = useMemo(
-    () => buildContentReferenceGraph(draftSnapshot),
-    [draftSnapshot],
-  );
   const fileEntries = useMemo(() => {
     const savedJsonByStem = serializeFiles(savedFiles);
     return listDialogueFiles(draftFiles).map((entry) => ({
@@ -141,7 +124,7 @@ export function useDialogueDraft(
       ? (selectedFile[selectedDialogueId] ?? [])
       : [];
   const selectedFileDiagnostics = selectedFile
-    ? diagnostics.filter(
+    ? combined.diagnostics.filter(
         (diagnostic) =>
           diagnostic.contentType === CONTENT_TYPES.dialogue &&
           (!diagnostic.contentId || selectedFile[diagnostic.contentId]),
@@ -153,15 +136,11 @@ export function useDialogueDraft(
       )
     : [];
   const selectedDialogueReferences = selectedDialogueId
-    ? graph.getReferencesTo({
+    ? combined.graph.getReferencesTo({
         type: CONTENT_TYPES.dialogue,
         id: selectedDialogueId,
       })
     : [];
-  const errorCount = diagnostics.filter(
-    (diagnostic) => diagnostic.severity === "error",
-  ).length;
-  const warningCount = diagnostics.length - errorCount;
   const hasUnsavedChanges = hasAnyUnsavedFile(draftFiles, savedFiles);
   const selectedFileHasUnsavedChanges =
     selectedFile !== null &&
@@ -171,7 +150,7 @@ export function useDialogueDraft(
   const canSaveSelectedFile =
     selectedFile !== null &&
     selectedFileHasUnsavedChanges &&
-    errorCount === 0 &&
+    combined.errorCount === 0 &&
     !isSaving;
   const canDeleteSelectedDialogue =
     selectedFile !== null &&
@@ -197,9 +176,8 @@ export function useDialogueDraft(
     if (selectedStem && draftFiles[selectedStem]) {
       return;
     }
-    const nextStem = Object.keys(draftFiles).sort((a, b) =>
-      a.localeCompare(b),
-    )[0] ?? "";
+    const nextStem =
+      Object.keys(draftFiles).sort((a, b) => a.localeCompare(b))[0] ?? "";
     setSelectedStem(nextStem);
     setSelectedDialogueId(firstDialogueId(draftFiles[nextStem]));
     setNewDialogueIdDraft(nextStem ? suggestDialogueId(nextStem) : "");
@@ -341,12 +319,8 @@ export function useDialogueDraft(
     }
     if (
       draftHasBlockingErrors(
-        draftSnapshot,
-        createDialogueDraftValidationContext(
-          baseValidationContext,
-          baseSnapshot,
-          draftFiles,
-        ),
+        combined.snapshot,
+        createDialogueDraftValidationContext(combined.context, base, draftFiles),
       ) ||
       validateDialogueFile(selectedFile).length > 0
     ) {
@@ -382,12 +356,11 @@ export function useDialogueDraft(
     selectedDialogueId,
     selectedDialogueNodes,
     dialogueIds,
-    diagnostics,
     selectedFileDiagnostics,
     selectedDialogueDiagnostics,
     selectedDialogueReferences,
-    errorCount,
-    warningCount,
+    errorCount: combined.errorCount,
+    warningCount: combined.warningCount,
     hasUnsavedChanges,
     selectedFileHasUnsavedChanges,
     canSaveSelectedFile,

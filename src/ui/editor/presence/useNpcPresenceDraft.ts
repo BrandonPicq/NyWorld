@@ -1,10 +1,7 @@
-import { useDeferredValue, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
-  buildContentReferenceGraph,
   CONTENT_TYPES,
-  createRuntimeContentValidationContext,
   getAllDialogueIds,
-  validateAllContent,
   validateNpcPresenceDef,
   type ContentCatalogSnapshot,
   type ContentDiagnostic,
@@ -14,11 +11,11 @@ import {
 } from "../../../engine";
 import { deleteEditorContent, saveEditorContent } from "../editorSaveClient";
 import { draftHasBlockingErrors, type SaveStatus } from "../editorModel";
+import type { CombinedDraftView, DraftSlot } from "../editorDraftTypes";
 import {
   addPresenceScheduleEntry,
   clonePresenceDefs,
   createPresenceDefForNpc,
-  createPresenceDraftSnapshot,
   defaultPresencePosition,
   listPresenceNpcEntries,
   presenceContentPath,
@@ -32,6 +29,17 @@ import {
   type EditorPresenceNpcEntry,
 } from "./presenceEditorModel";
 
+export interface PresenceDraftSlot {
+  draft: DraftSlot<NpcPresenceDef[]>;
+  saved: DraftSlot<NpcPresenceDef[]>;
+}
+
+export function createPresenceDraftState(
+  base: ContentCatalogSnapshot,
+): NpcPresenceDef[] {
+  return clonePresenceDefs(base.npcPresence);
+}
+
 export interface PresenceNpcListEntry extends EditorPresenceNpcEntry {
   hasUnsavedChanges: boolean;
 }
@@ -43,7 +51,6 @@ export interface NpcPresenceDraftController {
   selectedPresence: NpcPresenceDef | null;
   zoneIds: string[];
   dialogueIds: string[];
-  diagnostics: ContentDiagnostic[];
   selectedPresenceDiagnostics: ContentDiagnostic[];
   selectedPresenceReferences: ContentReference[];
   errorCount: number;
@@ -70,54 +77,29 @@ export interface NpcPresenceDraftController {
 }
 
 export function useNpcPresenceDraft(
-  baseSnapshot: ContentCatalogSnapshot,
+  base: ContentCatalogSnapshot,
+  slot: PresenceDraftSlot,
+  combined: CombinedDraftView,
 ): NpcPresenceDraftController {
-  const validationContext = useMemo(
-    () => createRuntimeContentValidationContext(),
-    [],
-  );
-  const [draftPresence, setDraftPresence] = useState<NpcPresenceDef[]>(() =>
-    clonePresenceDefs(baseSnapshot.npcPresence),
-  );
-  const [savedPresence, setSavedPresence] = useState<NpcPresenceDef[]>(() =>
-    clonePresenceDefs(baseSnapshot.npcPresence),
-  );
-  const [selectedNpcId, setSelectedNpcId] = useState(
-    firstNpcId(baseSnapshot.npcs),
-  );
+  const draftPresence = slot.draft.value;
+  const setDraftPresence = slot.draft.set;
+  const savedPresence = slot.saved.value;
+  const setSavedPresence = slot.saved.set;
+
+  const [selectedNpcId, setSelectedNpcId] = useState(firstNpcId(base.npcs));
   const [saveStatus, setSaveStatus] = useState<SaveStatus>({
     state: "idle",
     message: "No changes.",
   });
 
-  const draftSnapshot = useMemo(
-    () => createPresenceDraftSnapshot(baseSnapshot, draftPresence),
-    [baseSnapshot, draftPresence],
-  );
-  // Defer whole-bundle validation off the typing path; graph and save stay live.
-  const deferredDraftPresence = useDeferredValue(draftPresence);
-  const diagnostics = useMemo(
-    () =>
-      validateAllContent(
-        createPresenceDraftSnapshot(baseSnapshot, deferredDraftPresence),
-        validationContext,
-      ),
-    [baseSnapshot, deferredDraftPresence, validationContext],
-  );
-  const graph = useMemo(
-    () => buildContentReferenceGraph(draftSnapshot),
-    [draftSnapshot],
-  );
   const savedPresenceJsonById = useMemo(
     () => serializePresenceDefsById(savedPresence),
     [savedPresence],
   );
   const npcEntries = useMemo(
     () =>
-      listPresenceNpcEntries(baseSnapshot.npcs, draftPresence).map((entry) => {
-        const draftDef = draftPresence.find(
-          (def) => def.npcId === entry.npcId,
-        );
+      listPresenceNpcEntries(base.npcs, draftPresence).map((entry) => {
+        const draftDef = draftPresence.find((def) => def.npcId === entry.npcId);
         return {
           ...entry,
           hasUnsavedChanges:
@@ -125,11 +107,11 @@ export function useNpcPresenceDraft(
             savedPresenceJsonById.get(entry.npcId),
         };
       }),
-    [baseSnapshot.npcs, draftPresence, savedPresenceJsonById],
+    [base.npcs, draftPresence, savedPresenceJsonById],
   );
   const zoneIds = useMemo(
-    () => Object.keys(baseSnapshot.zones).sort((a, b) => a.localeCompare(b)),
-    [baseSnapshot.zones],
+    () => Object.keys(base.zones).sort((a, b) => a.localeCompare(b)),
+    [base.zones],
   );
   const dialogueIds = useMemo(
     () => [...getAllDialogueIds()].sort((a, b) => a.localeCompare(b)),
@@ -137,26 +119,22 @@ export function useNpcPresenceDraft(
   );
 
   const selectedNpc =
-    baseSnapshot.npcs.find((npc) => npc.npcId === selectedNpcId) ?? null;
+    base.npcs.find((npc) => npc.npcId === selectedNpcId) ?? null;
   const selectedPresence =
     draftPresence.find((def) => def.npcId === selectedNpcId) ?? null;
   const selectedPresenceDiagnostics = selectedNpcId
-    ? diagnostics.filter(
+    ? combined.diagnostics.filter(
         (diagnostic) =>
           diagnostic.contentType === CONTENT_TYPES.npcPresence &&
           diagnostic.contentId === selectedNpcId,
       )
     : [];
   const selectedPresenceReferences = selectedNpcId
-    ? graph.getReferencesTo({
+    ? combined.graph.getReferencesTo({
         type: CONTENT_TYPES.npcPresence,
         id: selectedNpcId,
       })
     : [];
-  const errorCount = diagnostics.filter(
-    (diagnostic) => diagnostic.severity === "error",
-  ).length;
-  const warningCount = diagnostics.length - errorCount;
   const selectedPresenceHasUnsavedChanges =
     selectedPresence !== null &&
     serializePresenceDef(selectedPresence) !==
@@ -168,7 +146,7 @@ export function useNpcPresenceDraft(
   const canSaveSelectedPresence =
     selectedPresence !== null &&
     selectedPresenceHasUnsavedChanges &&
-    errorCount === 0 &&
+    combined.errorCount === 0 &&
     !isSaving;
   const canResetSelectedPresence =
     selectedNpcId !== "" &&
@@ -191,14 +169,11 @@ export function useNpcPresenceDraft(
       : saveStatus;
 
   useEffect(() => {
-    if (
-      !selectedNpcId ||
-      baseSnapshot.npcs.some((npc) => npc.npcId === selectedNpcId)
-    ) {
+    if (!selectedNpcId || base.npcs.some((npc) => npc.npcId === selectedNpcId)) {
       return;
     }
-    setSelectedNpcId(firstNpcId(baseSnapshot.npcs));
-  }, [baseSnapshot.npcs, selectedNpcId]);
+    setSelectedNpcId(firstNpcId(base.npcs));
+  }, [base.npcs, selectedNpcId]);
 
   function selectNpc(npcId: string): void {
     setSelectedNpcId(npcId);
@@ -216,7 +191,7 @@ export function useNpcPresenceDraft(
     }
     const def = createPresenceDefForNpc(
       selectedNpc.npcId,
-      defaultPresencePosition(baseSnapshot),
+      defaultPresencePosition(base),
     );
     setDraftPresence((defs) => upsertPresenceDef(defs, def));
     markEditing();
@@ -235,7 +210,7 @@ export function useNpcPresenceDraft(
   }
 
   function addScheduleEntry(): void {
-    const position = defaultPresencePosition(baseSnapshot);
+    const position = defaultPresencePosition(base);
     updateSelectedPresence((def) => addPresenceScheduleEntry(def, position));
   }
 
@@ -274,8 +249,8 @@ export function useNpcPresenceDraft(
       return;
     }
     if (
-      draftHasBlockingErrors(draftSnapshot, validationContext) ||
-      validateNpcPresenceDef(selectedPresence, validationContext).length > 0
+      draftHasBlockingErrors(combined.snapshot, combined.context) ||
+      validateNpcPresenceDef(selectedPresence, combined.context).length > 0
     ) {
       setSaveStatus({
         state: "error",
@@ -343,11 +318,10 @@ export function useNpcPresenceDraft(
     selectedPresence,
     zoneIds,
     dialogueIds,
-    diagnostics,
     selectedPresenceDiagnostics,
     selectedPresenceReferences,
-    errorCount,
-    warningCount,
+    errorCount: combined.errorCount,
+    warningCount: combined.warningCount,
     hasUnsavedChanges,
     selectedPresenceHasUnsavedChanges,
     canCreateSelectedPresence,
@@ -379,10 +353,7 @@ function hasAnyUnsavedPresence(
 ): boolean {
   const draftJsonById = serializePresenceDefsById(draftPresence);
   const savedJsonById = serializePresenceDefsById(savedPresence);
-  const allIds = new Set([
-    ...draftJsonById.keys(),
-    ...savedJsonById.keys(),
-  ]);
+  const allIds = new Set([...draftJsonById.keys(), ...savedJsonById.keys()]);
 
   for (const npcId of allIds) {
     if (draftJsonById.get(npcId) !== savedJsonById.get(npcId)) {

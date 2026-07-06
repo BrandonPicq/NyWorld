@@ -1,9 +1,6 @@
-import { useDeferredValue, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
-  buildContentReferenceGraph,
   CONTENT_TYPES,
-  createRuntimeContentValidationContext,
-  validateAllContent,
   validateEnemyDef,
   type ContentCatalogSnapshot,
   type ContentDiagnostic,
@@ -11,16 +8,12 @@ import {
   type EnemyDef,
   type NpcDef,
 } from "../../../engine";
-import {
-  deleteEditorContent,
-  saveEditorContent,
-} from "../editorSaveClient";
+import { deleteEditorContent, saveEditorContent } from "../editorSaveClient";
 import { draftHasBlockingErrors, type SaveStatus } from "../editorModel";
+import type { CombinedDraftView, DraftSlot } from "../editorDraftTypes";
 import {
   cloneEnemyDefs,
   createEnemyDefForNpc,
-  createEnemyDraftSnapshot,
-  createEnemyDraftValidationContext,
   enemyContentPath,
   listEnemyNpcEntries,
   removeEnemyDef,
@@ -30,6 +23,17 @@ import {
   upsertEnemyDef,
   type EditorEnemyNpcEntry,
 } from "./enemyEditorModel";
+
+export interface EnemyDraftSlot {
+  draft: DraftSlot<EnemyDef[]>;
+  saved: DraftSlot<EnemyDef[]>;
+}
+
+export function createEnemyDraftState(
+  base: ContentCatalogSnapshot,
+): EnemyDef[] {
+  return cloneEnemyDefs(base.enemies);
+}
 
 export interface EnemyNpcListEntry extends EditorEnemyNpcEntry {
   hasUnsavedChanges: boolean;
@@ -41,7 +45,6 @@ export interface EnemyDraftController {
   selectedNpc: NpcDef | null;
   selectedEnemy: EnemyDef | null;
   itemIds: string[];
-  diagnostics: ContentDiagnostic[];
   selectedEnemyDiagnostics: ContentDiagnostic[];
   selectedEnemyReferences: ContentReference[];
   errorCount: number;
@@ -63,97 +66,61 @@ export interface EnemyDraftController {
 }
 
 export function useEnemyDraft(
-  baseSnapshot: ContentCatalogSnapshot,
+  base: ContentCatalogSnapshot,
+  slot: EnemyDraftSlot,
+  combined: CombinedDraftView,
 ): EnemyDraftController {
-  const baseValidationContext = useMemo(
-    () => createRuntimeContentValidationContext(),
-    [],
-  );
-  const [draftEnemies, setDraftEnemies] = useState<EnemyDef[]>(() =>
-    cloneEnemyDefs(baseSnapshot.enemies),
-  );
-  const [savedEnemies, setSavedEnemies] = useState<EnemyDef[]>(() =>
-    cloneEnemyDefs(baseSnapshot.enemies),
-  );
-  const [selectedNpcId, setSelectedNpcId] = useState(
-    firstNpcId(baseSnapshot.npcs),
-  );
+  const draftEnemies = slot.draft.value;
+  const setDraftEnemies = slot.draft.set;
+  const savedEnemies = slot.saved.value;
+  const setSavedEnemies = slot.saved.set;
+
+  const [selectedNpcId, setSelectedNpcId] = useState(firstNpcId(base.npcs));
   const [saveStatus, setSaveStatus] = useState<SaveStatus>({
     state: "idle",
     message: "No changes.",
   });
 
-  const draftSnapshot = useMemo(
-    () => createEnemyDraftSnapshot(baseSnapshot, draftEnemies),
-    [baseSnapshot, draftEnemies],
-  );
-  const validationContext = useMemo(
-    () =>
-      createEnemyDraftValidationContext(baseValidationContext, draftEnemies),
-    [baseValidationContext, draftEnemies],
-  );
-  // Defer whole-bundle validation off the typing path; graph and save stay live.
-  const deferredDraftEnemies = useDeferredValue(draftEnemies);
-  const diagnostics = useMemo(
-    () =>
-      validateAllContent(
-        createEnemyDraftSnapshot(baseSnapshot, deferredDraftEnemies),
-        createEnemyDraftValidationContext(
-          baseValidationContext,
-          deferredDraftEnemies,
-        ),
-      ),
-    [baseSnapshot, baseValidationContext, deferredDraftEnemies],
-  );
-  const graph = useMemo(
-    () => buildContentReferenceGraph(draftSnapshot),
-    [draftSnapshot],
-  );
   const savedEnemyJsonById = useMemo(
     () => serializeEnemyDefsById(savedEnemies),
     [savedEnemies],
   );
   const npcEntries = useMemo(
     () =>
-      listEnemyNpcEntries(baseSnapshot.npcs, draftEnemies).map((entry) => {
+      listEnemyNpcEntries(base.npcs, draftEnemies).map((entry) => {
         const draftEnemy = draftEnemies.find(
           (enemy) => enemy.npcId === entry.npcId,
         );
         return {
           ...entry,
           hasUnsavedChanges:
-            (draftEnemy
-              ? serializeEnemyDef(draftEnemy)
-              : undefined) !== savedEnemyJsonById.get(entry.npcId),
+            (draftEnemy ? serializeEnemyDef(draftEnemy) : undefined) !==
+            savedEnemyJsonById.get(entry.npcId),
         };
       }),
-    [baseSnapshot.npcs, draftEnemies, savedEnemyJsonById],
+    [base.npcs, draftEnemies, savedEnemyJsonById],
   );
   const itemIds = useMemo(
-    () => Object.keys(baseSnapshot.items).sort((a, b) => a.localeCompare(b)),
-    [baseSnapshot.items],
+    () => Object.keys(base.items).sort((a, b) => a.localeCompare(b)),
+    [base.items],
   );
   const selectedNpc =
-    baseSnapshot.npcs.find((npc) => npc.npcId === selectedNpcId) ?? null;
+    base.npcs.find((npc) => npc.npcId === selectedNpcId) ?? null;
   const selectedEnemy =
     draftEnemies.find((enemy) => enemy.npcId === selectedNpcId) ?? null;
   const selectedEnemyDiagnostics = selectedNpcId
-    ? diagnostics.filter(
+    ? combined.diagnostics.filter(
         (diagnostic) =>
           diagnostic.contentType === CONTENT_TYPES.enemy &&
           diagnostic.contentId === selectedNpcId,
       )
     : [];
   const selectedEnemyReferences = selectedNpcId
-    ? graph.getReferencesTo({
+    ? combined.graph.getReferencesTo({
         type: CONTENT_TYPES.enemy,
         id: selectedNpcId,
       })
     : [];
-  const errorCount = diagnostics.filter(
-    (diagnostic) => diagnostic.severity === "error",
-  ).length;
-  const warningCount = diagnostics.length - errorCount;
   const selectedEnemyHasUnsavedChanges =
     selectedEnemy !== null &&
     serializeEnemyDef(selectedEnemy) !==
@@ -165,15 +132,11 @@ export function useEnemyDraft(
   const canSaveSelectedEnemy =
     selectedEnemy !== null &&
     selectedEnemyHasUnsavedChanges &&
-    errorCount === 0 &&
+    combined.errorCount === 0 &&
     !isSaving;
   const canResetSelectedEnemy =
     selectedNpcId !== "" &&
-    hasSelectedEnemyUnsavedState(
-      selectedNpcId,
-      draftEnemies,
-      savedEnemies,
-    ) &&
+    hasSelectedEnemyUnsavedState(selectedNpcId, draftEnemies, savedEnemies) &&
     !isSaving;
   const canDeleteSelectedEnemy =
     selectedEnemy !== null &&
@@ -188,14 +151,11 @@ export function useEnemyDraft(
       : saveStatus;
 
   useEffect(() => {
-    if (
-      !selectedNpcId ||
-      baseSnapshot.npcs.some((npc) => npc.npcId === selectedNpcId)
-    ) {
+    if (!selectedNpcId || base.npcs.some((npc) => npc.npcId === selectedNpcId)) {
       return;
     }
-    setSelectedNpcId(firstNpcId(baseSnapshot.npcs));
-  }, [baseSnapshot.npcs, selectedNpcId]);
+    setSelectedNpcId(firstNpcId(base.npcs));
+  }, [base.npcs, selectedNpcId]);
 
   function selectNpc(npcId: string): void {
     setSelectedNpcId(npcId);
@@ -230,7 +190,6 @@ export function useEnemyDraft(
     if (!selectedNpcId) {
       return;
     }
-
     const savedEnemy = savedEnemies.find(
       (enemy) => enemy.npcId === selectedNpcId,
     );
@@ -251,8 +210,8 @@ export function useEnemyDraft(
       return;
     }
     if (
-      draftHasBlockingErrors(draftSnapshot, validationContext) ||
-      validateEnemyDef(selectedEnemy, validationContext).length > 0
+      draftHasBlockingErrors(combined.snapshot, combined.context) ||
+      validateEnemyDef(selectedEnemy, combined.context).length > 0
     ) {
       setSaveStatus({
         state: "error",
@@ -317,11 +276,10 @@ export function useEnemyDraft(
     selectedNpc,
     selectedEnemy,
     itemIds,
-    diagnostics,
     selectedEnemyDiagnostics,
     selectedEnemyReferences,
-    errorCount,
-    warningCount,
+    errorCount: combined.errorCount,
+    warningCount: combined.warningCount,
     hasUnsavedChanges,
     selectedEnemyHasUnsavedChanges,
     canCreateSelectedEnemy,
@@ -351,10 +309,7 @@ function hasAnyUnsavedEnemy(
 ): boolean {
   const draftJsonById = serializeEnemyDefsById(draftEnemies);
   const savedJsonById = serializeEnemyDefsById(savedEnemies);
-  const allIds = new Set([
-    ...draftJsonById.keys(),
-    ...savedJsonById.keys(),
-  ]);
+  const allIds = new Set([...draftJsonById.keys(), ...savedJsonById.keys()]);
 
   for (const npcId of allIds) {
     if (draftJsonById.get(npcId) !== savedJsonById.get(npcId)) {

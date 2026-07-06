@@ -4,6 +4,14 @@ This file tracks meaningful project changes by commit-oriented slices.
 
 Keep entries short and practical. When a slice is committed, its changelog section should stay aligned with the commit title so the project history remains easy to read after restores or bisects.
 
+## 2026-07-06 - [REFACTOR]: Share editor draft state across tabs
+
+- Lift every editor family's draft and saved state into one `useEditorDrafts` owner that derives a single combined snapshot, validation context, deferred diagnostics, and reference graph shared by all tabs.
+- Route each tab's diagnostics, reference graph, and save/delete gating through the combined view, so unsaved edits in one tab (e.g. a new dialogue) are visible to another tab's validation.
+- Share one dialogue-files draft between the Dialogues and NPCs tabs, so a newly created default dialogue is immediately visible in both.
+- Move zone selection and per-zone undo history into the owner keyed by zone id; unsaved zone edits now persist across zone and tab switches instead of being discarded.
+- Add `createCombinedDraftSnapshot`/`createCombinedDraftValidationContext` (chaining the existing per-family composers) with tests; no per-family model tests change.
+
 ## 2026-07-06 - [ADD]: Edit combat action tuning in the editor
 
 - Add an Actions editor tab for the fixed combat actions (no creation or deletion): edit name, category, order, summary, formula, tuning numbers, and the authored effect/detail lines.

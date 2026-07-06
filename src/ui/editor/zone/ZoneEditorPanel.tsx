@@ -1,30 +1,26 @@
-import { useMemo, useState } from "react";
-import type { ContentCatalogSnapshot, ZoneData } from "../../../engine";
+import type { ContentCatalogSnapshot } from "../../../engine";
 import { IdentifierLabel } from "../../components/IdentifierLabel";
 import { ScrollRegion } from "../../components/ScrollRegion";
 import { TerminalButton } from "../../components/TerminalButton";
 import { TerminalPanel } from "../../components/TerminalPanel";
 import { ZoneCreateForm } from "./ZoneCreateForm";
 import { ZoneDraftEditor } from "./ZoneDraftEditor";
-import { listEditorZones } from "./zoneEditorModel";
+import type { ZoneDraftController } from "./useZoneDraft";
 
 type ZoneEditorPanelProps = {
+  draft: ZoneDraftController;
   snapshot: ContentCatalogSnapshot;
 };
 
 /**
  * "Zones" tab of the content editor: pick a zone, paint its tiles.
  *
- * This panel orchestrates zone selection; the per-zone tile-painting draft lives
- * in ZoneDraftEditor, remounted per zone so switching zones starts fresh.
+ * Zone selection and the per-zone undo history live in the shared editor draft
+ * owner (keyed by zone id), so unsaved edits and validation are visible across
+ * tabs; this panel only orchestrates the list and the paint surface.
  */
-export function ZoneEditorPanel({ snapshot }: ZoneEditorPanelProps) {
-  const zones = useMemo(() => listEditorZones(snapshot), [snapshot]);
-  const [selectedZoneId, setSelectedZoneId] = useState(
-    () => zones[0]?.zoneId ?? "",
-  );
-
-  const selectedZone: ZoneData | undefined = snapshot.zones[selectedZoneId];
+export function ZoneEditorPanel({ draft, snapshot }: ZoneEditorPanelProps) {
+  const { zones, selectedZoneId, selectZone } = draft;
 
   return (
     <div className="editor-zone-layout">
@@ -39,13 +35,12 @@ export function ZoneEditorPanel({ snapshot }: ZoneEditorPanelProps) {
                 className="editor-entry-button editor-zone-entry"
                 isSelected={zone.zoneId === selectedZoneId}
                 key={zone.zoneId}
-                onClick={() => setSelectedZoneId(zone.zoneId)}
+                onClick={() => selectZone(zone.zoneId)}
               >
                 <span className="editor-zone-entry__name">{zone.name}</span>
                 <span className="editor-zone-entry__meta">
                   <IdentifierLabel value={zone.zoneId} /> · {zone.npcCount}N{" "}
-                  {zone.itemCount}I{" "}
-                  {zone.transitionCount}T
+                  {zone.itemCount}I {zone.transitionCount}T
                 </span>
               </TerminalButton>
             ))}
@@ -54,12 +49,8 @@ export function ZoneEditorPanel({ snapshot }: ZoneEditorPanelProps) {
         <ZoneCreateForm existingZoneIds={zones.map((zone) => zone.zoneId)} />
       </TerminalPanel>
 
-      {selectedZone ? (
-        <ZoneDraftEditor
-          key={selectedZone.zoneId}
-          snapshot={snapshot}
-          zone={selectedZone}
-        />
+      {draft.draft && draft.renderSnapshot ? (
+        <ZoneDraftEditor controller={draft} snapshot={snapshot} />
       ) : (
         <>
           <TerminalPanel className="editor-panel editor-zone-preview">

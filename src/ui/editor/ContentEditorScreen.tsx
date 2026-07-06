@@ -2,18 +2,13 @@ import { useMemo, useState } from "react";
 import { createRuntimeContentCatalogSnapshot } from "../../engine";
 import { TerminalButton } from "../components/TerminalButton";
 import { ActionsTab } from "./actions/ActionsTab";
-import { useActionDraft } from "./actions/useActionDraft";
 import { ContentTab } from "./ContentTab";
 import { DialogueTab } from "./dialogues/DialogueTab";
-import { useDialogueDraft } from "./dialogues/useDialogueDraft";
 import { EnemyTab } from "./enemies/EnemyTab";
-import { useEnemyDraft } from "./enemies/useEnemyDraft";
 import { GameConfigPanel } from "./GameConfigPanel";
 import { NpcTab } from "./npcs/NpcTab";
-import { useNpcDraft } from "./npcs/useNpcDraft";
 import { PresenceTab } from "./presence/PresenceTab";
-import { useNpcPresenceDraft } from "./presence/useNpcPresenceDraft";
-import { useItemDraft } from "./useItemDraft";
+import { useEditorDrafts } from "./useEditorDrafts";
 import { ZoneEditorPanel } from "./zone/ZoneEditorPanel";
 
 type ContentEditorScreenProps = {
@@ -33,12 +28,7 @@ type EditorTab =
 export function ContentEditorScreen({ onBack }: ContentEditorScreenProps) {
   const baseSnapshot = useMemo(() => createRuntimeContentCatalogSnapshot(), []);
   const [tab, setTab] = useState<EditorTab>("content");
-  const itemDraft = useItemDraft(baseSnapshot);
-  const dialogueDraft = useDialogueDraft(baseSnapshot);
-  const npcDraft = useNpcDraft(baseSnapshot);
-  const presenceDraft = useNpcPresenceDraft(baseSnapshot);
-  const enemyDraft = useEnemyDraft(baseSnapshot);
-  const actionDraft = useActionDraft(baseSnapshot);
+  const drafts = useEditorDrafts(baseSnapshot);
   const shellClasses = ["editor-shell", tab === "zones" && "editor-shell--zones"]
     .filter(Boolean)
     .join(" ");
@@ -121,21 +111,21 @@ export function ContentEditorScreen({ onBack }: ContentEditorScreenProps) {
         </nav>
 
         {tab === "zones" ? (
-          <ZoneEditorPanel snapshot={baseSnapshot} />
+          <ZoneEditorPanel draft={drafts.zone} snapshot={baseSnapshot} />
         ) : tab === "game" ? (
-          <GameConfigPanel snapshot={baseSnapshot} />
+          <GameConfigPanel draft={drafts.game} />
         ) : tab === "dialogues" ? (
-          <DialogueTab draft={dialogueDraft} />
+          <DialogueTab draft={drafts.dialogue} />
         ) : tab === "npcs" ? (
-          <NpcTab draft={npcDraft} />
+          <NpcTab draft={drafts.npc} />
         ) : tab === "presence" ? (
-          <PresenceTab draft={presenceDraft} />
+          <PresenceTab draft={drafts.presence} />
         ) : tab === "enemies" ? (
-          <EnemyTab draft={enemyDraft} />
+          <EnemyTab draft={drafts.enemy} />
         ) : tab === "actions" ? (
-          <ActionsTab draft={actionDraft} />
+          <ActionsTab draft={drafts.action} />
         ) : (
-          <ContentTab draft={itemDraft} />
+          <ContentTab draft={drafts.item} />
         )}
       </div>
     </main>

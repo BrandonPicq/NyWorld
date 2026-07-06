@@ -1,8 +1,6 @@
-import { useDeferredValue, useMemo, useState } from "react";
+import { useState } from "react";
 import {
   CONTENT_TYPES,
-  createRuntimeContentValidationContext,
-  validateAllContent,
   validateCombatActionDef,
   type CombatActionDef,
   type ContentCatalogSnapshot,
@@ -10,16 +8,26 @@ import {
 } from "../../../engine";
 import { saveEditorContent } from "../editorSaveClient";
 import { draftHasBlockingErrors, type SaveStatus } from "../editorModel";
+import type { CombinedDraftView, DraftSlot } from "../editorDraftTypes";
 import {
   actionContentPath,
   actionDerivedEffects,
-  cloneCombatActionDefs,
-  createActionDraftSnapshot,
   listAuthoredCombatActionDefs,
   serializeActionsById,
   serializeCombatActionDef,
   updateActionDef,
 } from "./actionEditorModel";
+
+export interface ActionDraftSlot {
+  draft: DraftSlot<CombatActionDef[]>;
+  saved: DraftSlot<CombatActionDef[]>;
+}
+
+export function createActionDraftState(
+  base: ContentCatalogSnapshot,
+): CombatActionDef[] {
+  return listAuthoredCombatActionDefs(base);
+}
 
 export interface ActionListEntry {
   actionId: string;
@@ -33,7 +41,6 @@ export interface ActionDraftController {
   selectedActionId: string;
   selectedAction: CombatActionDef | null;
   derivedEffects: string[];
-  diagnostics: ContentDiagnostic[];
   selectedActionDiagnostics: ContentDiagnostic[];
   errorCount: number;
   warningCount: number;
@@ -52,18 +59,14 @@ export interface ActionDraftController {
 }
 
 export function useActionDraft(
-  baseSnapshot: ContentCatalogSnapshot,
+  slot: ActionDraftSlot,
+  combined: CombinedDraftView,
 ): ActionDraftController {
-  const validationContext = useMemo(
-    () => createRuntimeContentValidationContext(),
-    [],
-  );
-  const [draftActions, setDraftActions] = useState<CombatActionDef[]>(() =>
-    listAuthoredCombatActionDefs(baseSnapshot),
-  );
-  const [savedActions, setSavedActions] = useState<CombatActionDef[]>(() =>
-    listAuthoredCombatActionDefs(baseSnapshot),
-  );
+  const draftActions = slot.draft.value;
+  const setDraftActions = slot.draft.set;
+  const savedActions = slot.saved.value;
+  const setSavedActions = slot.saved.set;
+
   const [selectedActionId, setSelectedActionId] = useState<string>(
     () => draftActions[0]?.actionId ?? "",
   );
@@ -72,32 +75,15 @@ export function useActionDraft(
     message: "No changes.",
   });
 
-  // Defer whole-bundle validation off the typing path; save stays live.
-  const deferredDraftActions = useDeferredValue(draftActions);
-  const diagnostics = useMemo(
-    () =>
-      validateAllContent(
-        createActionDraftSnapshot(baseSnapshot, deferredDraftActions),
-        validationContext,
-      ),
-    [baseSnapshot, deferredDraftActions, validationContext],
-  );
-  const savedActionJsonById = useMemo(
-    () => serializeActionsById(savedActions),
-    [savedActions],
-  );
-  const actionEntries = useMemo<ActionListEntry[]>(
-    () =>
-      draftActions.map((action) => ({
-        actionId: action.actionId,
-        name: action.name,
-        order: action.order,
-        hasUnsavedChanges:
-          serializeCombatActionDef(action) !==
-          savedActionJsonById.get(action.actionId),
-      })),
-    [draftActions, savedActionJsonById],
-  );
+  const savedActionJsonById = serializeActionsById(savedActions);
+  const actionEntries: ActionListEntry[] = draftActions.map((action) => ({
+    actionId: action.actionId,
+    name: action.name,
+    order: action.order,
+    hasUnsavedChanges:
+      serializeCombatActionDef(action) !==
+      savedActionJsonById.get(action.actionId),
+  }));
 
   const selectedAction =
     draftActions.find((action) => action.actionId === selectedActionId) ?? null;
@@ -105,16 +91,12 @@ export function useActionDraft(
     ? actionDerivedEffects(selectedAction)
     : [];
   const selectedActionDiagnostics = selectedActionId
-    ? diagnostics.filter(
+    ? combined.diagnostics.filter(
         (diagnostic) =>
           diagnostic.contentType === CONTENT_TYPES.combatAction &&
           diagnostic.contentId === selectedActionId,
       )
     : [];
-  const errorCount = diagnostics.filter(
-    (diagnostic) => diagnostic.severity === "error",
-  ).length;
-  const warningCount = diagnostics.length - errorCount;
   const selectedActionHasUnsavedChanges =
     selectedAction !== null &&
     serializeCombatActionDef(selectedAction) !==
@@ -126,7 +108,7 @@ export function useActionDraft(
   const canSaveSelectedAction =
     selectedAction !== null &&
     selectedActionHasUnsavedChanges &&
-    errorCount === 0 &&
+    combined.errorCount === 0 &&
     !isSaving;
   const canResetSelectedAction =
     selectedActionHasUnsavedChanges && !isSaving;
@@ -185,10 +167,7 @@ export function useActionDraft(
       return;
     }
     if (
-      draftHasBlockingErrors(
-        createActionDraftSnapshot(baseSnapshot, draftActions),
-        validationContext,
-      ) ||
+      draftHasBlockingErrors(combined.snapshot, combined.context) ||
       validateCombatActionDef(selectedAction).length > 0
     ) {
       setSaveStatus({
@@ -220,10 +199,9 @@ export function useActionDraft(
     selectedActionId,
     selectedAction,
     derivedEffects,
-    diagnostics,
     selectedActionDiagnostics,
-    errorCount,
-    warningCount,
+    errorCount: combined.errorCount,
+    warningCount: combined.warningCount,
     hasUnsavedChanges,
     selectedActionHasUnsavedChanges,
     canSaveSelectedAction,
