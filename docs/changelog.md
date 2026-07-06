@@ -4,6 +4,11 @@ This file tracks meaningful project changes by commit-oriented slices.
 
 Keep entries short and practical. When a slice is committed, its changelog section should stay aligned with the commit title so the project history remains easy to read after restores or bisects.
 
+## 2026-07-06 - [FIX]: Match editor range slider colors to the theme
+
+- Style editor range inputs with the active theme accent color instead of the browser default blue.
+- Keep disabled range inputs visually muted with the editor text-muted color.
+
 ## 2026-07-06 - [ADD]: Preview scheduled NPC positions by time of day
 
 - Export a pure NPC schedule-position helper for editor previews.
