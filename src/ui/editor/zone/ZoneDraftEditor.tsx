@@ -1,12 +1,13 @@
 import { useEffect, useState } from "react";
-import {
-  formatContentDiagnostic,
-  type ContentCatalogSnapshot,
-} from "../../../engine";
+import type { ContentCatalogSnapshot } from "../../../engine";
 import type { GridCell } from "../../../rendering/canvasCellMapping";
 import { ScrollRegion } from "../../components/ScrollRegion";
 import { TerminalButton } from "../../components/TerminalButton";
 import { TerminalPanel } from "../../components/TerminalPanel";
+import {
+  DiagnosticList,
+  type EditorContentNavigationTarget,
+} from "../DiagnosticList";
 import { MapCoordinatePicker } from "../MapCoordinatePicker";
 import { EditorZoneCanvas } from "./EditorZoneCanvas";
 import { EntryDialogueEditor } from "./EntryDialogueEditor";
@@ -18,6 +19,7 @@ import { describeZoneCell } from "./zoneEditorModel";
 
 type ZoneDraftEditorProps = {
   controller: ZoneDraftController;
+  onNavigate: (target: EditorContentNavigationTarget) => void;
   snapshot: ContentCatalogSnapshot;
 };
 
@@ -32,7 +34,11 @@ type CoordinatePickerRequest = {
  * canvas + live whole-bundle validation + save. Selection and undo history are
  * owned by the shared editor draft owner.
  */
-export function ZoneDraftEditor({ controller, snapshot }: ZoneDraftEditorProps) {
+export function ZoneDraftEditor({
+  controller,
+  onNavigate,
+  snapshot,
+}: ZoneDraftEditorProps) {
   const {
     renderSnapshot,
     draft,
@@ -225,16 +231,10 @@ export function ZoneDraftEditor({ controller, snapshot }: ZoneDraftEditorProps) 
             {diagnostics.length === 0 ? (
               <p className="editor-empty">No problems.</p>
             ) : (
-              <ul className="editor-diagnostic-list">
-                {diagnostics.map((diagnostic, index) => (
-                  <li
-                    className={`editor-diagnostic editor-diagnostic--${diagnostic.severity}`}
-                    key={`${diagnostic.path}-${index}`}
-                  >
-                    {formatContentDiagnostic(diagnostic)}
-                  </li>
-                ))}
-              </ul>
+              <DiagnosticList
+                diagnostics={diagnostics}
+                onNavigate={onNavigate}
+              />
             )}
           </section>
 

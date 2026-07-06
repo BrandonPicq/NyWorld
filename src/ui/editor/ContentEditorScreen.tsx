@@ -1,8 +1,14 @@
 import { useEffect, useMemo, useState } from "react";
-import { createRuntimeContentCatalogSnapshot } from "../../engine";
+import {
+  CONTENT_TYPES,
+  createRuntimeContentCatalogSnapshot,
+  type ContentRef,
+  type ContentTypeName,
+} from "../../engine";
 import { TerminalButton } from "../components/TerminalButton";
 import { ActionsTab } from "./actions/ActionsTab";
 import { ContentTab } from "./ContentTab";
+import type { EditorContentNavigationTarget } from "./DiagnosticList";
 import { DialogueTab } from "./dialogues/DialogueTab";
 import { EnemyTab } from "./enemies/EnemyTab";
 import { GameConfigPanel } from "./GameConfigPanel";
@@ -67,6 +73,63 @@ export function ContentEditorScreen({ onBack }: ContentEditorScreenProps) {
     }
   }
 
+  function navigateToContent(target: EditorContentNavigationTarget): void {
+    const ref = toContentRef(target);
+    if (ref) {
+      drafts.item.setSelectedRef(ref);
+    }
+
+    switch (target.type) {
+      case CONTENT_TYPES.game:
+        setTab("game");
+        return;
+      case CONTENT_TYPES.zone:
+        drafts.zone.selectZone(target.id);
+        setTab("zones");
+        return;
+      case CONTENT_TYPES.item:
+      case CONTENT_TYPES.tile:
+        setTab("content");
+        return;
+      case CONTENT_TYPES.dialogue: {
+        const stem = findDialogueStem(
+          drafts.combined.snapshot.dialogueFiles,
+          target.id,
+        );
+        if (stem) {
+          drafts.dialogue.selectFile(stem);
+          drafts.dialogue.selectDialogue(target.id);
+          setTab("dialogues");
+          return;
+        }
+        setTab("content");
+        return;
+      }
+      case CONTENT_TYPES.npc:
+        drafts.npc.selectNpc(target.id);
+        setTab("npcs");
+        return;
+      case CONTENT_TYPES.npcPresence:
+        drafts.presence.selectNpc(target.id);
+        setTab("presence");
+        return;
+      case CONTENT_TYPES.enemy:
+        drafts.enemy.selectNpc(target.id);
+        setTab("enemies");
+        return;
+      case CONTENT_TYPES.combatAction:
+        drafts.action.selectAction(target.id);
+        setTab("actions");
+        return;
+      case CONTENT_TYPES.quest:
+        drafts.quest.selectQuest(target.id);
+        setTab("quests");
+        return;
+      default:
+        setTab("content");
+    }
+  }
+
   return (
     <main
       className="app-shell app-shell--bounded editor-screen"
@@ -104,37 +167,68 @@ export function ContentEditorScreen({ onBack }: ContentEditorScreenProps) {
           {tab === "zones" ? (
             <ZoneEditorPanel
               draft={drafts.zone}
+              onNavigate={navigateToContent}
               snapshot={drafts.combined.snapshot}
             />
           ) : tab === "game" ? (
             <GameConfigPanel
               draft={drafts.game}
+              onNavigate={navigateToContent}
               snapshot={drafts.combined.snapshot}
             />
           ) : tab === "dialogues" ? (
-            <DialogueTab draft={drafts.dialogue} />
+            <DialogueTab
+              draft={drafts.dialogue}
+              onNavigate={navigateToContent}
+            />
           ) : tab === "npcs" ? (
-            <NpcTab draft={drafts.npc} />
+            <NpcTab draft={drafts.npc} onNavigate={navigateToContent} />
           ) : tab === "presence" ? (
             <PresenceTab
               draft={drafts.presence}
+              onNavigate={navigateToContent}
               snapshot={drafts.combined.snapshot}
             />
           ) : tab === "enemies" ? (
-            <EnemyTab draft={drafts.enemy} />
+            <EnemyTab draft={drafts.enemy} onNavigate={navigateToContent} />
           ) : tab === "actions" ? (
             <ActionsTab draft={drafts.action} />
           ) : tab === "quests" ? (
             <QuestTab
               draft={drafts.quest}
+              onNavigate={navigateToContent}
               snapshot={drafts.combined.snapshot}
             />
           ) : (
-            <ContentTab draft={drafts.item} />
+            <ContentTab draft={drafts.item} onNavigate={navigateToContent} />
           )}
         </div>
       </div>
     </main>
+  );
+}
+
+function toContentRef(
+  target: EditorContentNavigationTarget,
+): ContentRef | null {
+  if (!isContentTypeName(target.type)) {
+    return null;
+  }
+  return { type: target.type, id: target.id };
+}
+
+function isContentTypeName(type: string): type is ContentTypeName {
+  return Object.values(CONTENT_TYPES).includes(type as ContentTypeName);
+}
+
+function findDialogueStem(
+  files: Record<string, Record<string, unknown>>,
+  dialogueId: string,
+): string | null {
+  return (
+    Object.entries(files)
+      .sort(([a], [b]) => a.localeCompare(b))
+      .find(([, dialogues]) => dialogueId in dialogues)?.[0] ?? null
   );
 }
 

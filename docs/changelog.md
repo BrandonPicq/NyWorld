@@ -4,6 +4,12 @@ This file tracks meaningful project changes by commit-oriented slices.
 
 Keep entries short and practical. When a slice is committed, its changelog section should stay aligned with the commit title so the project history remains easy to read after restores or bisects.
 
+## 2026-07-06 - [ADD]: Navigate to content from diagnostics
+
+- Add shared clickable diagnostic rendering for the content, zones, game config, and quest problem panels.
+- Add a central editor navigation dispatcher that maps content references to the right editor tab and selected entry.
+- Route editor reference lists through the same dispatcher, including incoming-reference panels across content-family tabs.
+
 ## 2026-07-06 - [ADD]: Mark unsaved tabs and guard editor exit
 
 - Add unsaved indicators to editor tab buttons for each content family.

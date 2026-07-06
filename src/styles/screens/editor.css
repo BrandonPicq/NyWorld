@@ -174,6 +174,25 @@
   color: var(--color-text);
 }
 
+.editor-diagnostic-link {
+  width: 100%;
+  border: 0;
+  padding: 0;
+  color: inherit;
+  background: transparent;
+  font: inherit;
+  line-height: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.editor-diagnostic-link:hover,
+.editor-diagnostic-link:focus-visible {
+  color: var(--color-text-strong);
+  outline: var(--focus-ring-width) solid var(--color-text);
+  outline-offset: var(--focus-ring-offset);
+}
+
 .editor-item-editor {
   display: grid;
   gap: var(--space-2);

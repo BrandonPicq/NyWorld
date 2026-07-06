@@ -1,13 +1,13 @@
 import {
   formatContentDiagnostic,
-  type ContentReference,
 } from "../../../engine";
 import { IdentifierLabel } from "../../components/IdentifierLabel";
 import { ScrollRegion } from "../../components/ScrollRegion";
 import { TerminalButton } from "../../components/TerminalButton";
 import { TerminalPanel } from "../../components/TerminalPanel";
 import { DialogueNodesEditor } from "../DialogueNodesEditor";
-import { formatContentRef } from "../editorModel";
+import type { EditorContentNavigationTarget } from "../DiagnosticList";
+import { ReferenceList } from "../ReferenceList";
 import {
   addDialogueNode,
   removeDialogueNode,
@@ -17,9 +17,10 @@ import type { DialogueDraftController } from "./useDialogueDraft";
 
 type DialogueTabProps = {
   draft: DialogueDraftController;
+  onNavigate: (target: EditorContentNavigationTarget) => void;
 };
 
-export function DialogueTab({ draft }: DialogueTabProps) {
+export function DialogueTab({ draft, onNavigate }: DialogueTabProps) {
   return (
     <>
       <section className="editor-summary" aria-label="Dialogue summary">
@@ -229,9 +230,12 @@ export function DialogueTab({ draft }: DialogueTabProps) {
               )}
             </section>
 
-            <DialogueReferences
+            <ReferenceList
+              emptyLabel="No incoming references."
+              onNavigate={onNavigate}
               references={draft.selectedDialogueReferences}
               title="Incoming References"
+              useTarget={false}
             />
           </TerminalPanel>
         </ScrollRegion>
@@ -249,31 +253,5 @@ function InlineProblems({ problems }: { problems: string[] }) {
         </li>
       ))}
     </ul>
-  );
-}
-
-function DialogueReferences({
-  references,
-  title,
-}: {
-  references: ContentReference[];
-  title: string;
-}) {
-  return (
-    <section className="editor-reference-list">
-      <h3>{title}</h3>
-      {references.length === 0 ? (
-        <p className="editor-empty">No incoming references.</p>
-      ) : (
-        <ul>
-          {references.map((reference, index) => (
-            <li key={`${reference.from.type}-${reference.from.id}-${index}`}>
-              <span>{formatContentRef(reference.from)}</span>
-              <strong>{reference.path}</strong>
-            </li>
-          ))}
-        </ul>
-      )}
-    </section>
   );
 }

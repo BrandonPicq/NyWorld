@@ -1,6 +1,5 @@
 import { useState } from "react";
 import {
-  formatContentDiagnostic,
   QUEST_STAT_NAME_OPTIONS,
   type ContentCatalogSnapshot,
   type ContentReference,
@@ -12,6 +11,10 @@ import { IdentifierLabel } from "../../components/IdentifierLabel";
 import { ScrollRegion } from "../../components/ScrollRegion";
 import { TerminalButton } from "../../components/TerminalButton";
 import { TerminalPanel } from "../../components/TerminalPanel";
+import {
+  DiagnosticList,
+  type EditorContentNavigationTarget,
+} from "../DiagnosticList";
 import { formatContentRef } from "../editorModel";
 import { MapCoordinatePicker } from "../MapCoordinatePicker";
 import {
@@ -35,6 +38,7 @@ import type { QuestDraftController } from "./useQuestDraft";
 
 type QuestTabProps = {
   draft: QuestDraftController;
+  onNavigate: (target: EditorContentNavigationTarget) => void;
   snapshot: ContentCatalogSnapshot;
 };
 
@@ -44,7 +48,7 @@ type CoordinatePickerRequest = {
   onPick: (cell: GridCell) => void;
 };
 
-export function QuestTab({ draft, snapshot }: QuestTabProps) {
+export function QuestTab({ draft, onNavigate, snapshot }: QuestTabProps) {
   return (
     <>
       <section className="editor-summary" aria-label="Quest summary">
@@ -106,19 +110,16 @@ export function QuestTab({ draft, snapshot }: QuestTabProps) {
               {draft.selectedQuestDiagnostics.length === 0 ? (
                 <p className="editor-empty">No problems.</p>
               ) : (
-                <ul className="editor-diagnostic-list">
-                  {draft.selectedQuestDiagnostics.map((diagnostic, index) => (
-                    <li
-                      className={`editor-diagnostic editor-diagnostic--${diagnostic.severity}`}
-                      key={`${diagnostic.contentId ?? "quest"}-${diagnostic.path}-${index}`}
-                    >
-                      {formatContentDiagnostic(diagnostic)}
-                    </li>
-                  ))}
-                </ul>
+                <DiagnosticList
+                  diagnostics={draft.selectedQuestDiagnostics}
+                  onNavigate={onNavigate}
+                />
               )}
             </section>
-            <QuestReferences references={draft.selectedQuestReferences} />
+            <QuestReferences
+              onNavigate={onNavigate}
+              references={draft.selectedQuestReferences}
+            />
           </TerminalPanel>
         </ScrollRegion>
       </div>
@@ -920,7 +921,13 @@ function QuantityField({
   );
 }
 
-function QuestReferences({ references }: { references: ContentReference[] }) {
+function QuestReferences({
+  onNavigate,
+  references,
+}: {
+  onNavigate: (target: EditorContentNavigationTarget) => void;
+  references: ContentReference[];
+}) {
   return (
     <section className="editor-reference-list">
       <h3>Incoming References</h3>
@@ -930,7 +937,13 @@ function QuestReferences({ references }: { references: ContentReference[] }) {
         <ul>
           {references.map((reference, index) => (
             <li key={`${reference.from.type}-${reference.from.id}-${index}`}>
-              <span>{formatContentRef(reference.from)}</span>
+              <button
+                className="editor-reference-link"
+                onClick={() => onNavigate(reference.from)}
+                type="button"
+              >
+                {formatContentRef(reference.from)}
+              </button>
               <strong>{reference.path}</strong>
             </li>
           ))}

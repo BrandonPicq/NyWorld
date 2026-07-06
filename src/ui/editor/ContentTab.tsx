@@ -1,11 +1,12 @@
-import {
-  formatContentDiagnostic,
-  type ItemDef,
-} from "../../engine";
+import type { ItemDef } from "../../engine";
 import { IdentifierLabel } from "../components/IdentifierLabel";
 import { ScrollRegion } from "../components/ScrollRegion";
 import { TerminalButton } from "../components/TerminalButton";
 import { TerminalPanel } from "../components/TerminalPanel";
+import {
+  DiagnosticList,
+  type EditorContentNavigationTarget,
+} from "./DiagnosticList";
 import { refsEqual } from "./editorModel";
 import { ItemDraftEditor } from "./ItemDraftEditor";
 import { ReferenceList } from "./ReferenceList";
@@ -13,9 +14,10 @@ import type { ItemDraftController } from "./useItemDraft";
 
 type ContentTabProps = {
   draft: ItemDraftController;
+  onNavigate: (target: EditorContentNavigationTarget) => void;
 };
 
-export function ContentTab({ draft }: ContentTabProps) {
+export function ContentTab({ draft, onNavigate }: ContentTabProps) {
   const {
     browserGroups,
     diagnosticGroups,
@@ -88,16 +90,10 @@ export function ContentTab({ draft }: ContentTabProps) {
                         {group.errorCount}E / {group.warningCount}W
                       </span>
                     </div>
-                    <ul className="editor-diagnostic-list">
-                      {group.diagnostics.map((diagnostic, index) => (
-                        <li
-                          className={`editor-diagnostic editor-diagnostic--${diagnostic.severity}`}
-                          key={`${group.contentType}-${diagnostic.path}-${index}`}
-                        >
-                          {formatContentDiagnostic(diagnostic)}
-                        </li>
-                      ))}
-                    </ul>
+                    <DiagnosticList
+                      diagnostics={group.diagnostics}
+                      onNavigate={onNavigate}
+                    />
                   </section>
                 ))}
               </ScrollRegion>
@@ -157,14 +153,14 @@ export function ContentTab({ draft }: ContentTabProps) {
             <div className="editor-reference-columns">
               <ReferenceList
                 emptyLabel="No incoming references."
-                onSelectRef={setSelectedRef}
+                onNavigate={onNavigate}
                 references={incomingRefs}
                 title="Incoming"
                 useTarget={false}
               />
               <ReferenceList
                 emptyLabel="No outgoing references."
-                onSelectRef={setSelectedRef}
+                onNavigate={onNavigate}
                 references={outgoingRefs}
                 title="Outgoing"
                 useTarget

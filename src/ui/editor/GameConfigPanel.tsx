@@ -1,14 +1,18 @@
 import { useState } from "react";
-import { formatContentDiagnostic } from "../../engine";
 import type { ContentCatalogSnapshot } from "../../engine";
 import { ScrollRegion } from "../components/ScrollRegion";
 import { TerminalButton } from "../components/TerminalButton";
 import { TerminalPanel } from "../components/TerminalPanel";
+import {
+  DiagnosticList,
+  type EditorContentNavigationTarget,
+} from "./DiagnosticList";
 import { MapCoordinatePicker } from "./MapCoordinatePicker";
 import type { GameConfigController } from "./useGameConfigDraft";
 
 type GameConfigPanelProps = {
   draft: GameConfigController;
+  onNavigate: (target: EditorContentNavigationTarget) => void;
   snapshot: ContentCatalogSnapshot;
 };
 
@@ -18,7 +22,11 @@ type GameConfigPanelProps = {
  * Only defaultZoneId and safeRespawn are editable here; the rest of the config
  * is preserved and the file is re-serialized with its inline inventory intact.
  */
-export function GameConfigPanel({ draft, snapshot }: GameConfigPanelProps) {
+export function GameConfigPanel({
+  draft,
+  onNavigate,
+  snapshot,
+}: GameConfigPanelProps) {
   const [isRespawnPickerOpen, setRespawnPickerOpen] = useState(false);
   const {
     draft: config,
@@ -154,16 +162,10 @@ export function GameConfigPanel({ draft, snapshot }: GameConfigPanelProps) {
               {diagnostics.length === 0 ? (
                 <p className="editor-empty">No problems.</p>
               ) : (
-                <ul className="editor-diagnostic-list">
-                  {diagnostics.map((diagnostic, index) => (
-                    <li
-                      className={`editor-diagnostic editor-diagnostic--${diagnostic.severity}`}
-                      key={`${diagnostic.path}-${index}`}
-                    >
-                      {formatContentDiagnostic(diagnostic)}
-                    </li>
-                  ))}
-                </ul>
+                <DiagnosticList
+                  diagnostics={diagnostics}
+                  onNavigate={onNavigate}
+                />
               )}
             </section>
           </TerminalPanel>

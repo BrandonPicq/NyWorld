@@ -2,7 +2,6 @@ import {
   formatContentDiagnostic,
   NPC_IMPORTANCE_OPTIONS,
   NPC_RACE_OPTIONS,
-  type ContentReference,
   type NpcDef,
   type NpcImportance,
   type NpcRace,
@@ -11,14 +10,16 @@ import { IdentifierLabel } from "../../components/IdentifierLabel";
 import { ScrollRegion } from "../../components/ScrollRegion";
 import { TerminalButton } from "../../components/TerminalButton";
 import { TerminalPanel } from "../../components/TerminalPanel";
-import { formatContentRef } from "../editorModel";
+import type { EditorContentNavigationTarget } from "../DiagnosticList";
+import { ReferenceList } from "../ReferenceList";
 import type { NpcDraftController } from "./useNpcDraft";
 
 type NpcTabProps = {
   draft: NpcDraftController;
+  onNavigate: (target: EditorContentNavigationTarget) => void;
 };
 
-export function NpcTab({ draft }: NpcTabProps) {
+export function NpcTab({ draft, onNavigate }: NpcTabProps) {
   return (
     <>
       <section className="editor-summary" aria-label="NPC summary">
@@ -151,9 +152,12 @@ export function NpcTab({ draft }: NpcTabProps) {
               )}
             </section>
 
-            <NpcReferences
+            <ReferenceList
+              emptyLabel="No incoming references."
+              onNavigate={onNavigate}
               references={draft.selectedNpcReferences}
               title="Incoming References"
+              useTarget={false}
             />
           </TerminalPanel>
         </ScrollRegion>
@@ -379,32 +383,6 @@ function InlineProblems({ problems }: { problems: string[] }) {
         </li>
       ))}
     </ul>
-  );
-}
-
-function NpcReferences({
-  references,
-  title,
-}: {
-  references: ContentReference[];
-  title: string;
-}) {
-  return (
-    <section className="editor-reference-list">
-      <h3>{title}</h3>
-      {references.length === 0 ? (
-        <p className="editor-empty">No incoming references.</p>
-      ) : (
-        <ul>
-          {references.map((reference, index) => (
-            <li key={`${reference.from.type}-${reference.from.id}-${index}`}>
-              <span>{formatContentRef(reference.from)}</span>
-              <strong>{reference.path}</strong>
-            </li>
-          ))}
-        </ul>
-      )}
-    </section>
   );
 }
 

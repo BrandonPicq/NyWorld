@@ -3,12 +3,14 @@ import { IdentifierLabel } from "../../components/IdentifierLabel";
 import { ScrollRegion } from "../../components/ScrollRegion";
 import { TerminalButton } from "../../components/TerminalButton";
 import { TerminalPanel } from "../../components/TerminalPanel";
+import type { EditorContentNavigationTarget } from "../DiagnosticList";
 import { ZoneCreateForm } from "./ZoneCreateForm";
 import { ZoneDraftEditor } from "./ZoneDraftEditor";
 import type { ZoneDraftController } from "./useZoneDraft";
 
 type ZoneEditorPanelProps = {
   draft: ZoneDraftController;
+  onNavigate: (target: EditorContentNavigationTarget) => void;
   snapshot: ContentCatalogSnapshot;
 };
 
@@ -19,7 +21,11 @@ type ZoneEditorPanelProps = {
  * owner (keyed by zone id), so unsaved edits and validation are visible across
  * tabs; this panel only orchestrates the list and the paint surface.
  */
-export function ZoneEditorPanel({ draft, snapshot }: ZoneEditorPanelProps) {
+export function ZoneEditorPanel({
+  draft,
+  onNavigate,
+  snapshot,
+}: ZoneEditorPanelProps) {
   const { zones, selectedZoneId, selectZone } = draft;
 
   return (
@@ -52,7 +58,11 @@ export function ZoneEditorPanel({ draft, snapshot }: ZoneEditorPanelProps) {
       </ScrollRegion>
 
       {draft.draft && draft.renderSnapshot ? (
-        <ZoneDraftEditor controller={draft} snapshot={snapshot} />
+        <ZoneDraftEditor
+          controller={draft}
+          onNavigate={onNavigate}
+          snapshot={snapshot}
+        />
       ) : (
         <>
           <ScrollRegion className="workbench__main">

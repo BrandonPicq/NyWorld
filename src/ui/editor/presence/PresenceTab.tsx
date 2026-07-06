@@ -2,7 +2,6 @@ import { useState } from "react";
 import {
   formatContentDiagnostic,
   type ContentCatalogSnapshot,
-  type ContentReference,
   type NpcPresenceDef,
 } from "../../../engine";
 import type { GridCell } from "../../../rendering/canvasCellMapping";
@@ -10,13 +9,15 @@ import { IdentifierLabel } from "../../components/IdentifierLabel";
 import { ScrollRegion } from "../../components/ScrollRegion";
 import { TerminalButton } from "../../components/TerminalButton";
 import { TerminalPanel } from "../../components/TerminalPanel";
-import { formatContentRef } from "../editorModel";
+import type { EditorContentNavigationTarget } from "../DiagnosticList";
 import { MapCoordinatePicker } from "../MapCoordinatePicker";
+import { ReferenceList } from "../ReferenceList";
 import { ScheduleEntriesEditor } from "../ScheduleEntriesEditor";
 import type { NpcPresenceDraftController } from "./useNpcPresenceDraft";
 
 type PresenceTabProps = {
   draft: NpcPresenceDraftController;
+  onNavigate: (target: EditorContentNavigationTarget) => void;
   snapshot: ContentCatalogSnapshot;
 };
 
@@ -26,7 +27,11 @@ type CoordinatePickerRequest = {
   onPick: (cell: GridCell) => void;
 };
 
-export function PresenceTab({ draft, snapshot }: PresenceTabProps) {
+export function PresenceTab({
+  draft,
+  onNavigate,
+  snapshot,
+}: PresenceTabProps) {
   const [coordinatePicker, setCoordinatePicker] =
     useState<CoordinatePickerRequest | null>(null);
   const presenceCount = draft.npcs.filter((npc) => npc.hasPresence).length;
@@ -114,9 +119,12 @@ export function PresenceTab({ draft, snapshot }: PresenceTabProps) {
               )}
             </section>
 
-            <PresenceReferences
+            <ReferenceList
+              emptyLabel="No incoming references."
+              onNavigate={onNavigate}
               references={draft.selectedPresenceReferences}
               title="Incoming References"
+              useTarget={false}
             />
           </TerminalPanel>
         </ScrollRegion>
@@ -235,32 +243,6 @@ function PresenceForm({
       >
         {draft.saveStatus.message}
       </p>
-    </section>
-  );
-}
-
-function PresenceReferences({
-  references,
-  title,
-}: {
-  references: ContentReference[];
-  title: string;
-}) {
-  return (
-    <section className="editor-reference-list">
-      <h3>{title}</h3>
-      {references.length === 0 ? (
-        <p className="editor-empty">No incoming references.</p>
-      ) : (
-        <ul>
-          {references.map((reference, index) => (
-            <li key={`${reference.from.type}-${reference.from.id}-${index}`}>
-              <span>{formatContentRef(reference.from)}</span>
-              <strong>{reference.path}</strong>
-            </li>
-          ))}
-        </ul>
-      )}
     </section>
   );
 }

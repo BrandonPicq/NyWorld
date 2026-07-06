@@ -1,15 +1,16 @@
-import type { ContentRef, ContentReference } from "../../engine";
+import type { ContentReference } from "../../engine";
+import type { EditorContentNavigationTarget } from "./DiagnosticList";
 import { formatContentRef } from "./editorModel";
 
 export function ReferenceList({
   emptyLabel,
-  onSelectRef,
+  onNavigate,
   references,
   title,
   useTarget,
 }: {
   emptyLabel: string;
-  onSelectRef: (ref: ContentRef) => void;
+  onNavigate: (target: EditorContentNavigationTarget) => void;
   references: ContentReference[];
   title: string;
   useTarget: boolean;
@@ -27,7 +28,7 @@ export function ReferenceList({
               <li key={`${reference.path}-${index}`}>
                 <button
                   className="editor-reference-link"
-                  onClick={() => onSelectRef(linkedRef)}
+                  onClick={() => onNavigate(linkedRef)}
                   type="button"
                 >
                   {formatContentRef(linkedRef)}

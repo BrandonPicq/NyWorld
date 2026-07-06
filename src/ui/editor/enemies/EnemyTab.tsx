@@ -1,13 +1,13 @@
 import {
   formatContentDiagnostic,
-  type ContentReference,
   type EnemyDef,
 } from "../../../engine";
 import { IdentifierLabel } from "../../components/IdentifierLabel";
 import { ScrollRegion } from "../../components/ScrollRegion";
 import { TerminalButton } from "../../components/TerminalButton";
 import { TerminalPanel } from "../../components/TerminalPanel";
-import { formatContentRef } from "../editorModel";
+import type { EditorContentNavigationTarget } from "../DiagnosticList";
+import { ReferenceList } from "../ReferenceList";
 import {
   addEnemyLootEntry,
   ENEMY_STAT_SECTIONS,
@@ -21,9 +21,10 @@ import type { EnemyDraftController } from "./useEnemyDraft";
 
 type EnemyTabProps = {
   draft: EnemyDraftController;
+  onNavigate: (target: EditorContentNavigationTarget) => void;
 };
 
-export function EnemyTab({ draft }: EnemyTabProps) {
+export function EnemyTab({ draft, onNavigate }: EnemyTabProps) {
   const profileCount = draft.npcs.filter((npc) => npc.hasProfile).length;
 
   return (
@@ -107,9 +108,12 @@ export function EnemyTab({ draft }: EnemyTabProps) {
               )}
             </section>
 
-            <EnemyReferences
+            <ReferenceList
+              emptyLabel="No incoming references."
+              onNavigate={onNavigate}
               references={draft.selectedEnemyReferences}
               title="Incoming References"
+              useTarget={false}
             />
           </TerminalPanel>
         </ScrollRegion>
@@ -404,32 +408,6 @@ function BalanceHint() {
         Tutorial fights: 2-4 strong attacks. First threats: 4-7. Later danger:
         6-10. Favor one clear strength before adding HP.
       </p>
-    </section>
-  );
-}
-
-function EnemyReferences({
-  references,
-  title,
-}: {
-  references: ContentReference[];
-  title: string;
-}) {
-  return (
-    <section className="editor-reference-list">
-      <h3>{title}</h3>
-      {references.length === 0 ? (
-        <p className="editor-empty">No incoming references.</p>
-      ) : (
-        <ul>
-          {references.map((reference, index) => (
-            <li key={`${reference.from.type}-${reference.from.id}-${index}`}>
-              <span>{formatContentRef(reference.from)}</span>
-              <strong>{reference.path}</strong>
-            </li>
-          ))}
-        </ul>
-      )}
     </section>
   );
 }
