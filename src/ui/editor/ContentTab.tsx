@@ -137,7 +137,7 @@ export function ContentTab({ draft, onNavigate }: ContentTabProps) {
               itemIdDraft={draft.itemIdDraft}
               onApplyItemId={draft.renameSelectedItem}
               onCategoryChange={(category) =>
-                updateSelectedItem((item) => ({ ...item, category }))
+                updateSelectedItem((item) => updateItemCategory(item, category))
               }
               onDefaultQuantityChange={(value) =>
                 updateSelectedItem((item) => ({
@@ -151,6 +151,7 @@ export function ContentTab({ draft, onNavigate }: ContentTabProps) {
               onEffectChange={(field, value) =>
                 updateSelectedItem((item) => updateItemEffect(item, field, value))
               }
+              onUpdateItem={updateSelectedItem}
               onItemIdDraftChange={draft.setItemIdDraft}
               onNameChange={(name) =>
                 updateSelectedItem((item) => ({ ...item, name }))
@@ -219,4 +220,23 @@ function updateItemEffect(
     ...item,
     effects: Object.keys(effects).length > 0 ? effects : undefined,
   };
+}
+
+function updateItemCategory(
+  item: ItemDef,
+  category: ItemDef["category"],
+): ItemDef {
+  if (category === "equipment") {
+    return {
+      ...item,
+      category,
+      equipment: item.equipment ?? {
+        slot: "weapon",
+        weaponType: "sword",
+        bonuses: { "combat.attack": 1 },
+      },
+    };
+  }
+
+  return { ...item, category, equipment: undefined };
 }

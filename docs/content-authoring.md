@@ -190,6 +190,11 @@ applies when the item is used during exploration, `hpRestore` when it is used
 during combat. A consumable without effects is rejected on use with a player
 notice.
 
+Equipment items use `category: "equipment"` plus an `equipment` block with a
+slot, an optional `weaponType` for weapon-slot items, and flat bonuses. Bonuses
+may target attributes, combat values, or maximum resources (`maxHp`, `maxMp`,
+`maxSp`, `maxEnergy`), but never current resource values.
+
 ## Combat Actions
 
 Combat action files own the player-facing texts (name, summary, formula,

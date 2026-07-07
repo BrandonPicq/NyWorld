@@ -1,8 +1,14 @@
 import {
   CONTENT_TYPES,
+  EQUIPMENT_BONUS_OPTIONS,
+  EQUIPMENT_SLOT_OPTIONS,
+  EQUIPMENT_WEAPON_TYPE_OPTIONS,
   formatContentDiagnostic,
   ITEM_CATEGORY_OPTIONS,
   validateItemCatalog,
+  type EquipmentBonusKey,
+  type EquipmentSlot,
+  type EquipmentWeaponType,
   type ContentRef,
   type ItemDef,
 } from "../../engine";
@@ -23,6 +29,7 @@ export function ItemDraftEditor({
   onEffectChange,
   onItemIdDraftChange,
   onNameChange,
+  onUpdateItem,
   onReset,
   onSave,
   saveStatus,
@@ -44,6 +51,7 @@ export function ItemDraftEditor({
   ) => void;
   onItemIdDraftChange: (itemId: string) => void;
   onNameChange: (name: string) => void;
+  onUpdateItem: (updater: (item: ItemDef) => ItemDef) => void;
   onReset: () => void;
   onSave: () => void;
   saveStatus: SaveStatus;
@@ -183,6 +191,14 @@ export function ItemDraftEditor({
           </label>
         </div>
 
+        {item.category === "equipment" ? (
+          <EquipmentEditor
+            isSaving={isSaving}
+            item={item}
+            onUpdateItem={onUpdateItem}
+          />
+        ) : null}
+
         {itemDiagnostics.length > 0 && (
           <ul className="editor-inline-diagnostics">
             {itemDiagnostics.map((diagnostic, index) => (
@@ -222,4 +238,125 @@ export function ItemDraftEditor({
       </div>
     </section>
   );
+}
+
+function EquipmentEditor({
+  isSaving,
+  item,
+  onUpdateItem,
+}: {
+  isSaving: boolean;
+  item: ItemDef;
+  onUpdateItem: (updater: (item: ItemDef) => ItemDef) => void;
+}) {
+  const equipment = item.equipment ?? {
+    slot: "weapon" as const,
+    weaponType: "sword" as const,
+    bonuses: { "combat.attack": 1 },
+  };
+
+  return (
+    <section className="editor-zone-section">
+      <h3>Equipment</h3>
+      <div className="editor-form-row">
+        <label className="editor-field">
+          <span>Slot</span>
+          <select
+            disabled={isSaving}
+            onChange={(event) => {
+              const slot = event.target.value as EquipmentSlot;
+              onUpdateItem((current) => ({
+                ...current,
+                equipment: {
+                  ...(current.equipment ?? equipment),
+                  slot,
+                  weaponType:
+                    slot === "weapon"
+                      ? current.equipment?.weaponType ?? "sword"
+                      : undefined,
+                },
+              }));
+            }}
+            value={equipment.slot}
+          >
+            {EQUIPMENT_SLOT_OPTIONS.map((slot) => (
+              <option key={slot} value={slot}>
+                {slot}
+              </option>
+            ))}
+          </select>
+        </label>
+
+        <label className="editor-field">
+          <span>Weapon Type</span>
+          <select
+            disabled={isSaving || equipment.slot !== "weapon"}
+            onChange={(event) =>
+              onUpdateItem((current) => ({
+                ...current,
+                equipment: {
+                  ...(current.equipment ?? equipment),
+                  slot: "weapon",
+                  weaponType: event.target.value as EquipmentWeaponType,
+                },
+              }))
+            }
+            value={equipment.weaponType ?? ""}
+          >
+            <option value="">none</option>
+            {EQUIPMENT_WEAPON_TYPE_OPTIONS.map((weaponType) => (
+              <option key={weaponType} value={weaponType}>
+                {weaponType}
+              </option>
+            ))}
+          </select>
+        </label>
+      </div>
+
+      <div className="editor-stat-grid">
+        {EQUIPMENT_BONUS_OPTIONS.map((bonusKey) => (
+          <label className="editor-field" key={bonusKey}>
+            <span>{bonusKey}</span>
+            <input
+              disabled={isSaving}
+              onChange={(event) =>
+                onUpdateItem((current) =>
+                  updateEquipmentBonus(current, bonusKey, event.target.value),
+                )
+              }
+              step={1}
+              type="number"
+              value={equipment.bonuses[bonusKey] ?? ""}
+            />
+          </label>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function updateEquipmentBonus(
+  item: ItemDef,
+  bonusKey: EquipmentBonusKey,
+  value: string,
+): ItemDef {
+  const equipment = item.equipment ?? {
+    slot: "weapon" as const,
+    weaponType: "sword" as const,
+    bonuses: {},
+  };
+  const bonuses = { ...equipment.bonuses };
+  if (!value.trim()) {
+    delete bonuses[bonusKey];
+  } else {
+    bonuses[bonusKey] = Number(value);
+  }
+
+  return {
+    ...item,
+    equipment: {
+      ...equipment,
+      bonuses,
+    },
+  };
 }

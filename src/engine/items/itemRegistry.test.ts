@@ -61,7 +61,7 @@ describe("validateItemCatalog", () => {
           contentId: "broken_item",
           path: "category",
           message:
-            'Item "broken_item" has invalid category "weapon". Expected one of: quest, consumable, material, misc.',
+            'Item "broken_item" has invalid category "weapon". Expected one of: quest, consumable, material, equipment, misc.',
         }),
         expect.objectContaining({
           contentId: "broken_item",
@@ -131,6 +131,71 @@ describe("validateItemCatalog", () => {
     ]);
   });
 
+  it("validates equipment blocks", () => {
+    expect(
+      validateItemCatalog({
+        training_sword: {
+          name: "Training Sword",
+          description: "A safe practice blade.",
+          category: "equipment",
+          defaultQuantity: 1,
+          equipment: {
+            slot: "weapon",
+            weaponType: "sword",
+            bonuses: { "combat.attack": 1 },
+          },
+        },
+      }),
+    ).toEqual([]);
+  });
+
+  it("rejects malformed equipment blocks", () => {
+    const diagnostics = validateItemCatalog({
+      broken_sword: {
+        name: "Broken Sword",
+        description: "It barely knows what it is.",
+        category: "equipment",
+        defaultQuantity: 1,
+        equipment: {
+          slot: "weapon",
+          bonuses: { luck: 1, "combat.attack": 0 },
+        },
+      },
+      fake_hat: {
+        name: "Fake Hat",
+        description: "A material pretending to be equipment.",
+        category: "material",
+        defaultQuantity: 1,
+        equipment: {
+          slot: "head",
+          weaponType: "sword",
+          bonuses: {},
+        },
+      },
+    });
+
+    expect(diagnostics).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          contentId: "broken_sword",
+          path: "equipment.weaponType",
+        }),
+        expect.objectContaining({
+          contentId: "broken_sword",
+          path: "equipment.bonuses.luck",
+        }),
+        expect.objectContaining({
+          contentId: "broken_sword",
+          path: "equipment.bonuses.combat.attack",
+        }),
+        expect.objectContaining({
+          contentId: "fake_hat",
+          path: "equipment",
+        }),
+      ]),
+    );
+  });
+
   it("reports empty item ids", () => {
     const diagnostics = validateItemCatalog({
       "": {
@@ -180,6 +245,7 @@ describe("itemRegistry", () => {
       expect.objectContaining({ name: "Unknown Item", category: "misc" }),
     );
     expect(def.effects).toBeUndefined();
+    expect(def.equipment).toBeUndefined();
   });
 
   it("exposes authored consumable effects", () => {
@@ -220,9 +286,33 @@ describe("itemRegistry", () => {
     const fallback = getItemDef("missing_overlay_item");
     expect(fallback.name).toBe("Unknown Item");
     expect(fallback.effects).toBeUndefined();
+    expect(fallback.equipment).toBeUndefined();
 
     clearItemContentOverlay();
     expect(getAllItemIds()).toEqual(shippedIds);
     expect(hasItemDef("draft_ration")).toBe(false);
+  });
+
+  it("returns detached equipment definitions", () => {
+    installItemContentOverlay({
+      draft_sword: {
+        name: "Draft Sword",
+        description: "A draft equipment item.",
+        category: "equipment",
+        defaultQuantity: 1,
+        equipment: {
+          slot: "weapon",
+          weaponType: "sword",
+          bonuses: { "combat.attack": 1 },
+        },
+      },
+    });
+
+    const firstRead = getItemDef("draft_sword");
+    firstRead.equipment!.bonuses["combat.attack"] = 99;
+
+    expect(getItemDef("draft_sword").equipment!.bonuses["combat.attack"]).toBe(
+      1,
+    );
   });
 });

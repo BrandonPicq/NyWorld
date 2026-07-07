@@ -3,7 +3,12 @@ import type { Component } from "../ecs/types";
 /**
  * Broad item families used by UI grouping and future gameplay rules.
  */
-export type InventoryItemCategory = "quest" | "consumable" | "material" | "misc";
+export type InventoryItemCategory =
+  | "quest"
+  | "consumable"
+  | "material"
+  | "equipment"
+  | "misc";
 
 /**
  * Quantity of one item type held by an inventory.

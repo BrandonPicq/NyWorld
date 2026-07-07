@@ -2,7 +2,12 @@ import itemsData from "../../content/items/items.json";
 import type { ContentDiagnostic } from "../content/ContentDiagnostic";
 import { formatContentDiagnostic } from "../content/ContentDiagnostic";
 import { CONTENT_TYPES } from "../content/contentTypes";
-import { ITEM_CATEGORY_OPTIONS } from "../content/editingMetadata";
+import {
+  EQUIPMENT_BONUS_OPTIONS,
+  EQUIPMENT_SLOT_OPTIONS,
+  EQUIPMENT_WEAPON_TYPE_OPTIONS,
+  ITEM_CATEGORY_OPTIONS,
+} from "../content/editingMetadata";
 import type { ItemDef, ItemDefMap } from "./ItemDef";
 
 const ITEM_CONTENT_TYPE = CONTENT_TYPES.item;
@@ -118,6 +123,26 @@ function validateItemDef(
   if (value.effects !== undefined) {
     validateItemEffects(itemId, value.effects, value.category, diagnostics);
   }
+
+  if (value.category === "equipment") {
+    if (value.equipment === undefined) {
+      addItemError(
+        diagnostics,
+        itemId,
+        "equipment",
+        `Item "${itemId}" is equipment but has no equipment block.`,
+      );
+    } else {
+      validateItemEquipment(itemId, value.equipment, diagnostics);
+    }
+  } else if (value.equipment !== undefined) {
+    addItemError(
+      diagnostics,
+      itemId,
+      "equipment",
+      `Item "${itemId}" declares equipment data but is not equipment.`,
+    );
+  }
 }
 
 function validateItemEffects(
@@ -167,6 +192,109 @@ function validateItemEffects(
   }
 }
 
+function validateItemEquipment(
+  itemId: string,
+  value: unknown,
+  diagnostics: ContentDiagnostic[],
+): void {
+  if (!isRecord(value)) {
+    addItemError(
+      diagnostics,
+      itemId,
+      "equipment",
+      `Item "${itemId}" equipment must be an object.`,
+    );
+    return;
+  }
+
+  if (
+    typeof value.slot !== "string" ||
+    !(EQUIPMENT_SLOT_OPTIONS as readonly string[]).includes(value.slot)
+  ) {
+    addItemError(
+      diagnostics,
+      itemId,
+      "equipment.slot",
+      `Item "${itemId}" has invalid equipment slot.`,
+    );
+  }
+
+  if (value.slot === "weapon") {
+    if (
+      typeof value.weaponType !== "string" ||
+      !(EQUIPMENT_WEAPON_TYPE_OPTIONS as readonly string[]).includes(
+        value.weaponType,
+      )
+    ) {
+      addItemError(
+        diagnostics,
+        itemId,
+        "equipment.weaponType",
+        `Item "${itemId}" weapon equipment must declare a valid weaponType.`,
+      );
+    }
+  } else if (value.weaponType !== undefined) {
+    addItemError(
+      diagnostics,
+      itemId,
+      "equipment.weaponType",
+      `Item "${itemId}" declares weaponType but is not in the weapon slot.`,
+    );
+  }
+
+  validateEquipmentBonuses(itemId, value.bonuses, diagnostics);
+}
+
+function validateEquipmentBonuses(
+  itemId: string,
+  value: unknown,
+  diagnostics: ContentDiagnostic[],
+): void {
+  if (!isRecord(value)) {
+    addItemError(
+      diagnostics,
+      itemId,
+      "equipment.bonuses",
+      `Item "${itemId}" equipment bonuses must be an object.`,
+    );
+    return;
+  }
+
+  if (Object.keys(value).length === 0) {
+    addItemError(
+      diagnostics,
+      itemId,
+      "equipment.bonuses",
+      `Item "${itemId}" equipment bonuses cannot be empty.`,
+    );
+  }
+
+  for (const [bonusKey, amount] of Object.entries(value)) {
+    if (!(EQUIPMENT_BONUS_OPTIONS as readonly string[]).includes(bonusKey)) {
+      addItemError(
+        diagnostics,
+        itemId,
+        `equipment.bonuses.${bonusKey}`,
+        `Item "${itemId}" has unknown equipment bonus "${bonusKey}".`,
+      );
+      continue;
+    }
+
+    if (
+      typeof amount !== "number" ||
+      !Number.isInteger(amount) ||
+      amount === 0
+    ) {
+      addItemError(
+        diagnostics,
+        itemId,
+        `equipment.bonuses.${bonusKey}`,
+        `Item "${itemId}" has invalid equipment bonus "${bonusKey}". Expected a non-zero integer.`,
+      );
+    }
+  }
+}
+
 function buildRegistry(value: unknown): ItemDefMap {
   const diagnostics = validateItemCatalog(value);
   const firstError = diagnostics.find(
@@ -187,6 +315,12 @@ function cloneItemDef(def: ItemDef): ItemDef {
   return {
     ...def,
     effects: def.effects ? { ...def.effects } : undefined,
+    equipment: def.equipment
+      ? {
+          ...def.equipment,
+          bonuses: { ...def.equipment.bonuses },
+        }
+      : undefined,
   };
 }
 

@@ -1,4 +1,30 @@
 import type { InventoryItemCategory } from "../components/Inventory";
+import type {
+  EquipmentArmorSlot,
+  EquipmentWeaponType,
+} from "../classes/ClassDef";
+
+export type EquipmentSlot = "weapon" | EquipmentArmorSlot;
+
+export type EquipmentBonusKey =
+  | "attributes.strength"
+  | "attributes.vitality"
+  | "attributes.agility"
+  | "attributes.intelligence"
+  | "attributes.spirit"
+  | "attributes.willpower"
+  | "attributes.perception"
+  | "attributes.charisma"
+  | "combat.attack"
+  | "combat.magicAttack"
+  | "combat.defense"
+  | "combat.magicDefense"
+  | "resources.maxHp"
+  | "resources.maxMp"
+  | "resources.maxSp"
+  | "resources.maxEnergy";
+
+export type EquipmentBonusMap = Partial<Record<EquipmentBonusKey, number>>;
 
 /**
  * Authored gameplay effects applied when a consumable item is used.
@@ -11,6 +37,12 @@ export interface ItemEffects {
   energyRestore?: number;
   /** HP restored when used during combat. */
   hpRestore?: number;
+}
+
+export interface EquipmentDef {
+  slot: EquipmentSlot;
+  weaponType?: EquipmentWeaponType;
+  bonuses: EquipmentBonusMap;
 }
 
 /**
@@ -31,6 +63,8 @@ export interface ItemDef {
   defaultQuantity: number;
   /** Optional use effects; consumables without effects are rejected on use. */
   effects?: ItemEffects;
+  /** Optional equipment data; only valid for category "equipment". */
+  equipment?: EquipmentDef;
 }
 
 /**

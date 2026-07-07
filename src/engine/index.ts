@@ -80,6 +80,8 @@ export {
   COMBAT_ACTION_CATEGORY_OPTIONS,
   CORE_ATTRIBUTE_OPTIONS,
   EQUIPMENT_ARMOR_SLOT_OPTIONS,
+  EQUIPMENT_BONUS_OPTIONS,
+  EQUIPMENT_SLOT_OPTIONS,
   EQUIPMENT_WEAPON_TYPE_OPTIONS,
   ITEM_CATEGORY_OPTIONS,
   NPC_IMPORTANCE_OPTIONS,
@@ -239,7 +241,15 @@ export {
   hasItemDef,
   validateItemCatalog,
 } from "./items/itemRegistry";
-export type { ItemDef, ItemDefMap, ItemEffects } from "./items/ItemDef";
+export type {
+  EquipmentBonusKey,
+  EquipmentBonusMap,
+  EquipmentDef,
+  EquipmentSlot,
+  ItemDef,
+  ItemDefMap,
+  ItemEffects,
+} from "./items/ItemDef";
 export { getItemMapPresentation } from "./items/itemMapPresentation";
 export type { ItemMapPresentation } from "./items/itemMapPresentation";
 export {

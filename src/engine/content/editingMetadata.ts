@@ -3,6 +3,10 @@ import type {
   EquipmentArmorSlot,
   EquipmentWeaponType,
 } from "../classes/ClassDef";
+import type {
+  EquipmentBonusKey,
+  EquipmentSlot,
+} from "../items/ItemDef";
 import type { NpcImportance, NpcRace } from "../npcs/NpcDef";
 import type { StatPath } from "../stats/characterStats";
 
@@ -10,6 +14,7 @@ export const ITEM_CATEGORY_OPTIONS = [
   "quest",
   "consumable",
   "material",
+  "equipment",
   "misc",
 ] as const;
 
@@ -45,6 +50,30 @@ export const EQUIPMENT_ARMOR_SLOT_OPTIONS = [
   "feet",
   "accessory",
 ] as const satisfies readonly EquipmentArmorSlot[];
+
+export const EQUIPMENT_SLOT_OPTIONS = [
+  "weapon",
+  ...EQUIPMENT_ARMOR_SLOT_OPTIONS,
+] as const satisfies readonly EquipmentSlot[];
+
+export const EQUIPMENT_BONUS_OPTIONS = [
+  "attributes.strength",
+  "attributes.vitality",
+  "attributes.agility",
+  "attributes.intelligence",
+  "attributes.spirit",
+  "attributes.willpower",
+  "attributes.perception",
+  "attributes.charisma",
+  "combat.attack",
+  "combat.magicAttack",
+  "combat.defense",
+  "combat.magicDefense",
+  "resources.maxHp",
+  "resources.maxMp",
+  "resources.maxSp",
+  "resources.maxEnergy",
+] as const satisfies readonly EquipmentBonusKey[];
 
 export const NPC_RACE_OPTIONS = [
   "human",

@@ -12,6 +12,7 @@ const CATEGORY_COLORS: Record<InventoryItemCategory, string> = {
   quest: "#cba6f7",
   consumable: "#a6e3a1",
   material: "#cdd6f4",
+  equipment: "#89b4fa",
   misc: "#f9e2af",
 };
 

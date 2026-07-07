@@ -307,5 +307,11 @@ function cloneItem(item: ItemDef): ItemDef {
   return {
     ...item,
     effects: item.effects ? { ...item.effects } : undefined,
+    equipment: item.equipment
+      ? {
+          ...item.equipment,
+          bonuses: { ...item.equipment.bonuses },
+        }
+      : undefined,
   };
 }

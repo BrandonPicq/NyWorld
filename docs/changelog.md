@@ -4,6 +4,12 @@ This file tracks meaningful project changes by commit-oriented slices.
 
 Keep entries short and practical. When a slice is committed, its changelog section should stay aligned with the commit title so the project history remains easy to read after restores or bisects.
 
+## 2026-07-07 - [ADD]: Equipment item content model
+
+- Extend item content with equipment category data: slots, weapon types, and flat bonuses for attributes, combat stats, and max resources.
+- Validate equipment blocks in the item registry while keeping unknown item fallbacks inert.
+- Add equipment fields to the item editor and inventory/map presentation support for the equipment category.
+
 ## 2026-07-07 - [ADD]: Layered stat derivation
 
 - Add pure layered stat derivation for base attributes, global growth, active class growth, race fractional buffers, and a future equipment layer.
