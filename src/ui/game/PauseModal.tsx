@@ -5,18 +5,22 @@ import { playMenuConfirmSound, playMenuMoveSound } from "../audio/menuAudio";
 
 type PauseModalProps = {
   audioSettings: AudioSettings;
+  canSave?: boolean;
   onClose: () => void;
   onOpenOptions: () => void;
   onQuit: () => void;
   onSave: () => void;
+  quitLabel?: string;
 };
 
 export function PauseModal({
   audioSettings,
+  canSave = true,
   onClose,
   onOpenOptions,
   onQuit,
   onSave,
+  quitLabel = "Quit to Title",
 }: PauseModalProps) {
   const menuFeedback = {
     onActivateItem: () => {
@@ -47,12 +51,16 @@ export function PauseModal({
       label: "Options",
       onSelect: () => onOpenOptions(),
     },
+    ...(canSave
+      ? [
+          {
+            label: "Save Game",
+            onSelect: () => onSave(),
+          },
+        ]
+      : []),
     {
-      label: "Save Game",
-      onSelect: () => onSave(),
-    },
-    {
-      label: "Quit to Title",
+      label: quitLabel,
       onSelect: () => onQuit(),
     },
   ];

@@ -60,23 +60,42 @@ const enemyDefs = getSortedContentModules(
   }),
 );
 
+let overlayRegistry: EnemyDefMap | null = null;
+
 const registry = buildRegistry(enemyDefs);
 
 export function hasEnemyDef(npcId: string): boolean {
-  return Object.prototype.hasOwnProperty.call(registry, npcId);
+  return Object.prototype.hasOwnProperty.call(getActiveRegistry(), npcId);
 }
 
 export function isCombatEnemy(npcId: string): boolean {
-  return registry[npcId]?.combatable === true;
+  return getActiveRegistry()[npcId]?.combatable === true;
 }
 
 export function getEnemyDef(npcId: string): EnemyDef | undefined {
-  const def = registry[npcId];
+  const def = getActiveRegistry()[npcId];
   return def ? cloneEnemyDef(def) : undefined;
 }
 
 export function getAllEnemyDefs(): EnemyDef[] {
-  return Object.values(registry).map(cloneEnemyDef);
+  return Object.values(getActiveRegistry()).map(cloneEnemyDef);
+}
+
+export function installEnemyContentOverlay(defs: readonly EnemyDef[]): void {
+  if (!import.meta.env.DEV) return;
+  overlayRegistry = buildRegistry(defs);
+}
+
+export function clearEnemyContentOverlay(): void {
+  overlayRegistry = null;
+}
+
+function getActiveRegistry(): EnemyDefMap {
+  return overlayRegistry ?? registry;
+}
+
+if (import.meta.hot) {
+  import.meta.hot.dispose(clearEnemyContentOverlay);
 }
 
 /**

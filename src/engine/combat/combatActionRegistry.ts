@@ -45,6 +45,8 @@ const combatActionDefs = getSortedContentModules(
   }),
 );
 
+let overlayRegistry: CombatActionDefMap | null = null;
+
 const registry = buildRegistry(combatActionDefs);
 
 const fallback: CombatActionDef = {
@@ -59,18 +61,37 @@ const fallback: CombatActionDef = {
 };
 
 export function hasCombatActionDef(actionId: string): actionId is CombatActionId {
-  return Object.prototype.hasOwnProperty.call(registry, actionId);
+  return Object.prototype.hasOwnProperty.call(getActiveRegistry(), actionId);
 }
 
 export function getCombatActionDef(actionId: string): CombatActionDef {
-  const def = registry[actionId as CombatActionId];
+  const def = getActiveRegistry()[actionId as CombatActionId];
   return def ? cloneCombatActionDef(def) : cloneCombatActionDef(fallback);
 }
 
 export function getAllCombatActionDefs(): CombatActionDef[] {
-  return Object.values(registry)
+  return Object.values(getActiveRegistry())
     .sort((a, b) => a.order - b.order)
     .map(cloneCombatActionDef);
+}
+
+export function installCombatActionContentOverlay(
+  defs: readonly CombatActionDef[],
+): void {
+  if (!import.meta.env.DEV) return;
+  overlayRegistry = buildRegistry(defs);
+}
+
+export function clearCombatActionContentOverlay(): void {
+  overlayRegistry = null;
+}
+
+function getActiveRegistry(): CombatActionDefMap {
+  return overlayRegistry ?? registry;
+}
+
+if (import.meta.hot) {
+  import.meta.hot.dispose(clearCombatActionContentOverlay);
 }
 
 /**

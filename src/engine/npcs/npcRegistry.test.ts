@@ -1,13 +1,19 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it } from "vitest";
 import {
+  clearNpcContentOverlay,
   getAllNpcDefs,
   getNpcDef,
   hasNpcDef,
+  installNpcContentOverlay,
   validateNpcDef,
   validateNpcRegistry,
 } from "./npcRegistry";
 
 describe("npcRegistry", () => {
+  afterEach(() => {
+    clearNpcContentOverlay();
+  });
+
   it("exposes authored NPC character sheets", () => {
     const defs = getAllNpcDefs();
 
@@ -37,6 +43,30 @@ describe("npcRegistry", () => {
     }
 
     expect(getNpcDef(authored.npcId)).toEqual(authored);
+  });
+
+  it("serves detached draft NPC definitions from a dev content overlay", () => {
+    const shipped = getAllNpcDefs()[0];
+    const draft = { ...shipped, name: "Draft NPC" };
+
+    installNpcContentOverlay([draft]);
+
+    expect(getAllNpcDefs()).toEqual([draft]);
+    expect(hasNpcDef(draft.npcId)).toBe(true);
+    expect(getNpcDef(draft.npcId).name).toBe("Draft NPC");
+
+    const firstRead = getNpcDef(draft.npcId);
+    firstRead.name = "Mutated";
+    expect(getNpcDef(draft.npcId).name).toBe("Draft NPC");
+
+    expect(getNpcDef("missing_overlay_npc")).toMatchObject({
+      npcId: "unknown_npc",
+      name: "Unknown NPC",
+      defaultDialogueId: "unknown_npc.default",
+    });
+
+    clearNpcContentOverlay();
+    expect(getNpcDef(shipped.npcId)).toEqual(shipped);
   });
 });
 

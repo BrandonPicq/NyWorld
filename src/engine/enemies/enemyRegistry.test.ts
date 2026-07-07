@@ -1,11 +1,13 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it } from "vitest";
 import slimeData from "../../content/enemies/slime.json";
 import { createNpcStats } from "../stats/npcStats";
 import type { EnemyDef } from "./EnemyDef";
 import {
+  clearEnemyContentOverlay,
   getAllEnemyDefs,
   getEnemyDef,
   hasEnemyDef,
+  installEnemyContentOverlay,
   isCombatEnemy,
   validateEnemyDef,
   validateEnemyRegistry,
@@ -87,6 +89,10 @@ describe("validateEnemyRegistry", () => {
 });
 
 describe("enemyRegistry", () => {
+  afterEach(() => {
+    clearEnemyContentOverlay();
+  });
+
   it("loads combat enemy definitions from content", () => {
     expect(hasEnemyDef("slime")).toBe(true);
     expect(isCombatEnemy("slime")).toBe(true);
@@ -170,5 +176,29 @@ describe("enemyRegistry", () => {
       itemId: "mutated",
       quantity: 99,
     });
+  });
+
+  it("serves detached draft enemy definitions from a dev content overlay", () => {
+    const draft = {
+      ...slimeData,
+      combatable: false,
+      loot: [{ ...slimeData.loot[0], quantity: 3 }],
+    };
+
+    installEnemyContentOverlay([draft]);
+
+    expect(getAllEnemyDefs()).toEqual([draft]);
+    expect(hasEnemyDef("slime")).toBe(true);
+    expect(isCombatEnemy("slime")).toBe(false);
+    expect(getEnemyDef("slime")).toEqual(draft);
+
+    const firstRead = getEnemyDef("slime")!;
+    firstRead.loot[0].quantity = 99;
+    expect(getEnemyDef("slime")).toEqual(draft);
+
+    expect(getEnemyDef("missing_overlay_enemy")).toBeUndefined();
+
+    clearEnemyContentOverlay();
+    expect(getEnemyDef("slime")).toEqual(slimeData);
   });
 });

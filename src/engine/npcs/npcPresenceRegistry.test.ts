@@ -1,13 +1,19 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it } from "vitest";
 import {
+  clearNpcPresenceContentOverlay,
   getAllNpcPresenceDefs,
   getNpcPresenceDef,
   hasNpcPresenceDef,
+  installNpcPresenceContentOverlay,
   validateNpcPresenceDef,
   validateNpcPresenceRegistry,
 } from "./npcPresenceRegistry";
 
 describe("npcPresenceRegistry", () => {
+  afterEach(() => {
+    clearNpcPresenceContentOverlay();
+  });
+
   it("exposes authored NPC presence definitions", () => {
     for (const def of getAllNpcPresenceDefs()) {
       expect(hasNpcPresenceDef(def.npcId)).toBe(true);
@@ -35,6 +41,32 @@ describe("npcPresenceRegistry", () => {
 
     expect(firstRead).toEqual(secondRead);
     expect(firstRead).not.toBe(secondRead);
+  });
+
+  it("serves detached draft presence definitions from a dev content overlay", () => {
+    const shipped = getAllNpcPresenceDefs()[0];
+    if (!shipped) {
+      throw new Error("expected at least one shipped presence definition");
+    }
+    const draft = {
+      ...shipped,
+      schedule: [{ ...shipped.schedule[0], x: shipped.schedule[0].x + 1 }],
+    };
+
+    installNpcPresenceContentOverlay([draft]);
+
+    expect(getAllNpcPresenceDefs()).toEqual([draft]);
+    expect(hasNpcPresenceDef(draft.npcId)).toBe(true);
+    expect(getNpcPresenceDef(draft.npcId)).toEqual(draft);
+
+    const firstRead = getNpcPresenceDef(draft.npcId)!;
+    firstRead.schedule[0].x = 99;
+    expect(getNpcPresenceDef(draft.npcId)).toEqual(draft);
+
+    expect(getNpcPresenceDef("missing_overlay_presence")).toBeUndefined();
+
+    clearNpcPresenceContentOverlay();
+    expect(getNpcPresenceDef(shipped.npcId)).toEqual(shipped);
   });
 });
 

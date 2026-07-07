@@ -16,6 +16,8 @@ const fallback: ItemDef = {
   defaultQuantity: 1,
 };
 
+let overlayRegistry: ItemDefMap | null = null;
+
 const registry = buildRegistry(itemsData);
 
 /**
@@ -213,14 +215,14 @@ function isRecord(value: unknown): value is Record<string, unknown> {
  * Loaders use this to reject broken content references before gameplay starts.
  */
 export function hasItemDef(itemId: string): boolean {
-  return Object.prototype.hasOwnProperty.call(registry, itemId);
+  return Object.prototype.hasOwnProperty.call(getActiveRegistry(), itemId);
 }
 
 /**
  * Returns every registered item id in deterministic order.
  */
 export function getAllItemIds(): string[] {
-  return Object.keys(registry).sort();
+  return Object.keys(getActiveRegistry()).sort();
 }
 
 /**
@@ -230,6 +232,23 @@ export function getAllItemIds(): string[] {
  * should still validate ids with hasItemDef before accepting authored data.
  */
 export function getItemDef(itemId: string): ItemDef {
-  const def = registry[itemId];
+  const def = getActiveRegistry()[itemId];
   return def ? cloneItemDef(def) : cloneItemDef(fallback);
+}
+
+export function installItemContentOverlay(items: ItemDefMap): void {
+  if (!import.meta.env.DEV) return;
+  overlayRegistry = buildRegistry(items);
+}
+
+export function clearItemContentOverlay(): void {
+  overlayRegistry = null;
+}
+
+function getActiveRegistry(): ItemDefMap {
+  return overlayRegistry ?? registry;
+}
+
+if (import.meta.hot) {
+  import.meta.hot.dispose(clearItemContentOverlay);
 }

@@ -1,10 +1,12 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it } from "vitest";
 
 import itemsData from "../../content/items/items.json";
 import {
   getAllItemIds,
   getItemDef,
   hasItemDef,
+  clearItemContentOverlay,
+  installItemContentOverlay,
   validateItemCatalog,
 } from "./itemRegistry";
 
@@ -149,6 +151,10 @@ describe("validateItemCatalog", () => {
 });
 
 describe("itemRegistry", () => {
+  afterEach(() => {
+    clearItemContentOverlay();
+  });
+
   it("exposes shipped item ids in deterministic order", () => {
     const ids = getAllItemIds();
 
@@ -185,5 +191,38 @@ describe("itemRegistry", () => {
       expect(item.effects?.energyRestore ?? 1).toBeGreaterThan(0);
       expect(item.effects?.hpRestore ?? 1).toBeGreaterThan(0);
     }
+  });
+
+  it("serves detached draft definitions from a dev content overlay", () => {
+    const shippedIds = getAllItemIds();
+
+    installItemContentOverlay({
+      draft_ration: {
+        name: "Draft Ration",
+        description: "A ration from the editor draft.",
+        category: "consumable",
+        defaultQuantity: 2,
+        effects: { energyRestore: 9 },
+      },
+    });
+
+    expect(getAllItemIds()).toEqual(["draft_ration"]);
+    expect(hasItemDef("draft_ration")).toBe(true);
+    expect(getItemDef("draft_ration")).toMatchObject({
+      name: "Draft Ration",
+      effects: { energyRestore: 9 },
+    });
+
+    const firstRead = getItemDef("draft_ration");
+    firstRead.name = "Mutated";
+    expect(getItemDef("draft_ration").name).toBe("Draft Ration");
+
+    const fallback = getItemDef("missing_overlay_item");
+    expect(fallback.name).toBe("Unknown Item");
+    expect(fallback.effects).toBeUndefined();
+
+    clearItemContentOverlay();
+    expect(getAllItemIds()).toEqual(shippedIds);
+    expect(hasItemDef("draft_ration")).toBe(false);
   });
 });

@@ -1,10 +1,12 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it } from "vitest";
 
 import tilesData from "../content/tiles/tiles.json";
 import {
+  clearTileContentOverlay,
   getAllTileDefs,
   getTileDef,
   hasTileDef,
+  installTileContentOverlay,
   validateTileCatalog,
 } from "./TileRegistry";
 
@@ -75,6 +77,10 @@ describe("validateTileCatalog", () => {
 });
 
 describe("TileRegistry", () => {
+  afterEach(() => {
+    clearTileContentOverlay();
+  });
+
   it("exposes the authored floor and wall tiles", () => {
     const unknownTileId = nextUnknownTileId();
 
@@ -103,6 +109,27 @@ describe("TileRegistry", () => {
     const floor = defs.get(0);
     expect(floor).toBeDefined();
     floor!.name = "mutated";
+    expect(getTileDef(0).name).toBe("floor");
+  });
+
+  it("serves detached draft tile definitions from a dev content overlay", () => {
+    installTileContentOverlay(
+      new Map([
+        [0, { name: "draft floor", walkable: true, glyph: ",", color: "#111111" }],
+        [1, { name: "draft wall", walkable: false, glyph: "X", color: "#222222" }],
+      ]),
+    );
+
+    expect([...getAllTileDefs().keys()]).toEqual([0, 1]);
+    expect(hasTileDef(1)).toBe(true);
+    expect(getTileDef(0).name).toBe("draft floor");
+    expect(getTileDef(nextUnknownTileId()).name).toBe("draft floor");
+
+    const defs = getAllTileDefs();
+    defs.get(0)!.name = "mutated";
+    expect(getTileDef(0).name).toBe("draft floor");
+
+    clearTileContentOverlay();
     expect(getTileDef(0).name).toBe("floor");
   });
 });

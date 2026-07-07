@@ -2,7 +2,7 @@
 
 ## Statut
 
-Proposee, en attente d'approbation utilisateur avant implementation.
+Acceptee le 2026-07-07 : option (b), overlay de contenu dev-only.
 
 ## Contexte
 

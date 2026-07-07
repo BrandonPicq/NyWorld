@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import {
   CONTENT_TYPES,
   createRuntimeContentCatalogSnapshot,
+  type ContentBundle,
   type ContentRef,
   type ContentTypeName,
 } from "../../engine";
@@ -14,12 +15,14 @@ import { EnemyTab } from "./enemies/EnemyTab";
 import { GameConfigPanel } from "./GameConfigPanel";
 import { NpcTab } from "./npcs/NpcTab";
 import { PresenceTab } from "./presence/PresenceTab";
+import { prepareEditorPlaytest } from "./playtestLaunch";
 import { QuestTab } from "./quests/QuestTab";
 import { useEditorDrafts } from "./useEditorDrafts";
 import { ZoneEditorPanel } from "./zone/ZoneEditorPanel";
 
 type ContentEditorScreenProps = {
   onBack: () => void;
+  onStartPlaytest?: (contentBundle: ContentBundle) => void;
 };
 
 type EditorTab =
@@ -45,9 +48,13 @@ const EDITOR_TABS: { id: EditorTab; label: string }[] = [
   { id: "quests", label: "Quests" },
 ];
 
-export function ContentEditorScreen({ onBack }: ContentEditorScreenProps) {
+export function ContentEditorScreen({
+  onBack,
+  onStartPlaytest,
+}: ContentEditorScreenProps) {
   const baseSnapshot = useMemo(() => createRuntimeContentCatalogSnapshot(), []);
   const [tab, setTab] = useState<EditorTab>("content");
+  const [playtestError, setPlaytestError] = useState<string | null>(null);
   const drafts = useEditorDrafts(baseSnapshot);
 
   useEffect(() => {
@@ -71,6 +78,19 @@ export function ContentEditorScreen({ onBack }: ContentEditorScreenProps) {
     ) {
       onBack();
     }
+  }
+
+  function handleStartPlaytest(): void {
+    if (!onStartPlaytest) return;
+
+    const result = prepareEditorPlaytest(drafts.combined);
+    if (!result.ok) {
+      setPlaytestError(result.message);
+      return;
+    }
+
+    setPlaytestError(null);
+    onStartPlaytest(result.contentBundle);
   }
 
   function navigateToContent(target: EditorContentNavigationTarget): void {
@@ -142,10 +162,29 @@ export function ContentEditorScreen({ onBack }: ContentEditorScreenProps) {
             <h1 className="terminal-heading-md" id="editor-heading">
               Content Editor
             </h1>
+            {playtestError ? (
+              <p className="editor-header__notice">{playtestError}</p>
+            ) : null}
           </div>
-          <TerminalButton className="editor-header__back" onClick={handleBack}>
-            Back
-          </TerminalButton>
+          <div className="editor-header__actions">
+            {onStartPlaytest ? (
+              <TerminalButton
+                className="editor-header__playtest"
+                disabled={drafts.combined.errorCount > 0}
+                onClick={handleStartPlaytest}
+                title={
+                  drafts.combined.errorCount > 0
+                    ? "Fix validation errors before playtesting."
+                    : "Launch a playtest from the current draft."
+                }
+              >
+                Playtest
+              </TerminalButton>
+            ) : null}
+            <TerminalButton className="editor-header__back" onClick={handleBack}>
+              Back
+            </TerminalButton>
+          </div>
         </header>
 
         <nav className="editor-tabs" aria-label="Editor sections">

@@ -14,6 +14,9 @@ const fallback: DialogueNodeData[] = [
   },
 ];
 
+let overlayRegistry: DialogueDefMap | null = null;
+let overlayFiles: Record<string, DialogueDefMap> | null = null;
+
 const dialogueFiles = getSortedContentModules(
   import.meta.glob<unknown>("../../content/dialogues/*.json", {
     eager: true,
@@ -32,14 +35,14 @@ const registry = buildRegistry(dialogueMaps);
  * Returns true when a dialogue id is available in the dialogue registry.
  */
 export function hasDialogue(dialogueId: string): boolean {
-  return Object.prototype.hasOwnProperty.call(registry, dialogueId);
+  return Object.prototype.hasOwnProperty.call(getActiveRegistry(), dialogueId);
 }
 
 /**
  * Returns every registered dialogue id in deterministic order.
  */
 export function getAllDialogueIds(): string[] {
-  return Object.keys(registry).sort();
+  return Object.keys(getActiveRegistry()).sort();
 }
 
 /**
@@ -49,6 +52,10 @@ export function getAllDialogueIds(): string[] {
  * `getDialogue()` for resilience, but it is not owned by a JSON content file.
  */
 export function getDialogueFiles(): Record<string, DialogueDefMap> {
+  if (overlayFiles) {
+    return cloneDialogueFiles(overlayFiles);
+  }
+
   return Object.fromEntries(
     dialogueFiles.map((file) => [
       file.stem,
@@ -64,8 +71,33 @@ export function getDialogueFiles(): Record<string, DialogueDefMap> {
  * validation should still reject unknown dialogue ids.
  */
 export function getDialogue(dialogueId: string): DialogueNodeData[] {
-  const dialogue = registry[dialogueId] ?? fallback;
+  const dialogue = getActiveRegistry()[dialogueId] ?? fallback;
   return dialogue.map((node) => ({ ...node }));
+}
+
+export function installDialogueContentOverlay(
+  files: Record<string, DialogueDefMap>,
+): void {
+  if (!import.meta.env.DEV) return;
+  const clonedFiles = cloneDialogueFiles(files);
+  overlayRegistry = buildRegistry([
+    { "unknown_npc.default": fallback },
+    ...Object.values(clonedFiles),
+  ]);
+  overlayFiles = clonedFiles;
+}
+
+export function clearDialogueContentOverlay(): void {
+  overlayRegistry = null;
+  overlayFiles = null;
+}
+
+function getActiveRegistry(): DialogueDefMap {
+  return overlayRegistry ?? registry;
+}
+
+if (import.meta.hot) {
+  import.meta.hot.dispose(clearDialogueContentOverlay);
 }
 
 /**
@@ -242,6 +274,17 @@ function cloneDialogueMap(dialogues: DialogueDefMap): DialogueDefMap {
     Object.entries(dialogues).map(([dialogueId, nodes]) => [
       dialogueId,
       nodes.map((node) => ({ ...node })),
+    ]),
+  );
+}
+
+function cloneDialogueFiles(
+  files: Record<string, DialogueDefMap>,
+): Record<string, DialogueDefMap> {
+  return Object.fromEntries(
+    Object.entries(files).map(([stem, dialogues]) => [
+      stem,
+      cloneDialogueMap(dialogues),
     ]),
   );
 }

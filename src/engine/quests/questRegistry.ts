@@ -31,6 +31,8 @@ const questDefs = getSortedContentModules(
   }),
 );
 
+let overlayRegistry: QuestDefMap | null = null;
+
 const registry = buildRegistry(questDefs, createQuestRuntimeContext());
 
 function createQuestRuntimeContext(): QuestValidationContext {
@@ -43,16 +45,36 @@ function createQuestRuntimeContext(): QuestValidationContext {
 }
 
 export function hasQuestDef(questId: string): boolean {
-  return Object.prototype.hasOwnProperty.call(registry, questId);
+  return Object.prototype.hasOwnProperty.call(getActiveRegistry(), questId);
 }
 
 export function getQuestDef(questId: string): QuestDef | undefined {
-  const def = registry[questId];
+  const def = getActiveRegistry()[questId];
   return def ? cloneQuestDef(def) : undefined;
 }
 
 export function getAllQuestDefs(): QuestDef[] {
-  return Object.values(registry).map(cloneQuestDef);
+  return Object.values(getActiveRegistry()).map(cloneQuestDef);
+}
+
+export function installQuestContentOverlay(
+  defs: readonly QuestDef[],
+  context: QuestValidationContext,
+): void {
+  if (!import.meta.env.DEV) return;
+  overlayRegistry = buildRegistry(defs, context);
+}
+
+export function clearQuestContentOverlay(): void {
+  overlayRegistry = null;
+}
+
+function getActiveRegistry(): QuestDefMap {
+  return overlayRegistry ?? registry;
+}
+
+if (import.meta.hot) {
+  import.meta.hot.dispose(clearQuestContentOverlay);
 }
 
 /**

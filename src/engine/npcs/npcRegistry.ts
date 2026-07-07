@@ -33,13 +33,15 @@ const fallback: NpcDef = {
   defaultDialogueId: "unknown_npc.default",
 };
 
+let overlayRegistry: NpcDefMap | null = null;
+
 const registry = buildRegistry(npcDefs);
 
 /**
  * Returns true when an NPC id has a registered character definition.
  */
 export function hasNpcDef(npcId: string): boolean {
-  return Object.prototype.hasOwnProperty.call(registry, npcId);
+  return Object.prototype.hasOwnProperty.call(getActiveRegistry(), npcId);
 }
 
 /**
@@ -49,14 +51,31 @@ export function hasNpcDef(npcId: string): boolean {
  * loaders should still reject unknown ids with hasNpcDef.
  */
 export function getNpcDef(npcId: string): NpcDef {
-  return cloneNpcDef(registry[npcId] ?? fallback);
+  return cloneNpcDef(getActiveRegistry()[npcId] ?? fallback);
 }
 
 /**
  * Returns detached copies of every registered NPC definition.
  */
 export function getAllNpcDefs(): NpcDef[] {
-  return Object.values(registry).map(cloneNpcDef);
+  return Object.values(getActiveRegistry()).map(cloneNpcDef);
+}
+
+export function installNpcContentOverlay(defs: readonly NpcDef[]): void {
+  if (!import.meta.env.DEV) return;
+  overlayRegistry = buildRegistry(defs);
+}
+
+export function clearNpcContentOverlay(): void {
+  overlayRegistry = null;
+}
+
+function getActiveRegistry(): NpcDefMap {
+  return overlayRegistry ?? registry;
+}
+
+if (import.meta.hot) {
+  import.meta.hot.dispose(clearNpcContentOverlay);
 }
 
 /**

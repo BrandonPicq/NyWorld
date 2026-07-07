@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it } from "vitest";
 import lostNotebookQuestData from "../../content/quests/lost_notebook.json";
 import { createRuntimeContentValidationContext } from "../content/runtimeValidationContext";
 import type { QuestValidationContext } from "./questRegistry";
@@ -6,12 +6,16 @@ import { defaultContentBundle } from "../content/contentBundle";
 import { GameplayEngine } from "../GameplayEngine";
 import { loadZone } from "../zoneLoader";
 import {
+  clearQuestContentOverlay,
+  getAllQuestDefs,
   getQuestDef,
   hasQuestDef,
+  installQuestContentOverlay,
   validateQuestDef,
   validateQuestRegistry,
 } from "./questRegistry";
 import type { Inventory } from "../components";
+import type { QuestDef } from "./QuestDef";
 
 const zoneData = {
   version: "0.1",
@@ -213,12 +217,39 @@ describe("Quest content validation", () => {
 });
 
 describe("Quest System", () => {
+  afterEach(() => {
+    clearQuestContentOverlay();
+  });
+
   it("loads and validates the registries", () => {
     expect(hasQuestDef("lost_notebook")).toBe(true);
     const def = getQuestDef("lost_notebook");
     expect(def).toBeDefined();
     expect(def?.questId).toBe("lost_notebook");
     expect(def?.targetNpcId).toBe("old_scholar");
+  });
+
+  it("serves detached draft quest definitions from a dev content overlay", () => {
+    const shipped = getQuestDef("lost_notebook")!;
+    const draft: QuestDef = {
+      ...(lostNotebookQuestData as QuestDef),
+      name: "Draft Lost Notebook",
+    };
+
+    installQuestContentOverlay([draft], createValidationContext());
+
+    expect(getAllQuestDefs()).toEqual([draft]);
+    expect(hasQuestDef("lost_notebook")).toBe(true);
+    expect(getQuestDef("lost_notebook")?.name).toBe("Draft Lost Notebook");
+
+    const firstRead = getQuestDef("lost_notebook")!;
+    firstRead.objectives[0].description = "Mutated";
+    expect(getQuestDef("lost_notebook")).toEqual(draft);
+
+    expect(getQuestDef("missing_overlay_quest")).toBeUndefined();
+
+    clearQuestContentOverlay();
+    expect(getQuestDef("lost_notebook")).toEqual(shipped);
   });
 
   it("advances quest states through NPC dialogue triggers", () => {

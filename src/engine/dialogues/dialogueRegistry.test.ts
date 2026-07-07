@@ -1,13 +1,19 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it } from "vitest";
 import {
+  clearDialogueContentOverlay,
   getDialogueFiles,
   getDialogue,
   hasDialogue,
+  installDialogueContentOverlay,
   validateDialogueFile,
   validateDialogueRegistry,
 } from "./dialogueRegistry";
 
 describe("dialogueRegistry", () => {
+  afterEach(() => {
+    clearDialogueContentOverlay();
+  });
+
   it("exposes authored dialogue definitions", () => {
     const dialogue = getFirstEditableDialogue();
 
@@ -49,6 +55,48 @@ describe("dialogueRegistry", () => {
 
     expect(getDialogueFiles()[dialogue.stem][dialogue.dialogueId]).toEqual(
       dialogue.nodes,
+    );
+  });
+
+  it("serves detached draft dialogue files from a dev content overlay", () => {
+    const shippedDialogue = getFirstEditableDialogue();
+
+    installDialogueContentOverlay({
+      draft: {
+        "draft.greeting": [
+          { speaker: "Draft", text: "This is a draft line.", pitch: 1.1 },
+        ],
+      },
+    });
+
+    expect(hasDialogue("draft.greeting")).toBe(true);
+    expect(getDialogue("draft.greeting")).toEqual([
+      { speaker: "Draft", text: "This is a draft line.", pitch: 1.1 },
+    ]);
+    expect(getDialogueFiles()).toEqual({
+      draft: {
+        "draft.greeting": [
+          { speaker: "Draft", text: "This is a draft line.", pitch: 1.1 },
+        ],
+      },
+    });
+
+    const firstRead = getDialogue("draft.greeting");
+    firstRead[0].text = "Mutated.";
+    expect(getDialogue("draft.greeting")[0].text).toBe("This is a draft line.");
+
+    expect(getDialogue("missing.overlay")).toEqual([
+      {
+        speaker: "Narrator",
+        text: "There is nothing to say yet.",
+        pitch: 1,
+      },
+    ]);
+
+    clearDialogueContentOverlay();
+    expect(hasDialogue("draft.greeting")).toBe(false);
+    expect(getDialogue(shippedDialogue.dialogueId)).toEqual(
+      shippedDialogue.nodes,
     );
   });
 });

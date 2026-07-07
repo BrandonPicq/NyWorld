@@ -85,6 +85,10 @@ export {
   validateAllContent,
 } from "./content/contentAudit";
 export {
+  clearContentOverlay,
+  installContentOverlay,
+} from "./content/contentOverlay";
+export {
   createQteChallenge,
   resolveQteContest,
 } from "./combat/qteCombat";

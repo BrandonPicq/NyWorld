@@ -14,6 +14,8 @@ export interface TileDef {
   color: string;
 }
 
+let overlayRegistry: Record<TileId, TileDef> | null = null;
+
 const registry = buildRegistry(tilesData);
 
 /**
@@ -152,11 +154,12 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 }
 
 export function hasTileDef(id: TileId): boolean {
-  return Object.prototype.hasOwnProperty.call(registry, id);
+  return Object.prototype.hasOwnProperty.call(getActiveRegistry(), id);
 }
 
 export function getTileDef(id: TileId): TileDef {
-  return registry[id] ?? registry[0];
+  const activeRegistry = getActiveRegistry();
+  return activeRegistry[id] ?? activeRegistry[0];
 }
 
 /**
@@ -167,9 +170,28 @@ export function getTileDef(id: TileId): TileDef {
  */
 export function getAllTileDefs(): ReadonlyMap<TileId, TileDef> {
   return new Map(
-    Object.entries(registry).map(([tileKey, def]) => [
+    Object.entries(getActiveRegistry()).map(([tileKey, def]) => [
       Number(tileKey),
       { ...def },
     ]),
   );
+}
+
+export function installTileContentOverlay(
+  tiles: ReadonlyMap<TileId, TileDef>,
+): void {
+  if (!import.meta.env.DEV) return;
+  overlayRegistry = buildRegistry(Object.fromEntries(tiles.entries()));
+}
+
+export function clearTileContentOverlay(): void {
+  overlayRegistry = null;
+}
+
+function getActiveRegistry(): Record<TileId, TileDef> {
+  return overlayRegistry ?? registry;
+}
+
+if (import.meta.hot) {
+  import.meta.hot.dispose(clearTileContentOverlay);
 }

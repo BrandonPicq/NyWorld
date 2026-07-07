@@ -4,6 +4,12 @@ This file tracks meaningful project changes by commit-oriented slices.
 
 Keep entries short and practical. When a slice is committed, its changelog section should stay aligned with the commit title so the project history remains easy to read after restores or bisects.
 
+## 2026-07-07 - [ADD]: Launch a playtest session from the editor
+
+- Add dev-only content overlays for registry-backed content so playtest sessions can read the current editor draft without writing content files.
+- Add a Playtest action that freshly validates the combined draft, installs overlays, builds a draft content bundle, and starts a new isolated game session.
+- Keep the editor mounted while playtesting so unsaved drafts survive the round-trip, and disable real save-slot access in playtest mode.
+
 ## 2026-07-07 - [DOCS]: Propose playtest content source architecture
 
 - Compare full registry ownership inversion, a dev-only content overlay, and engine-level provider injection for editor playtesting.

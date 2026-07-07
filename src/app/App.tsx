@@ -33,6 +33,7 @@ import {
   readStoredGameplaySettings,
   writeStoredGameplaySettings,
 } from "../ui/controls/gameplaySettings";
+import { clearContentOverlay, type ContentBundle } from "../engine";
 import type { GameSaveData } from "../engine/GameSaveData";
 
 type OptionsScreenId =
@@ -52,6 +53,8 @@ function App() {
   const [loadedSaveData, setLoadedSaveData] = useState<GameSaveData | null>(
     null,
   );
+  const [playtestContentBundle, setPlaytestContentBundle] =
+    useState<ContentBundle | null>(null);
   const [titleNotice, setTitleNotice] = useState<string | null>(null);
   const [activeTheme, setActiveTheme] = useState<ThemeId>(() =>
     readStoredThemeId(),
@@ -103,12 +106,18 @@ function App() {
     },
   };
 
+  const isPlaytestActive = playtestContentBundle !== null;
   const showGame = isGameActive && screen === "game";
   const showOptions = isOptionsScreenId(screen);
   const showTitle = screen === "title" && !isGameActive;
-  const showEditor = import.meta.env.DEV && screen === "editor";
+  const shouldMountEditor =
+    import.meta.env.DEV && (screen === "editor" || isPlaytestActive);
+  const showEditor =
+    import.meta.env.DEV && screen === "editor" && !isPlaytestActive;
 
   const handleStartNewGame = () => {
+    clearContentOverlay();
+    setPlaytestContentBundle(null);
     setLoadedSaveData(null);
     setTitleNotice(null);
     setIsGameActive(true);
@@ -116,6 +125,8 @@ function App() {
   };
 
   const handleLoadSlot = (slotIndex: number) => {
+    clearContentOverlay();
+    setPlaytestContentBundle(null);
     const save = readSlot(slotIndex);
     if (!save) return;
     setTitleNotice(null);
@@ -125,6 +136,8 @@ function App() {
   };
 
   const handleBackToTitle = () => {
+    clearContentOverlay();
+    setPlaytestContentBundle(null);
     setLoadedSaveData(null);
     setIsGameActive(false);
     setScreen("title");
@@ -132,11 +145,36 @@ function App() {
   };
 
   const handleGameLoadError = (message: string) => {
+    if (isPlaytestActive) {
+      clearContentOverlay();
+      setPlaytestContentBundle(null);
+      setLoadedSaveData(null);
+      setIsGameActive(false);
+      setScreen("editor");
+      return;
+    }
+
     setLoadedSaveData(null);
     setIsGameActive(false);
     setScreen("title");
     setSaves(readAllSaves());
     setTitleNotice(message);
+  };
+
+  const handleStartEditorPlaytest = (contentBundle: ContentBundle) => {
+    setLoadedSaveData(null);
+    setTitleNotice(null);
+    setPlaytestContentBundle(contentBundle);
+    setIsGameActive(true);
+    setScreen("game");
+  };
+
+  const handleBackToEditor = () => {
+    clearContentOverlay();
+    setPlaytestContentBundle(null);
+    setLoadedSaveData(null);
+    setIsGameActive(false);
+    setScreen("editor");
   };
 
   return (
@@ -145,10 +183,13 @@ function App() {
         <div style={{ display: showGame ? "block" : "none" }}>
           <GameScreen
             audioSettings={audioSettings}
+            contentBundle={playtestContentBundle ?? undefined}
             gameplaySettings={gameplaySettings}
             initialSaveData={loadedSaveData ?? undefined}
+            isPlaytest={isPlaytestActive}
             keyboardLayout={keyboardLayout}
             textSpeed={textSpeed}
+            onBackToEditor={handleBackToEditor}
             onBackToTitle={handleBackToTitle}
             onLoadError={handleGameLoadError}
             onOpenOptions={() => setScreen("options")}
@@ -200,7 +241,14 @@ function App() {
         />
       )}
 
-      {showEditor && <ContentEditorScreen onBack={() => setScreen("title")} />}
+      {shouldMountEditor && (
+        <div style={{ display: showEditor ? "block" : "none" }}>
+          <ContentEditorScreen
+            onBack={() => setScreen("title")}
+            onStartPlaytest={handleStartEditorPlaytest}
+          />
+        </div>
+      )}
     </>
   );
 }

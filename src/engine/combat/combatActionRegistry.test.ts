@@ -1,13 +1,16 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it } from "vitest";
 import strikeData from "../../content/combat-actions/strike.json";
 import {
+  clearCombatActionContentOverlay,
   deriveCombatActionEffects,
   getAllCombatActionDefs,
   getCombatActionDef,
   hasCombatActionDef,
+  installCombatActionContentOverlay,
   validateCombatActionDef,
   validateCombatActionRegistry,
 } from "./combatActionRegistry";
+import type { CombatActionDef } from "./CombatActionDef";
 
 const CORE_COMBAT_ACTION_IDS = [
   "strike",
@@ -166,6 +169,10 @@ describe("validateCombatActionRegistry", () => {
 });
 
 describe("combatActionRegistry", () => {
+  afterEach(() => {
+    clearCombatActionContentOverlay();
+  });
+
   it("loads the core combat action definitions in authored display order", () => {
     const defs = getAllCombatActionDefs();
     const ids = defs.map((def) => def.actionId);
@@ -201,5 +208,40 @@ describe("combatActionRegistry", () => {
   it("checks action availability by id", () => {
     expect(hasCombatActionDef("guard")).toBe(true);
     expect(hasCombatActionDef("unknown_action")).toBe(false);
+  });
+
+  it("serves detached draft action definitions from a dev content overlay", () => {
+    const draft: CombatActionDef = {
+      ...(strikeData as CombatActionDef),
+      name: "Draft Strike",
+      tuning: { spGain: 7 },
+    };
+
+    installCombatActionContentOverlay([draft]);
+
+    expect(getAllCombatActionDefs().map((action) => action.actionId)).toEqual([
+      "strike",
+    ]);
+    expect(hasCombatActionDef("strike")).toBe(true);
+    expect(getCombatActionDef("strike")).toMatchObject({
+      name: "Draft Strike",
+      effects: [
+        "Gain 7 SP.",
+        "Uses Agility for QTE pressure.",
+        "Benefits from the next Focus damage boost.",
+      ],
+      tuning: { spGain: 7 },
+    });
+
+    const firstRead = getCombatActionDef("strike");
+    firstRead.effects[0] = "Mutated";
+    expect(getCombatActionDef("strike").effects[0]).toBe("Gain 7 SP.");
+
+    const fallback = getCombatActionDef("missing_overlay_action");
+    expect(fallback.name).toBe("Unknown Action");
+    expect(fallback.tuning).toBeUndefined();
+
+    clearCombatActionContentOverlay();
+    expect(getCombatActionDef("strike").name).toBe(strikeData.name);
   });
 });

@@ -4,6 +4,7 @@ import {
   defaultContentBundle,
   getItemDef,
   getNpcDef,
+  type ContentBundle,
   type DialogueNode,
   type EngineEffect,
   type EngineNotice,
@@ -46,7 +47,10 @@ type GameScreenProps = {
   gameplaySettings: GameplaySettings;
   keyboardLayout: KeyboardLayout;
   textSpeed: TextSpeed;
+  contentBundle?: ContentBundle;
   initialSaveData?: GameSaveData;
+  isPlaytest?: boolean;
+  onBackToEditor?: () => void;
   onBackToTitle: () => void;
   onLoadError?: (message: string) => void;
   onOpenOptions: () => void;
@@ -59,7 +63,10 @@ export function GameScreen({
   gameplaySettings,
   keyboardLayout,
   textSpeed,
+  contentBundle = defaultContentBundle,
   initialSaveData,
+  isPlaytest = false,
+  onBackToEditor,
   onBackToTitle,
   onLoadError,
   onOpenOptions,
@@ -103,8 +110,8 @@ export function GameScreen({
 
   const { createSaveData, executeCommand, snapshot } = useGameplayEngine({
     audioSettings,
-    contentBundle: defaultContentBundle,
-    initialSaveData,
+    contentBundle,
+    initialSaveData: isPlaytest ? undefined : initialSaveData,
     onDialogue: (nodes, id) => triggerDialogue(nodes, id),
     onEffect: handleEngineEffect,
     onLoadError,
@@ -142,11 +149,13 @@ export function GameScreen({
     : [];
 
   const handleSaveGame = () => {
+    if (isPlaytest) return;
     setIsPauseMenuOpen(false);
     setIsSaveSlotsOpen(true);
   };
 
   const handleSaveToSlot = (slotIndex: number) => {
+    if (isPlaytest) return;
     const saveData = createSaveData();
     if (!saveData) return;
 
@@ -247,9 +256,24 @@ export function GameScreen({
   }
 
   const gridRenderSnapshot = createGridRenderSnapshot(snapshot);
+  const handleExit = isPlaytest ? (onBackToEditor ?? onBackToTitle) : onBackToTitle;
 
   return (
     <main className="app-shell" aria-labelledby="game-heading">
+      {isPlaytest ? (
+        <div className="game-playtest-banner">
+          <div>
+            <p className="terminal-kicker">PLAYTEST</p>
+            <p>Running from the current editor draft. Saves are disabled.</p>
+          </div>
+          <TerminalButton
+            className="game-playtest-banner__button"
+            onClick={handleExit}
+          >
+            Back to Editor
+          </TerminalButton>
+        </div>
+      ) : null}
       <div className="game-layout">
         <CharacterStatusPanel
           controlsDisabled={controlsDisabled}
@@ -412,14 +436,16 @@ export function GameScreen({
         {isPauseMenuOpen && (
           <PauseModal
             audioSettings={audioSettings}
+            canSave={!isPlaytest}
             onClose={() => setIsPauseMenuOpen(false)}
             onOpenOptions={onOpenOptions}
-            onQuit={onBackToTitle}
+            onQuit={handleExit}
             onSave={handleSaveGame}
+            quitLabel={isPlaytest ? "Back to Editor" : "Quit to Title"}
           />
         )}
 
-        {isSaveSlotsOpen && (
+        {!isPlaytest && isSaveSlotsOpen && (
           <SaveSlotsModal
             audioSettings={audioSettings}
             onClose={() => setIsSaveSlotsOpen(false)}

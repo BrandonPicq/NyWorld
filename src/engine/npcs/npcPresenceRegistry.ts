@@ -28,20 +28,22 @@ const presenceDefs = getSortedContentModules(
   }),
 );
 
+let overlayRegistry: NpcPresenceDefMap | null = null;
+
 const registry = buildRegistry(presenceDefs);
 
 /**
  * Returns true when an NPC has a global presence definition.
  */
 export function hasNpcPresenceDef(npcId: string): boolean {
-  return Object.prototype.hasOwnProperty.call(registry, npcId);
+  return Object.prototype.hasOwnProperty.call(getActiveRegistry(), npcId);
 }
 
 /**
  * Returns a detached global presence definition for one NPC, if registered.
  */
 export function getNpcPresenceDef(npcId: string): NpcPresenceDef | undefined {
-  const def = registry[npcId];
+  const def = getActiveRegistry()[npcId];
   return def ? cloneNpcPresenceDef(def) : undefined;
 }
 
@@ -49,7 +51,26 @@ export function getNpcPresenceDef(npcId: string): NpcPresenceDef | undefined {
  * Returns detached copies of all global presence definitions.
  */
 export function getAllNpcPresenceDefs(): NpcPresenceDef[] {
-  return Object.values(registry).map(cloneNpcPresenceDef);
+  return Object.values(getActiveRegistry()).map(cloneNpcPresenceDef);
+}
+
+export function installNpcPresenceContentOverlay(
+  defs: readonly NpcPresenceDef[],
+): void {
+  if (!import.meta.env.DEV) return;
+  overlayRegistry = buildRegistry(defs);
+}
+
+export function clearNpcPresenceContentOverlay(): void {
+  overlayRegistry = null;
+}
+
+function getActiveRegistry(): NpcPresenceDefMap {
+  return overlayRegistry ?? registry;
+}
+
+if (import.meta.hot) {
+  import.meta.hot.dispose(clearNpcPresenceContentOverlay);
 }
 
 /**
