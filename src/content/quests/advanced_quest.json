@@ -32,6 +32,10 @@
     }
   ],
   "rewards": {
-    "currency": 50
+    "currency": 50,
+    "xp": 125,
+    "items": [
+      { "itemId": "copper_ring", "quantity": 1 }
+    ]
   }
 }

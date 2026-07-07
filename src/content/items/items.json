@@ -60,5 +60,129 @@
       "energyRestore": 10,
       "hpRestore": 10
     }
+  },
+  "rusty_sword": {
+    "name": "Rusty Sword",
+    "description": "A discarded iron sword, pitting with rust. Still sharp enough to cut.",
+    "category": "equipment",
+    "defaultQuantity": 1,
+    "equipment": {
+      "slot": "weapon",
+      "weaponType": "sword",
+      "bonuses": {
+        "combat.attack": 2
+      }
+    }
+  },
+  "stone_hammer": {
+    "name": "Stone Hammer",
+    "description": "A simple stone mallet lashed to a wooden shaft. Heavy and sturdy.",
+    "category": "equipment",
+    "defaultQuantity": 1,
+    "equipment": {
+      "slot": "weapon",
+      "weaponType": "hammer",
+      "bonuses": {
+        "combat.attack": 3
+      }
+    }
+  },
+  "training_bow": {
+    "name": "Training Bow",
+    "description": "A flexible wooden bow used for target practice.",
+    "category": "equipment",
+    "defaultQuantity": 1,
+    "equipment": {
+      "slot": "weapon",
+      "weaponType": "bow",
+      "bonuses": {
+        "combat.attack": 2
+      }
+    }
+  },
+  "novice_staff": {
+    "name": "Novice Staff",
+    "description": "A polished wooden staff carved with focusing runes.",
+    "category": "equipment",
+    "defaultQuantity": 1,
+    "equipment": {
+      "slot": "weapon",
+      "weaponType": "staff",
+      "bonuses": {
+        "combat.magicAttack": 2
+      }
+    }
+  },
+  "wooden_shield": {
+    "name": "Wooden Shield",
+    "description": "A round wooden buckler painted with protective symbols.",
+    "category": "equipment",
+    "defaultQuantity": 1,
+    "equipment": {
+      "slot": "offHand",
+      "bonuses": {
+        "combat.defense": 2
+      }
+    }
+  },
+  "ragged_cap": {
+    "name": "Ragged Cap",
+    "description": "A simple cloth hat that offers minor protection from elements.",
+    "category": "equipment",
+    "defaultQuantity": 1,
+    "equipment": {
+      "slot": "head",
+      "bonuses": {
+        "combat.defense": 1
+      }
+    }
+  },
+  "leather_tunic": {
+    "name": "Leather Tunic",
+    "description": "A sturdy shirt made of cured animal hide.",
+    "category": "equipment",
+    "defaultQuantity": 1,
+    "equipment": {
+      "slot": "body",
+      "bonuses": {
+        "combat.defense": 3
+      }
+    }
+  },
+  "worn_gloves": {
+    "name": "Worn Gloves",
+    "description": "Scuffed leather gloves protecting your hands.",
+    "category": "equipment",
+    "defaultQuantity": 1,
+    "equipment": {
+      "slot": "hands",
+      "bonuses": {
+        "combat.defense": 1
+      }
+    }
+  },
+  "worn_boots": {
+    "name": "Worn Boots",
+    "description": "Muddied leather boots suitable for traveling.",
+    "category": "equipment",
+    "defaultQuantity": 1,
+    "equipment": {
+      "slot": "feet",
+      "bonuses": {
+        "combat.defense": 1
+      }
+    }
+  },
+  "copper_ring": {
+    "name": "Copper Ring",
+    "description": "A simple metal band that feels slightly warm to the touch.",
+    "category": "equipment",
+    "defaultQuantity": 1,
+    "equipment": {
+      "slot": "accessory",
+      "bonuses": {
+        "attributes.vitality": 1
+      }
+    }
   }
 }

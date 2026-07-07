@@ -360,9 +360,15 @@ describe("Quest System", () => {
         quantity: 2,
         source: "reward",
       },
+      {
+        type: "ItemCollected",
+        itemId: "wooden_shield",
+        quantity: 1,
+        source: "reward",
+      },
     ]);
     expect(snapshot.log.map((entry) => entry.message)).toContain(
-      "Quest Rewards: 1s 50c, Travel Ration x2.",
+      "Quest Rewards: 1s 50c, 75 XP, Travel Ration x2, Wooden Shield.",
     );
   });
 

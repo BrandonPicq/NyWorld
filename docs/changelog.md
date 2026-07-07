@@ -4,6 +4,16 @@ This file tracks meaningful project changes by commit-oriented slices.
 
 Keep entries short and practical. When a slice is committed, its changelog section should stay aligned with the commit title so the project history remains easy to read after restores or bisects.
 
+## 2026-07-07 - [UPDATE]: Starter world content pass
+
+- Paint studySpot tiles in the scholar's area in test_zone.json.
+- Author Tier 0 equipment items for all 8 slots and all 4 weapon types in items.json.
+- Place equipment items in starter zones via ground pickups and quest rewards.
+- Set XP rewards for lost_notebook (75 XP), advanced_quest (125 XP), and defeat_the_kobold (180 XP).
+- Add sample classId, raceId, and level values to old_scholar, yuria, and goblin NPC definitions.
+- Update quests.test.ts to expect quest rewards including the new equipment item and XP.
+- Update project-plan.md and content-authoring.md documentation.
+
 ## 2026-07-07 - [ADD]: Gate Study to study environments
 
 - Add studySpot property to TileDef and validate in validateTileDef.

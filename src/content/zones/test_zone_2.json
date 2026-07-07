@@ -64,6 +64,30 @@
       "x": 5,
       "y": 2,
       "quantity": 1
+    },
+    {
+      "itemId": "rusty_sword",
+      "x": 4,
+      "y": 2,
+      "quantity": 1
+    },
+    {
+      "itemId": "training_bow",
+      "x": 4,
+      "y": 4,
+      "quantity": 1
+    },
+    {
+      "itemId": "novice_staff",
+      "x": 4,
+      "y": 6,
+      "quantity": 1
+    },
+    {
+      "itemId": "ragged_cap",
+      "x": 5,
+      "y": 5,
+      "quantity": 1
     }
   ]
 }

@@ -4,6 +4,9 @@
   "race": "human",
   "importance": "story",
   "defaultDialogueId": "yuria.default",
+  "classId": "otherworlder",
+  "raceId": "human",
+  "level": 12,
   "presentation": {
     "glyph": "!",
     "color": "#f0f0f0"

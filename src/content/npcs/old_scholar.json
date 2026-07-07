@@ -7,5 +7,8 @@
     "glyph": "S",
     "color": "#ffb000"
   },
+  "classId": "otherworlder",
+  "raceId": "human",
+  "level": 5,
   "defaultDialogueId": "old_scholar.default"
 }

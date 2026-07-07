@@ -74,6 +74,7 @@ Fondations posees (juillet 2026) :
 - edition dev-only des fichiers de dialogues reutilisables : creation de fichiers, ajout de sequences, edition des lignes speaker/text/pitch, suppression bloquee par les references entrantes, validation live du bundle.
 - edition dev-only des fiches PNJ : creation de fichiers PNJ, champs race/importance/presentation/dialogue par defaut, validation live du bundle, et raccourci de creation du dialogue par defaut.
 - edition dev-only des profils ennemis rattaches aux PNJ : toggle combatable, stat block complet, loot, validation live du bundle, sauvegarde et suppression des fichiers de profil.
+- jalon Fondations RPG terminé (juillet 2026) : double progression de niveau (global et classe), dérivation de statistiques par couches (layered stats), slots d'équipement et restrictions de classe, maîtrise des commandes (command mastery) avec caps/utilisations/effets, action d'étude restreinte aux zones dédiées (study spot gating), et mise à jour complète du contenu de départ (Tier 0 equipment, quêtes, XP).
 
 Etapes restantes :
 

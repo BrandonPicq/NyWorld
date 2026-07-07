@@ -226,3 +226,19 @@ Saves serialize the current mutable state: active zone, player position, facing,
 stats, inventory, log, world time, NPC state, and collected ground item spawn
 keys. Static content is not copied into the save. Loading a save rebuilds the
 world from current content plus saved mutable state.
+
+## Command Mastery
+
+Command masteries are defined in JSON files under `src/content/command-masteries/`. Each mastery defines a `commandId`, a `cap`, a `usageRequired`, and numeric `effects`. These masteries modify command performance:
+- `strike`: damageBoost
+- `guard`: incomingDamageMultiplier
+- `cast`: damageBoost and mpCostReductionLevels
+- `focus`: nextDamageBoost
+- `flee`: successChance
+- `use_item`: itemEffectMultiplier
+- `study`: xp
+- `rest`: energyRestore
+
+## Study Gating
+
+The `study` action is restricted to tiles marked with the `studySpot` property in the tile definition (`tiles.json`). Additionally, the Study action time cost and XP award are driven by the game configuration (`actions.study.timeCostMinutes` and `actions.study.xp`).

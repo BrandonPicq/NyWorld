@@ -61,6 +61,12 @@
       "x": 6,
       "y": 7,
       "quantity": 1
+    },
+    {
+      "itemId": "stone_hammer",
+      "x": 10,
+      "y": 8,
+      "quantity": 1
     }
   ]
 }
