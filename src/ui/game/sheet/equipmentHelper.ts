@@ -1,4 +1,5 @@
 import {
+  canEquipInSlot,
   getClassDef,
   getItemDef,
   type EquippedSlot,
@@ -25,26 +26,6 @@ export function getEquippableItemsForSlot(
       return false;
     }
 
-    const equipment = itemDef.equipment;
-
-    // 1. Verify equipment slot match
-    if (slot === "weapon") {
-      if (equipment.slot !== "weapon") return false;
-    } else if (slot === "accessory1" || slot === "accessory2") {
-      if (equipment.slot !== "accessory") return false;
-    } else {
-      if (equipment.slot !== slot) return false;
-    }
-
-    // 2. Verify class permissions
-    const canEquip =
-      equipment.slot === "weapon"
-        ? Boolean(
-            equipment.weaponType &&
-              permissions.allowedWeaponTypes.includes(equipment.weaponType)
-          )
-        : permissions.allowedArmorSlots.includes(equipment.slot);
-
-    return canEquip;
+    return canEquipInSlot(itemDef.equipment, slot, permissions);
   });
 }

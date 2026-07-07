@@ -260,6 +260,7 @@ export type {
   ItemEffects,
 } from "./items/ItemDef";
 export { getItemMapPresentation } from "./items/itemMapPresentation";
+export { canEquipInSlot } from "./items/equipmentRules";
 export type { ItemMapPresentation } from "./items/itemMapPresentation";
 export {
   getAllDialogueIds,

@@ -4,6 +4,12 @@ This file tracks meaningful project changes by commit-oriented slices.
 
 Keep entries short and practical. When a slice is committed, its changelog section should stay aligned with the commit title so the project history remains easy to read after restores or bisects.
 
+## 2026-07-08 - [REFACTOR]: Share the engine equippability predicate
+
+- Add `canEquipInSlot` in `engine/items/equipmentRules.ts`: one pure predicate combining slot match (with the accessory1/accessory2 → accessory aliasing) and class equipment permissions, exported from the engine barrel.
+- Consume it from both `GameplayEngine.equipItem` and the sheet's `getEquippableItemsForSlot`, removing the duplicated permission logic so the equip command and the equip picker can no longer drift.
+- Unit-test the predicate across weapon-type gating, slot mismatch, accessory slots, and the no-weapon-type edge case.
+
 ## 2026-07-07 - [FIX]: Remove duplicated attribute summary
 
 - Replace the top attribute summary with the detailed attribute layer table.

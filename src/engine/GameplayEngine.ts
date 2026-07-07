@@ -22,6 +22,7 @@ import { getDialogue } from "./dialogues/dialogueRegistry";
 import { InventorySystem } from "./items/InventorySystem";
 import { getItemDef } from "./items/itemRegistry";
 import type { EquipmentBonusMap } from "./items/ItemDef";
+import { canEquipInSlot } from "./items/equipmentRules";
 import { getAllNpcPresenceDefs } from "./npcs/npcPresenceRegistry";
 import {
   cloneNpcState,
@@ -788,13 +789,7 @@ export class GameplayEngine {
 
     const classDef = getClassDef(this.playerProgression.classId);
     const permissions = classDef.equipmentPermissions;
-    const canEquip =
-      equipment.slot === "weapon"
-        ? Boolean(
-            equipment.weaponType &&
-              permissions.allowedWeaponTypes.includes(equipment.weaponType),
-          )
-        : permissions.allowedArmorSlots.includes(equipment.slot);
+    const canEquip = canEquipInSlot(equipment, targetSlot, permissions);
 
     if (!canEquip) {
       const message = `${classDef.name} cannot equip ${itemDef.name}.`;
