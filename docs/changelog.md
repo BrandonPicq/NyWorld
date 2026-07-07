@@ -4,6 +4,15 @@ This file tracks meaningful project changes by commit-oriented slices.
 
 Keep entries short and practical. When a slice is committed, its changelog section should stay aligned with the commit title so the project history remains easy to read after restores or bisects.
 
+## 2026-07-07 - [ADD]: Body-layout equipment tab
+
+- Rebuild the equipment slot list in the character sheet into a visual body-shaped grid layout.
+- Rework slot item representation to display item names and checkboxes.
+- Allow checking an equipped slot to open the inventory modal with the selected item focused.
+- Clicking a slot zone displays a keyboard-navigable equipment picker overlay.
+- Filter candidate pickers using the slot match and the engine's active class equipment permissions.
+- Add unit tests verifying the equippable gear filtering logic.
+
 ## 2026-07-07 - [REFACTOR]: Split the character sheet into tabs
 
 - Refactor CharacterSheetModal.tsx to serve as a tabbed navigation panel.

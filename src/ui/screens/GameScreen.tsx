@@ -374,6 +374,14 @@ export function GameScreen({
             onUnequipSlot={(slot) =>
               handleExecuteCommand({ type: "Unequip", slot })
             }
+            onEquipSlot={(itemId, slot) =>
+              handleExecuteCommand({ type: "Equip", itemId, slot })
+            }
+            onNavigateToItem={(itemId) => {
+              setIsCharacterSheetOpen(false);
+              setInitialSelectedInventoryItemId(itemId);
+              setIsInventoryOpen(true);
+            }}
             statLayers={snapshot.statLayers}
             stats={snapshot.stats}
           />

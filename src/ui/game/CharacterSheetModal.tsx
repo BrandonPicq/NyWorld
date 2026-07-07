@@ -21,6 +21,8 @@ type CharacterSheetModalProps = {
   onClose: () => void;
   onChooseAttribute: (attribute: CoreAttributeKey) => void;
   onUnequipSlot: (slot: EquippedSlot) => void;
+  onEquipSlot: (itemId: string, slot: EquippedSlot) => void;
+  onNavigateToItem: (itemId: string) => void;
   inventory: Inventory;
   stats: Stats;
   statLayers: LayeredStatBreakdown;
@@ -42,6 +44,8 @@ export function CharacterSheetModal({
   onChooseAttribute,
   onClose,
   onUnequipSlot,
+  onEquipSlot,
+  onNavigateToItem,
   stats,
   statLayers,
 }: CharacterSheetModalProps) {
@@ -94,7 +98,14 @@ export function CharacterSheetModal({
             />
           )}
           {activeTab === "equipment" && (
-            <EquipmentTab inventory={inventory} onUnequipSlot={onUnequipSlot} />
+            <EquipmentTab
+              audioSettings={audioSettings}
+              inventory={inventory}
+              classId={statLayers.classId}
+              onUnequipSlot={onUnequipSlot}
+              onEquipSlot={onEquipSlot}
+              onNavigateToItem={onNavigateToItem}
+            />
           )}
           {activeTab === "mastery" && <MasteryTab stats={stats} statLayers={statLayers} />}
           {activeTab === "academy" && <AcademyTab stats={stats} />}

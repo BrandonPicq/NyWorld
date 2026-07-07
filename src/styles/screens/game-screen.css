@@ -1658,3 +1658,70 @@
     gap: var(--space-2);
   }
 }
+
+/* Equipment Body-Layout Grid */
+.equipment-body-layout {
+  display: grid;
+  grid-template-areas:
+    ". head ."
+    "accessory1 body accessory2"
+    "weapon hands offHand"
+    ". feet .";
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-3);
+  max-width: 540px;
+  margin: var(--space-3) auto;
+  width: 100%;
+}
+
+.equipment-slot-zone {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  border: 1px solid var(--color-border-muted);
+  background: var(--color-panel-background);
+  padding: var(--space-2);
+  min-height: 80px;
+  cursor: pointer;
+  box-sizing: border-box;
+}
+
+.equipment-slot-zone:hover {
+  border-color: var(--color-accent);
+}
+
+.equipment-slot-zone__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-1);
+}
+
+.equipment-slot-zone__label {
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+
+.equipment-slot-zone__marker {
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  cursor: pointer;
+  color: var(--color-accent);
+  border: none;
+  background: none;
+  padding: 0;
+}
+
+.equipment-slot-zone__marker:hover {
+  text-decoration: underline;
+}
+
+.equipment-slot-zone__name {
+  font-size: 0.95rem;
+  font-weight: bold;
+  color: var(--color-text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
