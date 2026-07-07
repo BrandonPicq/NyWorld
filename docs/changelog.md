@@ -4,6 +4,12 @@ This file tracks meaningful project changes by commit-oriented slices.
 
 Keep entries short and practical. When a slice is committed, its changelog section should stay aligned with the commit title so the project history remains easy to read after restores or bisects.
 
+## 2026-07-07 - [DOCS]: Propose the progression and equipment numbers
+
+- Record the settled RPG foundations model in ADR 0008 without reopening the design decisions.
+- Propose initial XP curve, level growth, attribute-choice cadence, skill-use thresholds, equipment bonus ranges, and XP award targets.
+- Extend combat-balance notes with progression and equipment draft targets for the next implementation slices.
+
 ## 2026-07-07 - [ADD]: Start the playtest where the author is looking
 
 - Resolve editor playtests to the selected zone instead of always using the configured new-game zone.
