@@ -4,6 +4,11 @@ This file tracks meaningful project changes by commit-oriented slices.
 
 Keep entries short and practical. When a slice is committed, its changelog section should stay aligned with the commit title so the project history remains easy to read after restores or bisects.
 
+## 2026-07-07 - [FIX]: Remove duplicated attribute summary
+
+- Replace the top attribute summary with the detailed attribute layer table.
+- Keep growth layer progression and pending attribute choice actions in their own section.
+
 ## 2026-07-08 - [FIX]: Lay modal tabs in a row and cap modal height
 
 - Render the character sheet and inventory tabs as a compact horizontal row instead of a full-width vertical stack (override the shared button width in `.stats-modal__tabs`).

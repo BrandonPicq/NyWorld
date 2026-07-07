@@ -92,7 +92,6 @@ export function CharacterSheetModal({
           {activeTab === "overview" && <OverviewTab stats={stats} />}
           {activeTab === "attributes" && (
             <AttributesTab
-              stats={stats}
               statLayers={statLayers}
               onChooseAttribute={onChooseAttribute}
             />
