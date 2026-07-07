@@ -1,5 +1,5 @@
-import type { Stats } from "../../engine/components";
-import type { WorldTimeSnapshot } from "../../engine";
+import type { Stats, LayeredStatBreakdown, WorldTimeSnapshot } from "../../engine";
+import { getClassDef } from "../../engine/classes/classRegistry";
 import { TerminalButton } from "../components/TerminalButton";
 import { TerminalPanel } from "../components/TerminalPanel";
 import { formatCurrency } from "../controls/statsFormatter";
@@ -21,6 +21,7 @@ type CharacterStatusPanelProps = {
   onRest: () => void;
   onStudy: () => void;
   stats: Stats;
+  statLayers: LayeredStatBreakdown;
   worldTime: WorldTimeSnapshot;
   keyboardLayout: KeyboardLayout;
   isCombatActive?: boolean;
@@ -35,10 +36,12 @@ export function CharacterStatusPanel({
   onRest,
   onStudy,
   stats,
+  statLayers,
   worldTime,
   keyboardLayout,
 }: CharacterStatusPanelProps) {
   const { energy, maxEnergy } = stats.resources;
+  const className = getClassDef(statLayers.classId).name;
 
   return (
     <TerminalPanel className="game-layout__sidebar-left">
@@ -69,10 +72,29 @@ export function CharacterStatusPanel({
         </div>
 
         <div className="sidebar-stats__section">
-          <p className="sidebar-stats__label">Standing</p>
-          <p className="sidebar-stats__value">
-            {stats.progression.academicTitle}
-          </p>
+          <p className="sidebar-stats__label">Global Lv. {statLayers.globalLevel}</p>
+          <div className="xp-bar-container">
+            <div
+              className="xp-bar-fill xp-bar-fill--global"
+              style={{ width: `${(statLayers.globalXp / statLayers.globalXpToNext) * 100}%` }}
+            />
+            <span className="xp-bar-text">
+              {statLayers.globalXp} / {statLayers.globalXpToNext}
+            </span>
+          </div>
+        </div>
+
+        <div className="sidebar-stats__section">
+          <p className="sidebar-stats__label">{className} Lv. {statLayers.classLevel}</p>
+          <div className="xp-bar-container">
+            <div
+              className="xp-bar-fill xp-bar-fill--class"
+              style={{ width: `${(statLayers.classXp / statLayers.classXpToNext) * 100}%` }}
+            />
+            <span className="xp-bar-text">
+              {statLayers.classXp} / {statLayers.classXpToNext}
+            </span>
+          </div>
         </div>
       </div>
 

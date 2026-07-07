@@ -94,7 +94,7 @@ const ATTRIBUTE_KEYS: CoreAttributeKey[] = [
   "charisma",
 ];
 
-const GLOBAL_GROWTH_CYCLE: AttributeValues[] = [
+export const GLOBAL_GROWTH_CYCLE: AttributeValues[] = [
   createAttributeValues({ vitality: 1, willpower: 1 }),
   createAttributeValues({ perception: 1, charisma: 1 }),
   createAttributeValues({ agility: 1, spirit: 1 }),
@@ -382,7 +382,7 @@ export function applyXpAwardToProgression(
   return { progression, result };
 }
 
-function deriveGrowthLayer(input: {
+export function deriveGrowthLayer(input: {
   level: number;
   cycle: readonly AttributeValues[];
   raceDef: RaceDef;
@@ -431,7 +431,7 @@ function ensureProgressionRecords(
   return next;
 }
 
-function createAttributeValues(
+export function createAttributeValues(
   values: Partial<Record<CoreAttributeKey, number>>,
 ): AttributeValues {
   return {

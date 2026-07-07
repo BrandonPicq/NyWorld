@@ -1725,3 +1725,41 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+
+/* XP Bar Styles */
+.xp-bar-container {
+  position: relative;
+  height: 16px;
+  background: var(--color-background);
+  border: 1px solid var(--color-border-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  margin-top: var(--space-1);
+}
+
+.xp-bar-fill {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  opacity: 0.25;
+  transition: width 0.2s ease;
+}
+
+.xp-bar-fill--global {
+  background: #f9e2af;
+}
+
+.xp-bar-fill--class {
+  background: #a6e3a1;
+}
+
+.xp-bar-text {
+  position: relative;
+  z-index: 1;
+  font-size: 0.75rem;
+  font-family: var(--font-mono);
+  font-weight: bold;
+}

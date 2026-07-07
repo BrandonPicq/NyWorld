@@ -1492,15 +1492,21 @@ describe("GameplayEngine", () => {
       expect(leveled.statLayers.buffers.global.charisma).toBeCloseTo(0.95);
       expect(engine.consumeNotices()).toEqual(
         expect.arrayContaining([
-          { title: "Global Level Up", message: "Reached global level 2." },
-          { title: "Global Level Up", message: "Reached global level 3." },
           {
-            title: "Class Level Up",
-            message: "Otherworlder reached level 2.",
+            title: "Global Level Up",
+            message: "Global level 2! (+1 vitality, +1 willpower) — next at 160 XP",
+          },
+          {
+            title: "Global Level Up",
+            message: "Global level 3! (+1 perception) — next at 240 XP",
           },
           {
             title: "Class Level Up",
-            message: "Otherworlder reached level 3.",
+            message: "Otherworlder reached level 2! (+1 strength) — next at 128 XP",
+          },
+          {
+            title: "Class Level Up",
+            message: "Otherworlder reached level 3! (+1 intelligence) — next at 192 XP",
           },
           {
             title: "Attribute Choice Available",

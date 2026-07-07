@@ -66,6 +66,10 @@ import {
 } from "./stats/characterStats";
 import { getRaceDef } from "./races/raceRegistry";
 import {
+  getGlobalLevelUpMessage,
+  getClassLevelUpMessage,
+} from "./stats/levelUpHelper";
+import {
   applyLayeredStats,
   applyXpAwardToProgression,
   cloneLayeredStatBreakdown,
@@ -866,15 +870,17 @@ export class GameplayEngine {
     this.addLog(`Gained ${result.amount} XP from ${source}.`);
     this.applyLayeredStatsTo(this.getPlayerStats(), this.getPlayerInventory());
 
+    const raceDef = getRaceDef(this.playerProgression.raceId);
+    const classDef = getClassDef(this.playerProgression.classId);
+
     for (const level of result.globalLevelsGained) {
-      const message = `Reached global level ${level}.`;
+      const message = getGlobalLevelUpMessage(level, raceDef);
       this.addLog(message);
       this.notices.push({ title: "Global Level Up", message });
     }
 
     for (const levelUp of result.classLevelsGained) {
-      const className = getClassDef(levelUp.classId).name;
-      const message = `${className} reached level ${levelUp.level}.`;
+      const message = getClassLevelUpMessage(levelUp.level, classDef, raceDef);
       this.addLog(message);
       this.notices.push({ title: "Class Level Up", message });
     }

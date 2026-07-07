@@ -295,6 +295,7 @@ export function GameScreen({
           onStudy={() => handleExecuteCommand({ type: "Study" })}
           isCombatActive={snapshot.combatState !== undefined}
           stats={snapshot.stats}
+          statLayers={snapshot.statLayers}
           worldTime={snapshot.worldTime}
           keyboardLayout={keyboardLayout}
         />

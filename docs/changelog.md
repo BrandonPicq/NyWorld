@@ -4,6 +4,13 @@ This file tracks meaningful project changes by commit-oriented slices.
 
 Keep entries short and practical. When a slice is committed, its changelog section should stay aligned with the commit title so the project history remains easy to read after restores or bisects.
 
+## 2026-07-07 - [UPDATE]: Rework the status panel and level-up feedback
+
+- Replace the "Standing" line in CharacterStatusPanel.tsx with Global level and Class level tracks, displaying numeric progress and colored XP progress bars.
+- Export deriveGrowthLayer and GLOBAL_GROWTH_CYCLE helpers from layeredStats.ts.
+- Enrich level-up logs and toast notifications in GameplayEngine.ts with exact attribute improvements and the next XP threshold.
+- Keep notice message construction logic in a pure, unit-tested levelUpHelper.ts.
+
 ## 2026-07-07 - [ADD]: Body-layout equipment tab
 
 - Rebuild the equipment slot list in the character sheet into a visual body-shaped grid layout.
