@@ -1,4 +1,11 @@
-import type { LayeredStatBreakdown, Stats } from "../../engine";
+import {
+  EQUIPPED_SLOT_IDS,
+  type EquippedSlot,
+  type Inventory,
+  type LayeredStatBreakdown,
+  type Stats,
+} from "../../engine";
+import { getItemDef } from "../../engine/items/itemRegistry";
 import { TerminalButton } from "../components/TerminalButton";
 import { TerminalPanel } from "../components/TerminalPanel";
 import type { AudioSettings } from "../audio/audioSettings";
@@ -7,13 +14,17 @@ import { playMenuConfirmSound } from "../audio/menuAudio";
 type CharacterSheetModalProps = {
   audioSettings: AudioSettings;
   onClose: () => void;
+  onUnequipSlot: (slot: EquippedSlot) => void;
+  inventory: Inventory;
   stats: Stats;
   statLayers: LayeredStatBreakdown;
 };
 
 export function CharacterSheetModal({
   audioSettings,
+  inventory,
   onClose,
+  onUnequipSlot,
   stats,
   statLayers,
 }: CharacterSheetModalProps) {
@@ -98,6 +109,34 @@ export function CharacterSheetModal({
             </div>
           </div>
 
+          <div className="stats-modal__section stats-modal__section--equipment">
+            <h3 className="stats-modal__subtitle">Equipment</h3>
+            <div className="stats-modal__equipment-grid">
+              {EQUIPPED_SLOT_IDS.map((slot) => {
+                const itemId = inventory.equipped[slot];
+                const itemName = itemId ? getItemDef(itemId).name : "Empty";
+                return (
+                  <div className="stats-modal__equipment-row" key={slot}>
+                    <span className="stats-modal__attr-name">
+                      {formatSlotLabel(slot)}
+                    </span>
+                    <span className="stats-modal__equipment-name">
+                      {itemName}
+                    </span>
+                    {itemId && (
+                      <TerminalButton
+                        className="stats-modal__equipment-action"
+                        onClick={() => onUnequipSlot(slot)}
+                      >
+                        Unequip
+                      </TerminalButton>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
           <div className="stats-modal__section stats-modal__section--combat">
             <h3 className="stats-modal__subtitle">Combat</h3>
             <div className="stats-modal__grid">
@@ -174,6 +213,12 @@ function StatsLayerRow({
 
 function formatSigned(value: number): string {
   return value > 0 ? `+${value}` : String(value);
+}
+
+function formatSlotLabel(slot: EquippedSlot): string {
+  return slot
+    .replace(/([A-Z0-9])/g, " $1")
+    .replace(/^./, (firstLetter) => firstLetter.toUpperCase());
 }
 
 function StatsRow({

@@ -1,9 +1,13 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it } from "vitest";
 import testZoneData from "../content/zones/test_zone.json";
 import testZone2Data from "../content/zones/test_zone_2.json";
 import { getDialogue } from "./dialogues/dialogueRegistry";
 import { SAVE_VERSION } from "./GameSaveData";
 import { GameplayEngine } from "./GameplayEngine";
+import {
+  clearItemContentOverlay,
+  installItemContentOverlay,
+} from "./items/itemRegistry";
 import { getAllNpcDefs } from "./npcs/npcRegistry";
 import type { ZoneData } from "./ZoneTypes";
 import {
@@ -32,6 +36,10 @@ const zoneData = {
 function createEngine() {
   return new GameplayEngine(loadZone(zoneData));
 }
+
+afterEach(() => {
+  clearItemContentOverlay();
+});
 
 const adjacentNpc = {
   npcId: "old_scholar",
@@ -1330,6 +1338,104 @@ describe("GameplayEngine", () => {
         "Travel Ration would have no effect right now.",
       );
     });
+
+    it("rejects equipment when the current class does not permit it", () => {
+      installItemContentOverlay({
+        training_sword: {
+          name: "Training Sword",
+          description: "A plain practice blade.",
+          category: "equipment",
+          defaultQuantity: 1,
+          equipment: {
+            slot: "weapon",
+            weaponType: "sword",
+            bonuses: { "combat.attack": 2 },
+          },
+        },
+      });
+      const engine = createEngine();
+      const save = engine.createSaveData();
+      save.playerProgression.classId = "missing_class";
+      save.playerProgression.classes = {
+        missing_class: { level: 1, xp: 0 },
+      };
+      save.playerProgression.buffers.classes = {
+        missing_class: {
+          strength: 0,
+          vitality: 0,
+          agility: 0,
+          intelligence: 0,
+          spirit: 0,
+          willpower: 0,
+          perception: 0,
+          charisma: 0,
+        },
+      };
+      save.inventory.items.push({ itemId: "training_sword", quantity: 1 });
+      const restored = GameplayEngine.fromSaveData(save, {
+        resolveZone: (zoneId) =>
+          zoneId === "movement_test" ? loadZone(zoneData) : undefined,
+      });
+
+      const result = restored.execute({
+        type: "Equip",
+        itemId: "training_sword",
+      });
+
+      expect(result.success).toBe(false);
+      expect(restored.getSnapshot().inventory.equipped.weapon).toBeUndefined();
+      expect(restored.consumeNotices()).toContainEqual({
+        title: "Cannot Equip",
+        message: "Unknown Class cannot equip Training Sword.",
+      });
+    });
+
+    it("applies max-resource equipment without filling current resources and clamps on unequip", () => {
+      installItemContentOverlay({
+        sturdy_charm: {
+          name: "Sturdy Charm",
+          description: "A simple charm that steadies the wearer.",
+          category: "equipment",
+          defaultQuantity: 1,
+          equipment: {
+            slot: "accessory",
+            bonuses: { "resources.maxHp": 50 },
+          },
+        },
+      });
+      const engine = createEngine();
+      const save = engine.createSaveData();
+      save.inventory.items.push({ itemId: "sturdy_charm", quantity: 1 });
+      const restored = GameplayEngine.fromSaveData(save, {
+        resolveZone: (zoneId) =>
+          zoneId === "movement_test" ? loadZone(zoneData) : undefined,
+      });
+
+      const equipResult = restored.execute({
+        type: "Equip",
+        itemId: "sturdy_charm",
+      });
+
+      expect(equipResult.success).toBe(true);
+      expect(restored.getSnapshot().stats.resources.hp).toBe(100);
+      expect(restored.getSnapshot().stats.resources.maxHp).toBe(150);
+
+      const equippedSave = restored.createSaveData();
+      equippedSave.stats.resources.hp = 150;
+      const boosted = GameplayEngine.fromSaveData(equippedSave, {
+        resolveZone: (zoneId) =>
+          zoneId === "movement_test" ? loadZone(zoneData) : undefined,
+      });
+
+      const unequipResult = boosted.execute({
+        type: "Unequip",
+        slot: "accessory1",
+      });
+
+      expect(unequipResult.success).toBe(true);
+      expect(boosted.getSnapshot().stats.resources.hp).toBe(100);
+      expect(boosted.getSnapshot().stats.resources.maxHp).toBe(100);
+    });
   });
 
   describe("SaveData", () => {
@@ -1356,6 +1462,7 @@ describe("GameplayEngine", () => {
       expect(save.stats.skills.scholarship).toBe(1);
       expect(save.stats.progression.academicTitle).toBe("Novice Scribe");
       expect(save.inventory.items).toHaveLength(3);
+      expect(save.inventory.equipped).toEqual({});
       expect(save.npcStates).toContainEqual({
         npcId: "old_scholar",
         relationship: 0,
@@ -1439,6 +1546,7 @@ describe("GameplayEngine", () => {
       expect(snap.stats.progression.academicProgress).toBe(30);
       expect(snap.stats.conditions).toEqual([{ id: "tired", name: "Tired" }]);
       expect(snap.inventory.items).toHaveLength(3);
+      expect(snap.inventory.equipped).toEqual({});
       expect(restored.getNpcState("old_scholar")).toEqual({
         npcId: "old_scholar",
         relationship: 12,

@@ -1,5 +1,6 @@
 import type { GameSaveData } from "../../engine/GameSaveData";
 import { SAVE_VERSION } from "../../engine/GameSaveData";
+import { EQUIPPED_SLOT_IDS } from "../../engine/components";
 
 export const SAVE_SLOT_COUNT = 3;
 
@@ -168,7 +169,20 @@ function isSaveInventory(value: unknown): boolean {
   return (
     value.type === "Inventory" &&
     Array.isArray(value.items) &&
-    value.items.every(isInventoryStack)
+    value.items.every(isInventoryStack) &&
+    isEquippedItems(value.equipped)
+  );
+}
+
+function isEquippedItems(value: unknown): boolean {
+  if (!isRecord(value)) return false;
+
+  const allowedSlots = new Set<string>(EQUIPPED_SLOT_IDS);
+  return Object.entries(value).every(
+    ([slot, itemId]) =>
+      allowedSlots.has(slot) &&
+      typeof itemId === "string" &&
+      itemId.trim().length > 0,
   );
 }
 

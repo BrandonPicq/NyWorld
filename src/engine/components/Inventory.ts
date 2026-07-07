@@ -20,10 +20,27 @@ export interface InventoryStack {
   quantity: number;
 }
 
+export const EQUIPPED_SLOT_IDS = [
+  "weapon",
+  "offHand",
+  "head",
+  "body",
+  "hands",
+  "feet",
+  "accessory1",
+  "accessory2",
+] as const;
+
+export type EquippedSlot = (typeof EQUIPPED_SLOT_IDS)[number];
+
+export type EquippedItems = Partial<Record<EquippedSlot, string>>;
+
 /**
- * Component storing the item stacks carried by an entity.
+ * Component storing the item stacks carried by an entity and the items
+ * currently assigned to equipment slots.
  */
 export interface Inventory extends Component {
   readonly type: "Inventory";
   items: InventoryStack[];
+  equipped: EquippedItems;
 }

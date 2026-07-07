@@ -4,6 +4,12 @@ This file tracks meaningful project changes by commit-oriented slices.
 
 Keep entries short and practical. When a slice is committed, its changelog section should stay aligned with the commit title so the project history remains easy to read after restores or bisects.
 
+## 2026-07-07 - [ADD]: Equip and unequip from the inventory
+
+- Persist equipped item slots in saves and bump the save version for the new inventory shape.
+- Add equip and unequip commands with class permission checks and equipment bonuses applied through the layered stat model.
+- Show equipment slots on the character sheet and add an inventory Equip action for equipment items.
+
 ## 2026-07-07 - [ADD]: Equipment item content model
 
 - Extend item content with equipment category data: slots, weapon types, and flat bonuses for attributes, combat stats, and max resources.

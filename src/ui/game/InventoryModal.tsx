@@ -11,6 +11,7 @@ type InventoryModalProps = {
   audioSettings: AudioSettings;
   inventory: Inventory;
   onClose: () => void;
+  onEquipItem: (itemId: string) => void;
   onUseItem: (itemId: string) => void;
 };
 
@@ -34,6 +35,7 @@ export function InventoryModal({
   audioSettings,
   inventory,
   onClose,
+  onEquipItem,
   onUseItem,
 }: InventoryModalProps) {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -60,18 +62,30 @@ export function InventoryModal({
     }
   };
 
+  const handleEquipSelected = (index: number) => {
+    if (!hasItems) return;
+    const selectedItem = items[index];
+    if (!selectedItem) return;
+    const def = getItemDef(selectedItem.itemId);
+    if (def.category === "equipment" && def.equipment) {
+      onEquipItem(selectedItem.itemId);
+    }
+  };
+
   const { selectedIndex, setSelectedIndex, handleKeyDown } = useMenuKeyboard({
     itemCount: items.length,
     audioSettings,
     onConfirm: (index) => handleUseSelected(index),
     onCancel: handleClose,
     extraKeys: {
+      e: (index) => handleEquipSelected(index),
       u: (index) => handleUseSelected(index),
     },
   });
 
   const selectedItem = hasItems ? items[selectedIndex] : null;
   const selectedDef = selectedItem ? getItemDef(selectedItem.itemId) : null;
+  const equippedItemIds = new Set(Object.values(inventory.equipped));
 
   return (
     <div
@@ -115,7 +129,9 @@ export function InventoryModal({
                       {isSelected ? "> " : "  "} {def.name}
                     </span>
                     <span className="stats-modal__inventory-qty">
-                      x{stack.quantity}
+                      {equippedItemIds.has(stack.itemId)
+                        ? `Equipped x${stack.quantity}`
+                        : `x${stack.quantity}`}
                     </span>
                   </div>
                 );
@@ -148,6 +164,15 @@ export function InventoryModal({
                     onClick={() => handleUseSelected(selectedIndex)}
                   >
                     [Use Item]
+                  </TerminalButton>
+                )}
+
+                {selectedDef.category === "equipment" && selectedDef.equipment && (
+                  <TerminalButton
+                    className="stats-modal__inventory-detail-action"
+                    onClick={() => handleEquipSelected(selectedIndex)}
+                  >
+                    [Equip]
                   </TerminalButton>
                 )}
               </div>

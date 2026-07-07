@@ -4,6 +4,7 @@ import type { ClassDef } from "../classes/ClassDef";
 import type { RaceDef } from "../races/RaceDef";
 import { createInitialStats } from "./characterStats";
 import {
+  applyLayeredStats,
   createInitialPlayerProgression,
   deriveLayeredStats,
 } from "./layeredStats";
@@ -120,5 +121,35 @@ describe("deriveLayeredStats", () => {
     expect(breakdown.classLevel).toBe(4);
     expect(breakdown.classAttributes.intelligence).toBe(3);
     expect(breakdown.classAttributes.strength).toBe(0);
+  });
+
+  it("applies equipment bonuses as a separate non-growth layer", () => {
+    const stats = createInitialStats();
+    stats.resources.hp = 75;
+
+    const breakdown = deriveLayeredStats({
+      baseStats: stats,
+      progression: createInitialPlayerProgression(),
+      classDef: otherworlder,
+      raceDef: human,
+      equipmentBonuses: {
+        "attributes.strength": 2,
+        "combat.attack": 3,
+        "resources.maxHp": 50,
+        "resources.maxEnergy": 20,
+      },
+    });
+
+    expect(breakdown.equipmentAttributes.strength).toBe(2);
+    expect(breakdown.equipmentCombat.attack).toBe(3);
+    expect(breakdown.equipmentResources.maxHp).toBe(50);
+    expect(breakdown.effectiveAttributes.strength).toBe(12);
+
+    applyLayeredStats(stats, breakdown);
+
+    expect(stats.resources.hp).toBe(75);
+    expect(stats.resources.maxHp).toBe(150);
+    expect(stats.resources.maxEnergy).toBe(120);
+    expect(stats.combat.attack).toBe(14);
   });
 });

@@ -22,5 +22,6 @@ export function createStartingInventory(config?: NewGameConfig): Inventory {
   return {
     type: "Inventory",
     items: stacks.map((stack) => ({ ...stack })),
+    equipped: {},
   };
 }

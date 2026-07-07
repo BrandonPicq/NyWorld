@@ -29,6 +29,7 @@ function stubSave(overrides: Partial<GameSaveData> = {}): GameSaveData {
     inventory: {
       type: "Inventory",
       items: [{ itemId: "travel_ration", quantity: 3 }],
+      equipped: {},
     },
     npcStates: [
       {
@@ -296,6 +297,16 @@ describe("gameSaveStorage", () => {
 
     const raw = JSON.parse(localStorage.getItem("nywarudo_save_slot_0")!);
     raw.inventory.items[0].quantity = 0;
+    localStorage.setItem("nywarudo_save_slot_0", JSON.stringify(raw));
+
+    expect(readSlot(0)).toBeNull();
+  });
+
+  it("returns null for a save with invalid equipped slot data", () => {
+    writeSlot(0, stubSave());
+
+    const raw = JSON.parse(localStorage.getItem("nywarudo_save_slot_0")!);
+    raw.inventory.equipped = { backpack: "travel_ration" };
     localStorage.setItem("nywarudo_save_slot_0", JSON.stringify(raw));
 
     expect(readSlot(0)).toBeNull();

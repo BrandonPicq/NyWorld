@@ -67,6 +67,7 @@ const baseSnapshot: GameSnapshot = {
   inventory: {
     type: "Inventory",
     items: [],
+    equipped: {},
   },
   npcStates: [],
   activeQuests: [],

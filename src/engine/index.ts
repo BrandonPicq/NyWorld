@@ -1,5 +1,7 @@
 export type {
   DialogueNode,
+  EquippedItems,
+  EquippedSlot,
   Inventory,
   InventoryItemCategory,
   InventoryStack,
@@ -12,6 +14,7 @@ export type {
   StatResources,
   Stats,
 } from "./components";
+export { EQUIPPED_SLOT_IDS } from "./components";
 export {
   cloneStats,
   createInitialStats,

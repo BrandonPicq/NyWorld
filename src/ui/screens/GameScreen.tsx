@@ -365,7 +365,11 @@ export function GameScreen({
         {isCharacterSheetOpen && (
           <CharacterSheetModal
             audioSettings={audioSettings}
+            inventory={snapshot.inventory}
             onClose={() => setIsCharacterSheetOpen(false)}
+            onUnequipSlot={(slot) =>
+              handleExecuteCommand({ type: "Unequip", slot })
+            }
             statLayers={snapshot.statLayers}
             stats={snapshot.stats}
           />
@@ -376,6 +380,9 @@ export function GameScreen({
             audioSettings={audioSettings}
             inventory={snapshot.inventory}
             onClose={() => setIsInventoryOpen(false)}
+            onEquipItem={(itemId) =>
+              handleExecuteCommand({ type: "Equip", itemId })
+            }
             onUseItem={(itemId) =>
               handleExecuteCommand({ type: "UseItem", itemId })
             }

@@ -54,6 +54,7 @@ export function serializeSaveData(state: SaveSerializationState): GameSaveData {
     inventory: {
       type: "Inventory",
       items: inventory.items.map((stack) => ({ ...stack })),
+      equipped: { ...inventory.equipped },
     },
     npcStates: Array.from(state.npcStates, cloneNpcState),
     log: state.log.map((entry) => ({ ...entry })),

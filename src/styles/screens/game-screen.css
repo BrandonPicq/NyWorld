@@ -455,7 +455,8 @@
   grid-template-areas:
     "resources attributes"
     "combat attributes"
-    "academy skills"
+    "equipment skills"
+    "academy academy"
     "layers layers";
   align-items: start;
   gap: var(--space-4);
@@ -479,6 +480,10 @@
 
 .stats-modal__section--academy {
   grid-area: academy;
+}
+
+.stats-modal__section--equipment {
+  grid-area: equipment;
 }
 
 .stats-modal__section--layers {
@@ -550,6 +555,29 @@
 
 .stats-modal__academic p {
   margin: 0;
+}
+
+.stats-modal__equipment-grid {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.stats-modal__equipment-row {
+  display: grid;
+  grid-template-columns: minmax(5.5rem, 0.8fr) minmax(8rem, 1fr) auto;
+  gap: var(--space-2);
+  align-items: center;
+  font-family: var(--font-mono);
+  font-size: 0.9rem;
+}
+
+.stats-modal__equipment-name {
+  min-width: 0;
+  color: var(--color-text-soft);
+}
+
+.stats-modal__equipment-action {
+  min-width: 5.5rem;
 }
 
 .stats-modal__empty {
@@ -687,8 +715,10 @@
       "resources"
       "attributes"
       "combat"
+      "equipment"
       "skills"
-      "academy";
+      "academy"
+      "layers";
   }
 }
 

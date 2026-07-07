@@ -1,6 +1,8 @@
 import type { GameCommand } from "./commands";
+import { EQUIPPED_SLOT_IDS } from "./components";
 import type {
   DialogueNode,
+  EquippedSlot,
   Inventory,
   Npc,
   Position,
@@ -17,6 +19,8 @@ import {
 } from "./quests/QuestProgressionSystem";
 import { getDialogue } from "./dialogues/dialogueRegistry";
 import { InventorySystem } from "./items/InventorySystem";
+import { getItemDef } from "./items/itemRegistry";
+import type { EquipmentBonusMap } from "./items/ItemDef";
 import { getAllNpcPresenceDefs } from "./npcs/npcPresenceRegistry";
 import {
   cloneNpcState,
@@ -324,9 +328,10 @@ export class GameplayEngine {
     this.world.addComponent(playerId, renderable);
 
     const playerStats = cloneStats(this.basePlayerStats);
-    this.applyLayeredStatsTo(playerStats);
+    const playerInventory = createStartingInventory(options.newGame);
+    this.applyLayeredStatsTo(playerStats, playerInventory);
     this.world.addComponent(playerId, playerStats);
-    this.world.addComponent(playerId, createStartingInventory(options.newGame));
+    this.world.addComponent(playerId, playerInventory);
 
     const quests: Quests = {
       type: "Quests",
@@ -390,6 +395,14 @@ export class GameplayEngine {
 
     if (command.type === "UseItem") {
       return this.inventory.useItem(command.itemId);
+    }
+
+    if (command.type === "Equip") {
+      return this.equipItem(command.itemId, command.slot);
+    }
+
+    if (command.type === "Unequip") {
+      return this.unequipItem(command.slot);
     }
 
     if (command.type === "CompleteDialogue") {
@@ -656,13 +669,25 @@ export class GameplayEngine {
     this.playerProgression = clonePlayerProgressionState(
       saveData.playerProgression,
     );
+    const inventory = this.world.getComponent<Inventory>(
+      playerId,
+      "Inventory",
+    )!;
+    inventory.items = saveData.inventory.items.map((stack) => ({ ...stack }));
+    inventory.equipped = { ...saveData.inventory.equipped };
+
     this.basePlayerStats = cloneStats(saveData.stats);
-    const savedBreakdown = this.rebuildStatLayers(this.basePlayerStats);
+    const savedBreakdown = this.rebuildStatLayers(this.basePlayerStats, inventory);
     this.basePlayerStats.attributes = subtractAttributeValues(
       saveData.stats.attributes,
       savedBreakdown.globalAttributes,
       savedBreakdown.classAttributes,
       savedBreakdown.equipmentAttributes,
+    );
+    this.basePlayerStats.resources.maxEnergy = Math.max(
+      0,
+      saveData.stats.resources.maxEnergy -
+        savedBreakdown.equipmentResources.maxEnergy,
     );
     stats.resources = { ...saveData.stats.resources };
     stats.currency = saveData.stats.currency;
@@ -676,13 +701,7 @@ export class GameplayEngine {
     this.basePlayerStats.conditions = stats.conditions.map((condition) => ({
       ...condition,
     }));
-    this.applyLayeredStatsTo(stats);
-
-    const inventory = this.world.getComponent<Inventory>(
-      playerId,
-      "Inventory",
-    )!;
-    inventory.items = saveData.inventory.items.map((stack) => ({ ...stack }));
+    this.applyLayeredStatsTo(stats, inventory);
 
     const quests = this.world.getComponent<Quests>(playerId, "Quests")!;
     const restoredQuests = this.quests.restoreQuestIds(
@@ -712,6 +731,122 @@ export class GameplayEngine {
     this.spawnNpcs();
     this.spawnItems();
     this.seenZoneEntryEventIds.add(getZoneEntryEventId(this.map.zoneId));
+  }
+
+  private equipItem(itemId: string, requestedSlot?: EquippedSlot): ExecuteResult {
+    const inventory = this.getPlayerInventory();
+    const stack = inventory.items.find((item) => item.itemId === itemId);
+
+    if (!stack) {
+      const message = "You don't have that item.";
+      this.addLog(message);
+      this.notices.push({ title: "Cannot Equip", message });
+      return { success: false };
+    }
+
+    const itemDef = getItemDef(itemId);
+    const equipment = itemDef.equipment;
+    if (itemDef.category !== "equipment" || !equipment) {
+      const message = `${itemDef.name} cannot be equipped.`;
+      this.addLog(message);
+      this.notices.push({ title: "Cannot Equip", message });
+      return { success: false };
+    }
+
+    const targetSlot = this.resolveEquippedSlot(
+      equipment.slot,
+      requestedSlot,
+      inventory,
+    );
+    if (!targetSlot) {
+      const message = `${itemDef.name} cannot be assigned to that slot.`;
+      this.addLog(message);
+      this.notices.push({ title: "Cannot Equip", message });
+      return { success: false };
+    }
+
+    const classDef = getClassDef(this.playerProgression.classId);
+    const permissions = classDef.equipmentPermissions;
+    const canEquip =
+      equipment.slot === "weapon"
+        ? Boolean(
+            equipment.weaponType &&
+              permissions.allowedWeaponTypes.includes(equipment.weaponType),
+          )
+        : permissions.allowedArmorSlots.includes(equipment.slot);
+
+    if (!canEquip) {
+      const message = `${classDef.name} cannot equip ${itemDef.name}.`;
+      this.addLog(message);
+      this.notices.push({ title: "Cannot Equip", message });
+      return { success: false };
+    }
+
+    const equippedCount = this.countEquippedCopies(
+      inventory,
+      itemId,
+      targetSlot,
+    );
+    if (equippedCount >= stack.quantity) {
+      const message = `No unequipped copies of ${itemDef.name} remain.`;
+      this.addLog(message);
+      this.notices.push({ title: "Cannot Equip", message });
+      return { success: false };
+    }
+
+    inventory.equipped[targetSlot] = itemId;
+    this.applyLayeredStatsTo(this.getPlayerStats(), inventory);
+    this.addLog(`Equipped ${itemDef.name}.`);
+    return { success: true };
+  }
+
+  private unequipItem(slot: EquippedSlot): ExecuteResult {
+    const inventory = this.getPlayerInventory();
+    const itemId = inventory.equipped[slot];
+
+    if (!itemId) {
+      const message = "Nothing is equipped there.";
+      this.addLog(message);
+      return { success: false };
+    }
+
+    delete inventory.equipped[slot];
+    this.applyLayeredStatsTo(this.getPlayerStats(), inventory);
+    this.addLog(`Unequipped ${getItemDef(itemId).name}.`);
+    return { success: true };
+  }
+
+  private resolveEquippedSlot(
+    equipmentSlot: string,
+    requestedSlot: EquippedSlot | undefined,
+    inventory: Inventory,
+  ): EquippedSlot | undefined {
+    if (equipmentSlot === "accessory") {
+      if (requestedSlot === "accessory1" || requestedSlot === "accessory2") {
+        return requestedSlot;
+      }
+      if (requestedSlot) return undefined;
+      return inventory.equipped.accessory1 ? "accessory2" : "accessory1";
+    }
+
+    if (requestedSlot && requestedSlot !== equipmentSlot) {
+      return undefined;
+    }
+
+    return EQUIPPED_SLOT_IDS.includes(equipmentSlot as EquippedSlot)
+      ? (equipmentSlot as EquippedSlot)
+      : undefined;
+  }
+
+  private countEquippedCopies(
+    inventory: Inventory,
+    itemId: string,
+    exceptSlot?: EquippedSlot,
+  ): number {
+    return EQUIPPED_SLOT_IDS.reduce((count, slot) => {
+      if (slot === exceptSlot) return count;
+      return inventory.equipped[slot] === itemId ? count + 1 : count;
+    }, 0);
   }
 
   private resolvePendingTransition(): void {
@@ -760,11 +895,8 @@ export class GameplayEngine {
     );
     this.basePlayerStats.attributes.intelligence =
       (this.basePlayerStats.attributes.intelligence ?? 0) + intelligenceGain;
-    stats.attributes.intelligence =
-      (stats.attributes.intelligence ?? 0) + intelligenceGain;
     stats.skills.scholarship += academicProgressGain;
-    refreshDerivedStats(stats);
-    this.statLayers = this.rebuildStatLayers(this.basePlayerStats);
+    this.applyLayeredStatsTo(stats, this.getPlayerInventory());
 
     this.tickCounter.advance();
     this.advanceWorldTime(WORLD_TIME_ACTION_COST.study);
@@ -902,6 +1034,7 @@ export class GameplayEngine {
       inventory: {
         ...inventory,
         items: inventory.items.map((stack) => ({ ...stack })),
+        equipped: { ...inventory.equipped },
       },
       npcStates: Object.values(this.npcStates).map(cloneNpcState),
       entities,
@@ -924,7 +1057,10 @@ export class GameplayEngine {
     return this.world.getComponent<Stats>(playerId, "Stats")!;
   }
 
-  private rebuildStatLayers(baseStats: Stats): LayeredStatBreakdown {
+  private rebuildStatLayers(
+    baseStats: Stats,
+    inventory?: Inventory,
+  ): LayeredStatBreakdown {
     const classDef = getClassDef(this.playerProgression.classId);
     const raceDef = getRaceDef(this.playerProgression.raceId);
     return deriveLayeredStats({
@@ -932,16 +1068,38 @@ export class GameplayEngine {
       progression: this.playerProgression,
       classDef,
       raceDef,
+      equipmentBonuses: inventory
+        ? this.getEquippedEquipmentBonuses(inventory)
+        : {},
     });
   }
 
-  private applyLayeredStatsTo(stats: Stats): void {
-    this.statLayers = this.rebuildStatLayers(this.basePlayerStats);
+  private applyLayeredStatsTo(stats: Stats, inventory?: Inventory): void {
+    this.statLayers = this.rebuildStatLayers(this.basePlayerStats, inventory);
     applyLayeredStats(stats, this.statLayers);
     this.playerProgression = normalizeProgressionBuffers(
       this.playerProgression,
       this.statLayers,
     );
+  }
+
+  private getEquippedEquipmentBonuses(inventory: Inventory): EquipmentBonusMap {
+    const totals: EquipmentBonusMap = {};
+
+    for (const slot of EQUIPPED_SLOT_IDS) {
+      const itemId = inventory.equipped[slot];
+      if (!itemId) continue;
+
+      const equipment = getItemDef(itemId).equipment;
+      if (!equipment) continue;
+
+      for (const [key, value] of Object.entries(equipment.bonuses)) {
+        totals[key as keyof EquipmentBonusMap] =
+          (totals[key as keyof EquipmentBonusMap] ?? 0) + (value ?? 0);
+      }
+    }
+
+    return totals;
   }
 
   getNpcState(npcId: string): NpcState | undefined {

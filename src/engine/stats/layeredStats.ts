@@ -1,5 +1,11 @@
 import type { ClassDef } from "../classes/ClassDef";
-import type { CoreAttributes, Stats } from "../components/Stats";
+import type {
+  CombatStats,
+  CoreAttributes,
+  StatResources,
+  Stats,
+} from "../components/Stats";
+import type { EquipmentBonusMap } from "../items/ItemDef";
 import type { RaceDef } from "../races/RaceDef";
 import {
   cloneStats,
@@ -15,6 +21,11 @@ export const DEFAULT_PLAYER_RACE_ID = "human";
 export type CoreAttributeKey = keyof CoreAttributes;
 
 export type AttributeValues = Record<CoreAttributeKey, number>;
+export type CombatBonusValues = Record<keyof CombatStats, number>;
+export type ResourceBonusValues = Pick<
+  StatResources,
+  "maxHp" | "maxMp" | "maxSp" | "maxEnergy"
+>;
 
 export interface PlayerClassProgression {
   level: number;
@@ -43,6 +54,9 @@ export interface LayeredStatBreakdown {
   globalAttributes: AttributeValues;
   classAttributes: AttributeValues;
   equipmentAttributes: AttributeValues;
+  equipmentCombat: CombatBonusValues;
+  equipmentResources: ResourceBonusValues;
+  baseResources: ResourceBonusValues;
   effectiveAttributes: AttributeValues;
   buffers: ProgressionFractionalBuffers;
 }
@@ -123,6 +137,9 @@ export function cloneLayeredStatBreakdown(
     globalAttributes: cloneAttributeValues(breakdown.globalAttributes),
     classAttributes: cloneAttributeValues(breakdown.classAttributes),
     equipmentAttributes: cloneAttributeValues(breakdown.equipmentAttributes),
+    equipmentCombat: { ...breakdown.equipmentCombat },
+    equipmentResources: { ...breakdown.equipmentResources },
+    baseResources: { ...breakdown.baseResources },
     effectiveAttributes: cloneAttributeValues(breakdown.effectiveAttributes),
     buffers: {
       global: cloneAttributeValues(breakdown.buffers.global),
@@ -141,9 +158,11 @@ export function deriveLayeredStats(input: {
   progression: PlayerProgressionState;
   classDef: ClassDef;
   raceDef: RaceDef;
+  equipmentBonuses?: EquipmentBonusMap;
 }): LayeredStatBreakdown {
   const progression = ensureProgressionRecords(input.progression);
   const baseAttributes = cloneAttributeValues(input.baseStats.attributes);
+  const baseResources = cloneResourceBonusValues(input.baseStats.resources);
   const globalLayer = deriveGrowthLayer({
     level: progression.global.level,
     cycle: GLOBAL_GROWTH_CYCLE,
@@ -160,12 +179,12 @@ export function deriveLayeredStats(input: {
     ),
     raceDef: input.raceDef,
   });
-  const equipmentAttributes = createEmptyAttributeValues();
+  const equipment = deriveEquipmentLayers(input.equipmentBonuses ?? {});
   const effectiveAttributes = addAttributeValues(
     baseAttributes,
     globalLayer.attributes,
     classLayer.attributes,
-    equipmentAttributes,
+    equipment.attributes,
   );
 
   return {
@@ -176,7 +195,10 @@ export function deriveLayeredStats(input: {
     baseAttributes,
     globalAttributes: globalLayer.attributes,
     classAttributes: classLayer.attributes,
-    equipmentAttributes,
+    equipmentAttributes: equipment.attributes,
+    equipmentCombat: equipment.combat,
+    equipmentResources: equipment.resources,
+    baseResources,
     effectiveAttributes,
     buffers: {
       global: globalLayer.buffers,
@@ -191,9 +213,15 @@ export function deriveLayeredStats(input: {
 export function applyLayeredStats(stats: Stats, breakdown: LayeredStatBreakdown): void {
   const previousResources = { ...stats.resources };
   stats.attributes = cloneAttributeValues(breakdown.effectiveAttributes);
-  stats.resources.maxHp = deriveMaxHp(stats.attributes);
-  stats.resources.maxMp = deriveMaxMp(stats.attributes);
-  stats.resources.maxSp = deriveMaxSp(stats.attributes);
+  stats.resources.maxHp =
+    deriveMaxHp(stats.attributes) + breakdown.equipmentResources.maxHp;
+  stats.resources.maxMp =
+    deriveMaxMp(stats.attributes) + breakdown.equipmentResources.maxMp;
+  stats.resources.maxSp =
+    deriveMaxSp(stats.attributes) + breakdown.equipmentResources.maxSp;
+  stats.resources.maxEnergy =
+    breakdown.baseResources.maxEnergy +
+    breakdown.equipmentResources.maxEnergy;
   stats.resources.hp = clamp(previousResources.hp, 0, stats.resources.maxHp);
   stats.resources.mp = clamp(previousResources.mp, 0, stats.resources.maxMp);
   stats.resources.sp = clamp(previousResources.sp, 0, stats.resources.maxSp);
@@ -202,7 +230,14 @@ export function applyLayeredStats(stats: Stats, breakdown: LayeredStatBreakdown)
     0,
     stats.resources.maxEnergy,
   );
-  stats.combat = deriveCombatStats(stats.attributes, stats.skills);
+  const combat = deriveCombatStats(stats.attributes, stats.skills);
+  stats.combat = {
+    attack: combat.attack + breakdown.equipmentCombat.attack,
+    magicAttack: combat.magicAttack + breakdown.equipmentCombat.magicAttack,
+    defense: combat.defense + breakdown.equipmentCombat.defense,
+    magicDefense:
+      combat.magicDefense + breakdown.equipmentCombat.magicDefense,
+  };
 }
 
 export function createStatsWithLayeredAttributes(input: {
@@ -210,6 +245,7 @@ export function createStatsWithLayeredAttributes(input: {
   progression: PlayerProgressionState;
   classDef: ClassDef;
   raceDef: RaceDef;
+  equipmentBonuses?: EquipmentBonusMap;
 }): { stats: Stats; breakdown: LayeredStatBreakdown } {
   const stats = cloneStats(input.baseStats);
   const breakdown = deriveLayeredStats(input);
@@ -295,8 +331,64 @@ function createEmptyAttributeValues(): AttributeValues {
   };
 }
 
+function createEmptyCombatBonuses(): CombatBonusValues {
+  return {
+    attack: 0,
+    magicAttack: 0,
+    defense: 0,
+    magicDefense: 0,
+  };
+}
+
+function createEmptyResourceBonuses(): ResourceBonusValues {
+  return {
+    maxHp: 0,
+    maxMp: 0,
+    maxSp: 0,
+    maxEnergy: 0,
+  };
+}
+
 function cloneAttributeValues(values: CoreAttributes): AttributeValues {
   return { ...values };
+}
+
+function cloneResourceBonusValues(resources: StatResources): ResourceBonusValues {
+  return {
+    maxHp: resources.maxHp,
+    maxMp: resources.maxMp,
+    maxSp: resources.maxSp,
+    maxEnergy: resources.maxEnergy,
+  };
+}
+
+function deriveEquipmentLayers(bonuses: EquipmentBonusMap): {
+  attributes: AttributeValues;
+  combat: CombatBonusValues;
+  resources: ResourceBonusValues;
+} {
+  const attributes = createEmptyAttributeValues();
+  const combat = createEmptyCombatBonuses();
+  const resources = createEmptyResourceBonuses();
+
+  for (const [bonusKey, value] of Object.entries(bonuses)) {
+    if (value === undefined) continue;
+
+    const [group, key] = bonusKey.split(".") as [string, string];
+    if (group === "attributes" && key in attributes) {
+      attributes[key as CoreAttributeKey] += value;
+      continue;
+    }
+    if (group === "combat" && key in combat) {
+      combat[key as keyof CombatStats] += value;
+      continue;
+    }
+    if (group === "resources" && key in resources) {
+      resources[key as keyof ResourceBonusValues] += value;
+    }
+  }
+
+  return { attributes, combat, resources };
 }
 
 function addAttributeValues(...layers: readonly AttributeValues[]): AttributeValues {

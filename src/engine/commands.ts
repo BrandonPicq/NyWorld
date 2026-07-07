@@ -1,4 +1,5 @@
 import type { Direction } from "./systems";
+import type { EquippedSlot } from "./components";
 
 /**
  * Combat actions the player can select from the combat menu.
@@ -31,6 +32,8 @@ export type CombatActionCommand =
  *   section (energy, intelligence, academic progress, world time).
  * - UseItem: consumes one unit of a consumable stack; outside combat it
  *   restores energy, inside combat it restores HP (item catalog effects).
+ * - Equip / Unequip: assigns equipment items to slots and refreshes derived
+ *   stats from the equipment layer.
  * - CompleteDialogue: acknowledges the end of the pending NPC dialogue and
  *   fires quest start/complete triggers tied to that dialogue.
  * - AcknowledgeZoneEntryDialogue: marks the pending one-shot zone entry
@@ -48,6 +51,8 @@ export type GameCommand =
   | { type: "Rest" }
   | { type: "Study" }
   | { type: "UseItem"; itemId: string }
+  | { type: "Equip"; itemId: string; slot?: EquippedSlot }
+  | { type: "Unequip"; slot: EquippedSlot }
   | { type: "CompleteDialogue" }
   | { type: "AcknowledgeZoneEntryDialogue" }
   | { type: "SelectCombatAction"; actionKind: CombatActionCommand }
