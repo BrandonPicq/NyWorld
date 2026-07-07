@@ -26,6 +26,7 @@ type UseGameplayEngineInput = {
    */
   contentBundle: ContentBundle;
   initialSaveData?: GameSaveData;
+  newGameRaceId?: string;
   newGameStart?: {
     zoneId: string;
     x: number;
@@ -48,6 +49,7 @@ export function useGameplayEngine({
   audioSettings,
   contentBundle,
   initialSaveData,
+  newGameRaceId,
   newGameStart,
   onDialogue,
   onEffect,
@@ -86,6 +88,7 @@ export function useGameplayEngine({
             resolveZone,
             safeRespawn,
             newGame,
+            playerRaceId: newGameRaceId,
             actions,
             initialPlayerPosition: newGameStart
               ? { x: newGameStart.x, y: newGameStart.y }

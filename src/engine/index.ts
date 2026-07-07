@@ -25,6 +25,26 @@ export {
 } from "./stats/characterStats";
 export type { StatPath } from "./stats/characterStats";
 export {
+  DEFAULT_PLAYER_CLASS_ID,
+  DEFAULT_PLAYER_RACE_ID,
+  applyLayeredStats,
+  cloneLayeredStatBreakdown,
+  clonePlayerProgressionState,
+  createInitialPlayerProgression,
+  createStatsWithLayeredAttributes,
+  deriveLayeredStats,
+  normalizeProgressionBuffers,
+  subtractAttributeValues,
+} from "./stats/layeredStats";
+export type {
+  AttributeValues,
+  CoreAttributeKey,
+  LayeredStatBreakdown,
+  PlayerClassProgression,
+  PlayerProgressionState,
+  ProgressionFractionalBuffers,
+} from "./stats/layeredStats";
+export {
   defaultContentBundle,
   createContentBundle,
   getActionTuning,

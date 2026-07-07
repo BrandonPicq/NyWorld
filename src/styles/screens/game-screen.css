@@ -456,7 +456,7 @@
     "resources attributes"
     "combat attributes"
     "academy skills"
-    ". skills";
+    "layers layers";
   align-items: start;
   gap: var(--space-4);
 }
@@ -479,6 +479,10 @@
 
 .stats-modal__section--academy {
   grid-area: academy;
+}
+
+.stats-modal__section--layers {
+  grid-area: layers;
 }
 
 .stats-modal__section {
@@ -519,6 +523,21 @@
   flex: 0 0 auto;
   color: var(--color-accent);
   font-weight: bold;
+}
+
+.stats-modal__layer-grid {
+  display: grid;
+  grid-template-columns: minmax(8rem, 1fr) repeat(4, minmax(3rem, auto));
+  gap: var(--space-1) var(--space-2);
+  align-items: center;
+  font-family: var(--font-mono);
+  font-size: 0.9rem;
+}
+
+.stats-modal__layer-grid > span:nth-child(-n + 5) {
+  color: var(--color-text-muted);
+  font-size: 0.75rem;
+  text-transform: uppercase;
 }
 
 .stats-modal__academic {

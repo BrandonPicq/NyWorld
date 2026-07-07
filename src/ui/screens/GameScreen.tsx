@@ -49,6 +49,7 @@ type GameScreenProps = {
   textSpeed: TextSpeed;
   contentBundle?: ContentBundle;
   initialSaveData?: GameSaveData;
+  newGameRaceId?: string;
   isPlaytest?: boolean;
   playtestStart?: {
     zoneId: string;
@@ -70,6 +71,7 @@ export function GameScreen({
   textSpeed,
   contentBundle = defaultContentBundle,
   initialSaveData,
+  newGameRaceId,
   isPlaytest = false,
   playtestStart,
   onBackToEditor,
@@ -118,6 +120,7 @@ export function GameScreen({
     audioSettings,
     contentBundle,
     initialSaveData: isPlaytest ? undefined : initialSaveData,
+    newGameRaceId: isPlaytest ? undefined : newGameRaceId,
     newGameStart: isPlaytest ? playtestStart : undefined,
     onDialogue: (nodes, id) => triggerDialogue(nodes, id),
     onEffect: handleEngineEffect,
@@ -363,6 +366,7 @@ export function GameScreen({
           <CharacterSheetModal
             audioSettings={audioSettings}
             onClose={() => setIsCharacterSheetOpen(false)}
+            statLayers={snapshot.statLayers}
             stats={snapshot.stats}
           />
         )}

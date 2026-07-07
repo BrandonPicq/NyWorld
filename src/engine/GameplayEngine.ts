@@ -8,10 +8,8 @@ import type {
   Stats,
   Quests,
 } from "./components";
-import {
-  getQuestDef,
-  getAllQuestDefs,
-} from "./quests/questRegistry";
+import { getClassDef } from "./classes/classRegistry";
+import { getQuestDef, getAllQuestDefs } from "./quests/questRegistry";
 import {
   QuestProgressionSystem,
   hasCompletedQuestObjective,
@@ -61,6 +59,18 @@ import {
   getStatValue,
   refreshDerivedStats,
 } from "./stats/characterStats";
+import { getRaceDef } from "./races/raceRegistry";
+import {
+  applyLayeredStats,
+  cloneLayeredStatBreakdown,
+  clonePlayerProgressionState,
+  createInitialPlayerProgression,
+  deriveLayeredStats,
+  normalizeProgressionBuffers,
+  subtractAttributeValues,
+  type LayeredStatBreakdown,
+  type PlayerProgressionState,
+} from "./stats/layeredStats";
 import {
   CombatSystem,
   isCombatNpc,
@@ -145,6 +155,7 @@ export interface GameSnapshot {
   log: LogEntry[];
   /** Detached copies: mutating snapshot data never affects the engine. */
   stats: Stats;
+  statLayers: LayeredStatBreakdown;
   inventory: Inventory;
   npcStates: NpcState[];
   /** Render-ready NPC and ground item projections for the canvas. */
@@ -211,6 +222,7 @@ type GameplayEngineOptions = {
    * full player state, so restored engines ignore this config.
    */
   newGame?: NewGameConfig;
+  playerRaceId?: string;
   /** Optional authored tuning for rest and study actions. */
   actions?: ActionTuningConfig;
   random?: () => number;
@@ -242,11 +254,19 @@ export class GameplayEngine {
   private readonly combat: CombatSystem;
   private readonly safeRespawn: SafeRespawnPoint;
   private readonly actionTuning: ActionTuningConfig;
+  private basePlayerStats: Stats;
+  private playerProgression: PlayerProgressionState;
+  private statLayers: LayeredStatBreakdown;
 
   constructor(map: GameMap, options: GameplayEngineOptions = {}) {
     this.map = map;
     this.resolveZone = options.resolveZone;
     this.actionTuning = options.actions ?? DEFAULT_ACTION_TUNING;
+    this.basePlayerStats = createInitialStats(options.newGame);
+    this.playerProgression = createInitialPlayerProgression({
+      raceId: options.playerRaceId,
+    });
+    this.statLayers = this.rebuildStatLayers(this.basePlayerStats);
     this.safeRespawn = options.safeRespawn ?? {
       zoneId: map.zoneId,
       x: map.playerStart.x,
@@ -303,7 +323,9 @@ export class GameplayEngine {
     };
     this.world.addComponent(playerId, renderable);
 
-    this.world.addComponent(playerId, createInitialStats(options.newGame));
+    const playerStats = cloneStats(this.basePlayerStats);
+    this.applyLayeredStatsTo(playerStats);
+    this.world.addComponent(playerId, playerStats);
     this.world.addComponent(playerId, createStartingInventory(options.newGame));
 
     const quests: Quests = {
@@ -598,6 +620,7 @@ export class GameplayEngine {
       playerPosition: this.getPlayerPosition(),
       playerFacing: this.playerFacing,
       stats: this.getPlayerStats(),
+      playerProgression: this.playerProgression,
       inventory: this.getPlayerInventory(),
       npcStates: Object.values(this.npcStates),
       log: this.log,
@@ -630,14 +653,30 @@ export class GameplayEngine {
     const [playerId] = this.world.entitiesWith("PlayerControlled");
 
     const stats = this.world.getComponent<Stats>(playerId, "Stats")!;
+    this.playerProgression = clonePlayerProgressionState(
+      saveData.playerProgression,
+    );
+    this.basePlayerStats = cloneStats(saveData.stats);
+    const savedBreakdown = this.rebuildStatLayers(this.basePlayerStats);
+    this.basePlayerStats.attributes = subtractAttributeValues(
+      saveData.stats.attributes,
+      savedBreakdown.globalAttributes,
+      savedBreakdown.classAttributes,
+      savedBreakdown.equipmentAttributes,
+    );
     stats.resources = { ...saveData.stats.resources };
     stats.currency = saveData.stats.currency;
-    stats.attributes = { ...saveData.stats.attributes };
+    stats.attributes = { ...this.basePlayerStats.attributes };
     stats.combat = { ...saveData.stats.combat };
     stats.skills = { ...saveData.stats.skills };
     stats.progression = { ...saveData.stats.progression };
     stats.conditions = [...saveData.stats.conditions];
-    refreshDerivedStats(stats);
+    this.basePlayerStats.skills = { ...stats.skills };
+    this.basePlayerStats.progression = { ...stats.progression };
+    this.basePlayerStats.conditions = stats.conditions.map((condition) => ({
+      ...condition,
+    }));
+    this.applyLayeredStatsTo(stats);
 
     const inventory = this.world.getComponent<Inventory>(
       playerId,
@@ -719,10 +758,13 @@ export class GameplayEngine {
       100,
       stats.progression.academicProgress + academicProgressGain,
     );
+    this.basePlayerStats.attributes.intelligence =
+      (this.basePlayerStats.attributes.intelligence ?? 0) + intelligenceGain;
     stats.attributes.intelligence =
       (stats.attributes.intelligence ?? 0) + intelligenceGain;
     stats.skills.scholarship += academicProgressGain;
     refreshDerivedStats(stats);
+    this.statLayers = this.rebuildStatLayers(this.basePlayerStats);
 
     this.tickCounter.advance();
     this.advanceWorldTime(WORLD_TIME_ACTION_COST.study);
@@ -856,6 +898,7 @@ export class GameplayEngine {
       tiles,
       log: [...this.log],
       stats: cloneStats(stats),
+      statLayers: cloneLayeredStatBreakdown(this.statLayers),
       inventory: {
         ...inventory,
         items: inventory.items.map((stack) => ({ ...stack })),
@@ -879,6 +922,26 @@ export class GameplayEngine {
   private getPlayerStats(): Stats {
     const [playerId] = this.world.entitiesWith("Stats", "PlayerControlled");
     return this.world.getComponent<Stats>(playerId, "Stats")!;
+  }
+
+  private rebuildStatLayers(baseStats: Stats): LayeredStatBreakdown {
+    const classDef = getClassDef(this.playerProgression.classId);
+    const raceDef = getRaceDef(this.playerProgression.raceId);
+    return deriveLayeredStats({
+      baseStats,
+      progression: this.playerProgression,
+      classDef,
+      raceDef,
+    });
+  }
+
+  private applyLayeredStatsTo(stats: Stats): void {
+    this.statLayers = this.rebuildStatLayers(this.basePlayerStats);
+    applyLayeredStats(stats, this.statLayers);
+    this.playerProgression = normalizeProgressionBuffers(
+      this.playerProgression,
+      this.statLayers,
+    );
   }
 
   getNpcState(npcId: string): NpcState | undefined {

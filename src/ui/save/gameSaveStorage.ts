@@ -106,6 +106,52 @@ function isSaveStats(value: unknown): boolean {
   );
 }
 
+function isAttributeBufferMap(value: unknown): boolean {
+  if (!isRecord(value)) return false;
+
+  return (
+    isFiniteNumber(value.strength) &&
+    isFiniteNumber(value.vitality) &&
+    isFiniteNumber(value.agility) &&
+    isFiniteNumber(value.intelligence) &&
+    isFiniteNumber(value.spirit) &&
+    isFiniteNumber(value.willpower) &&
+    isFiniteNumber(value.perception) &&
+    isFiniteNumber(value.charisma)
+  );
+}
+
+function isProgressionRecord(value: unknown): boolean {
+  if (!isRecord(value)) return false;
+  return isPositiveInteger(value.level) && isNonNegativeInteger(value.xp);
+}
+
+function isProgressionRecordMap(value: unknown): boolean {
+  if (!isRecord(value)) return false;
+  return Object.values(value).every(isProgressionRecord);
+}
+
+function isAttributeBufferRecordMap(value: unknown): boolean {
+  if (!isRecord(value)) return false;
+  return Object.values(value).every(isAttributeBufferMap);
+}
+
+function isPlayerProgressionState(value: unknown): boolean {
+  if (!isRecord(value)) return false;
+  if (!isRecord(value.buffers)) return false;
+
+  return (
+    isProgressionRecord(value.global) &&
+    isProgressionRecordMap(value.classes) &&
+    isAttributeBufferMap(value.buffers.global) &&
+    isAttributeBufferRecordMap(value.buffers.classes) &&
+    typeof value.classId === "string" &&
+    value.classId.trim().length > 0 &&
+    typeof value.raceId === "string" &&
+    value.raceId.trim().length > 0
+  );
+}
+
 function isInventoryStack(value: unknown): boolean {
   if (!isRecord(value)) return false;
 
@@ -168,6 +214,7 @@ function isGameSaveData(value: unknown): value is GameSaveData {
     Number.isInteger(obj.playerY) &&
     isDirection(obj.playerFacing) &&
     isSaveStats(obj.stats) &&
+    isPlayerProgressionState(obj.playerProgression) &&
     isSaveInventory(obj.inventory) &&
     Array.isArray(obj.npcStates) &&
     obj.npcStates.every(isSaveNpcState) &&

@@ -1,7 +1,11 @@
 import { describe, expect, it, beforeEach } from "vitest";
 import { SAVE_VERSION } from "../../engine/GameSaveData";
 import type { GameSaveData } from "../../engine/GameSaveData";
-import { START_WORLD_TIME_MINUTES, createInitialStats } from "../../engine";
+import {
+  START_WORLD_TIME_MINUTES,
+  createInitialPlayerProgression,
+  createInitialStats,
+} from "../../engine";
 import {
   deleteSlot,
   hasAnySave,
@@ -21,6 +25,7 @@ function stubSave(overrides: Partial<GameSaveData> = {}): GameSaveData {
     playerY: 4,
     playerFacing: "south",
     stats: createInitialStats(),
+    playerProgression: createInitialPlayerProgression(),
     inventory: {
       type: "Inventory",
       items: [{ itemId: "travel_ration", quantity: 3 }],

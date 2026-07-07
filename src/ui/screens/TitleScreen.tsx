@@ -1,6 +1,6 @@
 import { TerminalMenu } from "../components/TerminalMenu";
 import { TerminalPanel } from "../components/TerminalPanel";
-import { formatWorldDateTime } from "../../engine";
+import { formatWorldDateTime, type RaceDef } from "../../engine";
 import type { GameSaveData } from "../../engine/GameSaveData";
 import { SAVE_SLOT_COUNT } from "../save/gameSaveStorage";
 
@@ -9,9 +9,12 @@ type TitleScreenProps = {
   onMenuMove?: () => void;
   onOpenOptions: () => void;
   onOpenEditor?: () => void;
+  onChangeNewGameRace: (raceId: string) => void;
   onStartNewGame: () => void;
   onLoadSlot?: (slotIndex: number) => void;
+  newGameRaceId: string;
   notice?: string | null;
+  raceOptions: RaceDef[];
   saves: (GameSaveData | null)[];
 };
 
@@ -20,9 +23,12 @@ export function TitleScreen({
   onMenuMove,
   onOpenOptions,
   onOpenEditor,
+  onChangeNewGameRace,
   onStartNewGame,
   onLoadSlot,
+  newGameRaceId,
   notice,
+  raceOptions,
   saves,
 }: TitleScreenProps) {
   const hasAnySave = saves.some((s) => s !== null);
@@ -67,6 +73,20 @@ export function TitleScreen({
           onActivateItem={onMenuConfirm}
           onMoveSelection={onMenuMove}
         />
+
+        <label className="title-race-picker">
+          <span>Starting Race</span>
+          <select
+            onChange={(event) => onChangeNewGameRace(event.target.value)}
+            value={newGameRaceId}
+          >
+            {raceOptions.map((race) => (
+              <option key={race.raceId} value={race.raceId}>
+                {race.name}
+              </option>
+            ))}
+          </select>
+        </label>
 
         {notice && (
           <p className="terminal-status">

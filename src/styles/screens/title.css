@@ -6,3 +6,28 @@
 .title-actions {
   margin: 0 0 var(--space-4);
 }
+
+.title-race-picker {
+  margin: 0 0 var(--space-4);
+  display: grid;
+  gap: var(--space-1);
+  color: var(--color-text-muted);
+  font-size: 0.85rem;
+  text-transform: uppercase;
+}
+
+.title-race-picker select {
+  width: 100%;
+  border: 1px solid var(--color-border-muted);
+  border-radius: 0;
+  padding: 0.55rem 0.65rem;
+  color: var(--color-text);
+  background: var(--color-button-background);
+  font: inherit;
+  text-transform: none;
+}
+
+.title-race-picker select:focus-visible {
+  outline: var(--focus-ring-width) solid var(--color-text);
+  outline-offset: var(--focus-ring-offset);
+}

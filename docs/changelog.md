@@ -4,6 +4,12 @@ This file tracks meaningful project changes by commit-oriented slices.
 
 Keep entries short and practical. When a slice is committed, its changelog section should stay aligned with the commit title so the project history remains easy to read after restores or bisects.
 
+## 2026-07-07 - [ADD]: Layered stat derivation
+
+- Add pure layered stat derivation for base attributes, global growth, active class growth, race fractional buffers, and a future equipment layer.
+- Persist player global/class progression, fractional buffers, active class id, and race id in the save shape with a save-version bump.
+- Add a starting-race picker and show class/race levels plus base/global/class/equipment attribute layers on the character sheet.
+
 ## 2026-07-07 - [ADD]: Class and race content families
 
 - Accept ADR 0008 with the approved Study mastery adjustment to use a skills-neutral XP bonus.

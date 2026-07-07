@@ -1,8 +1,12 @@
 import { describe, expect, it } from "vitest";
 import {
   START_WORLD_TIME_MINUTES,
+  createInitialPlayerProgression,
   createInitialStats,
   createWorldTimeSnapshot,
+  deriveLayeredStats,
+  getClassDef,
+  getRaceDef,
   type GameSnapshot,
 } from "../../engine";
 import {
@@ -29,6 +33,12 @@ const baseSnapshot: GameSnapshot = {
   ],
   log: [],
   stats: createInitialStats(),
+  statLayers: deriveLayeredStats({
+    baseStats: createInitialStats(),
+    progression: createInitialPlayerProgression(),
+    classDef: getClassDef("otherworlder"),
+    raceDef: getRaceDef("human"),
+  }),
   entities: [
     {
       x: 3,

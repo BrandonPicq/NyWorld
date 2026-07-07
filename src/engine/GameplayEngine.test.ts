@@ -1133,6 +1133,9 @@ describe("GameplayEngine", () => {
         },
       });
       expect(engine.getSnapshot().stats.attributes.intelligence).toBe(11);
+      expect(engine.getSnapshot().statLayers.baseAttributes.intelligence).toBe(
+        11,
+      );
       expect(engine.getSnapshot().stats.skills.scholarship).toBe(16);
       expect(engine.getSnapshot().log.map((entry) => entry.message)).toContain(
         "Studied old notes. Intelligence +1, scholarship +15, academic progress +15%.",

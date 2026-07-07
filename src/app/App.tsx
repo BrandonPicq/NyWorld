@@ -35,6 +35,7 @@ import {
   writeStoredGameplaySettings,
 } from "../ui/controls/gameplaySettings";
 import { clearContentOverlay, type ContentBundle } from "../engine";
+import { getAllRaceDefs } from "../engine";
 import type { GameSaveData } from "../engine/GameSaveData";
 
 type OptionsScreenId =
@@ -59,6 +60,7 @@ function App() {
   const [playtestStart, setPlaytestStart] =
     useState<EditorPlaytestStart | null>(null);
   const [titleNotice, setTitleNotice] = useState<string | null>(null);
+  const [newGameRaceId, setNewGameRaceId] = useState("human");
   const [activeTheme, setActiveTheme] = useState<ThemeId>(() =>
     readStoredThemeId(),
   );
@@ -110,6 +112,7 @@ function App() {
   };
 
   const isPlaytestActive = playtestContentBundle !== null;
+  const raceOptions = getAllRaceDefs();
   const showGame = isGameActive && screen === "game";
   const showOptions = isOptionsScreenId(screen);
   const showTitle = screen === "title" && !isGameActive;
@@ -200,6 +203,7 @@ function App() {
             initialSaveData={loadedSaveData ?? undefined}
             isPlaytest={isPlaytestActive}
             keyboardLayout={keyboardLayout}
+            newGameRaceId={newGameRaceId}
             playtestStart={playtestStart ?? undefined}
             textSpeed={textSpeed}
             onBackToEditor={handleBackToEditor}
@@ -217,9 +221,12 @@ function App() {
           onOpenEditor={
             import.meta.env.DEV ? () => setScreen("editor") : undefined
           }
+          onChangeNewGameRace={setNewGameRaceId}
           onStartNewGame={handleStartNewGame}
           onLoadSlot={handleLoadSlot}
+          newGameRaceId={newGameRaceId}
           notice={titleNotice}
+          raceOptions={raceOptions}
           saves={saves}
         />
       )}

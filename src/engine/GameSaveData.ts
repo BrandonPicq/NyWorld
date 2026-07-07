@@ -2,6 +2,7 @@ import type { Direction } from "./systems/MovementSystem";
 import type { Inventory, Stats } from "./components";
 import type { LogEntry } from "./LogEntry";
 import type { NpcState } from "./npcs/NpcState";
+import type { PlayerProgressionState } from "./stats/layeredStats";
 
 /**
  * Current schema version for serialized saves.
@@ -9,7 +10,7 @@ import type { NpcState } from "./npcs/NpcState";
  * Increment this when older save payloads can no longer be safely interpreted
  * by the loader without migration.
  */
-export const SAVE_VERSION = "0.6";
+export const SAVE_VERSION = "0.7";
 
 /**
  * Versioned payload written to persistent save slots.
@@ -28,6 +29,7 @@ export interface GameSaveData {
   playerY: number;
   playerFacing: Direction;
   stats: Stats;
+  playerProgression: PlayerProgressionState;
   inventory: Inventory;
   npcStates: NpcState[];
   log: LogEntry[];

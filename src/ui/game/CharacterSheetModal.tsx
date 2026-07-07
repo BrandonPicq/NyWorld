@@ -1,4 +1,4 @@
-import type { Stats } from "../../engine/components";
+import type { LayeredStatBreakdown, Stats } from "../../engine";
 import { TerminalButton } from "../components/TerminalButton";
 import { TerminalPanel } from "../components/TerminalPanel";
 import type { AudioSettings } from "../audio/audioSettings";
@@ -8,12 +8,14 @@ type CharacterSheetModalProps = {
   audioSettings: AudioSettings;
   onClose: () => void;
   stats: Stats;
+  statLayers: LayeredStatBreakdown;
 };
 
 export function CharacterSheetModal({
   audioSettings,
   onClose,
   stats,
+  statLayers,
 }: CharacterSheetModalProps) {
   const handleClose = () => {
     if (audioSettings.soundEnabled) {
@@ -63,6 +65,39 @@ export function CharacterSheetModal({
             </div>
           </div>
 
+          <div className="stats-modal__section stats-modal__section--layers">
+            <h3 className="stats-modal__subtitle">Growth Layers</h3>
+            <div className="stats-modal__academic">
+              <p>
+                <strong>Class:</strong> {statLayers.classId} Lv.{" "}
+                {statLayers.classLevel}
+              </p>
+              <p>
+                <strong>Race:</strong> {statLayers.raceId}
+              </p>
+              <p>
+                <strong>Global Level:</strong> {statLayers.globalLevel}
+              </p>
+            </div>
+            <div className="stats-modal__layer-grid">
+              <span>Attribute</span>
+              <span>Base</span>
+              <span>Global</span>
+              <span>Class</span>
+              <span>Equip</span>
+              {Object.entries(statLayers.effectiveAttributes).map(([key]) => (
+                <StatsLayerRow
+                  classValue={statLayers.classAttributes[key as keyof typeof statLayers.classAttributes]}
+                  equipmentValue={statLayers.equipmentAttributes[key as keyof typeof statLayers.equipmentAttributes]}
+                  globalValue={statLayers.globalAttributes[key as keyof typeof statLayers.globalAttributes]}
+                  key={key}
+                  label={formatStatLabel(key)}
+                  baseValue={statLayers.baseAttributes[key as keyof typeof statLayers.baseAttributes]}
+                />
+              ))}
+            </div>
+          </div>
+
           <div className="stats-modal__section stats-modal__section--combat">
             <h3 className="stats-modal__subtitle">Combat</h3>
             <div className="stats-modal__grid">
@@ -107,6 +142,38 @@ export function CharacterSheetModal({
       </TerminalPanel>
     </div>
   );
+}
+
+function StatsLayerRow({
+  label,
+  baseValue,
+  globalValue,
+  classValue,
+  equipmentValue,
+}: {
+  label: string;
+  baseValue: number;
+  globalValue: number;
+  classValue: number;
+  equipmentValue: number;
+}) {
+  return (
+    <>
+      <span className="stats-modal__attr-name">{label}</span>
+      <span className="stats-modal__attr-value">{baseValue}</span>
+      <span className="stats-modal__attr-value">
+        {formatSigned(globalValue)}
+      </span>
+      <span className="stats-modal__attr-value">{formatSigned(classValue)}</span>
+      <span className="stats-modal__attr-value">
+        {formatSigned(equipmentValue)}
+      </span>
+    </>
+  );
+}
+
+function formatSigned(value: number): string {
+  return value > 0 ? `+${value}` : String(value);
 }
 
 function StatsRow({

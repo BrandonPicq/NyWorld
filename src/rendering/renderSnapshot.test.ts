@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { createInitialStats } from "../engine";
+import {
+  createInitialPlayerProgression,
+  createInitialStats,
+  deriveLayeredStats,
+  getClassDef,
+  getRaceDef,
+} from "../engine";
 import type { GameSnapshot } from "../engine/GameplayEngine";
 import {
   START_WORLD_TIME_MINUTES,
@@ -23,6 +29,12 @@ const gameSnapshot: GameSnapshot = {
   zoneId: "test_zone",
   zoneName: "Test Zone",
   stats: createInitialStats(),
+  statLayers: deriveLayeredStats({
+    baseStats: createInitialStats(),
+    progression: createInitialPlayerProgression(),
+    classDef: getClassDef("otherworlder"),
+    raceDef: getRaceDef("human"),
+  }),
   entities: [],
   entryDialogue: [],
   inventory: {

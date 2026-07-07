@@ -5,6 +5,10 @@ import type { LogEntry } from "../LogEntry";
 import { cloneNpcState, type NpcState } from "../npcs/NpcState";
 import type { Direction } from "../systems/MovementSystem";
 import { cloneStats } from "../stats/characterStats";
+import {
+  clonePlayerProgressionState,
+  type PlayerProgressionState,
+} from "../stats/layeredStats";
 
 /**
  * Minimal state required to build a save payload.
@@ -19,6 +23,7 @@ export interface SaveSerializationState {
   playerPosition: Position;
   playerFacing: Direction;
   stats: Stats;
+  playerProgression: PlayerProgressionState;
   inventory: Inventory;
   npcStates: Iterable<NpcState>;
   log: LogEntry[];
@@ -45,6 +50,7 @@ export function serializeSaveData(state: SaveSerializationState): GameSaveData {
     playerY: playerPosition.y,
     playerFacing: state.playerFacing,
     stats: cloneStats(stats),
+    playerProgression: clonePlayerProgressionState(state.playerProgression),
     inventory: {
       type: "Inventory",
       items: inventory.items.map((stack) => ({ ...stack })),
