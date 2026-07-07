@@ -4,6 +4,12 @@ This file tracks meaningful project changes by commit-oriented slices.
 
 Keep entries short and practical. When a slice is committed, its changelog section should stay aligned with the commit title so the project history remains easy to read after restores or bisects.
 
+## 2026-07-08 - [FIX]: Lay modal tabs in a row and cap modal height
+
+- Render the character sheet and inventory tabs as a compact horizontal row instead of a full-width vertical stack (override the shared button width in `.stats-modal__tabs`).
+- Give the sheet tab content vertical spacing between its stacked sections so Resources no longer runs into Combat.
+- Cap the inventory modal height with an internal scroll so it can no longer overflow the viewport and hide the Close button.
+
 ## 2026-07-07 - [UPDATE]: Rework the status panel and level-up feedback
 
 - Replace the "Standing" line in CharacterStatusPanel.tsx with Global level and Class level tracks, displaying numeric progress and colored XP progress bars.

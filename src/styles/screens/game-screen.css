@@ -600,6 +600,8 @@
 /* Inventory Rework */
 .stats-modal--inventory {
   width: min(92vw, 800px) !important;
+  max-height: min(86vh, 760px);
+  overflow-y: auto;
 }
 
 .stats-modal__tabs {
@@ -609,6 +611,23 @@
   margin-bottom: var(--space-3);
   border-bottom: 1px dashed var(--color-border-muted);
   padding-bottom: var(--space-2);
+}
+
+/* Tabs are a compact horizontal row, not a full-width vertical stack: the
+   shared .terminal-button defaults to width:100%, which must be overridden
+   here (mirrors the editor's .editor-tab). */
+.stats-modal__tabs .terminal-button {
+  width: auto;
+  min-width: 6rem;
+  text-align: center;
+}
+
+/* Gap between the stacked sections inside a sheet tab (e.g. Resources and
+   Combat on the Overview tab); the tab wrapper had no layout of its own. */
+.stats-modal__tab-content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
 }
 
 .stats-modal__content--inventory {
