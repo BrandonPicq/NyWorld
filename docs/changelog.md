@@ -4,6 +4,15 @@ This file tracks meaningful project changes by commit-oriented slices.
 
 Keep entries short and practical. When a slice is committed, its changelog section should stay aligned with the commit title so the project history remains easy to read after restores or bisects.
 
+## 2026-07-07 - [UPDATE]: Split the inventory into category tabs
+
+- Add horizontal category tabs (All, Quest, Consumable, Material, Equipment, Misc) to the inventory modal.
+- Only render category tabs that have items present in the player's inventory, hiding empty ones.
+- Restrict keyboard selection and navigation to run within the active category tab list.
+- Support pre-selecting an item when mounting the inventory modal.
+- Widen the inventory modal to 800px to accommodate tabs and fit equipment descriptions.
+- Add pure unit-tested category extraction helper.
+
 ## 2026-07-07 - [UPDATE]: Starter world content pass
 
 - Paint studySpot tiles in the scholar's area in test_zone.json.

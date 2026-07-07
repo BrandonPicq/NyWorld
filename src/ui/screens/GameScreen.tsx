@@ -82,6 +82,7 @@ export function GameScreen({
   const [isCharacterSheetOpen, setIsCharacterSheetOpen] = useState(false);
   const [isInteractChoiceOpen, setIsInteractChoiceOpen] = useState(false);
   const [isInventoryOpen, setIsInventoryOpen] = useState(false);
+  const [initialSelectedInventoryItemId, setInitialSelectedInventoryItemId] = useState<string | undefined>(undefined);
   const [isQuestsOpen, setIsQuestsOpen] = useState(false);
   const [gameNotice, setGameNotice] = useState<EngineNotice | null>(null);
   const [isPauseMenuOpen, setIsPauseMenuOpen] = useState(false);
@@ -382,7 +383,11 @@ export function GameScreen({
           <InventoryModal
             audioSettings={audioSettings}
             inventory={snapshot.inventory}
-            onClose={() => setIsInventoryOpen(false)}
+            initialSelectedItemId={initialSelectedInventoryItemId}
+            onClose={() => {
+              setIsInventoryOpen(false);
+              setInitialSelectedInventoryItemId(undefined);
+            }}
             onEquipItem={(itemId) =>
               handleExecuteCommand({ type: "Equip", itemId })
             }

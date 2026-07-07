@@ -599,7 +599,16 @@
 
 /* Inventory Rework */
 .stats-modal--inventory {
-  width: min(90%, 720px) !important;
+  width: min(92vw, 800px) !important;
+}
+
+.stats-modal__tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-bottom: var(--space-3);
+  border-bottom: 1px dashed var(--color-border-muted);
+  padding-bottom: var(--space-2);
 }
 
 .stats-modal__content--inventory {

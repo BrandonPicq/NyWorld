@@ -9,6 +9,7 @@ type UseMenuKeyboardOptions = {
   onConfirm?: (selectedIndex: number) => void;
   onCancel?: () => void;
   extraKeys?: Record<string, (selectedIndex: number) => void>;
+  initialIndex?: number;
 };
 
 /**
@@ -23,8 +24,14 @@ export function useMenuKeyboard({
   onConfirm,
   onCancel,
   extraKeys,
+  initialIndex = 0,
 }: UseMenuKeyboardOptions) {
-  const [selectedIndex, setSelectedIndex] = useState(0);
+  const [selectedIndex, setSelectedIndex] = useState(initialIndex);
+
+  // Sync selected index when initialIndex changes
+  useEffect(() => {
+    setSelectedIndex(initialIndex);
+  }, [initialIndex]);
 
   // Sync selected index with bounds if itemCount shrinks
   useEffect(() => {
