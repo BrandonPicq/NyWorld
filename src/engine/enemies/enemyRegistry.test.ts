@@ -43,6 +43,7 @@ describe("validateEnemyDef", () => {
         combat: { attack: 3, magicAttack: 1, defense: 1 },
         progression: { academicTitle: "", academicProgress: 0 },
       },
+      xpReward: -1,
       loot: [{ itemId: "missing_item", quantity: 0 }],
     };
 
@@ -57,6 +58,7 @@ describe("validateEnemyDef", () => {
           message: 'Enemy definition references unknown npcId "phantom".',
         }),
         expect.objectContaining({ path: "combatable" }),
+        expect.objectContaining({ path: "xpReward" }),
         expect.objectContaining({ path: "stats.combat.magicDefense" }),
         expect.objectContaining({ path: "stats.progression.academicTitle" }),
         expect.objectContaining({
@@ -67,7 +69,7 @@ describe("validateEnemyDef", () => {
         expect.objectContaining({ path: "loot[0].quantity" }),
       ]),
     );
-    expect(diagnostics).toHaveLength(6);
+    expect(diagnostics).toHaveLength(7);
   });
 });
 

@@ -1,5 +1,6 @@
 import {
   EQUIPPED_SLOT_IDS,
+  type CoreAttributeKey,
   type EquippedSlot,
   type Inventory,
   type LayeredStatBreakdown,
@@ -14,6 +15,7 @@ import { playMenuConfirmSound } from "../audio/menuAudio";
 type CharacterSheetModalProps = {
   audioSettings: AudioSettings;
   onClose: () => void;
+  onChooseAttribute: (attribute: CoreAttributeKey) => void;
   onUnequipSlot: (slot: EquippedSlot) => void;
   inventory: Inventory;
   stats: Stats;
@@ -23,6 +25,7 @@ type CharacterSheetModalProps = {
 export function CharacterSheetModal({
   audioSettings,
   inventory,
+  onChooseAttribute,
   onClose,
   onUnequipSlot,
   stats,
@@ -89,7 +92,32 @@ export function CharacterSheetModal({
               <p>
                 <strong>Global Level:</strong> {statLayers.globalLevel}
               </p>
+              <p>
+                <strong>Global XP:</strong> {statLayers.globalXp} /{" "}
+                {statLayers.globalXpToNext}
+              </p>
+              <p>
+                <strong>Class XP:</strong> {statLayers.classXp} /{" "}
+                {statLayers.classXpToNext}
+              </p>
+              <p>
+                <strong>Attribute Choices:</strong>{" "}
+                {statLayers.pendingAttributeChoices}
+              </p>
             </div>
+            {statLayers.pendingAttributeChoices > 0 && (
+              <div className="stats-modal__choice-grid">
+                {Object.keys(stats.attributes).map((attribute) => (
+                  <TerminalButton
+                    className="stats-modal__choice-action"
+                    key={attribute}
+                    onClick={() => onChooseAttribute(attribute as CoreAttributeKey)}
+                  >
+                    + {formatStatLabel(attribute)}
+                  </TerminalButton>
+                ))}
+              </div>
+            )}
             <div className="stats-modal__layer-grid">
               <span>Attribute</span>
               <span>Base</span>

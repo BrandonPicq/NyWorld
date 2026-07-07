@@ -32,6 +32,7 @@ import {
   setQuestOverride,
   setQuestTrigger,
   setRewardCurrency,
+  setRewardXp,
   updateObjectiveAt,
   updateRewardItem,
   type QuestObjectiveType,
@@ -475,6 +476,21 @@ function QuestRewardsEditor({
           step={1}
           type="number"
           value={quest.rewards.currency ?? ""}
+        />
+      </label>
+      <label className="editor-field">
+        <span>XP</span>
+        <input
+          disabled={draft.isSaving}
+          min={0}
+          onChange={(event) =>
+            draft.updateSelectedQuest((current) =>
+              setRewardXp(current, parseOptionalInt(event.target.value)),
+            )
+          }
+          step={1}
+          type="number"
+          value={quest.rewards.xp ?? ""}
         />
       </label>
       {items.length > 0 ? (

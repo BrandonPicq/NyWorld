@@ -33,6 +33,7 @@ export interface QuestProgressionSystemContext {
   getZoneId: () => string;
   addLog: (message: string) => void;
   addNotice: (notice: QuestProgressionNotice) => void;
+  awardXp: (amount: number, source: string) => void;
 }
 
 /**
@@ -149,6 +150,10 @@ export class QuestProgressionSystem {
     if (questDef.rewards.currency) {
       stats.currency += questDef.rewards.currency;
       rewardLogParts.push(formatCurrencyReward(questDef.rewards.currency));
+    }
+    if (questDef.rewards.xp) {
+      this.context.awardXp(questDef.rewards.xp, `completing ${questDef.name}`);
+      rewardLogParts.push(`${questDef.rewards.xp} XP`);
     }
     if (questDef.rewards.items) {
       for (const rewardItem of questDef.rewards.items) {

@@ -205,6 +205,20 @@ export function setRewardCurrency(
   return next;
 }
 
+/** Sets the reward XP, dropping the field when empty. */
+export function setRewardXp(
+  quest: QuestDef,
+  value: number | undefined,
+): QuestDef {
+  const next = cloneQuestDef(quest);
+  if (value === undefined || Number.isNaN(value)) {
+    delete next.rewards.xp;
+  } else {
+    next.rewards.xp = value;
+  }
+  return next;
+}
+
 export function addRewardItem(quest: QuestDef, itemId: string): QuestDef {
   if (!itemId) {
     return cloneQuestDef(quest);

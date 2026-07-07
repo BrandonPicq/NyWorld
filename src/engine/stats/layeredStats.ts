@@ -17,6 +17,8 @@ import {
 
 export const DEFAULT_PLAYER_CLASS_ID = "otherworlder";
 export const DEFAULT_PLAYER_RACE_ID = "human";
+export const ATTRIBUTE_CHOICE_INTERVAL = 3;
+export const ATTRIBUTE_CHOICE_AMOUNT = 1;
 
 export type CoreAttributeKey = keyof CoreAttributes;
 
@@ -43,6 +45,14 @@ export interface PlayerProgressionState {
   buffers: ProgressionFractionalBuffers;
   classId: string;
   raceId: string;
+  pendingAttributeChoices: number;
+}
+
+export interface XpAwardResult {
+  amount: number;
+  globalLevelsGained: number[];
+  classLevelsGained: Array<{ classId: string; level: number }>;
+  attributeChoicesGained: number;
 }
 
 export interface LayeredStatBreakdown {
@@ -50,6 +60,11 @@ export interface LayeredStatBreakdown {
   raceId: string;
   globalLevel: number;
   classLevel: number;
+  globalXp: number;
+  globalXpToNext: number;
+  classXp: number;
+  classXpToNext: number;
+  pendingAttributeChoices: number;
   baseAttributes: AttributeValues;
   globalAttributes: AttributeValues;
   classAttributes: AttributeValues;
@@ -97,6 +112,7 @@ export function createInitialPlayerProgression(input: {
     },
     classId,
     raceId: input.raceId ?? DEFAULT_PLAYER_RACE_ID,
+    pendingAttributeChoices: 0,
   };
 }
 
@@ -122,6 +138,7 @@ export function clonePlayerProgressionState(
     },
     classId: state.classId,
     raceId: state.raceId,
+    pendingAttributeChoices: state.pendingAttributeChoices,
   };
 }
 
@@ -133,6 +150,11 @@ export function cloneLayeredStatBreakdown(
     raceId: breakdown.raceId,
     globalLevel: breakdown.globalLevel,
     classLevel: breakdown.classLevel,
+    globalXp: breakdown.globalXp,
+    globalXpToNext: breakdown.globalXpToNext,
+    classXp: breakdown.classXp,
+    classXpToNext: breakdown.classXpToNext,
+    pendingAttributeChoices: breakdown.pendingAttributeChoices,
     baseAttributes: cloneAttributeValues(breakdown.baseAttributes),
     globalAttributes: cloneAttributeValues(breakdown.globalAttributes),
     classAttributes: cloneAttributeValues(breakdown.classAttributes),
@@ -192,6 +214,11 @@ export function deriveLayeredStats(input: {
     raceId: progression.raceId,
     globalLevel: progression.global.level,
     classLevel: classRecord.level,
+    globalXp: progression.global.xp,
+    globalXpToNext: getGlobalXpToNext(progression.global.level),
+    classXp: classRecord.xp,
+    classXpToNext: getClassXpToNext(classRecord.level),
+    pendingAttributeChoices: progression.pendingAttributeChoices,
     baseAttributes,
     globalAttributes: globalLayer.attributes,
     classAttributes: classLayer.attributes,
@@ -265,6 +292,60 @@ export function normalizeProgressionBuffers(
   return next;
 }
 
+export function getGlobalXpToNext(level: number): number {
+  const currentLevel = Math.max(1, Math.floor(level));
+  const levelOffset = currentLevel - 1;
+  return 100 + levelOffset * 50 + levelOffset * levelOffset * 10;
+}
+
+export function getClassXpToNext(level: number): number {
+  const currentLevel = Math.max(1, Math.floor(level));
+  const levelOffset = currentLevel - 1;
+  return 80 + levelOffset * 40 + levelOffset * levelOffset * 8;
+}
+
+export function applyXpAwardToProgression(
+  state: PlayerProgressionState,
+  rawAmount: number,
+): { progression: PlayerProgressionState; result: XpAwardResult } {
+  const amount = Math.max(0, Math.floor(rawAmount));
+  const progression = ensureProgressionRecords(state);
+  const result: XpAwardResult = {
+    amount,
+    globalLevelsGained: [],
+    classLevelsGained: [],
+    attributeChoicesGained: 0,
+  };
+
+  if (amount <= 0) {
+    return { progression, result };
+  }
+
+  progression.global.xp += amount;
+  while (progression.global.xp >= getGlobalXpToNext(progression.global.level)) {
+    progression.global.xp -= getGlobalXpToNext(progression.global.level);
+    progression.global.level += 1;
+    result.globalLevelsGained.push(progression.global.level);
+    if (progression.global.level % ATTRIBUTE_CHOICE_INTERVAL === 0) {
+      progression.pendingAttributeChoices += ATTRIBUTE_CHOICE_AMOUNT;
+      result.attributeChoicesGained += ATTRIBUTE_CHOICE_AMOUNT;
+    }
+  }
+
+  const classRecord = progression.classes[progression.classId];
+  classRecord.xp += amount;
+  while (classRecord.xp >= getClassXpToNext(classRecord.level)) {
+    classRecord.xp -= getClassXpToNext(classRecord.level);
+    classRecord.level += 1;
+    result.classLevelsGained.push({
+      classId: progression.classId,
+      level: classRecord.level,
+    });
+  }
+
+  return { progression, result };
+}
+
 function deriveGrowthLayer(input: {
   level: number;
   cycle: readonly AttributeValues[];
@@ -306,6 +387,10 @@ function ensureProgressionRecords(
   const next = clonePlayerProgressionState(progression);
   next.classes[next.classId] ??= { level: 1, xp: 0 };
   next.buffers.classes[next.classId] ??= createEmptyAttributeValues();
+  next.pendingAttributeChoices = Math.max(
+    0,
+    Math.floor(next.pendingAttributeChoices ?? 0),
+  );
   return next;
 }
 

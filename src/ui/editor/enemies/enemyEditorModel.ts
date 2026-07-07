@@ -222,6 +222,19 @@ export function updateEnemyProgression(
   return next;
 }
 
+export function setEnemyXpReward(
+  enemy: EnemyDef,
+  value: number | undefined,
+): EnemyDef {
+  const next = cloneEnemyDef(enemy);
+  if (value === undefined || Number.isNaN(value)) {
+    delete next.xpReward;
+  } else {
+    next.xpReward = value;
+  }
+  return next;
+}
+
 export function addEnemyLootEntry(enemy: EnemyDef, itemId: string): EnemyDef {
   if (!itemId) {
     return cloneEnemyDef(enemy);

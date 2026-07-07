@@ -4,6 +4,12 @@ This file tracks meaningful project changes by commit-oriented slices.
 
 Keep entries short and practical. When a slice is committed, its changelog section should stay aligned with the commit title so the project history remains easy to read after restores or bisects.
 
+## 2026-07-07 - [ADD]: XP and dual-track levels
+
+- Add global and active-class XP curves, dual-track level-ups, and pending global attribute choices.
+- Wire optional enemy and quest XP rewards through the gameplay engine with level-up notices and layered stat recalculation.
+- Add XP fields to enemy and quest editors, expose XP progress and attribute-choice buttons on the character sheet, and bump saves to version 0.9.
+
 ## 2026-07-07 - [ADD]: Equip and unequip from the inventory
 
 - Persist equipped item slots in saves and bump the save version for the new inventory shape.

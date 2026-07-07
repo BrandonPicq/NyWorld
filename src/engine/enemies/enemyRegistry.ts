@@ -149,6 +149,20 @@ export function validateEnemyDef(
     );
   }
 
+  if (
+    value.xpReward !== undefined &&
+    (typeof value.xpReward !== "number" ||
+      !Number.isInteger(value.xpReward) ||
+      value.xpReward < 0)
+  ) {
+    addEnemyError(
+      diagnostics,
+      npcId,
+      "xpReward",
+      `Enemy definition "${npcLabel}" has invalid xpReward. Expected a non-negative integer.`,
+    );
+  }
+
   validateEnemyStats(value.stats, npcId, npcLabel, diagnostics);
   validateLoot(value.loot, npcId, npcLabel, context, diagnostics);
 

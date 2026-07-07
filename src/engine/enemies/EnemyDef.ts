@@ -53,6 +53,8 @@ export interface EnemyDef {
   combatable: boolean;
   /** Authored combat stats; see docs/combat-balance.md for target ranges. */
   stats: EnemyStatsData;
+  /** Optional XP awarded on victory. Missing means no XP reward yet. */
+  xpReward?: number;
   /** Victory loot; an empty array is valid. */
   loot: EnemyLootEntry[];
 }

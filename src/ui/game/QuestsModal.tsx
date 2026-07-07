@@ -61,7 +61,7 @@ export function QuestsModal({ audioSettings, isOpen, snapshot, onClose }: Quests
     let statusLabel = "";
     let statusClass = "";
     let objectives: Array<{ id: string; description: string; currentQuantity: number; requiredQuantity: number }> = [];
-    let rewards: { currency?: number; items?: Array<{ itemId: string; quantity: number }> } = {};
+    let rewards: { currency?: number; xp?: number; items?: Array<{ itemId: string; quantity: number }> } = {};
     let targetNpcName = "";
 
     if (activeQuest) {
@@ -168,9 +168,10 @@ export function QuestsModal({ audioSettings, isOpen, snapshot, onClose }: Quests
               <h3 className="stats-modal__subtitle" style={{ fontSize: "0.9rem", borderBottom: "1px dashed var(--color-border-muted)", paddingBottom: "var(--space-1)", marginBottom: "var(--space-2)" }}>
                 Rewards
               </h3>
-              {rewards.currency || (rewards.items && rewards.items.length > 0) ? (
+              {rewards.currency || rewards.xp || (rewards.items && rewards.items.length > 0) ? (
                 <p className="quests-modal__rewards-text" style={{ fontSize: "0.9rem" }}>
                   {rewards.currency ? `${formatCurrency(rewards.currency)}` : ""}
+                  {rewards.xp ? `${rewards.currency ? " + " : ""}${rewards.xp} XP` : ""}
                   {rewards.items && rewards.items.map((reward) => {
                     return ` + ${reward.quantity}x ${reward.itemId.replace("_", " ")}`;
                   })}

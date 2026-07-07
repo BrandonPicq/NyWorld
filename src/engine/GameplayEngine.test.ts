@@ -5,6 +5,11 @@ import { getDialogue } from "./dialogues/dialogueRegistry";
 import { SAVE_VERSION } from "./GameSaveData";
 import { GameplayEngine } from "./GameplayEngine";
 import {
+  clearEnemyContentOverlay,
+  getEnemyDef,
+  installEnemyContentOverlay,
+} from "./enemies/enemyRegistry";
+import {
   clearItemContentOverlay,
   installItemContentOverlay,
 } from "./items/itemRegistry";
@@ -38,6 +43,7 @@ function createEngine() {
 }
 
 afterEach(() => {
+  clearEnemyContentOverlay();
   clearItemContentOverlay();
 });
 
@@ -1435,6 +1441,84 @@ describe("GameplayEngine", () => {
       expect(unequipResult.success).toBe(true);
       expect(boosted.getSnapshot().stats.resources.hp).toBe(100);
       expect(boosted.getSnapshot().stats.resources.maxHp).toBe(100);
+    });
+  });
+
+  describe("XP progression", () => {
+    it("awards enemy XP to global and class tracks and spends attribute choices as base gains", () => {
+      const slime = getEnemyDef("slime");
+      if (!slime) {
+        throw new Error("Missing slime enemy fixture.");
+      }
+      installEnemyContentOverlay([
+        {
+          ...slime,
+          stats: {
+            ...slime.stats,
+            resources: {
+              ...slime.stats.resources,
+              hp: 1,
+              maxHp: 1,
+            },
+          },
+          xpReward: 260,
+          loot: [],
+        },
+      ]);
+      const engine = new GameplayEngine(
+        loadZone({
+          ...zoneData,
+          npcs: [{ npcId: "slime", x: 2, y: 1 }],
+        }),
+        { playerRaceId: "orc", random: () => 0.5 },
+      );
+
+      engine.execute({ type: "MoveEast" });
+      engine.execute({ type: "SelectCombatAction", actionKind: "strike" });
+      engine.execute({
+        type: "SubmitCombatQte",
+        completed: true,
+        inputAdvantage: 2,
+        mistakes: 0,
+      });
+      engine.execute({ type: "ConcludeCombat" });
+
+      const leveled = engine.getSnapshot();
+      expect(leveled.statLayers.globalLevel).toBe(3);
+      expect(leveled.statLayers.classLevel).toBe(3);
+      expect(leveled.statLayers.globalXp).toBe(0);
+      expect(leveled.statLayers.classXp).toBe(52);
+      expect(leveled.statLayers.pendingAttributeChoices).toBe(1);
+      expect(leveled.statLayers.buffers.global.charisma).toBeCloseTo(0.95);
+      expect(engine.consumeNotices()).toEqual(
+        expect.arrayContaining([
+          { title: "Global Level Up", message: "Reached global level 2." },
+          { title: "Global Level Up", message: "Reached global level 3." },
+          {
+            title: "Class Level Up",
+            message: "Otherworlder reached level 2.",
+          },
+          {
+            title: "Class Level Up",
+            message: "Otherworlder reached level 3.",
+          },
+          {
+            title: "Attribute Choice Available",
+            message: "Choose +1 base attribute from the character sheet.",
+          },
+        ]),
+      );
+
+      const choice = engine.execute({
+        type: "ChooseAttribute",
+        attribute: "charisma",
+      });
+
+      expect(choice.success).toBe(true);
+      const chosen = engine.getSnapshot();
+      expect(chosen.statLayers.pendingAttributeChoices).toBe(0);
+      expect(chosen.statLayers.baseAttributes.charisma).toBe(11);
+      expect(chosen.stats.attributes.charisma).toBe(11);
     });
   });
 

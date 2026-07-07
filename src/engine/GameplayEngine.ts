@@ -66,14 +66,17 @@ import {
 import { getRaceDef } from "./races/raceRegistry";
 import {
   applyLayeredStats,
+  applyXpAwardToProgression,
   cloneLayeredStatBreakdown,
   clonePlayerProgressionState,
   createInitialPlayerProgression,
   deriveLayeredStats,
   normalizeProgressionBuffers,
   subtractAttributeValues,
+  type CoreAttributeKey,
   type LayeredStatBreakdown,
   type PlayerProgressionState,
+  type XpAwardResult,
 } from "./stats/layeredStats";
 import {
   CombatSystem,
@@ -182,7 +185,7 @@ export interface GameSnapshot {
       currentQuantity: number;
     }>;
     targetNpcId: string;
-    rewards: { currency?: number; items?: Array<{ itemId: string; quantity: number }> };
+    rewards: { currency?: number; xp?: number; items?: Array<{ itemId: string; quantity: number }> };
   }>;
   completedQuests: string[];
   /** Present only while a combat encounter is active. */
@@ -284,6 +287,7 @@ export class GameplayEngine {
       getZoneId: () => this.map.zoneId,
       addLog: (message) => this.addLog(message),
       addNotice: (notice) => this.notices.push({ ...notice }),
+      awardXp: (amount, source) => this.awardPlayerXp(amount, source),
     });
     this.inventory = new InventorySystem({
       world: this.world,
@@ -301,6 +305,7 @@ export class GameplayEngine {
       getPlayerInventory: () => this.getPlayerInventory(),
       addLog: (message) => this.addLog(message),
       recordNpcDefeat: (npcId) => this.quests.recordNpcDefeat(npcId),
+      awardXp: (amount, source) => this.awardPlayerXp(amount, source),
       recoverPlayerFromDefeat: () => this.recoverPlayerFromCombatDefeat(),
       random: options.random,
     });
@@ -403,6 +408,10 @@ export class GameplayEngine {
 
     if (command.type === "Unequip") {
       return this.unequipItem(command.slot);
+    }
+
+    if (command.type === "ChooseAttribute") {
+      return this.chooseAttribute(command.attribute);
     }
 
     if (command.type === "CompleteDialogue") {
@@ -814,6 +823,63 @@ export class GameplayEngine {
     this.applyLayeredStatsTo(this.getPlayerStats(), inventory);
     this.addLog(`Unequipped ${getItemDef(itemId).name}.`);
     return { success: true };
+  }
+
+  private chooseAttribute(attribute: CoreAttributeKey): ExecuteResult {
+    if (!(attribute in this.basePlayerStats.attributes)) {
+      return { success: false };
+    }
+
+    if (this.playerProgression.pendingAttributeChoices <= 0) {
+      const message = "No attribute choices are available.";
+      this.addLog(message);
+      this.notices.push({ title: "No Attribute Choice", message });
+      return { success: false };
+    }
+
+    this.playerProgression.pendingAttributeChoices -= 1;
+    this.basePlayerStats.attributes[attribute] += 1;
+    this.applyLayeredStatsTo(this.getPlayerStats(), this.getPlayerInventory());
+    this.addLog(`${formatAttributeName(attribute)} +1.`);
+    return { success: true };
+  }
+
+  private awardPlayerXp(amount: number, source: string): XpAwardResult {
+    const { progression, result } = applyXpAwardToProgression(
+      this.playerProgression,
+      amount,
+    );
+    this.playerProgression = progression;
+
+    if (result.amount <= 0) {
+      return result;
+    }
+
+    this.addLog(`Gained ${result.amount} XP from ${source}.`);
+    this.applyLayeredStatsTo(this.getPlayerStats(), this.getPlayerInventory());
+
+    for (const level of result.globalLevelsGained) {
+      const message = `Reached global level ${level}.`;
+      this.addLog(message);
+      this.notices.push({ title: "Global Level Up", message });
+    }
+
+    for (const levelUp of result.classLevelsGained) {
+      const className = getClassDef(levelUp.classId).name;
+      const message = `${className} reached level ${levelUp.level}.`;
+      this.addLog(message);
+      this.notices.push({ title: "Class Level Up", message });
+    }
+
+    if (result.attributeChoicesGained > 0) {
+      const message =
+        result.attributeChoicesGained === 1
+          ? "Choose +1 base attribute from the character sheet."
+          : `Choose ${result.attributeChoicesGained} base attributes from the character sheet.`;
+      this.notices.push({ title: "Attribute Choice Available", message });
+    }
+
+    return result;
   }
 
   private resolveEquippedSlot(
@@ -1367,4 +1433,10 @@ function cloneNpcScheduleEntry(entry: NpcScheduleEntryData): NpcScheduleEntryDat
 
 function getZoneEntryEventId(zoneId: string): string {
   return `zone_entry:${zoneId}`;
+}
+
+function formatAttributeName(attribute: string): string {
+  return attribute
+    .replace(/([A-Z])/g, " $1")
+    .replace(/^./, (firstLetter) => firstLetter.toUpperCase());
 }

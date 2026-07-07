@@ -5,8 +5,11 @@ import type { RaceDef } from "../races/RaceDef";
 import { createInitialStats } from "./characterStats";
 import {
   applyLayeredStats,
+  applyXpAwardToProgression,
   createInitialPlayerProgression,
   deriveLayeredStats,
+  getClassXpToNext,
+  getGlobalXpToNext,
 } from "./layeredStats";
 
 const human: RaceDef = {
@@ -44,6 +47,42 @@ const otherworlder: ClassDef = {
 };
 
 describe("deriveLayeredStats", () => {
+  it("uses the accepted global and class XP curves", () => {
+    expect(getGlobalXpToNext(1)).toBe(100);
+    expect(getGlobalXpToNext(3)).toBe(240);
+    expect(getClassXpToNext(1)).toBe(80);
+    expect(getClassXpToNext(3)).toBe(192);
+  });
+
+  it("feeds XP awards to both global and active class tracks", () => {
+    const progression = createInitialPlayerProgression();
+
+    const { progression: next, result } = applyXpAwardToProgression(
+      progression,
+      100,
+    );
+
+    expect(result.globalLevelsGained).toEqual([2]);
+    expect(result.classLevelsGained).toEqual([
+      { classId: "otherworlder", level: 2 },
+    ]);
+    expect(next.global).toEqual({ level: 2, xp: 0 });
+    expect(next.classes.otherworlder).toEqual({ level: 2, xp: 20 });
+  });
+
+  it("grants pending attribute choices on global levels 3, 6, and 9", () => {
+    const progression = createInitialPlayerProgression();
+
+    const { progression: next, result } = applyXpAwardToProgression(
+      progression,
+      260,
+    );
+
+    expect(result.globalLevelsGained).toEqual([2, 3]);
+    expect(result.attributeChoicesGained).toBe(1);
+    expect(next.pendingAttributeChoices).toBe(1);
+  });
+
   it("derives base plus global and class growth for the active class", () => {
     const progression = createInitialPlayerProgression();
     progression.global.level = 5;

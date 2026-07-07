@@ -39,6 +39,7 @@ export type QuestObjective =
 
 export interface QuestRewards {
   currency?: number;
+  xp?: number;
   items?: Array<{ itemId: string; quantity: number }>;
 }
 

@@ -149,7 +149,8 @@ function isPlayerProgressionState(value: unknown): boolean {
     typeof value.classId === "string" &&
     value.classId.trim().length > 0 &&
     typeof value.raceId === "string" &&
-    value.raceId.trim().length > 0
+    value.raceId.trim().length > 0 &&
+    isNonNegativeInteger(value.pendingAttributeChoices)
   );
 }
 

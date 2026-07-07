@@ -786,6 +786,20 @@ function validateRewards(
     );
   }
 
+  if (
+    value.xp !== undefined &&
+    (typeof value.xp !== "number" ||
+      !Number.isInteger(value.xp) ||
+      value.xp < 0)
+  ) {
+    addQuestError(
+      diagnostics,
+      questData,
+      "rewards.xp",
+      `Quest "${questId}" reward XP must be a non-negative integer.`,
+    );
+  }
+
   if (value.items !== undefined) {
     validateRewardItems(value.items, questId, questData, context, diagnostics);
   }

@@ -122,6 +122,7 @@ describe("Quest content validation", () => {
         ],
         rewards: {
           currency: -1,
+          xp: -5,
           items: [{ itemId: "missing_reward", quantity: 0 }],
         },
       },
@@ -156,6 +157,11 @@ describe("Quest content validation", () => {
           path: "objectives[1].zoneId",
           message:
             'Quest "broken_quest" objective "visit_missing" references unknown zoneId "missing_zone".',
+        }),
+        expect.objectContaining({
+          path: "rewards.xp",
+          message:
+            'Quest "broken_quest" reward XP must be a non-negative integer.',
         }),
         expect.objectContaining({
           path: "rewards.items[0].quantity",

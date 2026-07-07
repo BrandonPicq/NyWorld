@@ -1,5 +1,6 @@
 import type { Direction } from "./systems";
 import type { EquippedSlot } from "./components";
+import type { CoreAttributeKey } from "./stats/layeredStats";
 
 /**
  * Combat actions the player can select from the combat menu.
@@ -34,6 +35,8 @@ export type CombatActionCommand =
  *   restores energy, inside combat it restores HP (item catalog effects).
  * - Equip / Unequip: assigns equipment items to slots and refreshes derived
  *   stats from the equipment layer.
+ * - ChooseAttribute: spends one pending global-level attribute choice on a
+ *   base attribute, outside racial growth multipliers.
  * - CompleteDialogue: acknowledges the end of the pending NPC dialogue and
  *   fires quest start/complete triggers tied to that dialogue.
  * - AcknowledgeZoneEntryDialogue: marks the pending one-shot zone entry
@@ -53,6 +56,7 @@ export type GameCommand =
   | { type: "UseItem"; itemId: string }
   | { type: "Equip"; itemId: string; slot?: EquippedSlot }
   | { type: "Unequip"; slot: EquippedSlot }
+  | { type: "ChooseAttribute"; attribute: CoreAttributeKey }
   | { type: "CompleteDialogue" }
   | { type: "AcknowledgeZoneEntryDialogue" }
   | { type: "SelectCombatAction"; actionKind: CombatActionCommand }

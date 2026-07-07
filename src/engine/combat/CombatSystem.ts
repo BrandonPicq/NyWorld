@@ -79,6 +79,7 @@ export interface CombatSystemContext {
   getPlayerInventory: () => Inventory;
   addLog: (message: string) => void;
   recordNpcDefeat: (npcId: string) => void;
+  awardXp: (amount: number, source: string) => void;
   recoverPlayerFromDefeat: () => void;
   random?: () => number;
 }
@@ -576,6 +577,12 @@ export class CombatSystem {
       for (const lootEntry of enemyDef?.loot ?? []) {
         effects.push(
           this.collectCombatLoot(lootEntry.itemId, lootEntry.quantity),
+        );
+      }
+      if (enemyDef?.xpReward) {
+        this.context.awardXp(
+          enemyDef.xpReward,
+          `defeating ${this.state.opponentName}`,
         );
       }
 

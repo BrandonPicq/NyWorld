@@ -366,6 +366,9 @@ export function GameScreen({
           <CharacterSheetModal
             audioSettings={audioSettings}
             inventory={snapshot.inventory}
+            onChooseAttribute={(attribute) =>
+              handleExecuteCommand({ type: "ChooseAttribute", attribute })
+            }
             onClose={() => setIsCharacterSheetOpen(false)}
             onUnequipSlot={(slot) =>
               handleExecuteCommand({ type: "Unequip", slot })

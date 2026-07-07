@@ -30,12 +30,17 @@ export type { StatPath } from "./stats/characterStats";
 export {
   DEFAULT_PLAYER_CLASS_ID,
   DEFAULT_PLAYER_RACE_ID,
+  ATTRIBUTE_CHOICE_AMOUNT,
+  ATTRIBUTE_CHOICE_INTERVAL,
   applyLayeredStats,
+  applyXpAwardToProgression,
   cloneLayeredStatBreakdown,
   clonePlayerProgressionState,
   createInitialPlayerProgression,
   createStatsWithLayeredAttributes,
   deriveLayeredStats,
+  getClassXpToNext,
+  getGlobalXpToNext,
   normalizeProgressionBuffers,
   subtractAttributeValues,
 } from "./stats/layeredStats";
@@ -46,6 +51,7 @@ export type {
   PlayerClassProgression,
   PlayerProgressionState,
   ProgressionFractionalBuffers,
+  XpAwardResult,
 } from "./stats/layeredStats";
 export {
   defaultContentBundle,

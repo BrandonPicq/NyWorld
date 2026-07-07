@@ -15,6 +15,7 @@ import {
   addEnemyLootEntry,
   ENEMY_STAT_SECTIONS,
   removeEnemyLootEntry,
+  setEnemyXpReward,
   updateEnemyLootEntry,
   updateEnemyProgression,
   updateEnemyStatValue,
@@ -198,6 +199,25 @@ function EnemyProfileForm({
           type="checkbox"
         />
         <span>Combatable</span>
+      </label>
+
+      <label className="editor-field">
+        <span>XP Reward</span>
+        <input
+          disabled={draft.isSaving}
+          min={0}
+          onChange={(event) =>
+            draft.updateSelectedEnemy((current) =>
+              setEnemyXpReward(
+                current,
+                parseOptionalNumberInput(event.target.value),
+              ),
+            )
+          }
+          step={1}
+          type="number"
+          value={enemy.xpReward ?? ""}
+        />
       </label>
 
       <BalanceHint />
@@ -437,6 +457,10 @@ function itemOptions(
 
 function parseNumberInput(value: string): number {
   return value.trim() ? Number(value) : Number.NaN;
+}
+
+function parseOptionalNumberInput(value: string): number | undefined {
+  return value.trim() ? parseNumberInput(value) : undefined;
 }
 
 function formatNumberInput(value: number): string {

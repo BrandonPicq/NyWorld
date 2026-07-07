@@ -312,6 +312,16 @@ describe("gameSaveStorage", () => {
     expect(readSlot(0)).toBeNull();
   });
 
+  it("returns null for a save with invalid pending attribute choices", () => {
+    writeSlot(0, stubSave());
+
+    const raw = JSON.parse(localStorage.getItem("nywarudo_save_slot_0")!);
+    raw.playerProgression.pendingAttributeChoices = -1;
+    localStorage.setItem("nywarudo_save_slot_0", JSON.stringify(raw));
+
+    expect(readSlot(0)).toBeNull();
+  });
+
   it("returns null for a save with an invalid player facing", () => {
     writeSlot(0, stubSave());
 
