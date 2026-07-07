@@ -4,6 +4,15 @@ This file tracks meaningful project changes by commit-oriented slices.
 
 Keep entries short and practical. When a slice is committed, its changelog section should stay aligned with the commit title so the project history remains easy to read after restores or bisects.
 
+## 2026-07-07 - [ADD]: Gate Study to study environments
+
+- Add studySpot property to TileDef and validate in validateTileDef.
+- Define study desk tile (ID 2) with studySpot property in tiles.json.
+- Allow optional rest.xp, study.timeCostMinutes, and study.xp fields in ActionTuningConfig and game.json.
+- Gate Study action to tiles with studySpot = true in GameplayEngine.ts.
+- Award configured XP and consume timeCostMinutes for Study in GameplayEngine.ts.
+- Add unit and integration tests for Study gating, XP, and time cost.
+
 ## 2026-07-07 - [ADD]: Command mastery
 
 - Add command mastery definition JSON content, registries, whole-bundle content audit, and validation context.

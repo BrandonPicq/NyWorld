@@ -11,6 +11,7 @@ import type {
   Quests,
 } from "./components";
 import { getClassDef } from "./classes/classRegistry";
+import { getTileDef } from "./TileRegistry";
 import { getQuestDef, getAllQuestDefs } from "./quests/questRegistry";
 import {
   QuestProgressionSystem,
@@ -951,11 +952,23 @@ export class GameplayEngine {
     );
     this.tickCounter.advance();
     this.advanceWorldTime(WORLD_TIME_ACTION_COST.rest);
+
+    const restXp = this.actionTuning.rest.xp ?? 2;
+    this.awardPlayerXp(restXp, "resting");
+
     this.addLog(`Rested and recovered ${energyRestore} energy.`);
     this.incrementCommandUsage("rest");
   }
 
   private studyPlayer(): ExecuteResult {
+    const pos = this.getPlayerPosition();
+    const tileId = this.map.getTileId(pos.x, pos.y);
+    const tileDef = getTileDef(tileId);
+    if (!tileDef.studySpot) {
+      this.addLog("You can only study in a proper study environment.");
+      return { success: false };
+    }
+
     const { energyCost, academicProgressGain, intelligenceGain } =
       this.actionTuning.study;
     const stats = this.getPlayerStats();
@@ -976,10 +989,18 @@ export class GameplayEngine {
     this.applyLayeredStatsTo(stats, this.getPlayerInventory());
 
     this.tickCounter.advance();
-    this.advanceWorldTime(WORLD_TIME_ACTION_COST.study);
+    const timeCost = this.actionTuning.study.timeCostMinutes ?? WORLD_TIME_ACTION_COST.study;
+    this.advanceWorldTime(timeCost);
+
+    const studyMastery = this.getCommandMasteryLevel("study");
+    const baseStudyXp = this.actionTuning.study.xp ?? 10;
+    const studyXp = baseStudyXp + 2 * studyMastery;
+    this.awardPlayerXp(studyXp, "studying");
+
     this.addLog(
       `Studied old notes. Intelligence +${intelligenceGain}, scholarship +${academicProgressGain}, academic progress +${academicProgressGain}%.`,
     );
+    this.incrementCommandUsage("study");
 
     return { success: true };
   }

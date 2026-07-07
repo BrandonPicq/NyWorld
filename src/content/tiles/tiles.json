@@ -10,5 +10,12 @@
     "walkable": false,
     "glyph": "#",
     "color": "#666666"
+  },
+  "2": {
+    "name": "study desk",
+    "walkable": true,
+    "glyph": "T",
+    "color": "#8b5a2b",
+    "studySpot": true
   }
 }

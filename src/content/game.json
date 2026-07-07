@@ -7,12 +7,15 @@
   },
   "actions": {
     "rest": {
-      "energyRestore": 15
+      "energyRestore": 15,
+      "xp": 2
     },
     "study": {
       "energyCost": 10,
       "academicProgressGain": 15,
-      "intelligenceGain": 1
+      "intelligenceGain": 1,
+      "timeCostMinutes": 120,
+      "xp": 10
     }
   },
   "newGame": {

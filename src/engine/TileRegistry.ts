@@ -12,6 +12,7 @@ export interface TileDef {
   walkable: boolean;
   glyph: string;
   color: string;
+  studySpot?: boolean;
 }
 
 let overlayRegistry: Record<TileId, TileDef> | null = null;
@@ -111,6 +112,15 @@ function validateTileDef(
       tileKey,
       "color",
       `Tile "${tileKey}" has invalid or missing color.`,
+    );
+  }
+
+  if (value.studySpot !== undefined && typeof value.studySpot !== "boolean") {
+    addTileError(
+      diagnostics,
+      tileKey,
+      "studySpot",
+      `Tile "${tileKey}" studySpot must be a boolean.`,
     );
   }
 }

@@ -57,11 +57,15 @@ export interface NewGameConfig {
 export interface ActionTuningConfig {
   rest: {
     energyRestore: number;
+    timeCostMinutes?: number;
+    xp?: number;
   };
   study: {
     energyCost: number;
     academicProgressGain: number;
     intelligenceGain: number;
+    timeCostMinutes?: number;
+    xp?: number;
   };
 }
 
@@ -346,6 +350,20 @@ function validateActionTuning(
       "actions.rest.energyRestore",
       diagnostics,
     );
+    if (value.rest.timeCostMinutes !== undefined) {
+      validatePositiveInteger(
+        value.rest.timeCostMinutes,
+        "actions.rest.timeCostMinutes",
+        diagnostics,
+      );
+    }
+    if (value.rest.xp !== undefined) {
+      validatePositiveInteger(
+        value.rest.xp,
+        "actions.rest.xp",
+        diagnostics,
+      );
+    }
   }
 
   if (!isRecord(value.study)) {
@@ -370,6 +388,20 @@ function validateActionTuning(
       "actions.study.intelligenceGain",
       diagnostics,
     );
+    if (value.study.timeCostMinutes !== undefined) {
+      validatePositiveInteger(
+        value.study.timeCostMinutes,
+        "actions.study.timeCostMinutes",
+        diagnostics,
+      );
+    }
+    if (value.study.xp !== undefined) {
+      validatePositiveInteger(
+        value.study.xp,
+        "actions.study.xp",
+        diagnostics,
+      );
+    }
   }
 }
 

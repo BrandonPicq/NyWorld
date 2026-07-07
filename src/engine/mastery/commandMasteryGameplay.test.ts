@@ -24,11 +24,13 @@ const mockZone: ZoneData = {
 
 const mockConfig = {
   actions: {
-    rest: { energyRestore: 15 },
+    rest: { energyRestore: 15, xp: 2 },
     study: {
       energyCost: 10,
       academicProgressGain: 15,
       intelligenceGain: 1,
+      timeCostMinutes: 120,
+      xp: 10,
     },
   },
   newGame: {
@@ -144,5 +146,63 @@ describe("Command Mastery Gameplay", () => {
 
     const restoredSnapshot = restored.getSnapshot();
     expect(restoredSnapshot.statLayers.masteries.rest).toEqual({ level: 1, usage: 1 });
+  });
+
+  describe("Study Gating and Mechanics", () => {
+    it("refuses to study when not on a study spot", () => {
+      // player starts at (2,2) which is tile 0 (floor, studySpot undefined)
+      const engine = createEngine();
+      const result = engine.execute({ type: "Study" });
+      expect(result.success).toBe(false);
+      const messages = engine.getSnapshot().log.map(entry => entry.message);
+      expect(messages).toContain("You can only study in a proper study environment.");
+    });
+
+    it("succeeds when on a study spot, consumes energy, advances time, and awards XP", () => {
+      // Create a zone where player start is tile 2 (study desk)
+      const studyZone: ZoneData = {
+        version: "1.0",
+        zoneId: "study_zone",
+        name: "Library",
+        width: 3,
+        height: 3,
+        playerStart: { x: 1, y: 1 },
+        tiles: [
+          [2, 2, 2],
+          [2, 2, 2],
+          [2, 2, 2],
+        ],
+        npcs: [],
+        items: [],
+        transitions: [],
+      };
+
+      const map = new GameMap(studyZone);
+      const engine = new GameplayEngine(map, {
+        resolveZone: () => map,
+        actions: mockConfig.actions,
+        newGame: mockConfig.newGame,
+      });
+
+      // Initial state checks
+      const initialSnapshot = engine.getSnapshot();
+      expect(initialSnapshot.stats.resources.energy).toBe(100);
+      expect(initialSnapshot.worldTime.timeLabel).toBe("08:00");
+      expect(initialSnapshot.statLayers.globalXp).toBe(0);
+
+      // Study
+      const result = engine.execute({ type: "Study" });
+      expect(result.success).toBe(true);
+
+      const snapshot = engine.getSnapshot();
+      // energyCost = 10 -> energy should be 90
+      expect(snapshot.stats.resources.energy).toBe(90);
+      // timeCostMinutes = 120 -> time should advance by 2 hours (08:00 -> 10:00)
+      expect(snapshot.worldTime.timeLabel).toBe("10:00");
+      // xp = 10 -> xp should be 10 (base 10 + 2 * studyMastery level 0)
+      expect(snapshot.statLayers.globalXp).toBe(10);
+      // mastery usage should be incremented to 1
+      expect(snapshot.statLayers.masteries.study.usage).toBe(1);
+    });
   });
 });
