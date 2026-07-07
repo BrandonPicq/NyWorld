@@ -4,8 +4,12 @@
   "description": "The Young Page asks you to prove your worth by slaying a slime lurking in the Eastern Ruins.",
   "targetNpcId": "young_page",
   "triggers": {
-    "start": { "dialogueId": "young_page.quest_start" },
-    "complete": { "dialogueId": "young_page.quest_active_ready" }
+    "start": {
+      "dialogueId": "young_page.quest_start"
+    },
+    "complete": {
+      "dialogueId": "young_page.quest_active_ready"
+    }
   },
   "npcOverrides": {
     "young_page": {
@@ -26,7 +30,11 @@
   "rewards": {
     "currency": 100,
     "items": [
-      { "itemId": "healing_herb", "quantity": 1 }
-    ]
+      {
+        "itemId": "healing_herb",
+        "quantity": 1
+      }
+    ],
+    "xp": 75
   }
 }

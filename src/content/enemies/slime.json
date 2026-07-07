@@ -46,6 +46,10 @@
     "conditions": []
   },
   "loot": [
-    { "itemId": "slime_remains", "quantity": 1 }
-  ]
+    {
+      "itemId": "slime_remains",
+      "quantity": 1
+    }
+  ],
+  "xpReward": 25
 }

@@ -4,6 +4,11 @@ This file tracks meaningful project changes by commit-oriented slices.
 
 Keep entries short and practical. When a slice is committed, its changelog section should stay aligned with the commit title so the project history remains easy to read after restores or bisects.
 
+## 2026-07-07 - [UPDATE]: Set tutorial XP awards to the ADR 0008 values
+
+- Give the slime, goblin, and kobold their approved xpReward values (25 / 40 / 80).
+- Reward slay_the_slime with 75 XP so the tutorial combat quest plus the slime reach level 2 exactly.
+
 ## 2026-07-07 - [ADD]: XP and dual-track levels
 
 - Add global and active-class XP curves, dual-track level-ups, and pending global attribute choices.

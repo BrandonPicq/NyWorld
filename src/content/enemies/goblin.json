@@ -46,6 +46,10 @@
     "conditions": []
   },
   "loot": [
-    { "itemId": "goblin_ear", "quantity": 1 }
-  ]
+    {
+      "itemId": "goblin_ear",
+      "quantity": 1
+    }
+  ],
+  "xpReward": 40
 }

@@ -46,6 +46,10 @@
     "conditions": []
   },
   "loot": [
-    { "itemId": "kobold_remains", "quantity": 1 }
-  ]
+    {
+      "itemId": "kobold_remains",
+      "quantity": 1
+    }
+  ],
+  "xpReward": 80
 }
