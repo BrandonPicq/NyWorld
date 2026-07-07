@@ -15,6 +15,8 @@ export const CONTENT_TYPES = {
   enemy: "enemy",
   dialogue: "dialogue",
   combatAction: "combat-action",
+  class: "class",
+  race: "race",
   game: "game",
 } as const;
 

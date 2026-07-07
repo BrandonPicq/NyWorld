@@ -58,6 +58,9 @@ export { CONTENT_TYPES } from "./content/contentTypes";
 export type { ContentTypeName } from "./content/contentTypes";
 export {
   COMBAT_ACTION_CATEGORY_OPTIONS,
+  CORE_ATTRIBUTE_OPTIONS,
+  EQUIPMENT_ARMOR_SLOT_OPTIONS,
+  EQUIPMENT_WEAPON_TYPE_OPTIONS,
   ITEM_CATEGORY_OPTIONS,
   NPC_IMPORTANCE_OPTIONS,
   NPC_RACE_OPTIONS,
@@ -115,6 +118,24 @@ export type {
   CombatActionId,
   CombatActionTuning,
 } from "./combat/CombatActionDef";
+export {
+  cloneClassDef,
+  getAllClassDefs,
+  getAllClassIds,
+  getClassDef,
+  hasClassDef,
+  validateClassDef,
+  validateClassRegistry,
+} from "./classes/classRegistry";
+export type {
+  AttributeGrowth,
+  ClassDef,
+  ClassDefMap,
+  ClassEquipmentPermissions,
+  ClassGrowthEntry,
+  EquipmentArmorSlot,
+  EquipmentWeaponType,
+} from "./classes/ClassDef";
 export { CombatSystem, isCombatNpc } from "./combat/CombatSystem";
 export type {
   CombatEffect,
@@ -238,6 +259,20 @@ export type {
   NpcPresentationOverride,
   NpcRace,
 } from "./npcs/NpcDef";
+export {
+  cloneRaceDef,
+  getAllRaceDefs,
+  getAllRaceIds,
+  getRaceDef,
+  hasRaceDef,
+  validateRaceDef,
+  validateRaceRegistry,
+} from "./races/raceRegistry";
+export type {
+  RaceDef,
+  RaceDefMap,
+  RaceGrowthMultipliers,
+} from "./races/RaceDef";
 export type {
   NpcPresenceDef,
   NpcPresenceDefMap,

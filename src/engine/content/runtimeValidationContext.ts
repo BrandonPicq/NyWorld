@@ -1,9 +1,11 @@
 import { getAllCombatActionDefs } from "../combat/combatActionRegistry";
+import { getAllClassIds } from "../classes/classRegistry";
 import { getAllDialogueIds } from "../dialogues/dialogueRegistry";
 import { getAllEnemyDefs } from "../enemies/enemyRegistry";
 import { getAllItemIds } from "../items/itemRegistry";
 import { getAllNpcDefs } from "../npcs/npcRegistry";
 import { getAllQuestDefs } from "../quests/questRegistry";
+import { getAllRaceIds } from "../races/raceRegistry";
 import { getAllTileDefs } from "../TileRegistry";
 import type { ContentBundle } from "./contentBundle";
 import {
@@ -35,6 +37,8 @@ export function createRuntimeContentValidationContext(
     combatActionIds: new Set(
       getAllCombatActionDefs().map((action) => action.actionId),
     ),
+    classIds: new Set(getAllClassIds()),
+    raceIds: new Set(getAllRaceIds()),
     tileDefs: getAllTileDefs(),
     zones: resolveAllZonesFromBundle(bundle),
   };

@@ -296,6 +296,30 @@
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
+.editor-checkbox-grid,
+.editor-stat-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
+  gap: var(--space-2);
+  border: 1px solid var(--color-border-muted);
+  padding: var(--space-2);
+}
+
+.editor-checkbox-grid legend {
+  padding: 0 0.35rem;
+  color: var(--color-text-muted);
+  font-size: 0.8rem;
+  text-transform: uppercase;
+}
+
+.editor-nested-card {
+  display: grid;
+  gap: var(--space-2);
+  border: 1px solid var(--color-border-muted);
+  padding: var(--space-2);
+  background: var(--color-button-background);
+}
+
 .editor-compact-button,
 .editor-action-button {
   min-height: 2.35rem;

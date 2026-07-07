@@ -29,6 +29,12 @@ export interface NpcDef {
   name: string;
   /** Race bucket used by presentation helpers and future simulation rules. */
   race: NpcRace;
+  /** Optional RPG class used by future layered stat derivation. */
+  classId?: string;
+  /** Optional RPG race used by future layered stat derivation. */
+  raceId?: string;
+  /** Optional authored RPG level for future NPC stat derivation. */
+  level?: number;
   /** Defaults to common when omitted. */
   importance?: NpcImportance;
   /** Optional visible override, intended for notable or story characters. */

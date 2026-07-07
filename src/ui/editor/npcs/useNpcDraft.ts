@@ -50,6 +50,8 @@ export interface NpcDraftController {
   selectedNpcId: string;
   selectedNpc: NpcDef | null;
   dialogueIds: string[];
+  classIds: string[];
+  raceIds: string[];
   selectedNpcDiagnostics: ContentDiagnostic[];
   selectedNpcReferences: ContentReference[];
   errorCount: number;
@@ -125,6 +127,20 @@ export function useNpcDraft(
         a.localeCompare(b),
       ),
     [combined.snapshot.dialogues],
+  );
+  const classIds = useMemo(
+    () =>
+      combined.snapshot.classes
+        .map((classDef) => classDef.classId)
+        .sort((a, b) => a.localeCompare(b)),
+    [combined.snapshot.classes],
+  );
+  const raceIds = useMemo(
+    () =>
+      combined.snapshot.races
+        .map((race) => race.raceId)
+        .sort((a, b) => a.localeCompare(b)),
+    [combined.snapshot.races],
   );
   const selectedNpc =
     draftNpcs.find((npc) => npc.npcId === selectedNpcId) ?? null;
@@ -360,6 +376,8 @@ export function useNpcDraft(
     selectedNpcId,
     selectedNpc,
     dialogueIds,
+    classIds,
+    raceIds,
     selectedNpcDiagnostics,
     selectedNpcReferences,
     errorCount: combined.errorCount,

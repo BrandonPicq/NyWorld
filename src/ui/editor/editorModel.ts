@@ -67,6 +67,22 @@ export function buildContentBrowserGroups(
       }),
     },
     {
+      type: CONTENT_TYPES.class,
+      label: "Classes",
+      entries: snapshot.classes
+        .map((classDef) => ({ id: classDef.classId, name: classDef.name }))
+        .sort((a, b) => a.id.localeCompare(b.id))
+        .map((classDef) => entry(CONTENT_TYPES.class, classDef.id, classDef.name)),
+    },
+    {
+      type: CONTENT_TYPES.race,
+      label: "Races",
+      entries: snapshot.races
+        .map((race) => ({ id: race.raceId, name: race.name }))
+        .sort((a, b) => a.id.localeCompare(b.id))
+        .map((race) => entry(CONTENT_TYPES.race, race.id, race.name)),
+    },
+    {
       type: CONTENT_TYPES.tile,
       label: "Tiles",
       entries: [...snapshot.tiles.keys()]

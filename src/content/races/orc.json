@@ -1,0 +1,15 @@
+{
+  "raceId": "orc",
+  "name": "Orc",
+  "description": "Physically forceful and tough, with less natural ease in spirit and social grace.",
+  "growthMultipliers": {
+    "strength": 1.2,
+    "vitality": 1.1,
+    "agility": 1,
+    "intelligence": 1,
+    "spirit": 0.95,
+    "willpower": 1,
+    "perception": 1,
+    "charisma": 0.95
+  }
+}

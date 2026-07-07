@@ -1,4 +1,8 @@
 import type { CombatActionCategory } from "../combat/CombatActionDef";
+import type {
+  EquipmentArmorSlot,
+  EquipmentWeaponType,
+} from "../classes/ClassDef";
 import type { NpcImportance, NpcRace } from "../npcs/NpcDef";
 import type { StatPath } from "../stats/characterStats";
 
@@ -14,6 +18,33 @@ export const COMBAT_ACTION_CATEGORY_OPTIONS = [
   "defense",
   "utility",
 ] as const satisfies readonly CombatActionCategory[];
+
+export const CORE_ATTRIBUTE_OPTIONS = [
+  "strength",
+  "vitality",
+  "agility",
+  "intelligence",
+  "spirit",
+  "willpower",
+  "perception",
+  "charisma",
+] as const;
+
+export const EQUIPMENT_WEAPON_TYPE_OPTIONS = [
+  "sword",
+  "hammer",
+  "bow",
+  "staff",
+] as const satisfies readonly EquipmentWeaponType[];
+
+export const EQUIPMENT_ARMOR_SLOT_OPTIONS = [
+  "offHand",
+  "head",
+  "body",
+  "hands",
+  "feet",
+  "accessory",
+] as const satisfies readonly EquipmentArmorSlot[];
 
 export const NPC_RACE_OPTIONS = [
   "human",

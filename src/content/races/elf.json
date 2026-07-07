@@ -1,0 +1,15 @@
+{
+  "raceId": "elf",
+  "name": "Elf",
+  "description": "Quick, perceptive, and attuned to study and spirit, but a little less sturdy.",
+  "growthMultipliers": {
+    "strength": 1,
+    "vitality": 0.95,
+    "agility": 1.15,
+    "intelligence": 1.1,
+    "spirit": 1.1,
+    "willpower": 1,
+    "perception": 1,
+    "charisma": 1
+  }
+}

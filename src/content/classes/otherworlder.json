@@ -1,0 +1,36 @@
+{
+  "classId": "otherworlder",
+  "name": "Otherworlder",
+  "description": "A displaced beginner with no formal discipline yet: broadly permissive, lightly growing, and ready to become something more specific.",
+  "equipmentPermissions": {
+    "allowedWeaponTypes": ["sword", "hammer", "bow", "staff"],
+    "allowedArmorSlots": ["offHand", "head", "body", "hands", "feet", "accessory"]
+  },
+  "growthCycle": [
+    {
+      "level": 2,
+      "attributes": {
+        "strength": 1
+      }
+    },
+    {
+      "level": 3,
+      "attributes": {
+        "intelligence": 1
+      }
+    },
+    {
+      "level": 4,
+      "attributes": {
+        "agility": 1
+      }
+    },
+    {
+      "level": 5,
+      "attributes": {
+        "vitality": 1,
+        "spirit": 1
+      }
+    }
+  ]
+}

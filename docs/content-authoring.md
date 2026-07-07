@@ -35,6 +35,8 @@ Most content links are id based:
   definition;
 - `dialogueId` links NPC defaults, zone appearances, schedules, and saved NPC
   state to reusable dialogue sequences.
+- `classId` and `raceId` link RPG progression metadata to class and race
+  definitions.
 
 Ids should be stable once they appear in saves. Renaming an id later requires a
 save migration or compatibility alias.
@@ -83,20 +85,21 @@ without constructing runtime objects.
 data that has already crossed validation.
 
 Reference validation goes through an explicit `ContentValidationContext`
-holding the known item, NPC, dialogue, enemy, quest, combat action, tile, and
-zone catalogs. Each validator declares the subset it needs (for example
-`ZoneValidationContext` or `QuestValidationContext`), so editor drafts and mod
-bundles can build their own context and validate before becoming active
-content. The runtime builder `createRuntimeContentValidationContext` lives in
-its own top-of-graph module that registries must never import; registries that
-need a context at module load build their own subset from direct imports.
-Stable content-type names live in `contentTypes.ts` (see ADR 0005).
+holding the known item, NPC, dialogue, enemy, quest, combat action, tile,
+class, race, and zone catalogs. Each validator declares the subset it needs
+(for example `ZoneValidationContext` or `QuestValidationContext`), so editor
+drafts and mod bundles can build their own context and validate before
+becoming active content. The runtime builder
+`createRuntimeContentValidationContext` lives in its own top-of-graph module
+that registries must never import; registries that need a context at module
+load build their own subset from direct imports. Stable content-type names live
+in `contentTypes.ts` (see ADR 0005).
 
 ## Whole-Bundle Audit And Reference Graph
 
 Every content family now has an editor-facing validator that accumulates
 `ContentDiagnostic`s: zones, quests, items, tiles, dialogues, NPCs, global
-presence, enemies, combat actions, and the game config.
+presence, enemies, combat actions, classes, races, and the game config.
 
 `validateAllContent` (`engine/content/contentAudit.ts`) runs all of them over a
 `ContentCatalogSnapshot` plus full-context cross checks that per-registry
@@ -127,8 +130,8 @@ numbers by hand and could be derived later too.
 ## NPCs And Dialogue
 
 NPC definitions are character sheets: name, race, importance, optional map
-presentation, and default dialogue. They do not store location-specific text or
-mutable progression.
+presentation, default dialogue, and optional RPG metadata (`classId`, `raceId`,
+`level`). They do not store location-specific text or mutable progression.
 
 Dialogue files contain reusable sequences keyed by `dialogueId`. A character can
 use different dialogue depending on the active zone appearance, schedule entry,
@@ -144,6 +147,17 @@ Global presence files describe where a character should be during the day.
 Unlike a zone-local spawn, global presence can move the same `npcId` between
 zones. The schedule system resolves the latest reached entry for the current
 world day and applies that position to the active map when relevant.
+
+## Classes And Races
+
+Class files live under `src/content/classes/*.json`. A class definition owns a
+stable `classId`, display text, equipment permissions, and a repeated growth
+cycle. Unknown classes resolve to an inert display fallback: no growth and no
+equipment permissions.
+
+Race files live under `src/content/races/*.json`. A race definition owns a
+stable `raceId`, display text, and attribute growth multipliers. Multipliers
+feed layered stat derivation later; they do not change authored base stats.
 
 ## Tiles
 

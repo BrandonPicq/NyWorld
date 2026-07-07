@@ -93,6 +93,8 @@ function createSnapshot(): ContentCatalogSnapshot {
     enemies: [],
     quests: [],
     combatActions: [],
+    classes: [],
+    races: [],
     dialogues: {},
     dialogueFiles: {},
     tiles: new Map([
@@ -300,6 +302,8 @@ function createValidationContext(itemIds: string[]): ContentValidationContext {
     enemyIds: new Set(),
     questIds: new Set(),
     combatActionIds: new Set(),
+    classIds: new Set(),
+    raceIds: new Set(),
     tileDefs: new Map([
       [0, { name: "floor", walkable: true, glyph: ".", color: "#333333" }],
     ]),

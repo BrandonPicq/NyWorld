@@ -34,6 +34,8 @@ function contentsWith(
     enemies: base.enemies,
     items: base.items,
     actions: base.combatActions,
+    classes: base.classes,
+    races: base.races,
     quests: base.quests,
     game: base.game,
     ...overrides,

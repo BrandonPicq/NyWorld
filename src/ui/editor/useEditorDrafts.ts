@@ -4,6 +4,7 @@ import {
   createRuntimeContentValidationContext,
   validateAllContent,
   type CombatActionDef,
+  type ClassDef,
   type ContentCatalogSnapshot,
   type EnemyDef,
   type GameContentConfig,
@@ -11,6 +12,7 @@ import {
   type NpcDef,
   type NpcPresenceDef,
   type QuestDef,
+  type RaceDef,
 } from "../../engine";
 import type { GridCell } from "../../rendering/canvasCellMapping";
 import {
@@ -29,6 +31,11 @@ import {
   useActionDraft,
   type ActionDraftController,
 } from "./actions/useActionDraft";
+import {
+  createClassDraftState,
+  useClassDraft,
+  type ClassDraftController,
+} from "./classes/useClassDraft";
 import {
   createDialogueDraftState,
   useDialogueDraft,
@@ -52,6 +59,11 @@ import {
   useQuestDraft,
   type QuestDraftController,
 } from "./quests/useQuestDraft";
+import {
+  createRaceDraftState,
+  useRaceDraft,
+  type RaceDraftController,
+} from "./races/useRaceDraft";
 import {
   createGameConfigDraftState,
   useGameConfigDraft,
@@ -77,6 +89,8 @@ export interface EditorUnsavedChanges {
   presence: boolean;
   enemy: boolean;
   action: boolean;
+  class: boolean;
+  race: boolean;
   quest: boolean;
   zone: boolean;
   game: boolean;
@@ -89,6 +103,8 @@ export interface EditorDrafts {
   presence: NpcPresenceDraftController;
   enemy: EnemyDraftController;
   action: ActionDraftController;
+  class: ClassDraftController;
+  race: RaceDraftController;
   quest: QuestDraftController;
   zone: ZoneDraftController;
   game: GameConfigController;
@@ -147,6 +163,18 @@ export function useEditorDrafts(base: ContentCatalogSnapshot): EditorDrafts {
   const [savedActions, setSavedActions] = useState<CombatActionDef[]>(() =>
     createActionDraftState(base),
   );
+  const [draftClasses, setDraftClasses] = useState<ClassDef[]>(() =>
+    createClassDraftState(base),
+  );
+  const [savedClasses, setSavedClasses] = useState<ClassDef[]>(() =>
+    createClassDraftState(base),
+  );
+  const [draftRaces, setDraftRaces] = useState<RaceDef[]>(() =>
+    createRaceDraftState(base),
+  );
+  const [savedRaces, setSavedRaces] = useState<RaceDef[]>(() =>
+    createRaceDraftState(base),
+  );
   const [draftQuests, setDraftQuests] = useState<QuestDef[]>(() =>
     createQuestDraftState(base),
   );
@@ -180,6 +208,8 @@ export function useEditorDrafts(base: ContentCatalogSnapshot): EditorDrafts {
       enemies: draftEnemies,
       items: draftItems,
       actions: draftActions,
+      classes: draftClasses,
+      races: draftRaces,
       quests: draftQuests,
       game: gameDraft,
       zones: activeZoneDrafts(zoneHistories),
@@ -191,6 +221,8 @@ export function useEditorDrafts(base: ContentCatalogSnapshot): EditorDrafts {
       draftEnemies,
       draftItems,
       draftActions,
+      draftClasses,
+      draftRaces,
       draftQuests,
       gameDraft,
       zoneHistories,
@@ -285,6 +317,20 @@ export function useEditorDrafts(base: ContentCatalogSnapshot): EditorDrafts {
     },
     combined,
   );
+  const classDraft = useClassDraft(
+    {
+      draft: { value: draftClasses, set: setDraftClasses },
+      saved: { value: savedClasses, set: setSavedClasses },
+    },
+    combined,
+  );
+  const race = useRaceDraft(
+    {
+      draft: { value: draftRaces, set: setDraftRaces },
+      saved: { value: savedRaces, set: setSavedRaces },
+    },
+    combined,
+  );
   const quest = useQuestDraft(
     {
       draft: { value: draftQuests, set: setDraftQuests },
@@ -319,6 +365,8 @@ export function useEditorDrafts(base: ContentCatalogSnapshot): EditorDrafts {
     presence: presence.hasUnsavedChanges,
     enemy: enemy.hasUnsavedChanges,
     action: action.hasUnsavedChanges,
+    class: classDraft.hasUnsavedChanges,
+    race: race.hasUnsavedChanges,
     quest: quest.hasUnsavedChanges,
     zone: hasAnyUnsavedZoneDraft(base, zoneHistories, savedZoneJson),
     game: game.hasUnsavedChanges,
@@ -332,6 +380,8 @@ export function useEditorDrafts(base: ContentCatalogSnapshot): EditorDrafts {
     presence,
     enemy,
     action,
+    class: classDraft,
+    race,
     quest,
     zone,
     game,

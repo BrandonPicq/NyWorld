@@ -6,7 +6,9 @@ import {
   NPC_IMPORTANCE_OPTIONS,
   NPC_RACE_OPTIONS,
 } from "../content/editingMetadata";
+import { getAllClassIds } from "../classes/classRegistry";
 import { getAllDialogueIds } from "../dialogues/dialogueRegistry";
+import { getAllRaceIds } from "../races/raceRegistry";
 import type { NpcDef, NpcDefMap, NpcImportance, NpcRace } from "./NpcDef";
 
 const NPC_CONTENT_TYPE = CONTENT_TYPES.npc;
@@ -16,7 +18,7 @@ const NPC_CONTENT_TYPE = CONTENT_TYPES.npc;
  */
 export type NpcValidationContext = Pick<
   ContentValidationContext,
-  "dialogueIds"
+  "dialogueIds" | "classIds" | "raceIds"
 >;
 
 const npcDefs = getSortedContentModules(
@@ -135,6 +137,56 @@ export function validateNpcDef(
     );
   }
 
+  if (value.classId !== undefined) {
+    if (typeof value.classId !== "string" || !value.classId.trim()) {
+      addNpcError(
+        diagnostics,
+        npcId,
+        "classId",
+        `NPC definition "${npcLabel}" has invalid classId.`,
+      );
+    } else if (!context.classIds.has(value.classId)) {
+      addNpcError(
+        diagnostics,
+        npcId,
+        "classId",
+        `NPC definition "${npcLabel}" references unknown classId "${value.classId}".`,
+      );
+    }
+  }
+
+  if (value.raceId !== undefined) {
+    if (typeof value.raceId !== "string" || !value.raceId.trim()) {
+      addNpcError(
+        diagnostics,
+        npcId,
+        "raceId",
+        `NPC definition "${npcLabel}" has invalid raceId.`,
+      );
+    } else if (!context.raceIds.has(value.raceId)) {
+      addNpcError(
+        diagnostics,
+        npcId,
+        "raceId",
+        `NPC definition "${npcLabel}" references unknown raceId "${value.raceId}".`,
+      );
+    }
+  }
+
+  if (
+    value.level !== undefined &&
+    (typeof value.level !== "number" ||
+      !Number.isInteger(value.level) ||
+      value.level <= 0)
+  ) {
+    addNpcError(
+      diagnostics,
+      npcId,
+      "level",
+      `NPC definition "${npcLabel}" has invalid level.`,
+    );
+  }
+
   if (value.presentation !== undefined) {
     validateNpcPresentation(value.presentation, npcId, npcLabel, diagnostics);
   }
@@ -232,6 +284,8 @@ function validateNpcPresentation(
 function buildRegistry(defs: readonly unknown[]): NpcDefMap {
   const diagnostics = validateNpcRegistry(defs, {
     dialogueIds: new Set(getAllDialogueIds()),
+    classIds: new Set(getAllClassIds()),
+    raceIds: new Set(getAllRaceIds()),
   });
   const firstError = diagnostics.find(
     (diagnostic) => diagnostic.severity === "error",

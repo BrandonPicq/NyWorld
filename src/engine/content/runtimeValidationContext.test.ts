@@ -1,11 +1,13 @@
 import { describe, expect, it } from "vitest";
 
 import { getAllCombatActionDefs } from "../combat/combatActionRegistry";
+import { getAllClassIds } from "../classes/classRegistry";
 import { getAllDialogueIds } from "../dialogues/dialogueRegistry";
 import { getAllEnemyDefs } from "../enemies/enemyRegistry";
 import { getAllItemIds } from "../items/itemRegistry";
 import { getAllNpcDefs } from "../npcs/npcRegistry";
 import { getAllQuestDefs } from "../quests/questRegistry";
+import { getAllRaceIds } from "../races/raceRegistry";
 import { getAllTileDefs } from "../TileRegistry";
 import { defaultContentBundle } from "./contentBundle";
 import { createRuntimeContentValidationContext } from "./runtimeValidationContext";
@@ -36,6 +38,8 @@ describe("createRuntimeContentValidationContext", () => {
         .map((action) => action.actionId)
         .sort(),
     );
+    expect([...context.classIds].sort()).toEqual(getAllClassIds().sort());
+    expect([...context.raceIds].sort()).toEqual(getAllRaceIds().sort());
     expect([...context.tileDefs.keys()].sort((a, b) => a - b)).toEqual(
       [...getAllTileDefs().keys()].sort((a, b) => a - b),
     );

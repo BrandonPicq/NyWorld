@@ -8,6 +8,7 @@ import {
 } from "../../engine";
 import { TerminalButton } from "../components/TerminalButton";
 import { ActionsTab } from "./actions/ActionsTab";
+import { ClassTab } from "./classes/ClassTab";
 import { ContentTab } from "./ContentTab";
 import type { EditorContentNavigationTarget } from "./DiagnosticList";
 import { DialogueTab } from "./dialogues/DialogueTab";
@@ -17,6 +18,7 @@ import { NpcTab } from "./npcs/NpcTab";
 import { PresenceTab } from "./presence/PresenceTab";
 import { prepareEditorPlaytest } from "./playtestLaunch";
 import { QuestTab } from "./quests/QuestTab";
+import { RaceTab } from "./races/RaceTab";
 import { useEditorDrafts } from "./useEditorDrafts";
 import { ZoneEditorPanel } from "./zone/ZoneEditorPanel";
 import type { EditorPlaytestStart } from "./playtestStart";
@@ -38,6 +40,8 @@ type EditorTab =
   | "presence"
   | "enemies"
   | "actions"
+  | "classes"
+  | "races"
   | "quests";
 
 const EDITOR_TABS: { id: EditorTab; label: string }[] = [
@@ -49,6 +53,8 @@ const EDITOR_TABS: { id: EditorTab; label: string }[] = [
   { id: "presence", label: "Presence" },
   { id: "enemies", label: "Enemies" },
   { id: "actions", label: "Actions" },
+  { id: "classes", label: "Classes" },
+  { id: "races", label: "Races" },
   { id: "quests", label: "Quests" },
 ];
 
@@ -148,6 +154,14 @@ export function ContentEditorScreen({
         drafts.action.selectAction(target.id);
         setTab("actions");
         return;
+      case CONTENT_TYPES.class:
+        drafts.class.selectClass(target.id);
+        setTab("classes");
+        return;
+      case CONTENT_TYPES.race:
+        drafts.race.selectRace(target.id);
+        setTab("races");
+        return;
       case CONTENT_TYPES.quest:
         drafts.quest.selectQuest(target.id);
         setTab("quests");
@@ -239,6 +253,10 @@ export function ContentEditorScreen({
             <EnemyTab draft={drafts.enemy} onNavigate={navigateToContent} />
           ) : tab === "actions" ? (
             <ActionsTab draft={drafts.action} />
+          ) : tab === "classes" ? (
+            <ClassTab draft={drafts.class} onNavigate={navigateToContent} />
+          ) : tab === "races" ? (
+            <RaceTab draft={drafts.race} onNavigate={navigateToContent} />
           ) : tab === "quests" ? (
             <QuestTab
               draft={drafts.quest}
@@ -325,6 +343,10 @@ function tabHasUnsavedChanges(
       return changes.enemy;
     case "actions":
       return changes.action;
+    case "classes":
+      return changes.class;
+    case "races":
+      return changes.race;
     case "quests":
       return changes.quest;
   }

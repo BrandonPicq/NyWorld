@@ -1,0 +1,15 @@
+{
+  "raceId": "dwarf",
+  "name": "Dwarf",
+  "description": "Hardy and determined, growing well in strength, vitality, and willpower while moving a little slower.",
+  "growthMultipliers": {
+    "strength": 1.1,
+    "vitality": 1.15,
+    "agility": 0.95,
+    "intelligence": 1,
+    "spirit": 1,
+    "willpower": 1.1,
+    "perception": 1,
+    "charisma": 1
+  }
+}

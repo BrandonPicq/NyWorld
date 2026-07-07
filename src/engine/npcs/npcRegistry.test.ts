@@ -71,7 +71,11 @@ describe("npcRegistry", () => {
 });
 
 describe("validateNpcDef", () => {
-  const context = { dialogueIds: new Set(["hero.default"]) };
+  const context = {
+    dialogueIds: new Set(["hero.default"]),
+    classIds: new Set(["wanderer"]),
+    raceIds: new Set(["human"]),
+  };
 
   it("accepts a valid definition against an injected context", () => {
     expect(
@@ -79,9 +83,12 @@ describe("validateNpcDef", () => {
         {
           npcId: "hero",
           name: "Hero",
-          race: "human",
-          defaultDialogueId: "hero.default",
-        },
+        race: "human",
+        classId: "wanderer",
+        raceId: "human",
+        level: 2,
+        defaultDialogueId: "hero.default",
+      },
         context,
       ),
     ).toEqual([]);
@@ -93,6 +100,9 @@ describe("validateNpcDef", () => {
         npcId: "broken_npc",
         name: "",
         race: "dragon",
+        classId: "missing_class",
+        raceId: "missing_race",
+        level: 0,
         importance: "legend",
         presentation: { glyph: "ab", color: "" },
         defaultDialogueId: "missing.dialogue",
@@ -108,6 +118,9 @@ describe("validateNpcDef", () => {
           path: "name",
         }),
         expect.objectContaining({ path: "race" }),
+        expect.objectContaining({ path: "classId" }),
+        expect.objectContaining({ path: "raceId" }),
+        expect.objectContaining({ path: "level" }),
         expect.objectContaining({ path: "importance" }),
         expect.objectContaining({ path: "presentation.glyph" }),
         expect.objectContaining({ path: "presentation.color" }),
@@ -118,7 +131,7 @@ describe("validateNpcDef", () => {
         }),
       ]),
     );
-    expect(diagnostics).toHaveLength(6);
+    expect(diagnostics).toHaveLength(9);
   });
 });
 
@@ -134,6 +147,8 @@ describe("validateNpcRegistry", () => {
     expect(
       validateNpcRegistry([def, def], {
         dialogueIds: new Set(["hero.default"]),
+        classIds: new Set(),
+        raceIds: new Set(),
       }),
     ).toEqual([
       expect.objectContaining({

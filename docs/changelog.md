@@ -4,6 +4,12 @@ This file tracks meaningful project changes by commit-oriented slices.
 
 Keep entries short and practical. When a slice is committed, its changelog section should stay aligned with the commit title so the project history remains easy to read after restores or bisects.
 
+## 2026-07-07 - [ADD]: Class and race content families
+
+- Accept ADR 0008 with the approved Study mastery adjustment to use a skills-neutral XP bonus.
+- Add class and race JSON content, registries, validation, runtime snapshots, validation context ids, reference graph links, and playtest overlays.
+- Add editor tabs for class and race definitions, and expose optional RPG class/race/level fields on NPC sheets for future layered derivation.
+
 ## 2026-07-07 - [DOCS]: Revise the progression ADR to the layered model
 
 - Replace the unaccepted progression ADR proposal with the settled layered model.

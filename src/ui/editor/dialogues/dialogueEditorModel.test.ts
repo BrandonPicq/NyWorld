@@ -93,6 +93,8 @@ function createSnapshot(): ContentCatalogSnapshot {
     enemies: [],
     quests: [],
     combatActions: [],
+    classes: [],
+    races: [],
     dialogues: {
       "unknown_npc.default": [
         { speaker: "Narrator", text: "There is nothing to say yet.", pitch: 1 },
@@ -116,6 +118,8 @@ function createValidationContext(): ContentValidationContext {
     enemyIds: new Set(),
     questIds: new Set(),
     combatActionIds: new Set(),
+    classIds: new Set(),
+    raceIds: new Set(),
     tileDefs: new Map(),
     zones: new Map([["zone", {} as GameMap]]),
   };

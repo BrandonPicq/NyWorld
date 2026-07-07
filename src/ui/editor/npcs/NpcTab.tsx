@@ -284,6 +284,66 @@ function NpcSheetForm({
         </select>
       </label>
 
+      <div className="editor-form-row">
+        <label className="editor-field">
+          <span>RPG Class</span>
+          <select
+            disabled={draft.isSaving}
+            onChange={(event) =>
+              draft.updateSelectedNpc((current) => ({
+                ...current,
+                classId: event.target.value || undefined,
+              }))
+            }
+            value={npc.classId ?? ""}
+          >
+            <option value="">none</option>
+            {draft.classIds.map((classId) => (
+              <option key={classId} value={classId}>
+                {classId}
+              </option>
+            ))}
+          </select>
+        </label>
+
+        <label className="editor-field">
+          <span>RPG Race</span>
+          <select
+            disabled={draft.isSaving}
+            onChange={(event) =>
+              draft.updateSelectedNpc((current) => ({
+                ...current,
+                raceId: event.target.value || undefined,
+              }))
+            }
+            value={npc.raceId ?? ""}
+          >
+            <option value="">none</option>
+            {draft.raceIds.map((raceId) => (
+              <option key={raceId} value={raceId}>
+                {raceId}
+              </option>
+            ))}
+          </select>
+        </label>
+      </div>
+
+      <label className="editor-field">
+        <span>RPG Level</span>
+        <input
+          disabled={draft.isSaving}
+          min={1}
+          onChange={(event) =>
+            draft.updateSelectedNpc((current) => ({
+              ...current,
+              level: event.target.value ? Number(event.target.value) : undefined,
+            }))
+          }
+          type="number"
+          value={npc.level ?? ""}
+        />
+      </label>
+
       <label className="editor-checkbox-field">
         <input
           checked={hasPresentation}

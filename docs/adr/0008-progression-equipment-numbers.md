@@ -2,8 +2,10 @@
 
 ## Statut
 
-Proposee le 2026-07-07. En attente d'approbation explicite avant
-implementation.
+Acceptee le 2026-07-07, avec ajustement approuve : la maitrise Study donne un
+bonus neutre de `xp +2` par niveau de maitrise au lieu d'augmenter
+`academicProgressGain`, afin de ne pas alimenter la bizarrerie preservee de
+`skills.scholarship`.
 
 Cette ADR remplace la proposition initiale de slice 34. La version precedente
 n'a jamais ete acceptee ; le fichier est conserve pour garder le numero d'ADR.
@@ -175,7 +177,7 @@ Effets proposes :
 | Focus | 5 | 10 actions resolues | `nextDamageBoost +0.05` |
 | Flee | 3 | 5 fuites reussies | `successChance +0.05` |
 | Use Item | 3 | 8 objets utilises en combat | `itemEffectMultiplier +0.05` |
-| Study | 5 | 4 Study resolus | `academicProgressGain +1` |
+| Study | 5 | 4 Study resolus | `xp +2` |
 | Rest | 3 | 6 Rest resolus | `energyRestore +2` |
 
 Regles :

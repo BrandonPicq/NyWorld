@@ -3,6 +3,10 @@ import {
   installCombatActionContentOverlay,
 } from "../combat/combatActionRegistry";
 import {
+  clearClassContentOverlay,
+  installClassContentOverlay,
+} from "../classes/classRegistry";
+import {
   clearDialogueContentOverlay,
   installDialogueContentOverlay,
 } from "../dialogues/dialogueRegistry";
@@ -26,6 +30,10 @@ import {
   clearQuestContentOverlay,
   installQuestContentOverlay,
 } from "../quests/questRegistry";
+import {
+  clearRaceContentOverlay,
+  installRaceContentOverlay,
+} from "../races/raceRegistry";
 import {
   clearTileContentOverlay,
   installTileContentOverlay,
@@ -55,6 +63,8 @@ export function installContentOverlay(
     installNpcPresenceContentOverlay(snapshot.npcPresence);
     installEnemyContentOverlay(snapshot.enemies);
     installCombatActionContentOverlay(snapshot.combatActions);
+    installClassContentOverlay(snapshot.classes);
+    installRaceContentOverlay(snapshot.races);
     installQuestContentOverlay(snapshot.quests, context);
   } catch (error) {
     clearContentOverlay();
@@ -64,6 +74,8 @@ export function installContentOverlay(
 
 export function clearContentOverlay(): void {
   clearQuestContentOverlay();
+  clearRaceContentOverlay();
+  clearClassContentOverlay();
   clearCombatActionContentOverlay();
   clearEnemyContentOverlay();
   clearNpcPresenceContentOverlay();

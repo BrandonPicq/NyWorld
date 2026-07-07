@@ -1,5 +1,6 @@
 import type {
   CombatActionDef,
+  ClassDef,
   ContentCatalogSnapshot,
   ContentValidationContext,
   DialogueDefMap,
@@ -9,8 +10,13 @@ import type {
   NpcDef,
   NpcPresenceDef,
   QuestDef,
+  RaceDef,
   ZoneData,
 } from "../../engine";
+import {
+  cloneClassDefs,
+  createClassDraftValidationContext,
+} from "./classes/classEditorModel";
 import { cloneQuestDefs, createQuestDraftValidationContext } from "./quests/questEditorModel";
 import {
   createActionDraftSnapshot,
@@ -30,6 +36,10 @@ import {
 import { cloneNpcDefs } from "./npcs/npcEditorModel";
 import { createPresenceDraftSnapshot } from "./presence/presenceEditorModel";
 import {
+  cloneRaceDefs,
+  createRaceDraftValidationContext,
+} from "./races/raceEditorModel";
+import {
   createZoneDraftSnapshot,
   createZoneDraftValidationContext,
 } from "./zone/zoneEditorModel";
@@ -47,6 +57,8 @@ export interface EditorDraftContents {
   enemies: readonly EnemyDef[];
   items: ItemDefMap;
   actions: readonly CombatActionDef[];
+  classes: readonly ClassDef[];
+  races: readonly RaceDef[];
   quests: readonly QuestDef[];
   game: GameContentConfig;
   zones?: readonly ZoneData[];
@@ -69,6 +81,8 @@ export function createCombinedDraftSnapshot(
   snapshot = createEnemyDraftSnapshot(snapshot, contents.enemies);
   snapshot = createItemDraftSnapshot(snapshot, contents.items);
   snapshot = createActionDraftSnapshot(snapshot, contents.actions);
+  snapshot = { ...snapshot, classes: cloneClassDefs(contents.classes) };
+  snapshot = { ...snapshot, races: cloneRaceDefs(contents.races) };
   snapshot = { ...snapshot, quests: cloneQuestDefs(contents.quests) };
   for (const zone of contents.zones ?? []) {
     snapshot = createZoneDraftSnapshot(snapshot, zone);
@@ -101,6 +115,8 @@ export function createCombinedDraftValidationContext(
   };
   context = createEnemyDraftValidationContext(context, contents.enemies);
   context = createItemDraftValidationContext(context, contents.items);
+  context = createClassDraftValidationContext(context, contents.classes);
+  context = createRaceDraftValidationContext(context, contents.races);
   context = createQuestDraftValidationContext(context, contents.quests);
   for (const zone of contents.zones ?? []) {
     context = createZoneDraftValidationContext(context, zone);

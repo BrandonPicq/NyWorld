@@ -1,10 +1,12 @@
 import { validateCombatActionRegistry } from "../combat/combatActionRegistry";
+import { validateClassRegistry } from "../classes/classRegistry";
 import { validateDialogueRegistry } from "../dialogues/dialogueRegistry";
 import { validateEnemyRegistry } from "../enemies/enemyRegistry";
 import { validateItemCatalog } from "../items/itemRegistry";
 import { validateNpcRegistry } from "../npcs/npcRegistry";
 import { validateNpcPresenceRegistry } from "../npcs/npcPresenceRegistry";
 import { validateQuestRegistry } from "../quests/questRegistry";
+import { validateRaceRegistry } from "../races/raceRegistry";
 import { validateTileCatalog } from "../TileRegistry";
 import type { NpcScheduleEntryData, ZoneData } from "../ZoneTypes";
 import { validateZoneData } from "../zoneLoader";
@@ -47,6 +49,8 @@ export function validateAllContent(
     ...validateEnemyRegistry(snapshot.enemies, context),
     ...validateQuestRegistry(snapshot.quests, context),
     ...validateCombatActionRegistry(snapshot.combatActions),
+    ...validateClassRegistry(snapshot.classes),
+    ...validateRaceRegistry(snapshot.races),
     ...validateKnownScheduleTargetPositions(snapshot, context),
   ];
 

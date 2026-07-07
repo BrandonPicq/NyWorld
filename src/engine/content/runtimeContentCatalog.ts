@@ -1,4 +1,5 @@
 import { getAllCombatActionDefs } from "../combat/combatActionRegistry";
+import { getAllClassDefs } from "../classes/classRegistry";
 import {
   getAllDialogueIds,
   getDialogue,
@@ -9,6 +10,7 @@ import { getAllItemIds, getItemDef } from "../items/itemRegistry";
 import { getAllNpcDefs } from "../npcs/npcRegistry";
 import { getAllNpcPresenceDefs } from "../npcs/npcPresenceRegistry";
 import { getAllQuestDefs } from "../quests/questRegistry";
+import { getAllRaceDefs } from "../races/raceRegistry";
 import { getAllTileDefs } from "../TileRegistry";
 import type { ContentBundle } from "./contentBundle";
 import {
@@ -44,6 +46,8 @@ export function createRuntimeContentCatalogSnapshot(
     enemies: getAllEnemyDefs(),
     quests: getAllQuestDefs(),
     combatActions: getAllCombatActionDefs(),
+    classes: getAllClassDefs(),
+    races: getAllRaceDefs(),
     dialogues: Object.fromEntries(
       getAllDialogueIds().map((dialogueId) => [
         dialogueId,

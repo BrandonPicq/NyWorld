@@ -1,9 +1,11 @@
 import type { CombatActionDef } from "../combat/CombatActionDef";
+import type { ClassDef } from "../classes/ClassDef";
 import type { DialogueDefMap } from "../dialogues/DialogueDef";
 import type { EnemyDef } from "../enemies/EnemyDef";
 import type { NpcDef } from "../npcs/NpcDef";
 import type { NpcPresenceDef } from "../npcs/NpcPresenceDef";
 import type { QuestDef } from "../quests/QuestDef";
+import type { RaceDef } from "../races/RaceDef";
 import type { TileDef } from "../TileRegistry";
 import type { ItemDefMap } from "../items/ItemDef";
 import type { TileId, ZoneData } from "../ZoneTypes";
@@ -69,6 +71,8 @@ export interface ContentCatalogSnapshot {
   enemies: EnemyDef[];
   quests: QuestDef[];
   combatActions: CombatActionDef[];
+  classes: ClassDef[];
+  races: RaceDef[];
   dialogues: DialogueDefMap;
   dialogueFiles: Record<string, DialogueDefMap>;
   tiles: ReadonlyMap<TileId, TileDef>;
@@ -147,6 +151,10 @@ function referenceTargetExists(
       return context.questIds.has(target.id);
     case CONTENT_TYPES.combatAction:
       return context.combatActionIds.has(target.id);
+    case CONTENT_TYPES.class:
+      return context.classIds.has(target.id);
+    case CONTENT_TYPES.race:
+      return context.raceIds.has(target.id);
     case CONTENT_TYPES.tile:
       return context.tileDefs.has(Number(target.id));
     case CONTENT_TYPES.zone:
@@ -262,7 +270,7 @@ function collectZoneReferences(zone: ZoneData): ContentReference[] {
 
 function collectNpcReferences(npc: NpcDef): ContentReference[] {
   const from: ContentRef = { type: CONTENT_TYPES.npc, id: npc.npcId };
-  return [
+  const references: ContentReference[] = [
     reference(
       from,
       CONTENT_TYPES.dialogue,
@@ -270,6 +278,15 @@ function collectNpcReferences(npc: NpcDef): ContentReference[] {
       "defaultDialogueId",
     ),
   ];
+
+  if (npc.classId) {
+    references.push(reference(from, CONTENT_TYPES.class, npc.classId, "classId"));
+  }
+  if (npc.raceId) {
+    references.push(reference(from, CONTENT_TYPES.race, npc.raceId, "raceId"));
+  }
+
+  return references;
 }
 
 function collectNpcPresenceReferences(

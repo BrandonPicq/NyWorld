@@ -96,6 +96,8 @@ function createSnapshot(): ContentCatalogSnapshot {
     enemies: createEnemies(),
     quests: [],
     combatActions: [],
+    classes: [],
+    races: [],
     dialogues: {},
     dialogueFiles: {},
     tiles: new Map(),
@@ -110,6 +112,8 @@ function createValidationContext(): ContentValidationContext {
     enemyIds: new Set(["npc_a"]),
     questIds: new Set(),
     combatActionIds: new Set(),
+    classIds: new Set(),
+    raceIds: new Set(),
     tileDefs: new Map(),
     zones: new Map([["zone", {} as GameMap]]),
   };

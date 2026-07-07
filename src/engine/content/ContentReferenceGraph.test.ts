@@ -75,6 +75,9 @@ function createSyntheticSnapshot(): ContentCatalogSnapshot {
         npcId: "hero",
         name: "Hero",
         race: "human",
+        classId: "wanderer",
+        raceId: "human",
+        level: 2,
         defaultDialogueId: "hero.greeting",
       },
     ],
@@ -89,6 +92,26 @@ function createSyntheticSnapshot(): ContentCatalogSnapshot {
     enemies: [],
     quests: [],
     combatActions: [],
+    classes: [
+      {
+        classId: "wanderer",
+        name: "Wanderer",
+        description: "A test class.",
+        equipmentPermissions: {
+          allowedWeaponTypes: ["sword"],
+          allowedArmorSlots: ["body"],
+        },
+        growthCycle: [{ level: 2, attributes: { strength: 1 } }],
+      },
+    ],
+    races: [
+      {
+        raceId: "human",
+        name: "Human",
+        description: "A test race.",
+        growthMultipliers: { strength: 1 },
+      },
+    ],
     dialogues: {
       "hero.greeting": [{ speaker: "Hero", text: "Hello.", pitch: 1 }],
     },
@@ -116,6 +139,8 @@ function createSyntheticContext(
     combatActionIds: new Set(
       snapshot.combatActions.map((action) => action.actionId),
     ),
+    classIds: new Set(snapshot.classes.map((classDef) => classDef.classId)),
+    raceIds: new Set(snapshot.races.map((race) => race.raceId)),
     tileDefs: snapshot.tiles,
     zones: new Map(
       Object.values(snapshot.zones).map((zone) => [
@@ -148,6 +173,25 @@ describe("buildContentReferenceGraph", () => {
       ]),
     );
     expect(dialogueUsages).toHaveLength(2);
+  });
+
+  it("tracks NPC class and race references", () => {
+    const graph = buildContentReferenceGraph(createSyntheticSnapshot());
+
+    expect(
+      graph.getReferencesTo({ type: "class", id: "wanderer" }),
+    ).toEqual([
+      expect.objectContaining({
+        from: { type: "npc", id: "hero" },
+        path: "classId",
+      }),
+    ]);
+    expect(graph.getReferencesTo({ type: "race", id: "human" })).toEqual([
+      expect.objectContaining({
+        from: { type: "npc", id: "hero" },
+        path: "raceId",
+      }),
+    ]);
   });
 
   it("lists outgoing references for one content piece", () => {
