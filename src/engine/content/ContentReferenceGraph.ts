@@ -2,6 +2,7 @@ import type { CombatActionDef } from "../combat/CombatActionDef";
 import type { ClassDef } from "../classes/ClassDef";
 import type { DialogueDefMap } from "../dialogues/DialogueDef";
 import type { EnemyDef } from "../enemies/EnemyDef";
+import type { CommandMasteryDef } from "../mastery/CommandMasteryDef";
 import type { NpcDef } from "../npcs/NpcDef";
 import type { NpcPresenceDef } from "../npcs/NpcPresenceDef";
 import type { QuestDef } from "../quests/QuestDef";
@@ -73,6 +74,7 @@ export interface ContentCatalogSnapshot {
   combatActions: CombatActionDef[];
   classes: ClassDef[];
   races: RaceDef[];
+  commandMasteries?: CommandMasteryDef[];
   dialogues: DialogueDefMap;
   dialogueFiles: Record<string, DialogueDefMap>;
   tiles: ReadonlyMap<TileId, TileDef>;

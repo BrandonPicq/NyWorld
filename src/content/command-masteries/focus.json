@@ -1,0 +1,10 @@
+{
+  "commandId": "focus",
+  "name": "Focus",
+  "cap": 5,
+  "usageRequired": 10,
+  "effects": {
+    "nextDamageBoost": 0.05
+  },
+  "unlocks": []
+}

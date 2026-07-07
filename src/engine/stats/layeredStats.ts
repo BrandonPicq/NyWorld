@@ -34,6 +34,11 @@ export interface PlayerClassProgression {
   xp: number;
 }
 
+export interface CommandMasteryState {
+  level: number;
+  usage: number;
+}
+
 export interface ProgressionFractionalBuffers {
   global: AttributeValues;
   classes: Record<string, AttributeValues>;
@@ -46,6 +51,7 @@ export interface PlayerProgressionState {
   classId: string;
   raceId: string;
   pendingAttributeChoices: number;
+  masteries?: Record<string, CommandMasteryState>;
 }
 
 export interface XpAwardResult {
@@ -74,6 +80,7 @@ export interface LayeredStatBreakdown {
   baseResources: ResourceBonusValues;
   effectiveAttributes: AttributeValues;
   buffers: ProgressionFractionalBuffers;
+  masteries: Record<string, CommandMasteryState>;
 }
 
 const ATTRIBUTE_KEYS: CoreAttributeKey[] = [
@@ -94,6 +101,31 @@ const GLOBAL_GROWTH_CYCLE: AttributeValues[] = [
   createAttributeValues({ strength: 1, intelligence: 1 }),
 ];
 
+export const ALL_COMMAND_IDS = [
+  "strike",
+  "guard",
+  "cast",
+  "focus",
+  "flee",
+  "use_item",
+  "study",
+  "rest",
+] as const;
+
+export function ensureCommandMasteries(
+  masteries?: Record<string, CommandMasteryState>,
+): Record<string, CommandMasteryState> {
+  const next = {} as Record<string, CommandMasteryState>;
+  for (const cmd of ALL_COMMAND_IDS) {
+    const existing = masteries?.[cmd];
+    next[cmd] = {
+      level: existing?.level ?? 0,
+      usage: existing?.usage ?? 0,
+    };
+  }
+  return next;
+}
+
 export function createInitialPlayerProgression(input: {
   classId?: string;
   raceId?: string;
@@ -113,6 +145,7 @@ export function createInitialPlayerProgression(input: {
     classId,
     raceId: input.raceId ?? DEFAULT_PLAYER_RACE_ID,
     pendingAttributeChoices: 0,
+    masteries: ensureCommandMasteries(),
   };
 }
 
@@ -139,6 +172,7 @@ export function clonePlayerProgressionState(
     classId: state.classId,
     raceId: state.raceId,
     pendingAttributeChoices: state.pendingAttributeChoices,
+    masteries: ensureCommandMasteries(state.masteries),
   };
 }
 
@@ -172,6 +206,7 @@ export function cloneLayeredStatBreakdown(
         ]),
       ),
     },
+    masteries: ensureCommandMasteries(breakdown.masteries),
   };
 }
 
@@ -234,6 +269,7 @@ export function deriveLayeredStats(input: {
         [progression.classId]: classLayer.buffers,
       },
     },
+    masteries: ensureCommandMasteries(progression.masteries),
   };
 }
 
@@ -391,6 +427,7 @@ function ensureProgressionRecords(
     0,
     Math.floor(next.pendingAttributeChoices ?? 0),
   );
+  next.masteries = ensureCommandMasteries(next.masteries);
   return next;
 }
 

@@ -343,3 +343,17 @@ export {
 } from "./quests/questRegistry";
 export type { QuestValidationContext } from "./quests/questRegistry";
 export type { QuestDef, QuestObjective, QuestRewards, QuestTriggers, QuestNpcOverride } from "./quests/QuestDef";
+export {
+  cloneCommandMasteryDef,
+  getAllCommandMasteryDefs,
+  getCommandMasteryDef,
+  hasCommandMasteryDef,
+  validateCommandMasteryDef,
+  validateCommandMasteryRegistry,
+} from "./mastery/commandMasteryRegistry";
+export type {
+  CommandMasteryDef,
+  CommandMasteryDefMap,
+  CommandMasteryEffects,
+} from "./mastery/CommandMasteryDef";
+

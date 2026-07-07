@@ -35,6 +35,10 @@ import {
   installRaceContentOverlay,
 } from "../races/raceRegistry";
 import {
+  clearCommandMasteryContentOverlay,
+  installCommandMasteryContentOverlay,
+} from "../mastery/commandMasteryRegistry";
+import {
   clearTileContentOverlay,
   installTileContentOverlay,
 } from "../TileRegistry";
@@ -65,6 +69,7 @@ export function installContentOverlay(
     installCombatActionContentOverlay(snapshot.combatActions);
     installClassContentOverlay(snapshot.classes);
     installRaceContentOverlay(snapshot.races);
+    installCommandMasteryContentOverlay(snapshot.commandMasteries ?? []);
     installQuestContentOverlay(snapshot.quests, context);
   } catch (error) {
     clearContentOverlay();
@@ -74,6 +79,7 @@ export function installContentOverlay(
 
 export function clearContentOverlay(): void {
   clearQuestContentOverlay();
+  clearCommandMasteryContentOverlay();
   clearRaceContentOverlay();
   clearClassContentOverlay();
   clearCombatActionContentOverlay();

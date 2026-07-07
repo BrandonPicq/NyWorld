@@ -1,0 +1,10 @@
+{
+  "commandId": "study",
+  "name": "Study",
+  "cap": 5,
+  "usageRequired": 4,
+  "effects": {
+    "xp": 2
+  },
+  "unlocks": []
+}

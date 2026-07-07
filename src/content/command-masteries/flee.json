@@ -1,0 +1,10 @@
+{
+  "commandId": "flee",
+  "name": "Flee",
+  "cap": 3,
+  "usageRequired": 5,
+  "effects": {
+    "successChance": 0.05
+  },
+  "unlocks": []
+}

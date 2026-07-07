@@ -10,7 +10,7 @@ import type { PlayerProgressionState } from "./stats/layeredStats";
  * Increment this when older save payloads can no longer be safely interpreted
  * by the loader without migration.
  */
-export const SAVE_VERSION = "0.9";
+export const SAVE_VERSION = "0.10";
 
 /**
  * Versioned payload written to persistent save slots.

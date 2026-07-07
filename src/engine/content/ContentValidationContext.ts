@@ -20,6 +20,7 @@ export interface ContentValidationContext {
   combatActionIds: ReadonlySet<string>;
   classIds: ReadonlySet<string>;
   raceIds: ReadonlySet<string>;
+  commandMasteryIds?: ReadonlySet<string>;
   /** Tile catalog as a map because zone checks need walkability, not just existence. */
   tileDefs: ReadonlyMap<TileId, TileDef>;
   zones: ReadonlyMap<string, GameMap>;

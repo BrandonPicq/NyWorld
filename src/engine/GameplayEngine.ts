@@ -73,11 +73,16 @@ import {
   deriveLayeredStats,
   normalizeProgressionBuffers,
   subtractAttributeValues,
+  ensureCommandMasteries,
   type CoreAttributeKey,
   type LayeredStatBreakdown,
   type PlayerProgressionState,
   type XpAwardResult,
 } from "./stats/layeredStats";
+import {
+  getCommandMasteryDef,
+  hasCommandMasteryDef,
+} from "./mastery/commandMasteryRegistry";
 import {
   CombatSystem,
   isCombatNpc,
@@ -308,6 +313,8 @@ export class GameplayEngine {
       awardXp: (amount, source) => this.awardPlayerXp(amount, source),
       recoverPlayerFromDefeat: () => this.recoverPlayerFromCombatDefeat(),
       random: options.random,
+      getCommandMasteryLevel: (cmd) => this.getCommandMasteryLevel(cmd),
+      incrementCommandUsage: (cmd) => this.incrementCommandUsage(cmd),
     });
 
     const playerId = this.world.createEntity();
@@ -933,7 +940,10 @@ export class GameplayEngine {
   }
 
   private restPlayer(): void {
-    const { energyRestore } = this.actionTuning.rest;
+    const restMastery = this.getCommandMasteryLevel("rest");
+    const baseEnergyRestore = this.actionTuning.rest.energyRestore;
+    const energyRestore = baseEnergyRestore + 2 * restMastery;
+
     const stats = this.getPlayerStats();
     stats.resources.energy = Math.min(
       stats.resources.maxEnergy,
@@ -942,6 +952,7 @@ export class GameplayEngine {
     this.tickCounter.advance();
     this.advanceWorldTime(WORLD_TIME_ACTION_COST.rest);
     this.addLog(`Rested and recovered ${energyRestore} energy.`);
+    this.incrementCommandUsage("rest");
   }
 
   private studyPlayer(): ExecuteResult {
@@ -1166,6 +1177,36 @@ export class GameplayEngine {
     }
 
     return totals;
+  }
+
+  getCommandMasteryLevel(commandId: string): number {
+    return this.playerProgression.masteries?.[commandId]?.level ?? 0;
+  }
+
+  incrementCommandUsage(commandId: string): void {
+    this.playerProgression.masteries = ensureCommandMasteries(this.playerProgression.masteries);
+    const state = this.playerProgression.masteries[commandId];
+    if (!state) return;
+
+    if (!hasCommandMasteryDef(commandId)) return;
+    const def = getCommandMasteryDef(commandId);
+
+    if (state.level >= def.cap) return;
+
+    state.usage += 1;
+    if (state.usage >= def.usageRequired) {
+      state.usage = 0;
+      state.level += 1;
+
+      const logMsg = `Your mastery of ${def.name} has increased to level ${state.level}!`;
+      this.addLog(logMsg);
+      this.notices.push({
+        title: "Command Mastery Up",
+        message: logMsg,
+      });
+    }
+
+    this.statLayers = this.rebuildStatLayers(this.basePlayerStats, this.getPlayerInventory());
   }
 
   getNpcState(npcId: string): NpcState | undefined {

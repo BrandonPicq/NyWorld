@@ -1,0 +1,11 @@
+{
+  "commandId": "cast",
+  "name": "Cast",
+  "cap": 5,
+  "usageRequired": 10,
+  "effects": {
+    "damageBoost": 0.03,
+    "mpCostReductionLevels": [3, 5]
+  },
+  "unlocks": []
+}

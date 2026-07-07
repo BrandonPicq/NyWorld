@@ -1,0 +1,10 @@
+{
+  "commandId": "guard",
+  "name": "Guard",
+  "cap": 5,
+  "usageRequired": 10,
+  "effects": {
+    "incomingDamageMultiplier": -0.02
+  },
+  "unlocks": []
+}

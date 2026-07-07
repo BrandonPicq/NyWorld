@@ -1,0 +1,10 @@
+{
+  "commandId": "strike",
+  "name": "Strike",
+  "cap": 5,
+  "usageRequired": 12,
+  "effects": {
+    "damageBoost": 0.03
+  },
+  "unlocks": []
+}

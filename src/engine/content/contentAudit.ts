@@ -8,6 +8,7 @@ import { validateNpcPresenceRegistry } from "../npcs/npcPresenceRegistry";
 import { validateQuestRegistry } from "../quests/questRegistry";
 import { validateRaceRegistry } from "../races/raceRegistry";
 import { validateTileCatalog } from "../TileRegistry";
+import { validateCommandMasteryRegistry } from "../mastery/commandMasteryRegistry";
 import type { NpcScheduleEntryData, ZoneData } from "../ZoneTypes";
 import { validateZoneData } from "../zoneLoader";
 import { validateGameConfig } from "./contentBundle";
@@ -51,6 +52,7 @@ export function validateAllContent(
     ...validateCombatActionRegistry(snapshot.combatActions),
     ...validateClassRegistry(snapshot.classes),
     ...validateRaceRegistry(snapshot.races),
+    ...validateCommandMasteryRegistry(snapshot.commandMasteries ?? []),
     ...validateKnownScheduleTargetPositions(snapshot, context),
   ];
 

@@ -1,0 +1,10 @@
+{
+  "commandId": "use_item",
+  "name": "Use Item",
+  "cap": 3,
+  "usageRequired": 8,
+  "effects": {
+    "itemEffectMultiplier": 0.05
+  },
+  "unlocks": []
+}

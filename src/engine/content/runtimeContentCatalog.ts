@@ -12,6 +12,7 @@ import { getAllNpcPresenceDefs } from "../npcs/npcPresenceRegistry";
 import { getAllQuestDefs } from "../quests/questRegistry";
 import { getAllRaceDefs } from "../races/raceRegistry";
 import { getAllTileDefs } from "../TileRegistry";
+import { getAllCommandMasteryDefs } from "../mastery/commandMasteryRegistry";
 import type { ContentBundle } from "./contentBundle";
 import {
   defaultContentBundle,
@@ -48,6 +49,7 @@ export function createRuntimeContentCatalogSnapshot(
     combatActions: getAllCombatActionDefs(),
     classes: getAllClassDefs(),
     races: getAllRaceDefs(),
+    commandMasteries: getAllCommandMasteryDefs(),
     dialogues: Object.fromEntries(
       getAllDialogueIds().map((dialogueId) => [
         dialogueId,

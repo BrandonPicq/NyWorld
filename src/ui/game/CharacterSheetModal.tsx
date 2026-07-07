@@ -1,5 +1,6 @@
 import {
   EQUIPPED_SLOT_IDS,
+  getCommandMasteryDef,
   type CoreAttributeKey,
   type EquippedSlot,
   type Inventory,
@@ -180,6 +181,22 @@ export function CharacterSheetModal({
               {Object.entries(stats.skills).map(([key, val]) => (
                 <StatsRow key={key} label={formatStatLabel(key)} value={val} />
               ))}
+            </div>
+          </div>
+
+          <div className="stats-modal__section stats-modal__section--mastery">
+            <h3 className="stats-modal__subtitle">Command Mastery</h3>
+            <div className="stats-modal__grid">
+              {Object.entries(statLayers.masteries).map(([cmdId, state]) => {
+                const def = getCommandMasteryDef(cmdId);
+                return (
+                  <StatsRow
+                    key={cmdId}
+                    label={def.name}
+                    value={`Lv. ${state.level} / ${def.cap} (Uses: ${state.usage} / ${state.level >= def.cap ? "-" : def.usageRequired})`}
+                  />
+                );
+              })}
             </div>
           </div>
 

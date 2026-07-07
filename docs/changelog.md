@@ -4,6 +4,15 @@ This file tracks meaningful project changes by commit-oriented slices.
 
 Keep entries short and practical. When a slice is committed, its changelog section should stay aligned with the commit title so the project history remains easy to read after restores or bisects.
 
+## 2026-07-07 - [ADD]: Command mastery
+
+- Add command mastery definition JSON content, registries, whole-bundle content audit, and validation context.
+- Persist command mastery levels and usages in save slots, and bump save version to 0.10.
+- Wire Rest command mastery bonuses to the gameplay engine.
+- Wire Strike, Guard, Cast, Focus, Flee, and Use Item command mastery bonuses to the combat engine.
+- Display command masteries and usage progress on the character sheet sheet.
+- Add unit and gameplay tests for command mastery.
+
 ## 2026-07-07 - [UPDATE]: Set tutorial XP awards to the ADR 0008 values
 
 - Give the slime, goblin, and kobold their approved xpReward values (25 / 40 / 80).

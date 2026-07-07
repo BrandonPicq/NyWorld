@@ -1,0 +1,10 @@
+{
+  "commandId": "rest",
+  "name": "Rest",
+  "cap": 3,
+  "usageRequired": 6,
+  "effects": {
+    "energyRestore": 2
+  },
+  "unlocks": []
+}

@@ -39,6 +39,8 @@ export interface CombatState {
   actionKind?: CombatActionKind;
   /** Menu label of the pending action, for the combat log and panel. */
   actionLabel?: string;
+  /** Original command ID. */
+  actionCommand?: CombatActionCommand;
   /** True while Guard reduces the next incoming enemy attack. */
   isGuarding?: boolean;
   /** Focus multiplier applied to the next damaging player action. */
@@ -81,6 +83,8 @@ export interface CombatSystemContext {
   recordNpcDefeat: (npcId: string) => void;
   awardXp: (amount: number, source: string) => void;
   recoverPlayerFromDefeat: () => void;
+  getCommandMasteryLevel: (commandId: string) => number;
+  incrementCommandUsage: (commandId: string) => void;
   random?: () => number;
 }
 
@@ -213,12 +217,15 @@ export class CombatSystem {
       this.context.addLog(
         `You guard and brace for the next attack${formatSpGain(spGained)}.`,
       );
+      this.context.incrementCommandUsage("guard");
       return { success: true };
     }
 
     if (actionKind === "focus") {
       const spGained = gainSp(playerStats, ACTION_TUNING.focusSpGain);
-      this.state.damageBoostMultiplier = ACTION_TUNING.focusDamageMultiplier;
+      const focusMastery = this.context.getCommandMasteryLevel("focus");
+      const multiplier = (getCombatActionDef("focus").tuning?.damageBoostMultiplier ?? 1.5) + 0.05 * focusMastery;
+      this.state.damageBoostMultiplier = multiplier;
       this.state.phase = "opponent_turn_transition";
       this.state.actionKind = undefined;
       this.state.actionLabel = undefined;
@@ -227,12 +234,18 @@ export class CombatSystem {
       this.context.addLog(
         `You focus your next attack${formatSpGain(spGained)}.`,
       );
+      this.context.incrementCommandUsage("focus");
       return { success: true };
     }
 
+    const castMastery = this.context.getCommandMasteryLevel("cast");
+    let currentCastMpCost = getCombatActionDef("cast").tuning?.mpCost ?? 10;
+    if (castMastery >= 3) currentCastMpCost -= 1;
+    if (castMastery >= 5) currentCastMpCost -= 1;
+
     if (
       actionKind === "cast" &&
-      playerStats.resources.mp < ACTION_TUNING.castMpCost
+      playerStats.resources.mp < currentCastMpCost
     ) {
       this.context.addLog("Not enough MP to cast.");
       return { success: false };
@@ -243,13 +256,14 @@ export class CombatSystem {
     } else {
       playerStats.resources.mp = Math.max(
         0,
-        playerStats.resources.mp - ACTION_TUNING.castMpCost,
+        playerStats.resources.mp - currentCastMpCost,
       );
     }
 
     const qteActionKind = getQteActionKind(actionKind);
     this.state.actionKind = qteActionKind;
     this.state.actionLabel = getCombatActionLabel(actionKind);
+    this.state.actionCommand = actionKind;
     this.state.phase = "player_qte";
 
     const challenge = createQteChallenge({
@@ -276,7 +290,7 @@ export class CombatSystem {
       return { success: false };
     }
 
-    const fleeChance = Math.max(
+    const baseFleeChance = Math.max(
       0.1,
       Math.min(
         0.9,
@@ -286,9 +300,12 @@ export class CombatSystem {
             0.05,
       ),
     );
+    const fleeMastery = this.context.getCommandMasteryLevel("flee");
+    const fleeChance = baseFleeChance + 0.05 * fleeMastery;
     const success = this.random() < fleeChance;
     if (success) {
       this.context.addLog("You successfully fled from the combat!");
+      this.context.incrementCommandUsage("flee");
       this.state = undefined;
       return { success: true };
     }
@@ -344,9 +361,13 @@ export class CombatSystem {
       };
     }
 
+    const itemMastery = this.context.getCommandMasteryLevel("use_item");
+    const multiplier = 1 + 0.05 * itemMastery;
+    const finalHpRestored = Math.floor(hpRestored * multiplier);
+
     const nextHp = Math.min(
       playerStats.resources.maxHp,
-      playerStats.resources.hp + hpRestored,
+      playerStats.resources.hp + finalHpRestored,
     );
     const actualHpRestored = nextHp - playerStats.resources.hp;
     playerStats.resources.hp = nextHp;
@@ -363,6 +384,7 @@ export class CombatSystem {
     this.state.qteChallenge = undefined;
     this.state.qteSequence = undefined;
     this.context.addLog(`Used ${itemDef.name}. Recovered ${actualHpRestored} HP.`);
+    this.context.incrementCommandUsage("use_item");
 
     return {
       success: true,
@@ -425,6 +447,14 @@ export class CombatSystem {
       if (mistakes === 1) {
         finalDamage = Math.floor(finalDamage * 0.8);
       }
+
+      const cmd = this.state.actionCommand;
+      if (cmd === "strike" || cmd === "cast") {
+        const mastery = this.context.getCommandMasteryLevel(cmd);
+        if (mastery > 0) {
+          finalDamage = Math.floor(finalDamage * (1 + 0.03 * mastery));
+        }
+      }
     }
 
     if (damageBoostMultiplier !== undefined && finalDamage > 0) {
@@ -450,6 +480,11 @@ export class CombatSystem {
       this.state.phase = "opponent_turn_transition";
       this.state.qteChallenge = undefined;
       this.state.qteSequence = undefined;
+    }
+
+    const finalCmd = this.state.actionCommand;
+    if (finalCmd === "strike" || finalCmd === "cast") {
+      this.context.incrementCommandUsage(finalCmd);
     }
 
     return { success: true };
@@ -499,11 +534,13 @@ export class CombatSystem {
 
     finalDamage = applyDamageVariance(finalDamage, () => this.random());
     if (wasGuarding) {
+      const guardMastery = this.context.getCommandMasteryLevel("guard");
+      const multiplier = (getCombatActionDef("guard").tuning?.incomingDamageMultiplier ?? 0.5) - 0.02 * guardMastery;
       finalDamage =
         finalDamage > 0
           ? Math.max(
               1,
-              Math.floor(finalDamage * ACTION_TUNING.guardDamageMultiplier),
+              Math.floor(finalDamage * multiplier),
             )
           : 0;
       this.state.isGuarding = false;

@@ -17,6 +17,7 @@ export const CONTENT_TYPES = {
   combatAction: "combat-action",
   class: "class",
   race: "race",
+  commandMastery: "command-mastery",
   game: "game",
 } as const;
 

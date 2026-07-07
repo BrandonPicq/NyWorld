@@ -7,6 +7,7 @@ import { getAllNpcDefs } from "../npcs/npcRegistry";
 import { getAllQuestDefs } from "../quests/questRegistry";
 import { getAllRaceIds } from "../races/raceRegistry";
 import { getAllTileDefs } from "../TileRegistry";
+import { getAllCommandMasteryDefs } from "../mastery/commandMasteryRegistry";
 import type { ContentBundle } from "./contentBundle";
 import {
   defaultContentBundle,
@@ -39,6 +40,9 @@ export function createRuntimeContentValidationContext(
     ),
     classIds: new Set(getAllClassIds()),
     raceIds: new Set(getAllRaceIds()),
+    commandMasteryIds: new Set(
+      getAllCommandMasteryDefs().map((cmd) => cmd.commandId),
+    ),
     tileDefs: getAllTileDefs(),
     zones: resolveAllZonesFromBundle(bundle),
   };
