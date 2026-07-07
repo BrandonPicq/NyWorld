@@ -50,6 +50,11 @@ type GameScreenProps = {
   contentBundle?: ContentBundle;
   initialSaveData?: GameSaveData;
   isPlaytest?: boolean;
+  playtestStart?: {
+    zoneId: string;
+    x: number;
+    y: number;
+  };
   onBackToEditor?: () => void;
   onBackToTitle: () => void;
   onLoadError?: (message: string) => void;
@@ -66,6 +71,7 @@ export function GameScreen({
   contentBundle = defaultContentBundle,
   initialSaveData,
   isPlaytest = false,
+  playtestStart,
   onBackToEditor,
   onBackToTitle,
   onLoadError,
@@ -112,6 +118,7 @@ export function GameScreen({
     audioSettings,
     contentBundle,
     initialSaveData: isPlaytest ? undefined : initialSaveData,
+    newGameStart: isPlaytest ? playtestStart : undefined,
     onDialogue: (nodes, id) => triggerDialogue(nodes, id),
     onEffect: handleEngineEffect,
     onLoadError,

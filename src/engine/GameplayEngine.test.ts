@@ -131,6 +131,17 @@ describe("GameplayEngine", () => {
     ]);
   });
 
+  it("starts a fresh game from an injected player position", () => {
+    const engine = new GameplayEngine(loadZone(zoneData), {
+      initialPlayerPosition: { x: 2, y: 2 },
+    });
+
+    const snapshot = engine.getSnapshot();
+
+    expect(snapshot.playerX).toBe(2);
+    expect(snapshot.playerY).toBe(2);
+  });
+
   it("applies injected action tuning to rest and study", () => {
     const engine = new GameplayEngine(loadZone(zoneData), {
       actions: {

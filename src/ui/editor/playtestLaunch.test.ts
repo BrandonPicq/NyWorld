@@ -29,13 +29,19 @@ describe("prepareEditorPlaytest", () => {
       createRuntimeContentValidationContext(),
     );
 
-    const result = prepareEditorPlaytest(combined);
+    const result = prepareEditorPlaytest(combined, {
+      selectedZoneId: snapshot.game.defaultZoneId,
+    });
 
     expect(result.ok).toBe(true);
     if (!result.ok) return;
     expect(result.contentBundle.game.defaultZoneId).toBe(
       snapshot.game.defaultZoneId,
     );
+    expect(result.start).toEqual({
+      zoneId: snapshot.game.defaultZoneId,
+      ...snapshot.zones[snapshot.game.defaultZoneId].playerStart,
+    });
     expect(getItemDef(itemId).name).toBe("Draft Item Name");
   });
 
@@ -53,7 +59,9 @@ describe("prepareEditorPlaytest", () => {
       createRuntimeContentValidationContext(),
     );
 
-    const result = prepareEditorPlaytest(combined);
+    const result = prepareEditorPlaytest(combined, {
+      selectedZoneId: "missing_zone",
+    });
 
     expect(result.ok).toBe(false);
     if (result.ok) return;

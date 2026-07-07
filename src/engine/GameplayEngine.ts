@@ -196,6 +196,10 @@ type ZoneResolver = (zoneId: string) => GameMap | undefined;
 
 type GameplayEngineOptions = {
   resolveZone?: ZoneResolver;
+  initialPlayerPosition?: {
+    x: number;
+    y: number;
+  };
   /**
    * Optional authored recovery point. When omitted, the engine falls back to the
    * initial map's playerStart so tests and isolated engine instances remain
@@ -279,10 +283,13 @@ export class GameplayEngine {
 
     const playerId = this.world.createEntity();
 
+    const initialPlayerPosition =
+      options.initialPlayerPosition ?? map.playerStart;
+
     const position = {
       type: "Position" as const,
-      x: map.playerStart.x,
-      y: map.playerStart.y,
+      x: initialPlayerPosition.x,
+      y: initialPlayerPosition.y,
     };
     this.world.addComponent(playerId, position);
 

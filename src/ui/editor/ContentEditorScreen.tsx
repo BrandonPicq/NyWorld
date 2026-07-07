@@ -19,10 +19,14 @@ import { prepareEditorPlaytest } from "./playtestLaunch";
 import { QuestTab } from "./quests/QuestTab";
 import { useEditorDrafts } from "./useEditorDrafts";
 import { ZoneEditorPanel } from "./zone/ZoneEditorPanel";
+import type { EditorPlaytestStart } from "./playtestStart";
 
 type ContentEditorScreenProps = {
   onBack: () => void;
-  onStartPlaytest?: (contentBundle: ContentBundle) => void;
+  onStartPlaytest?: (
+    contentBundle: ContentBundle,
+    start: EditorPlaytestStart,
+  ) => void;
 };
 
 type EditorTab =
@@ -83,14 +87,17 @@ export function ContentEditorScreen({
   function handleStartPlaytest(): void {
     if (!onStartPlaytest) return;
 
-    const result = prepareEditorPlaytest(drafts.combined);
+    const result = prepareEditorPlaytest(drafts.combined, {
+      selectedZoneId: drafts.zone.selectedZoneId,
+      pinnedInspectCell: drafts.zone.pinnedInspectCell,
+    });
     if (!result.ok) {
       setPlaytestError(result.message);
       return;
     }
 
     setPlaytestError(null);
-    onStartPlaytest(result.contentBundle);
+    onStartPlaytest(result.contentBundle, result.start);
   }
 
   function navigateToContent(target: EditorContentNavigationTarget): void {

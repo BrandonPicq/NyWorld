@@ -9,6 +9,7 @@ import {
   playMenuMoveSound,
 } from "../ui/audio/menuAudio";
 import { ContentEditorScreen } from "../ui/editor/ContentEditorScreen";
+import type { EditorPlaytestStart } from "../ui/editor/playtestStart";
 import { GameScreen } from "../ui/screens/GameScreen";
 import { OptionsScreen } from "../ui/screens/OptionsScreen";
 import { TitleScreen } from "../ui/screens/TitleScreen";
@@ -55,6 +56,8 @@ function App() {
   );
   const [playtestContentBundle, setPlaytestContentBundle] =
     useState<ContentBundle | null>(null);
+  const [playtestStart, setPlaytestStart] =
+    useState<EditorPlaytestStart | null>(null);
   const [titleNotice, setTitleNotice] = useState<string | null>(null);
   const [activeTheme, setActiveTheme] = useState<ThemeId>(() =>
     readStoredThemeId(),
@@ -118,6 +121,7 @@ function App() {
   const handleStartNewGame = () => {
     clearContentOverlay();
     setPlaytestContentBundle(null);
+    setPlaytestStart(null);
     setLoadedSaveData(null);
     setTitleNotice(null);
     setIsGameActive(true);
@@ -127,6 +131,7 @@ function App() {
   const handleLoadSlot = (slotIndex: number) => {
     clearContentOverlay();
     setPlaytestContentBundle(null);
+    setPlaytestStart(null);
     const save = readSlot(slotIndex);
     if (!save) return;
     setTitleNotice(null);
@@ -138,6 +143,7 @@ function App() {
   const handleBackToTitle = () => {
     clearContentOverlay();
     setPlaytestContentBundle(null);
+    setPlaytestStart(null);
     setLoadedSaveData(null);
     setIsGameActive(false);
     setScreen("title");
@@ -148,6 +154,7 @@ function App() {
     if (isPlaytestActive) {
       clearContentOverlay();
       setPlaytestContentBundle(null);
+      setPlaytestStart(null);
       setLoadedSaveData(null);
       setIsGameActive(false);
       setScreen("editor");
@@ -161,10 +168,14 @@ function App() {
     setTitleNotice(message);
   };
 
-  const handleStartEditorPlaytest = (contentBundle: ContentBundle) => {
+  const handleStartEditorPlaytest = (
+    contentBundle: ContentBundle,
+    start: EditorPlaytestStart,
+  ) => {
     setLoadedSaveData(null);
     setTitleNotice(null);
     setPlaytestContentBundle(contentBundle);
+    setPlaytestStart(start);
     setIsGameActive(true);
     setScreen("game");
   };
@@ -172,6 +183,7 @@ function App() {
   const handleBackToEditor = () => {
     clearContentOverlay();
     setPlaytestContentBundle(null);
+    setPlaytestStart(null);
     setLoadedSaveData(null);
     setIsGameActive(false);
     setScreen("editor");
@@ -188,6 +200,7 @@ function App() {
             initialSaveData={loadedSaveData ?? undefined}
             isPlaytest={isPlaytestActive}
             keyboardLayout={keyboardLayout}
+            playtestStart={playtestStart ?? undefined}
             textSpeed={textSpeed}
             onBackToEditor={handleBackToEditor}
             onBackToTitle={handleBackToTitle}

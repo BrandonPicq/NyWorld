@@ -12,6 +12,7 @@ import {
   type NpcPresenceDef,
   type QuestDef,
 } from "../../engine";
+import type { GridCell } from "../../rendering/canvasCellMapping";
 import {
   createCombinedDraftSnapshot,
   createCombinedDraftValidationContext,
@@ -167,6 +168,9 @@ export function useEditorDrafts(base: ContentCatalogSnapshot): EditorDrafts {
   const [selectedZoneId, setSelectedZoneId] = useState(
     () => Object.keys(base.zones).sort((a, b) => a.localeCompare(b))[0] ?? "",
   );
+  const [pinnedInspectCell, setPinnedInspectCell] = useState<GridCell | null>(
+    null,
+  );
 
   const contents = useMemo<EditorDraftContents>(
     () => ({
@@ -293,6 +297,8 @@ export function useEditorDrafts(base: ContentCatalogSnapshot): EditorDrafts {
     {
       selectedZoneId,
       setSelectedZoneId,
+      pinnedInspectCell,
+      setPinnedInspectCell,
       histories: { value: zoneHistories, set: setZoneHistories },
       savedJson: { value: savedZoneJson, set: setSavedZoneJson },
     },

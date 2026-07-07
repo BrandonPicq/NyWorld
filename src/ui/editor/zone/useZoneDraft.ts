@@ -4,6 +4,7 @@ import type {
   ContentDiagnostic,
   ZoneData,
 } from "../../../engine";
+import type { GridCell } from "../../../rendering/canvasCellMapping";
 import type { GridRenderSnapshot } from "../../../rendering/renderSnapshot";
 import { createZoneEditRenderSnapshot } from "../../../rendering/zoneEditRenderSnapshot";
 import { saveEditorContent } from "../editorSaveClient";
@@ -27,6 +28,8 @@ export interface ZoneHistory {
 export interface ZoneDraftSlot {
   selectedZoneId: string;
   setSelectedZoneId: (zoneId: string) => void;
+  pinnedInspectCell: GridCell | null;
+  setPinnedInspectCell: (cell: GridCell | null) => void;
   histories: DraftSlot<Record<string, ZoneHistory>>;
   savedJson: DraftSlot<Record<string, string>>;
 }
@@ -46,6 +49,8 @@ export interface ZoneDraftController {
   zones: EditorZoneListEntry[];
   selectedZoneId: string;
   selectZone: (zoneId: string) => void;
+  pinnedInspectCell: GridCell | null;
+  setPinnedInspectCell: (cell: GridCell | null) => void;
   draft: ZoneData | null;
   renderSnapshot: GridRenderSnapshot | null;
   diagnostics: ContentDiagnostic[];
@@ -68,7 +73,12 @@ export function useZoneDraft(
   slot: ZoneDraftSlot,
   combined: CombinedDraftView,
 ): ZoneDraftController {
-  const { selectedZoneId, setSelectedZoneId } = slot;
+  const {
+    selectedZoneId,
+    setSelectedZoneId,
+    pinnedInspectCell,
+    setPinnedInspectCell,
+  } = slot;
   const histories = slot.histories.value;
   const setHistories = slot.histories.set;
   const savedJsonMap = slot.savedJson.value;
@@ -247,6 +257,8 @@ export function useZoneDraft(
     zones,
     selectedZoneId,
     selectZone: setSelectedZoneId,
+    pinnedInspectCell,
+    setPinnedInspectCell,
     draft,
     renderSnapshot,
     diagnostics: combined.diagnostics,

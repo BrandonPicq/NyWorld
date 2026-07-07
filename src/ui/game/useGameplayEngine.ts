@@ -26,6 +26,11 @@ type UseGameplayEngineInput = {
    */
   contentBundle: ContentBundle;
   initialSaveData?: GameSaveData;
+  newGameStart?: {
+    zoneId: string;
+    x: number;
+    y: number;
+  };
   onDialogue: (nodes: DialogueNode[], dialogueId?: string) => void;
   onEffect?: (effect: EngineEffect) => void;
   onLoadError?: (message: string) => void;
@@ -43,6 +48,7 @@ export function useGameplayEngine({
   audioSettings,
   contentBundle,
   initialSaveData,
+  newGameStart,
   onDialogue,
   onEffect,
   onLoadError,
@@ -76,11 +82,14 @@ export function useGameplayEngine({
             safeRespawn,
             actions,
           })
-        : new GameplayEngine(loadZone(getDefaultZoneData(contentBundle)), {
+        : new GameplayEngine(resolveNewGameMap(contentBundle, newGameStart), {
             resolveZone,
             safeRespawn,
             newGame,
             actions,
+            initialPlayerPosition: newGameStart
+              ? { x: newGameStart.x, y: newGameStart.y }
+              : undefined,
           });
 
       engineRef.current = engine;
@@ -99,7 +108,7 @@ export function useGameplayEngine({
     return () => {
       engineRef.current = null;
     };
-  }, [contentBundle]);
+  }, [contentBundle, newGameStart?.zoneId, newGameStart?.x, newGameStart?.y]);
 
   const executeCommand = useCallback(
     (command: GameCommand) => {
@@ -130,6 +139,29 @@ export function useGameplayEngine({
     executeCommand,
     snapshot,
   };
+}
+
+function resolveNewGameMap(
+  contentBundle: ContentBundle,
+  newGameStart:
+    | {
+        zoneId: string;
+        x: number;
+        y: number;
+      }
+    | undefined,
+) {
+  if (!newGameStart) {
+    return loadZone(getDefaultZoneData(contentBundle));
+  }
+
+  const map = resolveZoneFromBundle(contentBundle, newGameStart.zoneId);
+  if (!map) {
+    throw new Error(
+      `Content bundle zone "${newGameStart.zoneId}" is not available.`,
+    );
+  }
+  return map;
 }
 
 function playEffect(

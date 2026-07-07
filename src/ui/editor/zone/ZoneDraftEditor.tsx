@@ -56,11 +56,12 @@ export function ZoneDraftEditor({
     redo,
     resetDraft,
     saveDraft,
+    pinnedInspectCell,
+    setPinnedInspectCell,
   } = controller;
   const placement = usePlacementSelection(snapshot);
 
   const [hoveredCell, setHoveredCell] = useState<GridCell | null>(null);
-  const [pinnedCell, setPinnedCell] = useState<GridCell | null>(null);
   const [coordinatePicker, setCoordinatePicker] =
     useState<CoordinatePickerRequest | null>(null);
   const [isSchedulePreviewEnabled, setSchedulePreviewEnabled] =
@@ -69,8 +70,8 @@ export function ZoneDraftEditor({
 
   useEffect(() => {
     setHoveredCell(null);
-    setPinnedCell(null);
-  }, [draft?.zoneId, placement.mode]);
+    setPinnedInspectCell(null);
+  }, [draft?.zoneId, placement.mode, setPinnedInspectCell]);
 
   if (!draft || !renderSnapshot) {
     return null;
@@ -84,20 +85,20 @@ export function ZoneDraftEditor({
       })
     : renderSnapshot;
 
-  const activeReadoutCell = hoveredCell || pinnedCell;
+  const activeReadoutCell = hoveredCell || pinnedInspectCell;
   const cellDescription = activeReadoutCell ? describeZoneCell(draft, activeReadoutCell) : null;
 
   // In inspect mode, the pinned cell selects the placement sitting there so the
   // inspector can focus and delete it. Preview mode stays inspect-only readout.
   const selectedPlacement =
-    !isSchedulePreviewEnabled && placement.mode === "inspect" && pinnedCell
-      ? findPlacementAt(draft, pinnedCell)
+    !isSchedulePreviewEnabled && placement.mode === "inspect" && pinnedInspectCell
+      ? findPlacementAt(draft, pinnedInspectCell)
       : null;
 
   function handleCell(cell: GridCell, kind: "down" | "move"): void {
     if (isSchedulePreviewEnabled || placement.mode === "inspect") {
       if (kind === "down") {
-        setPinnedCell(cell);
+        setPinnedInspectCell(cell);
       }
       return;
     }

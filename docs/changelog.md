@@ -4,6 +4,12 @@ This file tracks meaningful project changes by commit-oriented slices.
 
 Keep entries short and practical. When a slice is committed, its changelog section should stay aligned with the commit title so the project history remains easy to read after restores or bisects.
 
+## 2026-07-07 - [ADD]: Start the playtest where the author is looking
+
+- Resolve editor playtests to the selected zone instead of always using the configured new-game zone.
+- Start at the pinned inspect cell when it is walkable, otherwise falling back to that zone's player start.
+- Carry the resolved start into fresh playtest sessions without changing normal new-game or save loading behavior.
+
 ## 2026-07-07 - [ADD]: Launch a playtest session from the editor
 
 - Add dev-only content overlays for registry-backed content so playtest sessions can read the current editor draft without writing content files.
