@@ -4,6 +4,12 @@ This file tracks meaningful project changes by commit-oriented slices.
 
 Keep entries short and practical. When a slice is committed, its changelog section should stay aligned with the commit title so the project history remains easy to read after restores or bisects.
 
+## 2026-07-07 - [DOCS]: Revise the progression ADR to the layered model
+
+- Replace the unaccepted progression ADR proposal with the settled layered model.
+- Propose numeric defaults for global and class XP curves, race multipliers, fractional buffers, command mastery, gated Study, equipment permissions, equipment tiers, and XP awards.
+- Align combat-balance notes with frozen CharacterSkills, command mastery, dual-track XP, race multipliers, and class-gated equipment.
+
 ## 2026-07-07 - [DOCS]: Propose the progression and equipment numbers
 
 - Record the settled RPG foundations model in ADR 0008 without reopening the design decisions.

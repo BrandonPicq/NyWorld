@@ -21,8 +21,9 @@ checking QTE combat changes. These are design targets, not final formulas.
   become a hard wall at equal stats.
 - Agility controls physical QTE pressure.
 - Spirit controls magical QTE pressure.
-- Skills and equipment should feed derived combat values instead of making
-  content files or React components calculate combat math directly.
+- Frozen CharacterSkills, layered growth, command mastery, and equipment should
+  feed derived combat values instead of making content files or React
+  components calculate combat math directly.
 
 ## QTE Profiles
 
@@ -73,24 +74,33 @@ to a valid integer damage value.
 ## Progression and Equipment Draft Targets
 
 The first RPG-foundation pass should keep early combat balanced around the
-current QTE ladder while making level, skill, and equipment growth visible.
+current QTE ladder while making layered level, class, race, command mastery,
+and equipment growth visible.
 
 - XP to the next level should start at 100 XP for level 1 and grow with
   `100 + (level - 1) * 50 + (level - 1)^2 * 10`.
+- Class XP should use the same curve shape at about 80% of the global curve:
+  `80 + (level - 1) * 40 + (level - 1)^2 * 8`.
+- Every XP award should feed both the global level and the active class record.
 - Slime + its tutorial quest should total about 100 XP, enough to reach level 2.
 - Early enemy XP targets: Slime 25, Goblin 40, Kobold 80.
 - Early quest XP targets: small exploration or tutorial quests 60 to 90 XP,
   multi-step quests 120 to 180 XP, chapter-scale quests 250 to 350 XP.
-- Study should grant about 10 XP and Rest about 2 XP; Rest XP is intentionally
-  tiny so resting does not replace goals.
-- Automatic level growth should add about 3 base attribute points per level,
-  distributed across different attributes rather than stacked into one combat
-  stat.
+- Study should require a study spot, take about 120 minutes, grant about 10 XP,
+  and keep the existing academic progress and scholarship behavior.
+- Rest should grant about 2 XP; Rest XP is intentionally tiny so resting does
+  not replace goals.
+- Global level growth should add about 2 generic attribute points per level.
+- The starting `otherworlder` class should add 1 focused attribute point most
+  class levels, with a slightly stronger 2-point cycle beat every fourth class
+  level.
+- Race multipliers should stay gentle, around 0.95 to 1.20, and should use
+  fractional buffers so small advantages become visible over several levels.
 - Attribute-choice milestones should happen every 3 levels and grant +1 to one
-  chosen base attribute.
-- Skill-by-use thresholds should stay in the 8 to 10 use range for combat
-  skills, 40 movement steps for Athletics, 4 Study actions for Scholarship, and
-  6 significant social interactions for Speech.
+  chosen base attribute; this choice should not be multiplied by race.
+- CharacterSkills are frozen for this milestone. Command mastery should improve
+  command tuning only, with caps around 3 to 5 levels per command.
+- Flee mastery should count successful flees only.
 - Equipment bonuses are flat effective-stat bonuses. Early starter equipment
   should stay in tier 0 ranges: weapons +1 to +2, armor or off-hand +1 to +2,
   accessories +1 attribute or +5 max resource.
@@ -98,3 +108,5 @@ current QTE ladder while making level, skill, and equipment growth visible.
   to +3, and accessories +1 to +2 attributes or +10 max resource.
 - Equipment may raise max HP, MP, SP, or Energy, but should not directly grant
   current HP, MP, SP, or Energy.
+- The starting `otherworlder` class should allow all four weapon archetypes:
+  sword, hammer, bow, and staff.
