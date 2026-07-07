@@ -4,6 +4,12 @@ This file tracks meaningful project changes by commit-oriented slices.
 
 Keep entries short and practical. When a slice is committed, its changelog section should stay aligned with the commit title so the project history remains easy to read after restores or bisects.
 
+## 2026-07-07 - [REFACTOR]: Split the character sheet into tabs
+
+- Refactor CharacterSheetModal.tsx to serve as a tabbed navigation panel.
+- Split character sheet sections into five distinct React components under src/ui/game/sheet/: OverviewTab, AttributesTab, EquipmentTab, MasteryTab, and AcademyTab.
+- Keep Esc and C closing/opening shortcut handlers functioning identically.
+
 ## 2026-07-07 - [UPDATE]: Split the inventory into category tabs
 
 - Add horizontal category tabs (All, Quest, Consumable, Material, Equipment, Misc) to the inventory modal.
