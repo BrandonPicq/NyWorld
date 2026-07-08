@@ -4,6 +4,12 @@ This file tracks meaningful project changes by commit-oriented slices.
 
 Keep entries short and practical. When a slice is committed, its changelog section should stay aligned with the commit title so the project history remains easy to read after restores or bisects.
 
+## 2026-07-08 - [DOCS]: Add the combat minigame and QTE pattern ADR
+
+- Add ADR 0009 (`docs/adr/0009-minigames-arme-et-patterns-qte.md`), designed with the user and accepted 2026-07-08: per-weapon-archetype minigames (sword/staff sequence, hammer single-arrow mash, bow timing volley) all normalizing to the existing QTE contest resolution.
+- Settle weapon masteries per archetype with a soft recommended level modulating each minigame, MP as the cost of all techniques (SP reserved for future ultimates), and learned QTE patterns: hidden execution with reset-on-mistake, acquired through single-use tomes and usage+level evolution, persisted in saves.
+- Defer NPC pattern teaching to the relations chapter, SP ultimates, the Mana/Energy merge, and per-enemy attack profiles.
+
 ## 2026-07-08 - [REFACTOR]: Share the engine equippability predicate
 
 - Add `canEquipInSlot` in `engine/items/equipmentRules.ts`: one pure predicate combining slot match (with the accessory1/accessory2 → accessory aliasing) and class equipment permissions, exported from the engine barrel.
