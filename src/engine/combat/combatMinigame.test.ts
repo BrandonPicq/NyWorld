@@ -4,8 +4,13 @@ import { getItemDef } from "../items/itemRegistry";
 import {
   classifyTimingPress,
   computeMashTargetPresses,
+  computeMasteryDelta,
   computeTimingWindows,
   mapTimingVolley,
+  modulateMashTarget,
+  modulateSequenceLength,
+  modulateSequenceTimeLimit,
+  modulateTimingSweep,
   resolveWeaponMinigameType,
 } from "./combatMinigame";
 
@@ -90,6 +95,45 @@ describe("computeMashTargetPresses", () => {
   it("clamps to the 6..20 range", () => {
     expect(computeMashTargetPresses(100)).toBe(6);
     expect(computeMashTargetPresses(-100)).toBe(20);
+  });
+});
+
+describe("weapon mastery modulation", () => {
+  it("clamps the mastery delta to -3..+3", () => {
+    expect(computeMasteryDelta(5, 5)).toBe(0);
+    expect(computeMasteryDelta(7, 5)).toBe(2);
+    expect(computeMasteryDelta(2, 5)).toBe(-3);
+    expect(computeMasteryDelta(20, 0)).toBe(3);
+  });
+
+  it("shifts the sequence time limit by 300 ms per point", () => {
+    expect(modulateSequenceTimeLimit(5000, 0)).toBe(5000);
+    expect(modulateSequenceTimeLimit(5000, 3)).toBe(5900);
+    expect(modulateSequenceTimeLimit(5000, -2)).toBe(4400);
+  });
+
+  it("changes the sequence length only at |delta| >= 2", () => {
+    expect(modulateSequenceLength(5, 1)).toBe(5);
+    expect(modulateSequenceLength(5, -1)).toBe(5);
+    expect(modulateSequenceLength(5, 2)).toBe(4);
+    expect(modulateSequenceLength(5, -2)).toBe(6);
+    expect(modulateSequenceLength(1, 3)).toBe(1);
+  });
+
+  it("eases the mash target by one press per point, floored at 4", () => {
+    expect(modulateMashTarget(10, 0)).toBe(10);
+    expect(modulateMashTarget(10, 3)).toBe(7);
+    expect(modulateMashTarget(10, -2)).toBe(12);
+    expect(modulateMashTarget(5, 3)).toBe(4);
+  });
+
+  it("scales the timing sweep by 10 % per point, clamped to +/-30 %", () => {
+    expect(modulateTimingSweep(1200, 0)).toBe(1200);
+    expect(modulateTimingSweep(1200, 2)).toBeCloseTo(1440, 6);
+    expect(modulateTimingSweep(1200, -1)).toBeCloseTo(1080, 6);
+    // +5 points would be +50 %, clamped to +30 %
+    expect(modulateTimingSweep(1200, 5)).toBeCloseTo(1560, 6);
+    expect(modulateTimingSweep(1200, -5)).toBeCloseTo(840, 6);
   });
 });
 

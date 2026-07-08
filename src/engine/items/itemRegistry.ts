@@ -286,6 +286,28 @@ function validateItemEquipment(
     }
   }
 
+  if (value.recommendedMasteryLevel !== undefined) {
+    if (value.slot !== "weapon") {
+      addItemError(
+        diagnostics,
+        itemId,
+        "equipment.recommendedMasteryLevel",
+        `Item "${itemId}" declares a recommendedMasteryLevel but is not in the weapon slot.`,
+      );
+    } else if (
+      typeof value.recommendedMasteryLevel !== "number" ||
+      !Number.isInteger(value.recommendedMasteryLevel) ||
+      value.recommendedMasteryLevel < 0
+    ) {
+      addItemError(
+        diagnostics,
+        itemId,
+        "equipment.recommendedMasteryLevel",
+        `Item "${itemId}" has invalid recommendedMasteryLevel. Expected a non-negative integer.`,
+      );
+    }
+  }
+
   validateEquipmentBonuses(itemId, value.bonuses, diagnostics);
 }
 

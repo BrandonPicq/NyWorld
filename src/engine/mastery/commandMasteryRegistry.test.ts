@@ -27,6 +27,19 @@ describe("Command Mastery Registry", () => {
     }
   });
 
+  it("defines a mastery per weapon archetype at cap 10 / usage 8", () => {
+    for (const weaponType of ["sword", "hammer", "bow", "staff"]) {
+      const commandId = `weapon_${weaponType}`;
+      expect(hasCommandMasteryDef(commandId)).toBe(true);
+      const def = getCommandMasteryDef(commandId);
+      expect(def.commandId).toBe(commandId);
+      expect(def.cap).toBe(10);
+      expect(def.usageRequired).toBe(8);
+      expect(def.effects).toEqual({});
+      expect(def.unlocks).toEqual([]);
+    }
+  });
+
   it("returns fallback for unknown commands", () => {
     expect(hasCommandMasteryDef("non_existent")).toBe(false);
     const fallback = getCommandMasteryDef("non_existent");

@@ -16,7 +16,12 @@ import {
 import {
   cloneCombatMinigameSpec,
   computeMashTargetPresses,
+  computeMasteryDelta,
   computeTimingWindows,
+  modulateMashTarget,
+  modulateSequenceLength,
+  modulateSequenceTimeLimit,
+  modulateTimingSweep,
   resolveWeaponMinigameType,
   DEFAULT_VOLLEY_SIZE,
   TIMING_BASE_SWEEP_MS,
@@ -311,14 +316,16 @@ export class CombatSystem {
   ): CombatMinigameSpec {
     const weaponEquipment = this.getEquippedWeaponEquipment();
     const mechanic = resolveWeaponMinigameType(weaponEquipment);
+    const delta = this.computeWeaponMasteryDelta(weaponEquipment);
 
     if (mechanic === "mash") {
       const speedAdvantage = challenge.actorSpeed - challenge.opponentSpeed;
+      const baseTarget = computeMashTargetPresses(speedAdvantage);
       return {
         kind: "mash",
         challenge,
         arrow: generateQteSequence(1, () => this.random())[0],
-        targetPresses: computeMashTargetPresses(speedAdvantage),
+        targetPresses: modulateMashTarget(baseTarget, delta),
       };
     }
 
@@ -329,18 +336,23 @@ export class CombatSystem {
       return {
         kind: "timing",
         volleySize: weaponEquipment?.volleySize ?? DEFAULT_VOLLEY_SIZE,
-        sweepMs: TIMING_BASE_SWEEP_MS,
+        sweepMs: modulateTimingSweep(TIMING_BASE_SWEEP_MS, delta),
         greatWindow,
         criticalWindow,
       };
     }
 
+    const sequenceLength = modulateSequenceLength(challenge.sequenceLength, delta);
+    const modulatedChallenge: QteChallenge = {
+      ...challenge,
+      sequenceLength,
+      playerSequenceLength: sequenceLength,
+      timeLimitMs: modulateSequenceTimeLimit(challenge.timeLimitMs, delta),
+    };
     return {
       kind: "sequence",
-      challenge,
-      sequence: generateQteSequence(challenge.sequenceLength, () =>
-        this.random(),
-      ),
+      challenge: modulatedChallenge,
+      sequence: generateQteSequence(sequenceLength, () => this.random()),
     };
   }
 
@@ -350,6 +362,23 @@ export class CombatSystem {
       return undefined;
     }
     return getItemDef(weaponId).equipment;
+  }
+
+  /**
+   * Mastery delta for the equipped weapon: 0 when unarmed or non-weapon (no
+   * modulation), otherwise the wielder's `weapon_<type>` mastery level over the
+   * weapon's soft recommended level, clamped to -3..+3.
+   */
+  private computeWeaponMasteryDelta(
+    weaponEquipment: EquipmentDef | undefined,
+  ): number {
+    const weaponType = weaponEquipment?.weaponType;
+    if (!weaponType) {
+      return 0;
+    }
+    const level = this.context.getCommandMasteryLevel(`weapon_${weaponType}`);
+    const recommended = weaponEquipment?.recommendedMasteryLevel ?? 0;
+    return computeMasteryDelta(level, recommended);
   }
 
   private handleFleeAttempt(
@@ -552,6 +581,10 @@ export class CombatSystem {
     const finalCmd = this.state.actionCommand;
     if (finalCmd === "strike" || finalCmd === "cast") {
       this.context.incrementCommandUsage(finalCmd);
+      const weaponType = this.getEquippedWeaponEquipment()?.weaponType;
+      if (weaponType) {
+        this.context.incrementCommandUsage(`weapon_${weaponType}`);
+      }
     }
 
     return { success: true };

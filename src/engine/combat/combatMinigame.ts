@@ -112,6 +112,53 @@ export function computeMashTargetPresses(speedAdvantage: number): number {
 }
 
 /**
+ * Weapon-mastery modulation delta: how far the wielder's mastery is above (or
+ * below) the weapon's soft recommended level, clamped to -3..+3 (ADR 0009).
+ * Positive eases the minigame, negative hardens it.
+ */
+export function computeMasteryDelta(
+  masteryLevel: number,
+  recommendedLevel: number,
+): number {
+  return clamp(masteryLevel - recommendedLevel, -3, 3);
+}
+
+/** Sequence time limit modulation: +/-300 ms per mastery delta point. */
+export function modulateSequenceTimeLimit(
+  baseTimeLimitMs: number,
+  delta: number,
+): number {
+  return baseTimeLimitMs + 300 * delta;
+}
+
+/**
+ * Sequence length modulation: at delta >= +2 the sequence loses one input, at
+ * delta <= -2 it gains one; otherwise unchanged (ADR 0009).
+ */
+export function modulateSequenceLength(baseLength: number, delta: number): number {
+  if (delta >= 2) {
+    return Math.max(1, baseLength - 1);
+  }
+  if (delta <= -2) {
+    return baseLength + 1;
+  }
+  return baseLength;
+}
+
+/** Mash target modulation: -1 press per positive delta point, floored at 4. */
+export function modulateMashTarget(baseTarget: number, delta: number): number {
+  return Math.max(4, baseTarget - delta);
+}
+
+/**
+ * Timing sweep modulation: +10 % per positive delta point (slower, easier
+ * cursor), clamped to +/-30 % (ADR 0009).
+ */
+export function modulateTimingSweep(baseSweepMs: number, delta: number): number {
+  return baseSweepMs * clamp(1 + 0.1 * delta, 0.7, 1.3);
+}
+
+/**
  * Great/critical window widths (as gauge fractions) for the timing volley,
  * sized by the acting side's agility gap over the defender (ADR 0009). The
  * critical window is centered inside the great window.

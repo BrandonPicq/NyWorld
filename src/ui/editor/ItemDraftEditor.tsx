@@ -365,6 +365,30 @@ function EquipmentEditor({
             value={equipment.volleySize ?? ""}
           />
         </label>
+
+        <label className="editor-field">
+          <span>Recommended Mastery</span>
+          <input
+            disabled={isSaving || equipment.slot !== "weapon"}
+            min={0}
+            onChange={(event) => {
+              const raw = event.target.value.trim();
+              const parsed = Number(raw);
+              onUpdateItem((current) => ({
+                ...current,
+                equipment: {
+                  ...(current.equipment ?? equipment),
+                  slot: "weapon",
+                  recommendedMasteryLevel:
+                    raw && Number.isFinite(parsed) ? parsed : undefined,
+                },
+              }));
+            }}
+            step={1}
+            type="number"
+            value={equipment.recommendedMasteryLevel ?? ""}
+          />
+        </label>
       </div>
 
       <div className="editor-stat-grid">

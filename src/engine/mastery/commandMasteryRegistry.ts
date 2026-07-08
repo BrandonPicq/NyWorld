@@ -17,6 +17,10 @@ const VALID_COMMAND_IDS = [
   "use_item",
   "study",
   "rest",
+  "weapon_sword",
+  "weapon_hammer",
+  "weapon_bow",
+  "weapon_staff",
 ];
 
 const commandMasteryDefs = getSortedContentModules(

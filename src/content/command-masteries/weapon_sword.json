@@ -1,0 +1,8 @@
+{
+  "commandId": "weapon_sword",
+  "name": "Sword Mastery",
+  "cap": 10,
+  "usageRequired": 8,
+  "effects": {},
+  "unlocks": []
+}

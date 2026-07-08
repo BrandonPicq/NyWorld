@@ -4,6 +4,13 @@ This file tracks meaningful project changes by commit-oriented slices.
 
 Keep entries short and practical. When a slice is committed, its changelog section should stay aligned with the commit title so the project history remains easy to read after restores or bisects.
 
+## 2026-07-08 - [ADD]: Weapon masteries and minigame modulation
+
+- Add per-archetype command masteries (`weapon_sword` / `weapon_hammer` / `weapon_bow` / `weapon_staff`, cap 10, usageRequired 8, empty effects/unlocks) to the command-mastery family and the persisted mastery set; a Strike or Cast with a weapon equipped now increments that weapon type's mastery.
+- Add the soft `EquipmentDef.recommendedMasteryLevel` (default 0, weapon-only, validated) and an editor field for it; tier-0 weapons stay at 0.
+- Modulate the minigame by `delta = clamp(masteryLevel − recommended, −3, +3)`: sequence time ±300 ms/point and ±1 input at |delta| ≥ 2, mash target −1/point (min 4), timing sweep ±10 %/point (clamp ±30 %). Bare-hand attacks are unmodulated.
+- Unit-test the delta clamp and every per-mechanic modulation, plus the new weapon mastery definitions.
+
 ## 2026-07-08 - [ADD]: Timing volley minigame for bows
 
 - Map the bow archetype to a new `timing` minigame: a volley of `volleySize` shots (authored per bow, default 3), each timed against a cursor sweeping the gauge in a base 1200 ms, with great/critical windows sized by the agility gap and centered on the gauge.

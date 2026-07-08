@@ -1,0 +1,8 @@
+{
+  "commandId": "weapon_staff",
+  "name": "Staff Mastery",
+  "cap": 10,
+  "usageRequired": 8,
+  "effects": {},
+  "unlocks": []
+}

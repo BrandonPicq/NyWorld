@@ -110,6 +110,10 @@ export const ALL_COMMAND_IDS = [
   "use_item",
   "study",
   "rest",
+  "weapon_sword",
+  "weapon_hammer",
+  "weapon_bow",
+  "weapon_staff",
 ] as const;
 
 export function ensureCommandMasteries(

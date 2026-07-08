@@ -59,6 +59,12 @@ export interface EquipmentDef {
    * for weapons that run the `timing` minigame.
    */
   volleySize?: number;
+  /**
+   * Soft recommended weapon-mastery level (defaults to 0). Above it the
+   * minigame eases, below it hardens; never an equip gate. Only valid on
+   * weapons.
+   */
+  recommendedMasteryLevel?: number;
   bonuses: EquipmentBonusMap;
 }
 

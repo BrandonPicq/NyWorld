@@ -179,8 +179,13 @@ export type {
 export {
   classifyTimingPress,
   computeMashTargetPresses,
+  computeMasteryDelta,
   computeTimingWindows,
   mapTimingVolley,
+  modulateMashTarget,
+  modulateSequenceLength,
+  modulateSequenceTimeLimit,
+  modulateTimingSweep,
   resolveWeaponMinigameType,
   DEFAULT_VOLLEY_SIZE,
   TIMING_BASE_SWEEP_MS,

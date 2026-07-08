@@ -1,0 +1,8 @@
+{
+  "commandId": "weapon_hammer",
+  "name": "Hammer Mastery",
+  "cap": 10,
+  "usageRequired": 8,
+  "effects": {},
+  "unlocks": []
+}
