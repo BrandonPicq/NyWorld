@@ -4,6 +4,13 @@ This file tracks meaningful project changes by commit-oriented slices.
 
 Keep entries short and practical. When a slice is committed, its changelog section should stay aligned with the commit title so the project history remains easy to read after restores or bisects.
 
+## 2026-07-08 - [ADD]: Keyboard navigation for game menus
+
+- Add horizontal keyboard navigation for inventory category tabs while preserving vertical item selection and item actions.
+- Add keyboard tab switching and local Escape handling to the character sheet, plus arrow-key navigation across the equipment body slots.
+- Add keyboard selection for the quest journal lists and Enter/Escape dismissal for focused gameplay toasts.
+- Unit-test the shared tab-navigation helper and the equipment slot movement map.
+
 ## 2026-07-08 - [ADD]: Pattern evolution and sheet techniques
 
 - Auto-learn eligible QTE pattern evolutions after pattern usage through the shared learning path, with Fireball evolving into Pyrosphere while both techniques remain known.

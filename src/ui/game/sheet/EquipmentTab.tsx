@@ -1,8 +1,10 @@
-import { useState } from "react";
+import { useEffect, useRef, useState, type KeyboardEvent } from "react";
 import type { EquippedSlot, Inventory } from "../../../engine";
 import { getItemDef } from "../../../engine/items/itemRegistry";
 import type { AudioSettings } from "../../audio/audioSettings";
+import { playMenuConfirmSound, playMenuMoveSound } from "../../audio/menuAudio";
 import { EquipPickerModal } from "./EquipPickerModal";
+import { resolveEquipmentSlotMove } from "./equipmentSlotNavigation";
 
 type EquipmentTabProps = {
   audioSettings: AudioSettings;
@@ -33,6 +35,41 @@ export function EquipmentTab({
   onNavigateToItem,
 }: EquipmentTabProps) {
   const [activePickerSlot, setActivePickerSlot] = useState<EquippedSlot | null>(null);
+  const [selectedSlot, setSelectedSlot] = useState<EquippedSlot>("head");
+  const slotRefs = useRef<Record<string, HTMLButtonElement | null>>({});
+
+  useEffect(() => {
+    slotRefs.current[selectedSlot]?.focus();
+  }, [selectedSlot]);
+
+  const openPicker = (slot: EquippedSlot) => {
+    setActivePickerSlot(slot);
+    if (audioSettings.soundEnabled) {
+      playMenuConfirmSound();
+    }
+  };
+
+  const handleSlotKeyDown = (
+    event: KeyboardEvent<HTMLElement>,
+    slot: EquippedSlot,
+  ) => {
+    const nextSlot = resolveEquipmentSlotMove(slot, event.key);
+    if (nextSlot) {
+      event.preventDefault();
+      event.stopPropagation();
+      setSelectedSlot(nextSlot);
+      if (audioSettings.soundEnabled) {
+        playMenuMoveSound();
+      }
+      return;
+    }
+
+    if (event.key === "Enter" || event.key === " " || event.key === "Spacebar") {
+      event.preventDefault();
+      event.stopPropagation();
+      openPicker(slot);
+    }
+  };
 
   return (
     <div className="stats-modal__tab-content">
@@ -48,28 +85,42 @@ export function EquipmentTab({
                 key={slot}
                 className="equipment-slot-zone"
                 style={{ gridArea }}
-                onClick={() => setActivePickerSlot(slot)}
               >
-                <div className="equipment-slot-zone__header">
-                  <span className="equipment-slot-zone__label">{label}</span>
-                  {itemId ? (
-                    <button
+                <button
+                  className="equipment-slot-zone__main"
+                  onClick={() => openPicker(slot)}
+                  onFocus={() => setSelectedSlot(slot)}
+                  onKeyDown={(event) => handleSlotKeyDown(event, slot)}
+                  ref={(button) => {
+                    slotRefs.current[slot] = button;
+                  }}
+                  tabIndex={selectedSlot === slot ? 0 : -1}
+                  type="button"
+                >
+                  <div className="equipment-slot-zone__header">
+                    <span className="equipment-slot-zone__label">{label}</span>
+                    <span
                       className="equipment-slot-zone__marker"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onNavigateToItem(itemId);
-                      }}
-                      title="Inspect in inventory"
+                      style={itemId ? undefined : { opacity: 0.3 }}
                     >
-                      [✓]
-                    </button>
-                  ) : (
-                    <span className="equipment-slot-zone__marker" style={{ opacity: 0.3 }}>
-                      [ ]
+                      {itemId ? "[✓]" : "[ ]"}
                     </span>
-                  )}
-                </div>
-                <div className="equipment-slot-zone__name">{itemName}</div>
+                  </div>
+                  <div className="equipment-slot-zone__name">{itemName}</div>
+                </button>
+                {itemId && (
+                  <button
+                    className="equipment-slot-zone__inspect"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onNavigateToItem(itemId);
+                    }}
+                    title="Inspect in inventory"
+                    type="button"
+                  >
+                    Inspect
+                  </button>
+                )}
               </div>
             );
           })}

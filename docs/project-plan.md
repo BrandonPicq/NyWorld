@@ -11,6 +11,7 @@ La phase V0 (base jouable minimale) et la phase V1 (exploration + combat simple)
 Le prototype couvre une boucle de jeu complete sur deux zones de test :
 
 - ecran titre, options (themes, vitesse de texte, audio, clavier QWERTY/AZERTY, confort gameplay), menu pause, sauvegardes sur 3 emplacements localStorage avec versionnage et migration ;
+- navigation clavier des principaux menus de jeu : inventaire par categories, fiche personnage, grille d'equipement, journal de quetes, toasts et sous-menus de combat/pause/sauvegarde ;
 - deux zones tutorielles chargees depuis JSON, transitions entre zones, rendu Canvas 2D de la grille, dialogues d'entree de zone joues une seule fois ;
 - deplacement clavier et D-pad, commande contextuelle `Interact`, actions `Rest` et `Study` avec cout en energie ;
 - calendrier de monde (12 mois de 30 jours) avec horloge, date affichee et journal d'actions en temps de monde ;

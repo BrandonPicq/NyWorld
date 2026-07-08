@@ -1,4 +1,10 @@
-import { useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type KeyboardEvent as ReactKeyboardEvent,
+} from "react";
 import type {
   CoreAttributeKey,
   EquippedSlot,
@@ -16,6 +22,7 @@ import { AttributesTab } from "./sheet/AttributesTab";
 import { EquipmentTab } from "./sheet/EquipmentTab";
 import { MasteryTab } from "./sheet/MasteryTab";
 import { AcademyTab } from "./sheet/AcademyTab";
+import { getNextTabIndex, resolveTabKeyAction } from "../menu/tabNavigation";
 
 type CharacterSheetModalProps = {
   audioSettings: AudioSettings;
@@ -40,6 +47,14 @@ const TAB_LABELS: Record<CharacterTab, string> = {
   academy: "Academy",
 };
 
+const CHARACTER_TABS: CharacterTab[] = [
+  "overview",
+  "attributes",
+  "equipment",
+  "mastery",
+  "academy",
+];
+
 export function CharacterSheetModal({
   audioSettings,
   inventory,
@@ -52,7 +67,12 @@ export function CharacterSheetModal({
   stats,
   statLayers,
 }: CharacterSheetModalProps) {
+  const containerRef = useRef<HTMLDivElement>(null);
   const [activeTab, setActiveTab] = useState<CharacterTab>("overview");
+
+  useEffect(() => {
+    containerRef.current?.focus();
+  }, []);
 
   const handleClose = () => {
     if (audioSettings.soundEnabled) {
@@ -68,8 +88,58 @@ export function CharacterSheetModal({
     }
   };
 
+  const handleKeyDown = useCallback((event: ReactKeyboardEvent<HTMLElement> | KeyboardEvent) => {
+    if (
+      event.target instanceof HTMLElement &&
+      event.target.closest(".stats-modal--equip-picker")
+    ) {
+      return;
+    }
+
+    const action = resolveTabKeyAction(event.key, {
+      tabCount: CHARACTER_TABS.length,
+      hasCancel: true,
+    });
+
+    if (action.kind === "none") {
+      return;
+    }
+
+    event.preventDefault();
+    event.stopPropagation();
+
+    if (action.kind === "cancel") {
+      handleClose();
+      return;
+    }
+
+    if (action.kind === "move") {
+      const activeIndex = CHARACTER_TABS.indexOf(activeTab);
+      handleTabSelect(
+        CHARACTER_TABS[
+          getNextTabIndex(activeIndex, CHARACTER_TABS.length, action.direction)
+        ],
+      );
+      return;
+    }
+
+    handleTabSelect(CHARACTER_TABS[action.index]);
+  }, [activeTab, audioSettings.soundEnabled, onClose]);
+
+  useEffect(() => {
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [handleKeyDown]);
+
   return (
-    <div className="modal-overlay" onClick={handleClose}>
+    <div
+      className="modal-overlay"
+      onClick={handleClose}
+      onKeyDown={handleKeyDown}
+      ref={containerRef}
+      style={{ outline: "none" }}
+      tabIndex={-1}
+    >
       <TerminalPanel
         className="stats-modal stats-modal--character"
         onClick={(e) => e.stopPropagation()}
@@ -78,17 +148,16 @@ export function CharacterSheetModal({
         <h2 className="terminal-heading-md">Character Sheet</h2>
 
         <div className="stats-modal__tabs">
-          {(["overview", "attributes", "equipment", "mastery", "academy"] as CharacterTab[]).map(
-            (tab) => (
+          {CHARACTER_TABS.map((tab) => (
               <TerminalButton
                 key={tab}
                 isSelected={activeTab === tab}
                 onClick={() => handleTabSelect(tab)}
+                tabIndex={activeTab === tab ? 0 : -1}
               >
                 {TAB_LABELS[tab]}
               </TerminalButton>
-            )
-          )}
+            ))}
         </div>
 
         <div className="stats-modal__content">

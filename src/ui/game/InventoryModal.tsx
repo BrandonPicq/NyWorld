@@ -1,12 +1,13 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type KeyboardEvent } from "react";
 import type { Inventory, InventoryItemCategory } from "../../engine/components";
 import { getItemDef } from "../../engine/items/itemRegistry";
 import { TerminalButton } from "../components/TerminalButton";
 import { TerminalPanel } from "../components/TerminalPanel";
 import type { AudioSettings } from "../audio/audioSettings";
 import { useMenuKeyboard } from "../hooks/useMenuKeyboard";
-import { playMenuMoveSound, playMenuConfirmSound } from "../audio/menuAudio";
+import { playMenuMoveSound } from "../audio/menuAudio";
 import { getCategoriesPresent } from "./inventoryHelper";
+import { getNextTabIndex, resolveTabKeyAction } from "../menu/tabNavigation";
 
 type InventoryModalProps = {
   audioSettings: AudioSettings;
@@ -62,6 +63,10 @@ export function InventoryModal({
   };
 
   const presentCategories = getCategoriesPresent(items, (id) => getItemDef(id).category);
+  const inventoryTabs: Array<"all" | InventoryItemCategory> = [
+    "all",
+    ...presentCategories,
+  ];
 
   // Filter items based on active tab
   const filteredItems = activeTab === "all"
@@ -112,11 +117,38 @@ export function InventoryModal({
   const selectedDef = selectedItem ? getItemDef(selectedItem.itemId) : null;
   const equippedItemIds = new Set(Object.values(inventory.equipped));
 
+  const handleInventoryKeyDown = (
+    event: KeyboardEvent<HTMLElement>,
+  ) => {
+    const tabAction = resolveTabKeyAction(event.key, {
+      tabCount: inventoryTabs.length,
+    });
+
+    if (tabAction.kind === "move") {
+      event.preventDefault();
+      event.stopPropagation();
+      const activeIndex = Math.max(0, inventoryTabs.indexOf(activeTab));
+      const nextIndex = getNextTabIndex(
+        activeIndex,
+        inventoryTabs.length,
+        tabAction.direction,
+      );
+      setActiveTab(inventoryTabs[nextIndex]);
+      setSelectedIndex(0);
+      if (audioSettings.soundEnabled) {
+        playMenuMoveSound();
+      }
+      return;
+    }
+
+    handleKeyDown(event);
+  };
+
   return (
     <div
       className="modal-overlay"
       onClick={handleClose}
-      onKeyDown={handleKeyDown}
+      onKeyDown={handleInventoryKeyDown}
       tabIndex={-1}
       ref={containerRef}
       style={{ outline: "none" }}
@@ -131,8 +163,10 @@ export function InventoryModal({
         <div className="stats-modal__tabs">
           <TerminalButton
             isSelected={activeTab === "all"}
+            tabIndex={activeTab === "all" ? 0 : -1}
             onClick={() => {
               setActiveTab("all");
+              setSelectedIndex(0);
               if (audioSettings.soundEnabled) {
                 playMenuMoveSound();
               }
@@ -144,8 +178,10 @@ export function InventoryModal({
             <TerminalButton
               key={cat}
               isSelected={activeTab === cat}
+              tabIndex={activeTab === cat ? 0 : -1}
               onClick={() => {
                 setActiveTab(cat);
+                setSelectedIndex(0);
                 if (audioSettings.soundEnabled) {
                   playMenuMoveSound();
                 }

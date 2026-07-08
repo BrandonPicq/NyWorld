@@ -4,6 +4,7 @@ import {
   useRef,
   useState,
   type FocusEvent,
+  type KeyboardEvent,
 } from "react";
 
 export type GameToastTone = "default" | "important";
@@ -139,11 +140,21 @@ function GameToast({
     };
   }, [dismiss, isPaused, visible]);
 
+  const handleKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
+    if (event.key !== "Enter" && event.key !== "Escape") {
+      return;
+    }
+    event.preventDefault();
+    event.stopPropagation();
+    dismiss();
+  };
+
   return (
     <div
       className="game-toast"
       data-tone={tone}
       data-visible={visible ? "true" : undefined}
+      onKeyDown={handleKeyDown}
       tabIndex={0}
     >
       {message}

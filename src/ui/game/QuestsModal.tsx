@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import type { GameSnapshot } from "../../engine";
 import { formatCurrency } from "../controls/statsFormatter";
 import { getNpcDef, getQuestDef } from "../../engine";
@@ -6,6 +6,7 @@ import { TerminalButton } from "../components/TerminalButton";
 import { TerminalPanel } from "../components/TerminalPanel";
 import type { AudioSettings } from "../audio/audioSettings";
 import { playMenuConfirmSound } from "../audio/menuAudio";
+import { useMenuKeyboard } from "../hooks/useMenuKeyboard";
 
 type QuestsModalProps = {
   audioSettings: AudioSettings;
@@ -15,7 +16,33 @@ type QuestsModalProps = {
 };
 
 export function QuestsModal({ audioSettings, isOpen, snapshot, onClose }: QuestsModalProps) {
+  const containerRef = useRef<HTMLDivElement>(null);
   const [selectedQuestId, setSelectedQuestId] = useState<string | null>(null);
+  const { activeQuests, completedQuests } = snapshot;
+  const questOptions = [
+    ...activeQuests.map((quest) => ({
+      kind: "active" as const,
+      id: quest.questId,
+    })),
+    ...completedQuests.map((questId) => ({
+      kind: "completed" as const,
+      id: questId,
+    })),
+  ];
+
+  const handleClose = () => {
+    if (audioSettings.soundEnabled) {
+      playMenuConfirmSound();
+    }
+    onClose();
+  };
+
+  const handleSelectQuest = (questId: string) => {
+    if (audioSettings.soundEnabled) {
+      playMenuConfirmSound();
+    }
+    setSelectedQuestId(questId);
+  };
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -35,23 +62,45 @@ export function QuestsModal({ audioSettings, isOpen, snapshot, onClose }: Quests
     };
   }, [selectedQuestId, audioSettings]);
 
+  const { selectedIndex, setSelectedIndex, handleKeyDown } = useMenuKeyboard({
+    itemCount: questOptions.length,
+    audioSettings,
+    onConfirm: (index) => {
+      const quest = questOptions[index];
+      if (quest) {
+        handleSelectQuest(quest.id);
+      }
+    },
+    onCancel: () => {
+      if (selectedQuestId === null) {
+        handleClose();
+      }
+    },
+  });
+
+  useEffect(() => {
+    if (isOpen) {
+      containerRef.current?.focus();
+    }
+  }, [isOpen]);
+
+  const handleModalKeyDown = (event: React.KeyboardEvent<HTMLElement>) => {
+    if (selectedQuestId !== null) {
+      return;
+    }
+    handleKeyDown(event);
+  };
+
+  useEffect(() => {
+    if (!isOpen || selectedQuestId !== null) {
+      return;
+    }
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [handleKeyDown, isOpen, selectedQuestId]);
+
   if (!isOpen) return null;
-
-  const { activeQuests, completedQuests } = snapshot;
-
-  const handleClose = () => {
-    if (audioSettings.soundEnabled) {
-      playMenuConfirmSound();
-    }
-    onClose();
-  };
-
-  const handleSelectQuest = (questId: string) => {
-    if (audioSettings.soundEnabled) {
-      playMenuConfirmSound();
-    }
-    setSelectedQuestId(questId);
-  };
 
   let detailModal = null;
   if (selectedQuestId) {
@@ -193,7 +242,14 @@ export function QuestsModal({ audioSettings, isOpen, snapshot, onClose }: Quests
   }
 
   return (
-    <div className="modal-overlay" onClick={handleClose}>
+    <div
+      className="modal-overlay"
+      onClick={handleClose}
+      onKeyDown={handleModalKeyDown}
+      ref={containerRef}
+      style={{ outline: "none" }}
+      tabIndex={-1}
+    >
       <TerminalPanel
         className="stats-modal stats-modal--quests"
         onClick={(e) => e.stopPropagation()}
@@ -209,13 +265,21 @@ export function QuestsModal({ audioSettings, isOpen, snapshot, onClose }: Quests
               <p className="stats-modal__empty">No active quests in your journal.</p>
             ) : (
               <div className="quests-modal__list">
-                {activeQuests.map((quest) => {
+                {activeQuests.map((quest, index) => {
                   const isReady = quest.state === "readyToComplete";
+                  const isSelected = selectedIndex === index;
                   return (
                     <button
                       key={quest.questId}
-                      className="quests-modal__list-button"
-                      onClick={() => handleSelectQuest(quest.questId)}
+                      className={`quests-modal__list-button ${
+                        isSelected ? "quests-modal__list-button--selected" : ""
+                      }`}
+                      onClick={() => {
+                        setSelectedIndex(index);
+                        handleSelectQuest(quest.questId);
+                      }}
+                      onFocus={() => setSelectedIndex(index)}
+                      tabIndex={isSelected ? 0 : -1}
                     >
                       <span className="quests-modal__quest-name">{quest.name}</span>
                       <span className={`quests-modal__quest-status ${isReady ? "ready" : "ongoing"}`}>
@@ -234,13 +298,22 @@ export function QuestsModal({ audioSettings, isOpen, snapshot, onClose }: Quests
               <p className="stats-modal__empty">No completed quests yet.</p>
             ) : (
               <div className="quests-modal__list">
-                {completedQuests.map((questId) => {
+                {completedQuests.map((questId, completedIndex) => {
                   const questDef = getQuestDef(questId);
+                  const index = activeQuests.length + completedIndex;
+                  const isSelected = selectedIndex === index;
                   return (
                     <button
                       key={questId}
-                      className="quests-modal__list-button quests-modal__list-button--completed"
-                      onClick={() => handleSelectQuest(questId)}
+                      className={`quests-modal__list-button quests-modal__list-button--completed ${
+                        isSelected ? "quests-modal__list-button--selected" : ""
+                      }`}
+                      onClick={() => {
+                        setSelectedIndex(index);
+                        handleSelectQuest(questId);
+                      }}
+                      onFocus={() => setSelectedIndex(index)}
+                      tabIndex={isSelected ? 0 : -1}
                     >
                       <span className="quests-modal__quest-name">{questDef?.name ?? questId}</span>
                       <span className="quests-modal__quest-status completed">
