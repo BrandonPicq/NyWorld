@@ -14,6 +14,7 @@ import {
   type ContentTypeName,
 } from "../../engine";
 import { TerminalButton } from "../components/TerminalButton";
+import { getFocusableElements } from "../hooks/focusTrap";
 import { getNextTabIndex, resolveTabKeyAction } from "../menu/tabNavigation";
 import { consumeIfPointerOverKeyboardBlockingElement } from "../menu/pointerKeyboardBlock";
 import { ActionsTab } from "./actions/ActionsTab";
@@ -29,6 +30,10 @@ import { prepareEditorPlaytest } from "./playtestLaunch";
 import { QuestTab } from "./quests/QuestTab";
 import { RaceTab } from "./races/RaceTab";
 import { PatternTab } from "./patterns/PatternTab";
+import {
+  getNextEditorRegionIndex,
+  resolveEditorRegionKeyAction,
+} from "./editorRegionNavigation";
 import { useEditorDrafts } from "./useEditorDrafts";
 import { ZoneEditorPanel } from "./zone/ZoneEditorPanel";
 import type { EditorPlaytestStart } from "./playtestStart";
@@ -76,7 +81,10 @@ export function ContentEditorScreen({
 }: ContentEditorScreenProps) {
   const baseSnapshot = useMemo(() => createRuntimeContentCatalogSnapshot(), []);
   const [tab, setTab] = useState<EditorTab>("content");
+  const [selectedRegionIndex, setSelectedRegionIndex] = useState(0);
   const tabButtonRefs = useRef<Array<HTMLButtonElement | null>>([]);
+  const tabContentRef = useRef<HTMLDivElement>(null);
+  const pendingRegionFocusRef = useRef(false);
   const [playtestError, setPlaytestError] = useState<string | null>(null);
   const drafts = useEditorDrafts(baseSnapshot);
 
@@ -93,6 +101,33 @@ export function ContentEditorScreen({
     window.addEventListener("beforeunload", handleBeforeUnload);
     return () => window.removeEventListener("beforeunload", handleBeforeUnload);
   }, [drafts.hasAnyUnsavedChanges]);
+
+  useEffect(() => {
+    const regions = getEditorRegions(tabContentRef.current);
+    const nextRegionIndex = Math.min(
+      selectedRegionIndex,
+      Math.max(0, regions.length - 1),
+    );
+
+    regions.forEach((region, index) => {
+      region.dataset.editorRegion = "true";
+      region.tabIndex = index === nextRegionIndex ? 0 : -1;
+      if (index === nextRegionIndex) {
+        region.dataset.regionSelected = "true";
+      } else {
+        delete region.dataset.regionSelected;
+      }
+    });
+
+    if (pendingRegionFocusRef.current) {
+      pendingRegionFocusRef.current = false;
+      requestAnimationFrame(() => focusEditorRegion(tabContentRef.current, 0));
+    }
+  });
+
+  useEffect(() => {
+    setSelectedRegionIndex(0);
+  }, [tab]);
 
   function handleBack(): void {
     if (
@@ -188,8 +223,13 @@ export function ContentEditorScreen({
     }
   }
 
-  function selectTab(nextTab: EditorTab, options: { focus?: boolean } = {}): void {
+  function selectTab(
+    nextTab: EditorTab,
+    options: { focus?: boolean; focusRegion?: boolean } = {},
+  ): void {
     setTab(nextTab);
+    setSelectedRegionIndex(0);
+    pendingRegionFocusRef.current = options.focusRegion ?? false;
     if (options.focus) {
       const index = EDITOR_TABS.findIndex((entry) => entry.id === nextTab);
       requestAnimationFrame(() => tabButtonRefs.current[index]?.focus());
@@ -226,10 +266,92 @@ export function ContentEditorScreen({
     selectTab(EDITOR_TABS[action.index].id, { focus: true });
   }
 
+  function focusActiveTab(): void {
+    const index = EDITOR_TABS.findIndex((entry) => entry.id === tab);
+    tabButtonRefs.current[index]?.focus();
+  }
+
+  function handleEditorKeyDownCapture(event: KeyboardEvent<HTMLElement>): void {
+    if (
+      event.target instanceof HTMLElement &&
+      event.target.closest(".editor-coordinate-picker")
+    ) {
+      return;
+    }
+
+    const regions = getEditorRegions(tabContentRef.current);
+    const activeElement =
+      document.activeElement instanceof HTMLElement
+        ? document.activeElement
+        : null;
+    const activeRegionIndex = activeElement
+      ? regions.findIndex((region) => region.contains(activeElement))
+      : -1;
+
+    if (event.key === "Escape") {
+      event.preventDefault();
+      event.stopPropagation();
+
+      if (
+        activeElement?.closest(".editor-tabs") ||
+        activeElement?.closest(".editor-header__actions")
+      ) {
+        handleBack();
+        return;
+      }
+
+      if (activeRegionIndex >= 0) {
+        setSelectedRegionIndex(activeRegionIndex);
+        if (activeElement === regions[activeRegionIndex]) {
+          focusActiveTab();
+        } else {
+          focusEditorRegion(tabContentRef.current, activeRegionIndex);
+        }
+        return;
+      }
+
+      focusActiveTab();
+      return;
+    }
+
+    if (activeRegionIndex < 0 || activeElement !== regions[activeRegionIndex]) {
+      return;
+    }
+
+    const action = resolveEditorRegionKeyAction(event.key, {
+      regionCount: regions.length,
+    });
+    if (action.kind === "none" || action.kind === "previous") {
+      return;
+    }
+
+    if (consumeIfPointerOverKeyboardBlockingElement(event)) {
+      return;
+    }
+
+    event.preventDefault();
+    event.stopPropagation();
+
+    if (action.kind === "enter") {
+      const firstFocusable = getFocusableElements(regions[activeRegionIndex])[0];
+      firstFocusable?.focus();
+      return;
+    }
+
+    const nextIndex = getNextEditorRegionIndex(
+      activeRegionIndex,
+      regions.length,
+      action.direction,
+    );
+    setSelectedRegionIndex(nextIndex);
+    focusEditorRegion(tabContentRef.current, nextIndex);
+  }
+
   return (
     <main
       className="app-shell app-shell--bounded editor-screen"
       aria-labelledby="editor-heading"
+      onKeyDownCapture={handleEditorKeyDownCapture}
     >
       <div className="editor-shell">
         <header className="editor-header">
@@ -277,7 +399,7 @@ export function ContentEditorScreen({
               isSelected={tab === entry.id}
               key={entry.id}
               label={entry.label}
-              onClick={() => selectTab(entry.id)}
+              onClick={() => selectTab(entry.id, { focusRegion: true })}
               ref={(button) => {
                 tabButtonRefs.current[index] = button;
               }}
@@ -285,7 +407,7 @@ export function ContentEditorScreen({
           ))}
         </nav>
 
-        <div className="editor-tab-content">
+        <div className="editor-tab-content" ref={tabContentRef}>
           {tab === "zones" ? (
             <ZoneEditorPanel
               draft={drafts.zone}
@@ -358,6 +480,24 @@ function findDialogueStem(
       .sort(([a], [b]) => a.localeCompare(b))
       .find(([, dialogues]) => dialogueId in dialogues)?.[0] ?? null
   );
+}
+
+function getEditorRegions(container: HTMLElement | null): HTMLElement[] {
+  if (!container) {
+    return [];
+  }
+
+  return Array.from(
+    container.querySelectorAll<HTMLElement>(".editor-panel"),
+  ).filter((region) => !region.closest(".editor-coordinate-picker"));
+}
+
+function focusEditorRegion(
+  container: HTMLElement | null,
+  index: number,
+): void {
+  const regions = getEditorRegions(container);
+  regions[index]?.focus();
 }
 
 const EditorTabButton = forwardRef<HTMLButtonElement, {

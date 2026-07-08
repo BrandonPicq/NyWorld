@@ -4,6 +4,13 @@ This file tracks meaningful project changes by commit-oriented slices.
 
 Keep entries short and practical. When a slice is committed, its changelog section should stay aligned with the commit title so the project history remains easy to read after restores or bisects.
 
+## 2026-07-08 - [ADD]: Hierarchical keyboard navigation for editor panels
+
+- Add an editor panel navigation layer between tab selection and form controls.
+- Let editor panels move with arrow keys, enter their first control with Enter, and return upward with Escape.
+- Make Escape step back from panel controls to panels, panels to tabs, and tabs to the title screen back action.
+- Unit-test the editor region navigation key model.
+
 ## 2026-07-08 - [FIX]: Block menu keyboard navigation while hovering commands
 
 - Share the pointer-hover keyboard guard across game and editor menu surfaces.

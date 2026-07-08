@@ -108,6 +108,16 @@
   flex-shrink: 0;
 }
 
+.editor-panel[data-editor-region="true"] {
+  outline: 1px solid transparent;
+  outline-offset: 4px;
+}
+
+.editor-panel[data-editor-region="true"]:focus-visible,
+.editor-panel[data-editor-region="true"][data-region-selected="true"] {
+  outline-color: var(--color-accent);
+}
+
 .editor-panel__title {
   margin: 0;
   color: var(--color-text-strong);
