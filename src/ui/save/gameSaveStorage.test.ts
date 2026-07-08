@@ -26,6 +26,7 @@ function stubSave(overrides: Partial<GameSaveData> = {}): GameSaveData {
     playerFacing: "south",
     stats: createInitialStats(),
     playerProgression: createInitialPlayerProgression(),
+    knownPatterns: {},
     inventory: {
       type: "Inventory",
       items: [{ itemId: "travel_ration", quantity: 3 }],
@@ -96,6 +97,7 @@ describe("gameSaveStorage", () => {
     expect(restored!.playerY).toBe(4);
     expect(restored!.playerFacing).toBe("south");
     expect(restored!.stats.resources.energy).toBe(100);
+    expect(restored!.knownPatterns).toEqual({});
     expect(restored!.inventory.items).toHaveLength(1);
     expect(restored!.npcStates).toEqual([
       {
@@ -136,6 +138,18 @@ describe("gameSaveStorage", () => {
         knownFlags: [],
       },
     ]);
+  });
+
+  it("writes and reads known QTE pattern state", () => {
+    const save = stubSave({
+      knownPatterns: { crosscut: { timesUsed: 3 } },
+    });
+
+    expect(writeSlot(0, save)).toBe(true);
+
+    expect(readSlot(0)?.knownPatterns).toEqual({
+      crosscut: { timesUsed: 3 },
+    });
   });
 
   it("uses independent storage per slot", () => {
@@ -227,6 +241,16 @@ describe("gameSaveStorage", () => {
 
     const raw = JSON.parse(localStorage.getItem("nywarudo_save_slot_0")!);
     raw.seenZoneEntryEventIds = [42];
+    localStorage.setItem("nywarudo_save_slot_0", JSON.stringify(raw));
+
+    expect(readSlot(0)).toBeNull();
+  });
+
+  it("returns null for invalid known pattern state", () => {
+    writeSlot(0, stubSave());
+
+    const raw = JSON.parse(localStorage.getItem("nywarudo_save_slot_0")!);
+    raw.knownPatterns = { crosscut: { timesUsed: -1 } };
     localStorage.setItem("nywarudo_save_slot_0", JSON.stringify(raw));
 
     expect(readSlot(0)).toBeNull();

@@ -39,6 +39,7 @@ const baseSnapshot: GameSnapshot = {
     classDef: getClassDef("otherworlder"),
     raceDef: getRaceDef("human"),
   }),
+  knownPatterns: {},
   entities: [
     {
       x: 3,

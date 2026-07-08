@@ -1312,6 +1312,76 @@ describe("GameplayEngine", () => {
       expect(fail.effects).toBeUndefined();
     });
 
+    it("learns a QTE pattern from a tome through the pattern learning system", () => {
+      const save = createEngine().createSaveData();
+      save.inventory.items.push({ itemId: "crosscut_tome", quantity: 1 });
+      save.playerProgression.global.level = 2;
+
+      const engine = GameplayEngine.fromSaveData(save, {
+        resolveZone: (zoneId) =>
+          zoneId === "movement_test" ? loadZone(zoneData) : undefined,
+      });
+
+      const result = engine.execute({
+        type: "UseItem",
+        itemId: "crosscut_tome",
+      });
+
+      expect(result).toEqual({
+        success: true,
+        effects: [
+          {
+            type: "PatternLearned",
+            itemId: "crosscut_tome",
+            patternId: "crosscut",
+          },
+        ],
+      });
+      expect(engine.getSnapshot().knownPatterns).toEqual({
+        crosscut: { timesUsed: 0 },
+      });
+      expect(
+        engine
+          .getSnapshot()
+          .inventory.items.find((stack) => stack.itemId === "crosscut_tome"),
+      ).toBeUndefined();
+      expect(engine.consumeNotices()).toContainEqual({
+        title: "Pattern Learned",
+        message: "Learned Crosscut.",
+      });
+    });
+
+    it("rejects a tome without consuming it when pattern requirements are unmet", () => {
+      const engine = createEngine();
+      engine.getPlayerInventory().items.push({
+        itemId: "fireball_tome",
+        quantity: 1,
+      });
+
+      const result = engine.execute({
+        type: "UseItem",
+        itemId: "fireball_tome",
+      });
+
+      expect(result).toEqual({
+        success: false,
+        effects: [
+          {
+            type: "ItemUseRejected",
+            itemId: "fireball_tome",
+            reason: "requirements_not_met",
+            message: "Tome of Fireball requires level 2 and intelligence 12.",
+          },
+        ],
+      });
+      expect(engine.getSnapshot().knownPatterns).toEqual({});
+      expect(
+        engine
+          .getSnapshot()
+          .inventory.items.find((stack) => stack.itemId === "fireball_tome"),
+      ).toEqual({ itemId: "fireball_tome", quantity: 1 });
+    });
+
     it("rejects usage when energy is already at maximum", () => {
       const engine = createEngine();
 
@@ -1551,6 +1621,7 @@ describe("GameplayEngine", () => {
       expect(save.stats.combat.attack).toBe(10);
       expect(save.stats.skills.scholarship).toBe(1);
       expect(save.stats.progression.academicTitle).toBe("Novice Scribe");
+      expect(save.knownPatterns).toEqual({});
       expect(save.inventory.items).toHaveLength(3);
       expect(save.inventory.equipped).toEqual({});
       expect(save.npcStates).toContainEqual({
@@ -1605,6 +1676,7 @@ describe("GameplayEngine", () => {
       save.stats.skills.scholarship = 7;
       save.stats.progression.academicProgress = 30;
       save.stats.conditions = [{ id: "tired", name: "Tired" }];
+      save.knownPatterns = { crosscut: { timesUsed: 3 } };
       save.npcStates = save.npcStates.map((state) =>
         state.npcId === "old_scholar"
           ? {
@@ -1635,6 +1707,7 @@ describe("GameplayEngine", () => {
       expect(snap.stats.skills.scholarship).toBe(7);
       expect(snap.stats.progression.academicProgress).toBe(30);
       expect(snap.stats.conditions).toEqual([{ id: "tired", name: "Tired" }]);
+      expect(snap.knownPatterns).toEqual({ crosscut: { timesUsed: 3 } });
       expect(snap.inventory.items).toHaveLength(3);
       expect(snap.inventory.equipped).toEqual({});
       expect(restored.getNpcState("old_scholar")).toEqual({

@@ -154,6 +154,19 @@ function isPlayerProgressionState(value: unknown): boolean {
   );
 }
 
+function isKnownPatternState(value: unknown): boolean {
+  if (!isRecord(value)) return false;
+  return isNonNegativeInteger(value.timesUsed);
+}
+
+function isKnownPatternMap(value: unknown): boolean {
+  if (!isRecord(value)) return false;
+  return Object.entries(value).every(
+    ([patternId, state]) =>
+      patternId.trim().length > 0 && isKnownPatternState(state),
+  );
+}
+
 function isInventoryStack(value: unknown): boolean {
   if (!isRecord(value)) return false;
 
@@ -230,6 +243,7 @@ function isGameSaveData(value: unknown): value is GameSaveData {
     isDirection(obj.playerFacing) &&
     isSaveStats(obj.stats) &&
     isPlayerProgressionState(obj.playerProgression) &&
+    isKnownPatternMap(obj.knownPatterns) &&
     isSaveInventory(obj.inventory) &&
     Array.isArray(obj.npcStates) &&
     obj.npcStates.every(isSaveNpcState) &&

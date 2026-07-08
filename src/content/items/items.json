@@ -61,6 +61,24 @@
       "hpRestore": 10
     }
   },
+  "crosscut_tome": {
+    "name": "Tome of Crosscut",
+    "description": "A slim sword manual describing a crossing blade pattern.",
+    "category": "consumable",
+    "defaultQuantity": 1,
+    "effects": {
+      "teachesPatternId": "crosscut"
+    }
+  },
+  "fireball_tome": {
+    "name": "Tome of Fireball",
+    "description": "A singed primer whose margins warm under careful study.",
+    "category": "consumable",
+    "defaultQuantity": 1,
+    "effects": {
+      "teachesPatternId": "fireball"
+    }
+  },
   "rusty_sword": {
     "name": "Rusty Sword",
     "description": "A discarded iron sword, pitting with rust. Still sharp enough to cut.",

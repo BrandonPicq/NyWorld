@@ -9,7 +9,7 @@ import type { NpcPresenceDef } from "../npcs/NpcPresenceDef";
 import type { QuestDef } from "../quests/QuestDef";
 import type { RaceDef } from "../races/RaceDef";
 import type { TileDef } from "../TileRegistry";
-import type { ItemDefMap } from "../items/ItemDef";
+import type { ItemDef, ItemDefMap } from "../items/ItemDef";
 import type { TileId, ZoneData } from "../ZoneTypes";
 import type { GameContentConfig } from "./contentBundle";
 import { CONTENT_TYPES, type ContentTypeName } from "./contentTypes";
@@ -89,6 +89,7 @@ const SAVED_CONTENT_TYPES: ReadonlySet<ContentTypeName> = new Set([
   CONTENT_TYPES.dialogue,
   CONTENT_TYPES.zone,
   CONTENT_TYPES.quest,
+  CONTENT_TYPES.qtePattern,
 ]);
 
 /**
@@ -99,6 +100,9 @@ export function buildContentReferenceGraph(
 ): ContentReferenceGraph {
   const references: ContentReference[] = [
     ...collectGameConfigReferences(snapshot.game),
+    ...Object.entries(snapshot.items).flatMap(([itemId, item]) =>
+      collectItemReferences(itemId, item),
+    ),
     ...Object.values(snapshot.zones).flatMap(collectZoneReferences),
     ...snapshot.npcs.flatMap(collectNpcReferences),
     ...snapshot.npcPresence.flatMap(collectNpcPresenceReferences),
@@ -195,6 +199,27 @@ function collectGameConfigReferences(
       ),
     );
   });
+
+  return references;
+}
+
+function collectItemReferences(
+  itemId: string,
+  item: ItemDef,
+): ContentReference[] {
+  const from: ContentRef = { type: CONTENT_TYPES.item, id: itemId };
+  const references: ContentReference[] = [];
+
+  if (item.effects?.teachesPatternId) {
+    references.push(
+      reference(
+        from,
+        CONTENT_TYPES.qtePattern,
+        item.effects.teachesPatternId,
+        "effects.teachesPatternId",
+      ),
+    );
+  }
 
   return references;
 }

@@ -193,6 +193,19 @@ export function ItemDraftEditor({
           </label>
         </div>
 
+        <label className="editor-field">
+          <span>Teaches Pattern</span>
+          <input
+            disabled={isSaving}
+            onChange={(event) =>
+              onEffectChange("teachesPatternId", event.target.value)
+            }
+            placeholder="pattern_id"
+            type="text"
+            value={item.effects?.teachesPatternId ?? ""}
+          />
+        </label>
+
         {item.category === "equipment" ? (
           <EquipmentEditor
             isSaving={isSaving}

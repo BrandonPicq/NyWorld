@@ -4,6 +4,7 @@ import {
   defaultContentBundle,
   getItemDef,
   getNpcDef,
+  getQtePatternDef,
   type ContentBundle,
   type DialogueNode,
   type EngineEffect,
@@ -514,6 +515,14 @@ function getEffectToast(
     return {
       message: getUsedItemToastMessage(effect),
       tone: getItemToastTone(effect.itemId),
+    };
+  }
+
+  if (effect.type === "PatternLearned") {
+    const pattern = getQtePatternDef(effect.patternId);
+    return {
+      message: `Learned ${pattern?.name ?? effect.patternId}.`,
+      tone: "important",
     };
   }
 

@@ -39,7 +39,7 @@ export function validateAllContent(
     ...Object.values(snapshot.zones).flatMap((zone) =>
       validateZoneData(zone, context),
     ),
-    ...validateItemCatalog(snapshot.items),
+    ...validateItemCatalog(snapshot.items, context),
     ...validateTileCatalog(
       Object.fromEntries(
         [...snapshot.tiles].map(([tileId, def]) => [String(tileId), def]),

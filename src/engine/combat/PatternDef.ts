@@ -47,3 +47,9 @@ export interface PatternDef {
 }
 
 export type PatternDefMap = Record<string, PatternDef>;
+
+export interface KnownPatternState {
+  timesUsed: number;
+}
+
+export type KnownPatternMap = Record<string, KnownPatternState>;

@@ -94,6 +94,11 @@ import {
   isCombatNpc,
   type CombatState,
 } from "./combat/CombatSystem";
+import {
+  cloneKnownPatterns,
+  QtePatternLearningSystem,
+} from "./combat/QtePatternLearningSystem";
+import type { KnownPatternMap } from "./combat/PatternDef";
 
 export type { CombatState } from "./combat/CombatSystem";
 
@@ -119,8 +124,18 @@ export type EngineEffect =
   | {
       type: "ItemUseRejected";
       itemId: string;
-      reason: "energy_full" | "no_effect";
+      reason:
+        | "energy_full"
+        | "no_effect"
+        | "already_known"
+        | "missing_pattern"
+        | "requirements_not_met";
       message: string;
+    }
+  | {
+      type: "PatternLearned";
+      itemId: string;
+      patternId: string;
     };
 
 export interface EngineNotice {
@@ -174,6 +189,7 @@ export interface GameSnapshot {
   /** Detached copies: mutating snapshot data never affects the engine. */
   stats: Stats;
   statLayers: LayeredStatBreakdown;
+  knownPatterns: KnownPatternMap;
   inventory: Inventory;
   npcStates: NpcState[];
   /** Render-ready NPC and ground item projections for the canvas. */
@@ -269,11 +285,13 @@ export class GameplayEngine {
   private notices: EngineNotice[] = [];
   private readonly quests: QuestProgressionSystem;
   private readonly inventory: InventorySystem;
+  private readonly patternLearning: QtePatternLearningSystem;
   private readonly combat: CombatSystem;
   private readonly safeRespawn: SafeRespawnPoint;
   private readonly actionTuning: ActionTuningConfig;
   private basePlayerStats: Stats;
   private playerProgression: PlayerProgressionState;
+  private knownPatterns: KnownPatternMap = {};
   private statLayers: LayeredStatBreakdown;
 
   constructor(map: GameMap, options: GameplayEngineOptions = {}) {
@@ -309,6 +327,16 @@ export class GameplayEngine {
       advanceWorldTime: (minutes) => this.advanceWorldTime(minutes),
       markItemSpawnPickedUp: (spawnKey) =>
         this.pickedUpItemSpawnKeys.add(spawnKey),
+    });
+    this.patternLearning = new QtePatternLearningSystem({
+      getPlayerInventory: () => this.getPlayerInventory(),
+      getPlayerStats: () => this.getPlayerStats(),
+      getGlobalLevel: () => this.playerProgression.global.level,
+      getKnownPatterns: () => this.knownPatterns,
+      addLog: (message) => this.addLog(message),
+      addNotice: (notice) => this.notices.push({ ...notice }),
+      advanceTick: () => this.tickCounter.advance(),
+      advanceWorldTime: (minutes) => this.advanceWorldTime(minutes),
     });
     this.combat = new CombatSystem({
       world: this.world,
@@ -412,6 +440,9 @@ export class GameplayEngine {
     }
 
     if (command.type === "UseItem") {
+      if (this.patternLearning.canHandleItem(command.itemId)) {
+        return this.patternLearning.usePatternTome(command.itemId);
+      }
       return this.inventory.useItem(command.itemId);
     }
 
@@ -656,6 +687,7 @@ export class GameplayEngine {
       playerFacing: this.playerFacing,
       stats: this.getPlayerStats(),
       playerProgression: this.playerProgression,
+      knownPatterns: this.knownPatterns,
       inventory: this.getPlayerInventory(),
       npcStates: Object.values(this.npcStates),
       log: this.log,
@@ -691,6 +723,7 @@ export class GameplayEngine {
     this.playerProgression = clonePlayerProgressionState(
       saveData.playerProgression,
     );
+    this.knownPatterns = cloneKnownPatterns(saveData.knownPatterns);
     const inventory = this.world.getComponent<Inventory>(
       playerId,
       "Inventory",
@@ -1130,6 +1163,7 @@ export class GameplayEngine {
       log: [...this.log],
       stats: cloneStats(stats),
       statLayers: cloneLayeredStatBreakdown(this.statLayers),
+      knownPatterns: cloneKnownPatterns(this.knownPatterns),
       inventory: {
         ...inventory,
         items: inventory.items.map((stack) => ({ ...stack })),

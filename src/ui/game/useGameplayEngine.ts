@@ -188,4 +188,10 @@ function playEffect(
       playMenuConfirmSound();
     }
   }
+
+  if (effect.type === "PatternLearned") {
+    if (audioSettings.soundEnabled) {
+      playMenuConfirmSound();
+    }
+  }
 }

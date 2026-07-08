@@ -212,6 +212,8 @@ function updateItemEffect(
   const effects = { ...(item.effects ?? {}) };
   if (!value.trim()) {
     delete effects[field];
+  } else if (field === "teachesPatternId") {
+    effects[field] = value.trim();
   } else {
     effects[field] = parseNumberDraft(value);
   }

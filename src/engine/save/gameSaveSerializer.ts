@@ -1,5 +1,6 @@
 import type { GameSaveData } from "../GameSaveData";
 import { SAVE_VERSION } from "../GameSaveData";
+import { cloneKnownPatterns } from "../combat/QtePatternLearningSystem";
 import type { Inventory, Position, Stats } from "../components";
 import type { LogEntry } from "../LogEntry";
 import { cloneNpcState, type NpcState } from "../npcs/NpcState";
@@ -24,6 +25,7 @@ export interface SaveSerializationState {
   playerFacing: Direction;
   stats: Stats;
   playerProgression: PlayerProgressionState;
+  knownPatterns: GameSaveData["knownPatterns"];
   inventory: Inventory;
   npcStates: Iterable<NpcState>;
   log: LogEntry[];
@@ -51,6 +53,7 @@ export function serializeSaveData(state: SaveSerializationState): GameSaveData {
     playerFacing: state.playerFacing,
     stats: cloneStats(stats),
     playerProgression: clonePlayerProgressionState(state.playerProgression),
+    knownPatterns: cloneKnownPatterns(state.knownPatterns),
     inventory: {
       type: "Inventory",
       items: inventory.items.map((stack) => ({ ...stack })),

@@ -44,6 +44,8 @@ export interface ItemEffects {
   energyRestore?: number;
   /** HP restored when used during combat. */
   hpRestore?: number;
+  /** Pattern learned when a single-use tome is consumed. */
+  teachesPatternId?: string;
 }
 
 export interface EquipmentDef {

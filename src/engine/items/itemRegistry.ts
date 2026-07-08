@@ -2,6 +2,7 @@ import itemsData from "../../content/items/items.json";
 import type { ContentDiagnostic } from "../content/ContentDiagnostic";
 import { formatContentDiagnostic } from "../content/ContentDiagnostic";
 import { CONTENT_TYPES } from "../content/contentTypes";
+import type { ContentValidationContext } from "../content/ContentValidationContext";
 import {
   EQUIPMENT_BONUS_OPTIONS,
   EQUIPMENT_MINIGAME_OPTIONS,
@@ -9,11 +10,12 @@ import {
   EQUIPMENT_WEAPON_TYPE_OPTIONS,
   ITEM_CATEGORY_OPTIONS,
 } from "../content/editingMetadata";
+import { getAllQtePatternIds } from "../combat/qtePatternRegistry";
 import type { ItemDef, ItemDefMap } from "./ItemDef";
 
 const ITEM_CONTENT_TYPE = CONTENT_TYPES.item;
 
-const ITEM_EFFECT_FIELDS = ["energyRestore", "hpRestore"] as const;
+const NUMERIC_ITEM_EFFECT_FIELDS = ["energyRestore", "hpRestore"] as const;
 
 const fallback: ItemDef = {
   name: "Unknown Item",
@@ -30,10 +32,18 @@ const registry = buildRegistry(itemsData);
  * Validates a raw item catalog without throwing.
  *
  * This is the editor-facing path: it accumulates every authoring problem so
- * tools can report several precise issues at once. Items are a leaf content
- * type, so no validation context is needed.
+ * tools can report several precise issues at once. A validation context lets
+ * tome effects check their referenced QTE pattern ids.
  */
-export function validateItemCatalog(value: unknown): ContentDiagnostic[] {
+export type ItemValidationContext = Pick<
+  ContentValidationContext,
+  "qtePatternIds"
+>;
+
+export function validateItemCatalog(
+  value: unknown,
+  context?: ItemValidationContext,
+): ContentDiagnostic[] {
   const diagnostics: ContentDiagnostic[] = [];
 
   if (!isRecord(value)) {
@@ -57,7 +67,7 @@ export function validateItemCatalog(value: unknown): ContentDiagnostic[] {
       continue;
     }
 
-    validateItemDef(itemId, def, diagnostics);
+    validateItemDef(itemId, def, diagnostics, context);
   }
 
   return diagnostics;
@@ -67,6 +77,7 @@ function validateItemDef(
   itemId: string,
   value: unknown,
   diagnostics: ContentDiagnostic[],
+  context?: ItemValidationContext,
 ): void {
   if (!isRecord(value)) {
     addItemError(
@@ -122,7 +133,13 @@ function validateItemDef(
   }
 
   if (value.effects !== undefined) {
-    validateItemEffects(itemId, value.effects, value.category, diagnostics);
+    validateItemEffects(
+      itemId,
+      value.effects,
+      value.category,
+      diagnostics,
+      context,
+    );
   }
 
   if (value.category === "equipment") {
@@ -151,6 +168,7 @@ function validateItemEffects(
   value: unknown,
   category: unknown,
   diagnostics: ContentDiagnostic[],
+  context?: ItemValidationContext,
 ): void {
   if (!isRecord(value)) {
     addItemError(
@@ -162,7 +180,7 @@ function validateItemEffects(
     return;
   }
 
-  for (const field of ITEM_EFFECT_FIELDS) {
+  for (const field of NUMERIC_ITEM_EFFECT_FIELDS) {
     const effectValue = value[field];
     if (effectValue === undefined) {
       continue;
@@ -178,6 +196,30 @@ function validateItemEffects(
         itemId,
         `effects.${field}`,
         `Item "${itemId}" has invalid effects.${field}. Expected a positive integer.`,
+      );
+    }
+  }
+
+  if (value.teachesPatternId !== undefined) {
+    if (
+      typeof value.teachesPatternId !== "string" ||
+      !value.teachesPatternId.trim()
+    ) {
+      addItemError(
+        diagnostics,
+        itemId,
+        "effects.teachesPatternId",
+        `Item "${itemId}" has invalid effects.teachesPatternId. Expected a non-empty pattern id.`,
+      );
+    } else if (
+      context?.qtePatternIds &&
+      !context.qtePatternIds.has(value.teachesPatternId)
+    ) {
+      addItemError(
+        diagnostics,
+        itemId,
+        "effects.teachesPatternId",
+        `Item "${itemId}" teaches unknown pattern "${value.teachesPatternId}".`,
       );
     }
   }
@@ -362,7 +404,9 @@ function validateEquipmentBonuses(
 }
 
 function buildRegistry(value: unknown): ItemDefMap {
-  const diagnostics = validateItemCatalog(value);
+  const diagnostics = validateItemCatalog(value, {
+    qtePatternIds: new Set(getAllQtePatternIds()),
+  });
   const firstError = diagnostics.find(
     (diagnostic) => diagnostic.severity === "error",
   );

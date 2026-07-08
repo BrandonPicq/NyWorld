@@ -69,6 +69,13 @@ function createSyntheticSnapshot(): ContentCatalogSnapshot {
         category: "misc",
         defaultQuantity: 1,
       },
+      crosscut_tome: {
+        name: "Crosscut Tome",
+        description: "A sword manual.",
+        category: "consumable",
+        defaultQuantity: 1,
+        effects: { teachesPatternId: "crosscut" },
+      },
     },
     npcs: [
       {
@@ -112,6 +119,21 @@ function createSyntheticSnapshot(): ContentCatalogSnapshot {
         growthMultipliers: { strength: 1 },
       },
     ],
+    qtePatterns: [
+      {
+        patternId: "crosscut",
+        name: "Crosscut",
+        description: "A crossing blade combo.",
+        kind: "physical",
+        inputs: ["left", "right", "up", "down"],
+        timeLimitMs: 3200,
+        mpCost: 8,
+        damageMultiplier: 1.4,
+        requiredPlayerLevel: 2,
+        requiredIntelligence: 8,
+        requiredWeaponTypes: ["sword"],
+      },
+    ],
     dialogues: {
       "hero.greeting": [{ speaker: "Hero", text: "Hello.", pitch: 1 }],
     },
@@ -141,6 +163,9 @@ function createSyntheticContext(
     ),
     classIds: new Set(snapshot.classes.map((classDef) => classDef.classId)),
     raceIds: new Set(snapshot.races.map((race) => race.raceId)),
+    qtePatternIds: new Set(
+      (snapshot.qtePatterns ?? []).map((pattern) => pattern.patternId),
+    ),
     tileDefs: snapshot.tiles,
     zones: new Map(
       Object.values(snapshot.zones).map((zone) => [
@@ -210,6 +235,23 @@ describe("buildContentReferenceGraph", () => {
         expect.objectContaining({ to: { type: "item", id: "trinket" } }),
       ]),
     );
+  });
+
+  it("tracks item tome references to QTE patterns", () => {
+    const graph = buildContentReferenceGraph(createSyntheticSnapshot());
+
+    expect(
+      graph.getReferencesTo({ type: "qte-pattern", id: "crosscut" }),
+    ).toEqual([
+      expect.objectContaining({
+        from: { type: "item", id: "crosscut_tome" },
+        path: "effects.teachesPatternId",
+      }),
+    ]);
+    expect(
+      graph.getRenameImpact({ type: "qte-pattern", id: "crosscut" })
+        .appearsInSaves,
+    ).toBe(true);
   });
 
   it("detects dangling references with the full context", () => {

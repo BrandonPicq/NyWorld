@@ -82,8 +82,8 @@ export function useItemDraft(
     [combined.diagnostics],
   );
   const itemCatalogDiagnostics = useMemo(
-    () => validateItemCatalog(draftItems),
-    [draftItems],
+    () => validateItemCatalog(draftItems, combined.context),
+    [combined.context, draftItems],
   );
   const firstRef = browserGroups[0]?.entries[0]?.ref ?? {
     type: "game",

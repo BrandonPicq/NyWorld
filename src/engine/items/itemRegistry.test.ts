@@ -109,6 +109,44 @@ describe("validateItemCatalog", () => {
     expect(diagnostics).toHaveLength(2);
   });
 
+  it("validates pattern-teaching use effects against a context", () => {
+    expect(
+      validateItemCatalog(
+        {
+          crosscut_tome: {
+            name: "Crosscut Tome",
+            description: "A sword manual.",
+            category: "consumable",
+            defaultQuantity: 1,
+            effects: { teachesPatternId: "crosscut" },
+          },
+        },
+        { qtePatternIds: new Set(["crosscut"]) },
+      ),
+    ).toEqual([]);
+
+    expect(
+      validateItemCatalog(
+        {
+          bad_tome: {
+            name: "Bad Tome",
+            description: "It points nowhere.",
+            category: "consumable",
+            defaultQuantity: 1,
+            effects: { teachesPatternId: "missing_pattern" },
+          },
+        },
+        { qtePatternIds: new Set(["crosscut"]) },
+      ),
+    ).toEqual([
+      expect.objectContaining({
+        contentId: "bad_tome",
+        path: "effects.teachesPatternId",
+        message: 'Item "bad_tome" teaches unknown pattern "missing_pattern".',
+      }),
+    ]);
+  });
+
   it("warns when a non-consumable declares use effects", () => {
     const diagnostics = validateItemCatalog({
       strange_rock: {

@@ -35,7 +35,8 @@
     "currency": 50,
     "xp": 125,
     "items": [
-      { "itemId": "copper_ring", "quantity": 1 }
+      { "itemId": "copper_ring", "quantity": 1 },
+      { "itemId": "fireball_tome", "quantity": 1 }
     ]
   }
 }

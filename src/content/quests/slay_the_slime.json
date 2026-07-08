@@ -33,6 +33,10 @@
       {
         "itemId": "healing_herb",
         "quantity": 1
+      },
+      {
+        "itemId": "crosscut_tome",
+        "quantity": 1
       }
     ],
     "xp": 75

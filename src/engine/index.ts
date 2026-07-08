@@ -161,11 +161,14 @@ export {
 } from "./combat/qtePatternRegistry";
 export type { QtePatternValidationContext } from "./combat/qtePatternRegistry";
 export type {
+  KnownPatternMap,
+  KnownPatternState,
   PatternDef,
   PatternDefMap,
   PatternEvolution,
   PatternKind,
 } from "./combat/PatternDef";
+export { cloneKnownPatterns } from "./combat/QtePatternLearningSystem";
 export {
   cloneClassDef,
   getAllClassDefs,
@@ -397,4 +400,3 @@ export type {
   CommandMasteryDefMap,
   CommandMasteryEffects,
 } from "./mastery/CommandMasteryDef";
-

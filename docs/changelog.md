@@ -4,6 +4,14 @@ This file tracks meaningful project changes by commit-oriented slices.
 
 Keep entries short and practical. When a slice is committed, its changelog section should stay aligned with the commit title so the project history remains easy to read after restores or bisects.
 
+## 2026-07-08 - [ADD]: Learn QTE patterns from tomes
+
+- Add `effects.teachesPatternId` for consumable tome items, validate pattern references, expose the field in the item editor, and track tome-to-pattern references in the content graph.
+- Add `QtePatternLearningSystem` to learn patterns outside `GameplayEngine`, with requirement checks for global level and effective intelligence, clean rejection without consuming the tome, notices, logs, and UI toasts.
+- Persist learned patterns as `knownPatterns: patternId -> { timesUsed }`, bump saves to version `0.11`, and validate the new save state in storage.
+- Add `crosscut_tome` and `fireball_tome` to starter content as quest rewards while leaving `pyrosphere` evolution-only.
+- Unit-test the learning system, item validation, reference graph, save storage, engine integration, and full shipped content.
+
 ## 2026-07-08 - [ADD]: QTE pattern content family
 
 - Add JSON-authored QTE patterns with registry loading, multi-error validation, detached reads, and dev overlay support.

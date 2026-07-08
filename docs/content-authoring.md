@@ -190,8 +190,14 @@ Ground item presentation is resolved from item category so maps stay readable.
 
 Consumables declare their use effects in an `effects` block: `energyRestore`
 applies when the item is used during exploration, `hpRestore` when it is used
-during combat. A consumable without effects is rejected on use with a player
-notice.
+during combat, and `teachesPatternId` makes the item a single-use tome that
+teaches a QTE pattern. A consumable without effects is rejected on use with a
+player notice.
+
+Pattern tomes check the target pattern's `requiredPlayerLevel` and
+`requiredIntelligence` against the current player state. If requirements fail,
+the item is not consumed. If the pattern is already known, the tome is also not
+consumed.
 
 Equipment items use `category: "equipment"` plus an `equipment` block with a
 slot, an optional `weaponType` for weapon-slot items, and flat bonuses. Bonuses
@@ -215,9 +221,9 @@ numbers by hand.
 ## QTE Patterns
 
 QTE pattern files live under `src/content/qte-patterns/*.json`. They describe
-learnable techniques such as `fireball` or `crosscut`; the current slice owns
-the content family and editor loop, while gameplay learning, tomes, and save
-state are wired in later slices from ADR 0009.
+learnable techniques such as `fireball` or `crosscut`; tomes learn these
+patterns through item `effects.teachesPatternId`, while combat execution is
+wired in later slices from ADR 0009.
 
 A pattern definition owns:
 
@@ -234,6 +240,10 @@ Pattern evolution references must point to another authored pattern and cannot
 point back to the same `patternId`. Unknown patterns are intentionally inert:
 the registry returns `undefined` rather than a fallback, so a typo cannot be
 learned or executed silently.
+
+Learned pattern state is mutable save data, not content data:
+`knownPatterns: patternId -> { timesUsed }`. Tome learning creates an entry
+with `timesUsed: 0`; future combat execution increments it for evolution.
 
 ## Quests
 
