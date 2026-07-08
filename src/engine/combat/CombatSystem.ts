@@ -15,8 +15,11 @@ import {
 } from "./qteCombat";
 import {
   cloneCombatMinigameSpec,
+  computeMashTargetPresses,
+  resolveWeaponMinigameType,
   type CombatMinigameSpec,
 } from "./combatMinigame";
+import type { EquipmentDef } from "../items/ItemDef";
 
 export type CombatPhase =
   | "action_selection"
@@ -146,8 +149,7 @@ export class CombatSystem {
       ...this.state,
       opponentStats: cloneStats(this.state.opponentStats),
       minigame: spec ? cloneCombatMinigameSpec(spec) : undefined,
-      qteChallenge:
-        spec?.kind === "sequence" ? { ...spec.challenge } : undefined,
+      qteChallenge: spec ? { ...spec.challenge } : undefined,
       qteSequence: spec?.kind === "sequence" ? [...spec.sequence] : undefined,
     };
   }
@@ -283,15 +285,45 @@ export class CombatSystem {
       isPlayerActor: true,
     });
 
-    this.state.minigame = {
+    this.state.minigame = this.buildPlayerMinigame(challenge);
+
+    return { success: true };
+  }
+
+  /**
+   * Builds the minigame spec for the player's attack from the equipped weapon:
+   * an authored override or the archetype default selects the mechanic, while
+   * unarmed attacks fall back to the sequence race.
+   */
+  private buildPlayerMinigame(challenge: QteChallenge): CombatMinigameSpec {
+    const weaponEquipment = this.getEquippedWeaponEquipment();
+    const mechanic = resolveWeaponMinigameType(weaponEquipment);
+
+    if (mechanic === "mash") {
+      const speedAdvantage = challenge.actorSpeed - challenge.opponentSpeed;
+      return {
+        kind: "mash",
+        challenge,
+        arrow: generateQteSequence(1, () => this.random())[0],
+        targetPresses: computeMashTargetPresses(speedAdvantage),
+      };
+    }
+
+    return {
       kind: "sequence",
       challenge,
       sequence: generateQteSequence(challenge.sequenceLength, () =>
         this.random(),
       ),
     };
+  }
 
-    return { success: true };
+  private getEquippedWeaponEquipment(): EquipmentDef | undefined {
+    const weaponId = this.context.getPlayerInventory().equipped.weapon;
+    if (!weaponId) {
+      return undefined;
+    }
+    return getItemDef(weaponId).equipment;
   }
 
   private handleFleeAttempt(

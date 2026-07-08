@@ -90,6 +90,7 @@ export {
   CORE_ATTRIBUTE_OPTIONS,
   EQUIPMENT_ARMOR_SLOT_OPTIONS,
   EQUIPMENT_BONUS_OPTIONS,
+  EQUIPMENT_MINIGAME_OPTIONS,
   EQUIPMENT_SLOT_OPTIONS,
   EQUIPMENT_WEAPON_TYPE_OPTIONS,
   ITEM_CATEGORY_OPTIONS,
@@ -175,8 +176,14 @@ export type {
   CombatState,
   CombatSystemContext,
 } from "./combat/CombatSystem";
+export {
+  computeMashTargetPresses,
+  resolveWeaponMinigameType,
+  WEAPON_ARCHETYPE_MINIGAME,
+} from "./combat/combatMinigame";
 export type {
   CombatMinigameSpec,
+  MashMinigameSpec,
   SequenceMinigameSpec,
 } from "./combat/combatMinigame";
 export {
@@ -258,6 +265,7 @@ export type {
   EquipmentBonusKey,
   EquipmentBonusMap,
   EquipmentDef,
+  EquipmentMinigameType,
   EquipmentSlot,
   ItemDef,
   ItemDefMap,

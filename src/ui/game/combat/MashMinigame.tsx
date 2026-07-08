@@ -1,57 +1,55 @@
 import { useEffect, useRef, useState } from "react";
-import type { GameCommand, SequenceMinigameSpec } from "../../../engine";
+import type { GameCommand, MashMinigameSpec } from "../../../engine";
 import type { KeyboardLayout } from "../../controls/keyboardLayout";
 import type { AudioSettings } from "../../audio/audioSettings";
 import { playQteKeySound, playQteErrorSound } from "../../audio/menuAudio";
 import { ARROW_GLYPHS, mapKeyToDirection } from "./qteInput";
 
-type SequenceMinigameProps = {
+type MashMinigameProps = {
   phase: "player_qte" | "enemy_qte";
-  spec: SequenceMinigameSpec;
+  spec: MashMinigameSpec;
   executeCommand: (command: GameCommand) => void;
   keyboardLayout: KeyboardLayout;
   audioSettings: AudioSettings;
 };
 
 /**
- * Renders and drives the arrow-key sequence race (the original QTE mechanic).
+ * Renders and drives the hammer mash (the hammer archetype mechanic).
  *
- * The engine owns the challenge parameters (via the `sequence` minigame spec);
- * this component runs the real-time loop, matches keys, and reports the
- * normalized `SubmitCombatQte` result. It never decides damage or which
- * minigame runs.
+ * The engine owns the drawn arrow and the target press count (via the `mash`
+ * minigame spec); this component runs the real-time loop and reports the
+ * normalized `SubmitCombatQte` result using the same race mapping as the
+ * sequence mechanic. Pressing any arrow other than the drawn one is a mistake.
  */
-export function SequenceMinigame({
+export function MashMinigame({
   phase,
   spec,
   executeCommand,
   keyboardLayout,
   audioSettings,
-}: SequenceMinigameProps) {
-  const { challenge, sequence: qteSequence } = spec;
+}: MashMinigameProps) {
+  const { challenge, arrow, targetPresses } = spec;
 
-  const [playerInputIndex, setPlayerInputIndex] = useState(0);
+  const [presses, setPresses] = useState(0);
   const [timeElapsed, setTimeElapsed] = useState(0);
   const [mistakes, setMistakes] = useState(0);
 
   // Real-time loop refs to avoid stale closures
-  const playerInputIndexRef = useRef(0);
+  const pressesRef = useRef(0);
   const mistakesRef = useRef(0);
   const requestRef = useRef<number | null>(null);
   const startTimeRef = useRef<number | null>(null);
   const submittedRef = useRef(false);
 
   const opponentSpeed = challenge.opponentSpeed;
-  // Calculate opponent key delay: faster speed = shorter delay
   const opponentKeyDelayMs = Math.max(400, 1000 - opponentSpeed * 40);
-  const playerSequenceLength = challenge.playerSequenceLength;
   const opponentSequenceLength = challenge.opponentSequenceLength;
   const timeLimitMs = challenge.timeLimitMs;
 
-  // Reset states on phase changes
+  // Reset state on phase changes
   useEffect(() => {
-    setPlayerInputIndex(0);
-    playerInputIndexRef.current = 0;
+    setPresses(0);
+    pressesRef.current = 0;
     setTimeElapsed(0);
     setMistakes(0);
     mistakesRef.current = 0;
@@ -64,7 +62,7 @@ export function SequenceMinigame({
     }
   }, [phase]);
 
-  // Real-time animation loop for QTE timer and opponent progress
+  // Real-time animation loop for the timer and opponent progress
   useEffect(() => {
     function updateTimer(timestamp: number) {
       if (!startTimeRef.current) {
@@ -75,31 +73,13 @@ export function SequenceMinigame({
 
       const oppProgress = Math.floor(elapsed / opponentKeyDelayMs);
 
-      // Check if opponent finished first
-      if (oppProgress >= opponentSequenceLength && !submittedRef.current) {
+      const opponentFirst = oppProgress >= opponentSequenceLength;
+      const timedOut = elapsed >= timeLimitMs;
+      if ((opponentFirst || timedOut) && !submittedRef.current) {
         submittedRef.current = true;
         if (requestRef.current) cancelAnimationFrame(requestRef.current);
 
-        const currentIdx = playerInputIndexRef.current;
-        const advantage = -(playerSequenceLength - currentIdx);
-
-        executeCommand({
-          type: "SubmitCombatQte",
-          completed: false,
-          inputAdvantage: advantage,
-          mistakes: mistakesRef.current,
-        });
-        return;
-      }
-
-      // Check if time limit ran out
-      if (elapsed >= timeLimitMs && !submittedRef.current) {
-        submittedRef.current = true;
-        if (requestRef.current) cancelAnimationFrame(requestRef.current);
-
-        const currentIdx = playerInputIndexRef.current;
-        const advantage = -(playerSequenceLength - currentIdx);
-
+        const advantage = -(targetPresses - pressesRef.current);
         executeCommand({
           type: "SubmitCombatQte",
           completed: false,
@@ -122,34 +102,29 @@ export function SequenceMinigame({
   }, [
     phase,
     opponentKeyDelayMs,
-    playerSequenceLength,
     opponentSequenceLength,
     timeLimitMs,
+    targetPresses,
     executeCommand,
   ]);
 
-  // Player QTE keyboard input matching
+  // Keyboard input matching: hammer the drawn arrow, any other arrow is a miss
   useEffect(() => {
-    function handleQteKeys(e: KeyboardEvent) {
+    function handleMashKeys(e: KeyboardEvent) {
       const inputDir = mapKeyToDirection(e, keyboardLayout);
-
       if (!inputDir) return;
       e.preventDefault();
 
-      const currentIdx = playerInputIndexRef.current;
-      const expectedDir = qteSequence[currentIdx];
-
-      if (inputDir === expectedDir) {
+      if (inputDir === arrow) {
         if (audioSettings.soundEnabled) {
           playQteKeySound(inputDir);
         }
 
-        const nextIndex = currentIdx + 1;
-        setPlayerInputIndex(nextIndex);
-        playerInputIndexRef.current = nextIndex;
+        const nextPresses = pressesRef.current + 1;
+        setPresses(nextPresses);
+        pressesRef.current = nextPresses;
 
-        // Check if player completed the sequence
-        if (nextIndex >= playerSequenceLength && !submittedRef.current) {
+        if (nextPresses >= targetPresses && !submittedRef.current) {
           submittedRef.current = true;
           if (requestRef.current) cancelAnimationFrame(requestRef.current);
 
@@ -176,8 +151,7 @@ export function SequenceMinigame({
           submittedRef.current = true;
           if (requestRef.current) cancelAnimationFrame(requestRef.current);
 
-          // Failed immediately due to 2 mistakes
-          const advantage = -(playerSequenceLength - currentIdx);
+          const advantage = -(targetPresses - pressesRef.current);
           executeCommand({
             type: "SubmitCombatQte",
             completed: false,
@@ -188,12 +162,12 @@ export function SequenceMinigame({
       }
     }
 
-    window.addEventListener("keydown", handleQteKeys);
-    return () => window.removeEventListener("keydown", handleQteKeys);
+    window.addEventListener("keydown", handleMashKeys);
+    return () => window.removeEventListener("keydown", handleMashKeys);
   }, [
     phase,
-    qteSequence,
-    playerSequenceLength,
+    arrow,
+    targetPresses,
     opponentSequenceLength,
     timeElapsed,
     opponentKeyDelayMs,
@@ -210,24 +184,28 @@ export function SequenceMinigame({
   return (
     <div className="combat-qte-section">
       <p className="combat-phase-instruction">
-        {phase === "player_qte"
-          ? "Attack! Complete the QTE:"
-          : "Defend! Match the keys to block:"}
+        Attack! Hammer the key as fast as you can:
       </p>
 
-      {/* Arrow Keys Sequence */}
+      {/* Drawn arrow to hammer */}
       <div className="combat-qte-sequence">
-        {qteSequence.map((dir, idx) => {
-          let statusClass = "combat-keycap--pending";
-          if (idx < playerInputIndex) {
-            statusClass = "combat-keycap--success";
-          }
-          return (
-            <span key={idx} className={`combat-keycap ${statusClass}`}>
-              {ARROW_GLYPHS[dir] || dir.toUpperCase()}
-            </span>
-          );
-        })}
+        <span className="combat-keycap combat-keycap--mash">
+          {ARROW_GLYPHS[arrow] || arrow.toUpperCase()}
+        </span>
+      </div>
+
+      {/* Press progress */}
+      <div className="combat-mash-progress-row">
+        <span>Presses</span>
+        <div className="combat-bar-container">
+          <div
+            className="combat-bar-fill combat-bar-fill--hp"
+            style={{ width: `${Math.min(100, (presses / targetPresses) * 100)}%` }}
+          />
+          <span className="combat-bar-text">
+            {Math.min(presses, targetPresses)} / {targetPresses}
+          </span>
+        </div>
       </div>
 
       {/* Mistakes display */}
@@ -245,7 +223,7 @@ export function SequenceMinigame({
           <div className="combat-race-bar">
             <div
               className="combat-race-fill combat-race-fill--player"
-              style={{ width: `${(playerInputIndex / playerSequenceLength) * 100}%` }}
+              style={{ width: `${Math.min(100, (presses / targetPresses) * 100)}%` }}
             />
           </div>
         </div>

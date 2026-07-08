@@ -1466,6 +1466,25 @@
   transform: translateY(2px);
 }
 
+.combat-keycap--mash {
+  width: 4.5rem;
+  height: 4.5rem;
+  font-size: 2.4rem;
+  background: #f9e2af;
+  color: #11111b;
+  border-color: #f9e2af;
+  box-shadow: 0 4px 0 #fab387;
+}
+
+.combat-mash-progress-row {
+  width: 100%;
+  max-width: 28rem;
+  display: grid;
+  grid-template-columns: 6rem 1fr;
+  align-items: center;
+  gap: var(--space-2);
+}
+
 .combat-race-container {
   width: 100%;
   max-width: 28rem;

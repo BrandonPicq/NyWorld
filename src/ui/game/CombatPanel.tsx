@@ -19,6 +19,7 @@ import { TerminalButton } from "../components/TerminalButton";
 import { CombatActionDetailsModal } from "./CombatActionDetailsModal";
 import { CombatItemPickerModal } from "./CombatItemPickerModal";
 import { SequenceMinigame } from "./combat/SequenceMinigame";
+import { MashMinigame } from "./combat/MashMinigame";
 
 type CombatMenuAction = {
   id: CombatActionId;
@@ -340,6 +341,17 @@ export function CombatPanel({
           {(phase === "player_qte" || phase === "enemy_qte") &&
             minigame?.kind === "sequence" && (
               <SequenceMinigame
+                audioSettings={audioSettings}
+                executeCommand={executeCommand}
+                keyboardLayout={keyboardLayout}
+                phase={phase}
+                spec={minigame}
+              />
+            )}
+
+          {(phase === "player_qte" || phase === "enemy_qte") &&
+            minigame?.kind === "mash" && (
+              <MashMinigame
                 audioSettings={audioSettings}
                 executeCommand={executeCommand}
                 keyboardLayout={keyboardLayout}

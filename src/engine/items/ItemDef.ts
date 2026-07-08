@@ -6,6 +6,13 @@ import type {
 
 export type EquipmentSlot = "weapon" | EquipmentArmorSlot;
 
+/**
+ * Combat minigame a weapon drives when its wielder attacks. Authored as an
+ * optional override on a weapon; when omitted the mechanic is derived from the
+ * weapon archetype (see `resolveWeaponMinigameType`).
+ */
+export type EquipmentMinigameType = "sequence" | "mash";
+
 export type EquipmentBonusKey =
   | "attributes.strength"
   | "attributes.vitality"
@@ -42,6 +49,11 @@ export interface ItemEffects {
 export interface EquipmentDef {
   slot: EquipmentSlot;
   weaponType?: EquipmentWeaponType;
+  /**
+   * Optional override of the weapon's combat minigame. Only valid on weapons;
+   * when omitted the archetype default applies.
+   */
+  minigame?: EquipmentMinigameType;
   bonuses: EquipmentBonusMap;
 }
 

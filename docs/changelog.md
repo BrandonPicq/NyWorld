@@ -4,6 +4,14 @@ This file tracks meaningful project changes by commit-oriented slices.
 
 Keep entries short and practical. When a slice is committed, its changelog section should stay aligned with the commit title so the project history remains easy to read after restores or bisects.
 
+## 2026-07-08 - [ADD]: Weapon minigame profiles and the mash minigame
+
+- Resolve the player's combat minigame from the equipped weapon: an authored `EquipmentDef.minigame` override wins, else the archetype default (`hammer` → mash, the rest → sequence), else the sequence race for unarmed/non-weapon (`resolveWeaponMinigameType` in `engine/combat/combatMinigame.ts`).
+- Add the `mash` minigame spec: one randomly-drawn arrow hammered to a speed-derived target `clamp(12 - trunc(speedAdvantage/5)*2, 6, 20)` under the existing time budget, wrong arrow counts as a mistake (global 1/-20 %, 2/fail), with the same race-based `inputAdvantage` mapping and opponent progress as the sequence.
+- Add the `MashMinigame` UI component (drawn arrow, press bar, opponent race, countdown) and route it from `CombatPanel`; share the arrow/WASD/ZQSD key mapping between minigames via `qteInput.mapKeyToDirection`.
+- Validate the weapon-only `minigame` override in the item catalog and expose it in the editor item form.
+- Unit-test the mechanic resolution (incl. shipped tier-0 weapons), the mash target derivation, the key mapping, and the override validation.
+
 ## 2026-07-08 - [REFACTOR]: Extract a combat minigame abstraction
 
 - Introduce `CombatMinigameSpec` in `engine/combat/combatMinigame.ts` with its single `sequence` variant wrapping the QTE challenge and arrow sequence; `CombatState` now carries the engine-owned `minigame` spec, keeping `qteChallenge`/`qteSequence` as backward-compatible snapshot mirrors.

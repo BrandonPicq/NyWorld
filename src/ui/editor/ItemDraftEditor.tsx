@@ -1,12 +1,14 @@
 import {
   CONTENT_TYPES,
   EQUIPMENT_BONUS_OPTIONS,
+  EQUIPMENT_MINIGAME_OPTIONS,
   EQUIPMENT_SLOT_OPTIONS,
   EQUIPMENT_WEAPON_TYPE_OPTIONS,
   formatContentDiagnostic,
   ITEM_CATEGORY_OPTIONS,
   validateItemCatalog,
   type EquipmentBonusKey,
+  type EquipmentMinigameType,
   type EquipmentSlot,
   type EquipmentWeaponType,
   type ContentRef,
@@ -307,6 +309,34 @@ function EquipmentEditor({
             {EQUIPMENT_WEAPON_TYPE_OPTIONS.map((weaponType) => (
               <option key={weaponType} value={weaponType}>
                 {weaponType}
+              </option>
+            ))}
+          </select>
+        </label>
+
+        <label className="editor-field">
+          <span>Minigame</span>
+          <select
+            disabled={isSaving || equipment.slot !== "weapon"}
+            onChange={(event) => {
+              const value = event.target.value;
+              onUpdateItem((current) => ({
+                ...current,
+                equipment: {
+                  ...(current.equipment ?? equipment),
+                  slot: "weapon",
+                  minigame: value
+                    ? (value as EquipmentMinigameType)
+                    : undefined,
+                },
+              }));
+            }}
+            value={equipment.minigame ?? ""}
+          >
+            <option value="">archetype default</option>
+            {EQUIPMENT_MINIGAME_OPTIONS.map((minigame) => (
+              <option key={minigame} value={minigame}>
+                {minigame}
               </option>
             ))}
           </select>

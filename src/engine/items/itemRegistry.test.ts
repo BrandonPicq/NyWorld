@@ -196,6 +196,66 @@ describe("validateItemCatalog", () => {
     );
   });
 
+  it("accepts a valid weapon minigame override", () => {
+    expect(
+      validateItemCatalog({
+        light_hammer: {
+          name: "Light Hammer",
+          description: "A hammer light enough to swing in a sequence.",
+          category: "equipment",
+          defaultQuantity: 1,
+          equipment: {
+            slot: "weapon",
+            weaponType: "hammer",
+            minigame: "sequence",
+            bonuses: { "combat.attack": 1 },
+          },
+        },
+      }),
+    ).toEqual([]);
+  });
+
+  it("rejects an invalid or misplaced minigame override", () => {
+    const diagnostics = validateItemCatalog({
+      bad_minigame_sword: {
+        name: "Bad Minigame Sword",
+        description: "It wants a minigame that does not exist.",
+        category: "equipment",
+        defaultQuantity: 1,
+        equipment: {
+          slot: "weapon",
+          weaponType: "sword",
+          minigame: "rhythm",
+          bonuses: { "combat.attack": 1 },
+        },
+      },
+      minigame_hat: {
+        name: "Minigame Hat",
+        description: "Armor cannot drive a minigame.",
+        category: "equipment",
+        defaultQuantity: 1,
+        equipment: {
+          slot: "head",
+          minigame: "mash",
+          bonuses: { "combat.defense": 1 },
+        },
+      },
+    });
+
+    expect(diagnostics).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          contentId: "bad_minigame_sword",
+          path: "equipment.minigame",
+        }),
+        expect.objectContaining({
+          contentId: "minigame_hat",
+          path: "equipment.minigame",
+        }),
+      ]),
+    );
+  });
+
   it("reports empty item ids", () => {
     const diagnostics = validateItemCatalog({
       "": {

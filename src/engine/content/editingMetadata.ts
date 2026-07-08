@@ -5,6 +5,7 @@ import type {
 } from "../classes/ClassDef";
 import type {
   EquipmentBonusKey,
+  EquipmentMinigameType,
   EquipmentSlot,
 } from "../items/ItemDef";
 import type { NpcImportance, NpcRace } from "../npcs/NpcDef";
@@ -55,6 +56,11 @@ export const EQUIPMENT_SLOT_OPTIONS = [
   "weapon",
   ...EQUIPMENT_ARMOR_SLOT_OPTIONS,
 ] as const satisfies readonly EquipmentSlot[];
+
+export const EQUIPMENT_MINIGAME_OPTIONS = [
+  "sequence",
+  "mash",
+] as const satisfies readonly EquipmentMinigameType[];
 
 export const EQUIPMENT_BONUS_OPTIONS = [
   "attributes.strength",

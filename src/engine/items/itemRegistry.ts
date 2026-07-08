@@ -4,6 +4,7 @@ import { formatContentDiagnostic } from "../content/ContentDiagnostic";
 import { CONTENT_TYPES } from "../content/contentTypes";
 import {
   EQUIPMENT_BONUS_OPTIONS,
+  EQUIPMENT_MINIGAME_OPTIONS,
   EQUIPMENT_SLOT_OPTIONS,
   EQUIPMENT_WEAPON_TYPE_OPTIONS,
   ITEM_CATEGORY_OPTIONS,
@@ -240,6 +241,27 @@ function validateItemEquipment(
       "equipment.weaponType",
       `Item "${itemId}" declares weaponType but is not in the weapon slot.`,
     );
+  }
+
+  if (value.minigame !== undefined) {
+    if (value.slot !== "weapon") {
+      addItemError(
+        diagnostics,
+        itemId,
+        "equipment.minigame",
+        `Item "${itemId}" declares a minigame override but is not in the weapon slot.`,
+      );
+    } else if (
+      typeof value.minigame !== "string" ||
+      !(EQUIPMENT_MINIGAME_OPTIONS as readonly string[]).includes(value.minigame)
+    ) {
+      addItemError(
+        diagnostics,
+        itemId,
+        "equipment.minigame",
+        `Item "${itemId}" has invalid minigame override "${String(value.minigame)}". Expected one of: ${EQUIPMENT_MINIGAME_OPTIONS.join(", ")}.`,
+      );
+    }
   }
 
   validateEquipmentBonuses(itemId, value.bonuses, diagnostics);
