@@ -177,14 +177,21 @@ export type {
   CombatSystemContext,
 } from "./combat/CombatSystem";
 export {
+  classifyTimingPress,
   computeMashTargetPresses,
+  computeTimingWindows,
+  mapTimingVolley,
   resolveWeaponMinigameType,
+  DEFAULT_VOLLEY_SIZE,
+  TIMING_BASE_SWEEP_MS,
   WEAPON_ARCHETYPE_MINIGAME,
 } from "./combat/combatMinigame";
 export type {
   CombatMinigameSpec,
   MashMinigameSpec,
   SequenceMinigameSpec,
+  TimingMinigameSpec,
+  TimingShotOutcome,
 } from "./combat/combatMinigame";
 export {
   cloneEnemyStats,

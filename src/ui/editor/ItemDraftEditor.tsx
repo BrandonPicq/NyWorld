@@ -341,6 +341,30 @@ function EquipmentEditor({
             ))}
           </select>
         </label>
+
+        <label className="editor-field">
+          <span>Volley Size</span>
+          <input
+            disabled={isSaving || equipment.slot !== "weapon"}
+            min={1}
+            onChange={(event) => {
+              const raw = event.target.value.trim();
+              const parsed = Number(raw);
+              onUpdateItem((current) => ({
+                ...current,
+                equipment: {
+                  ...(current.equipment ?? equipment),
+                  slot: "weapon",
+                  volleySize:
+                    raw && Number.isFinite(parsed) ? parsed : undefined,
+                },
+              }));
+            }}
+            step={1}
+            type="number"
+            value={equipment.volleySize ?? ""}
+          />
+        </label>
       </div>
 
       <div className="editor-stat-grid">

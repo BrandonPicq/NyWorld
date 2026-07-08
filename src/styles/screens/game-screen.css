@@ -1485,6 +1485,78 @@
   gap: var(--space-2);
 }
 
+.combat-timing-pip {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  font-size: 1.3rem;
+  font-weight: bold;
+  border-radius: 6px;
+  border: 2px solid var(--color-border);
+  background: #313244;
+  color: #cdd6f4;
+}
+
+.combat-timing-pip--pending {
+  background: #313244;
+  color: #cdd6f4;
+}
+
+.combat-timing-pip--great {
+  background: #a6e3a1;
+  color: #11111b;
+  border-color: #a6e3a1;
+}
+
+.combat-timing-pip--critical {
+  background: #f9e2af;
+  color: #11111b;
+  border-color: #f9e2af;
+}
+
+.combat-timing-pip--rate {
+  background: #f38ba8;
+  color: #11111b;
+  border-color: #f38ba8;
+}
+
+.combat-timing-gauge {
+  position: relative;
+  width: 100%;
+  max-width: 28rem;
+  height: 2rem;
+  background: #11111b;
+  border: 1px solid var(--color-border-muted);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.combat-timing-window {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+}
+
+.combat-timing-window--great {
+  background: rgba(166, 227, 161, 0.35);
+}
+
+.combat-timing-window--critical {
+  background: rgba(249, 226, 175, 0.6);
+}
+
+.combat-timing-cursor {
+  position: absolute;
+  top: -2px;
+  bottom: -2px;
+  width: 3px;
+  margin-left: -1.5px;
+  background: #cdd6f4;
+  box-shadow: 0 0 4px #cdd6f4;
+}
+
 .combat-race-container {
   width: 100%;
   max-width: 28rem;

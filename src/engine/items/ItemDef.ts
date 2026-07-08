@@ -11,7 +11,7 @@ export type EquipmentSlot = "weapon" | EquipmentArmorSlot;
  * optional override on a weapon; when omitted the mechanic is derived from the
  * weapon archetype (see `resolveWeaponMinigameType`).
  */
-export type EquipmentMinigameType = "sequence" | "mash";
+export type EquipmentMinigameType = "sequence" | "mash" | "timing";
 
 export type EquipmentBonusKey =
   | "attributes.strength"
@@ -54,6 +54,11 @@ export interface EquipmentDef {
    * when omitted the archetype default applies.
    */
   minigame?: EquipmentMinigameType;
+  /**
+   * Number of shots in the bow timing volley (defaults to 3). Only meaningful
+   * for weapons that run the `timing` minigame.
+   */
+  volleySize?: number;
   bonuses: EquipmentBonusMap;
 }
 

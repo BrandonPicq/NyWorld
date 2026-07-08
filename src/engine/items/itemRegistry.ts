@@ -264,6 +264,28 @@ function validateItemEquipment(
     }
   }
 
+  if (value.volleySize !== undefined) {
+    if (value.slot !== "weapon") {
+      addItemError(
+        diagnostics,
+        itemId,
+        "equipment.volleySize",
+        `Item "${itemId}" declares a volleySize but is not in the weapon slot.`,
+      );
+    } else if (
+      typeof value.volleySize !== "number" ||
+      !Number.isInteger(value.volleySize) ||
+      value.volleySize <= 0
+    ) {
+      addItemError(
+        diagnostics,
+        itemId,
+        "equipment.volleySize",
+        `Item "${itemId}" has invalid volleySize. Expected a positive integer.`,
+      );
+    }
+  }
+
   validateEquipmentBonuses(itemId, value.bonuses, diagnostics);
 }
 

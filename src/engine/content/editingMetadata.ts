@@ -60,6 +60,7 @@ export const EQUIPMENT_SLOT_OPTIONS = [
 export const EQUIPMENT_MINIGAME_OPTIONS = [
   "sequence",
   "mash",
+  "timing",
 ] as const satisfies readonly EquipmentMinigameType[];
 
 export const EQUIPMENT_BONUS_OPTIONS = [

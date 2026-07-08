@@ -4,6 +4,14 @@ This file tracks meaningful project changes by commit-oriented slices.
 
 Keep entries short and practical. When a slice is committed, its changelog section should stay aligned with the commit title so the project history remains easy to read after restores or bisects.
 
+## 2026-07-08 - [ADD]: Timing volley minigame for bows
+
+- Map the bow archetype to a new `timing` minigame: a volley of `volleySize` shots (authored per bow, default 3), each timed against a cursor sweeping the gauge in a base 1200 ms, with great/critical windows sized by the agility gap and centered on the gauge.
+- Normalize the volley to the QTE contest: critical +2 / great +1 / miss −2 summed into `inputAdvantage`, `completed` when at least one shot lands, no mistakes (`computeTimingWindows`, `classifyTimingPress`, `mapTimingVolley` in `engine/combat/combatMinigame.ts`).
+- Add the `TimingMinigame` UI component (sweeping cursor, great/critical zones, per-shot pips) and route it from `CombatPanel`; timing carries no opponent race, so the snapshot's `qteChallenge` mirror is derived only for the race-based mechanics.
+- Add and validate the weapon-only `EquipmentDef.volleySize`, and expose it in the editor item form.
+- Unit-test the window sizing, press classification, volley mapping, and the bow → timing resolution (incl. the shipped `training_bow`).
+
 ## 2026-07-08 - [ADD]: Weapon minigame profiles and the mash minigame
 
 - Resolve the player's combat minigame from the equipped weapon: an authored `EquipmentDef.minigame` override wins, else the archetype default (`hammer` → mash, the rest → sequence), else the sequence race for unarmed/non-weapon (`resolveWeaponMinigameType` in `engine/combat/combatMinigame.ts`).

@@ -256,6 +256,47 @@ describe("validateItemCatalog", () => {
     );
   });
 
+  it("rejects an invalid or misplaced volleySize", () => {
+    const diagnostics = validateItemCatalog({
+      bad_volley_bow: {
+        name: "Bad Volley Bow",
+        description: "It wants to fire half a shot.",
+        category: "equipment",
+        defaultQuantity: 1,
+        equipment: {
+          slot: "weapon",
+          weaponType: "bow",
+          volleySize: 0,
+          bonuses: { "combat.attack": 1 },
+        },
+      },
+      volley_boots: {
+        name: "Volley Boots",
+        description: "Boots cannot fire a volley.",
+        category: "equipment",
+        defaultQuantity: 1,
+        equipment: {
+          slot: "feet",
+          volleySize: 3,
+          bonuses: { "combat.defense": 1 },
+        },
+      },
+    });
+
+    expect(diagnostics).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          contentId: "bad_volley_bow",
+          path: "equipment.volleySize",
+        }),
+        expect.objectContaining({
+          contentId: "volley_boots",
+          path: "equipment.volleySize",
+        }),
+      ]),
+    );
+  });
+
   it("reports empty item ids", () => {
     const diagnostics = validateItemCatalog({
       "": {

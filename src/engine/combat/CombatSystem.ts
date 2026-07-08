@@ -16,7 +16,10 @@ import {
 import {
   cloneCombatMinigameSpec,
   computeMashTargetPresses,
+  computeTimingWindows,
   resolveWeaponMinigameType,
+  DEFAULT_VOLLEY_SIZE,
+  TIMING_BASE_SWEEP_MS,
   type CombatMinigameSpec,
 } from "./combatMinigame";
 import type { EquipmentDef } from "../items/ItemDef";
@@ -145,11 +148,13 @@ export class CombatSystem {
     }
 
     const spec = this.state.minigame;
+    const raceChallenge =
+      spec && spec.kind !== "timing" ? spec.challenge : undefined;
     return {
       ...this.state,
       opponentStats: cloneStats(this.state.opponentStats),
       minigame: spec ? cloneCombatMinigameSpec(spec) : undefined,
-      qteChallenge: spec ? { ...spec.challenge } : undefined,
+      qteChallenge: raceChallenge ? { ...raceChallenge } : undefined,
       qteSequence: spec?.kind === "sequence" ? [...spec.sequence] : undefined,
     };
   }
@@ -285,7 +290,11 @@ export class CombatSystem {
       isPlayerActor: true,
     });
 
-    this.state.minigame = this.buildPlayerMinigame(challenge);
+    this.state.minigame = this.buildPlayerMinigame(
+      challenge,
+      playerStats,
+      opponentStats,
+    );
 
     return { success: true };
   }
@@ -295,7 +304,11 @@ export class CombatSystem {
    * an authored override or the archetype default selects the mechanic, while
    * unarmed attacks fall back to the sequence race.
    */
-  private buildPlayerMinigame(challenge: QteChallenge): CombatMinigameSpec {
+  private buildPlayerMinigame(
+    challenge: QteChallenge,
+    playerStats: Stats,
+    opponentStats: Stats,
+  ): CombatMinigameSpec {
     const weaponEquipment = this.getEquippedWeaponEquipment();
     const mechanic = resolveWeaponMinigameType(weaponEquipment);
 
@@ -306,6 +319,19 @@ export class CombatSystem {
         challenge,
         arrow: generateQteSequence(1, () => this.random())[0],
         targetPresses: computeMashTargetPresses(speedAdvantage),
+      };
+    }
+
+    if (mechanic === "timing") {
+      const agilityGap =
+        playerStats.attributes.agility - opponentStats.attributes.agility;
+      const { greatWindow, criticalWindow } = computeTimingWindows(agilityGap);
+      return {
+        kind: "timing",
+        volleySize: weaponEquipment?.volleySize ?? DEFAULT_VOLLEY_SIZE,
+        sweepMs: TIMING_BASE_SWEEP_MS,
+        greatWindow,
+        criticalWindow,
       };
     }
 

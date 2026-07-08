@@ -12,7 +12,10 @@ import type { QteChallenge } from "./qteCombat";
  * React renders a spec and collects input, it never decides which minigame
  * runs.
  */
-export type CombatMinigameSpec = SequenceMinigameSpec | MashMinigameSpec;
+export type CombatMinigameSpec =
+  | SequenceMinigameSpec
+  | MashMinigameSpec
+  | TimingMinigameSpec;
 
 /**
  * The original arrow-key sequence race: the acting side types an ordered
@@ -42,8 +45,28 @@ export interface MashMinigameSpec {
 }
 
 /**
- * Default minigame per weapon archetype (ADR 0009). Bow becomes `timing` in a
- * later slice; it stays a sequence race until then.
+ * The bow timing volley: the acting side looses `volleySize` shots, each timed
+ * against a cursor sweeping the gauge. Pressing while the cursor is inside the
+ * great/critical window scores the shot; the outcome maps straight to the
+ * QTE contest advantage (no opponent race, no mistakes).
+ */
+export interface TimingMinigameSpec {
+  kind: "timing";
+  /** Number of shots in the volley. */
+  volleySize: number;
+  /** Time for the cursor to sweep the whole gauge, per shot, in ms. */
+  sweepMs: number;
+  /** Width of the great window as a fraction of the gauge (centered). */
+  greatWindow: number;
+  /** Width of the critical window as a fraction of the gauge (centered). */
+  criticalWindow: number;
+}
+
+/** How a single timing shot lands. */
+export type TimingShotOutcome = "critical" | "great" | "rate";
+
+/**
+ * Default minigame per weapon archetype (ADR 0009).
  */
 export const WEAPON_ARCHETYPE_MINIGAME: Record<
   EquipmentWeaponType,
@@ -51,9 +74,15 @@ export const WEAPON_ARCHETYPE_MINIGAME: Record<
 > = {
   sword: "sequence",
   hammer: "mash",
-  bow: "sequence",
+  bow: "timing",
   staff: "sequence",
 };
+
+/** Base sweep time for one bow timing shot, in milliseconds (ADR 0009). */
+export const TIMING_BASE_SWEEP_MS = 1200;
+
+/** Default number of shots in a bow volley when the weapon omits it. */
+export const DEFAULT_VOLLEY_SIZE = 3;
 
 /**
  * Resolves the minigame mechanic for an equipped weapon: an authored override
@@ -82,6 +111,66 @@ export function computeMashTargetPresses(speedAdvantage: number): number {
   return clamp(12 - Math.trunc(speedAdvantage / 5) * 2, 6, 20);
 }
 
+/**
+ * Great/critical window widths (as gauge fractions) for the timing volley,
+ * sized by the acting side's agility gap over the defender (ADR 0009). The
+ * critical window is centered inside the great window.
+ */
+export function computeTimingWindows(agilityGap: number): {
+  greatWindow: number;
+  criticalWindow: number;
+} {
+  return {
+    greatWindow: clamp(0.26 + 0.02 * agilityGap, 0.14, 0.4),
+    criticalWindow: clamp(0.08 + 0.01 * agilityGap, 0.04, 0.16),
+  };
+}
+
+/**
+ * Classifies a timing shot by the cursor position (0..1) at press time. Both
+ * windows are centered on the middle of the gauge.
+ */
+export function classifyTimingPress(
+  position: number,
+  greatWindow: number,
+  criticalWindow: number,
+): TimingShotOutcome {
+  const distanceFromCenter = Math.abs(position - 0.5);
+  if (distanceFromCenter <= criticalWindow / 2) {
+    return "critical";
+  }
+  if (distanceFromCenter <= greatWindow / 2) {
+    return "great";
+  }
+  return "rate";
+}
+
+/**
+ * Normalizes a finished volley to the QTE contest contract: critical +2,
+ * great +1, rate -2 summed into `inputAdvantage`; `completed` is true when at
+ * least one shot did not miss; timing carries no mistakes (ADR 0009).
+ */
+export function mapTimingVolley(outcomes: TimingShotOutcome[]): {
+  completed: boolean;
+  inputAdvantage: number;
+  mistakes: number;
+} {
+  const shotValue: Record<TimingShotOutcome, number> = {
+    critical: 2,
+    great: 1,
+    rate: -2,
+  };
+  const inputAdvantage = outcomes.reduce(
+    (sum, outcome) => sum + shotValue[outcome],
+    0,
+  );
+  return {
+    completed: outcomes.some((outcome) => outcome !== "rate"),
+    inputAdvantage,
+    mistakes: 0,
+  };
+}
+
 /** Detached deep copy of a minigame spec, safe to expose in a snapshot. */
 export function cloneCombatMinigameSpec(
   spec: CombatMinigameSpec,
@@ -99,6 +188,14 @@ export function cloneCombatMinigameSpec(
         challenge: { ...spec.challenge },
         arrow: spec.arrow,
         targetPresses: spec.targetPresses,
+      };
+    case "timing":
+      return {
+        kind: "timing",
+        volleySize: spec.volleySize,
+        sweepMs: spec.sweepMs,
+        greatWindow: spec.greatWindow,
+        criticalWindow: spec.criticalWindow,
       };
   }
 }
