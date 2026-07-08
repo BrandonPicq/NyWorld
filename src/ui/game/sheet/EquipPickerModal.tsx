@@ -114,6 +114,7 @@ export function EquipPickerModal({
                     className={`stats-modal__inventory-row ${
                       isSelected ? "stats-modal__inventory-row--selected" : ""
                     }`}
+                    data-keyboard-blocking-hover="true"
                     onClick={() => {
                       setSelectedIndex(index);
                       if (audioSettings.soundEnabled && index !== selectedIndex) {

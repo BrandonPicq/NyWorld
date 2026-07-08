@@ -15,6 +15,7 @@ import {
 } from "../../engine";
 import { TerminalButton } from "../components/TerminalButton";
 import { getNextTabIndex, resolveTabKeyAction } from "../menu/tabNavigation";
+import { consumeIfPointerOverKeyboardBlockingElement } from "../menu/pointerKeyboardBlock";
 import { ActionsTab } from "./actions/ActionsTab";
 import { ClassTab } from "./classes/ClassTab";
 import { ContentTab } from "./ContentTab";
@@ -201,6 +202,10 @@ export function ContentEditorScreen({
     });
 
     if (action.kind === "none" || action.kind === "cancel") {
+      return;
+    }
+
+    if (consumeIfPointerOverKeyboardBlockingElement(event)) {
       return;
     }
 

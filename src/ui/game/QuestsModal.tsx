@@ -274,6 +274,7 @@ export function QuestsModal({ audioSettings, isOpen, snapshot, onClose }: Quests
                       className={`quests-modal__list-button ${
                         isSelected ? "quests-modal__list-button--selected" : ""
                       }`}
+                      data-keyboard-blocking-hover="true"
                       onClick={() => {
                         setSelectedIndex(index);
                         handleSelectQuest(quest.questId);
@@ -308,6 +309,7 @@ export function QuestsModal({ audioSettings, isOpen, snapshot, onClose }: Quests
                       className={`quests-modal__list-button quests-modal__list-button--completed ${
                         isSelected ? "quests-modal__list-button--selected" : ""
                       }`}
+                      data-keyboard-blocking-hover="true"
                       onClick={() => {
                         setSelectedIndex(index);
                         handleSelectQuest(questId);

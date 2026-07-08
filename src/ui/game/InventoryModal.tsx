@@ -8,6 +8,7 @@ import { useMenuKeyboard } from "../hooks/useMenuKeyboard";
 import { playMenuMoveSound } from "../audio/menuAudio";
 import { getCategoriesPresent } from "./inventoryHelper";
 import { getNextTabIndex, resolveTabKeyAction } from "../menu/tabNavigation";
+import { consumeIfPointerOverKeyboardBlockingElement } from "../menu/pointerKeyboardBlock";
 
 type InventoryModalProps = {
   audioSettings: AudioSettings;
@@ -125,6 +126,10 @@ export function InventoryModal({
     });
 
     if (tabAction.kind === "move") {
+      if (consumeIfPointerOverKeyboardBlockingElement(event)) {
+        return;
+      }
+
       event.preventDefault();
       event.stopPropagation();
       const activeIndex = Math.max(0, inventoryTabs.indexOf(activeTab));
@@ -207,6 +212,7 @@ export function InventoryModal({
                     className={`stats-modal__inventory-row ${
                       isSelected ? "stats-modal__inventory-row--selected" : ""
                     }`}
+                    data-keyboard-blocking-hover="true"
                     onClick={() => {
                       setSelectedIndex(index);
                       if (audioSettings.soundEnabled && index !== selectedIndex) {

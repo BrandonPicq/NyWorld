@@ -17,7 +17,10 @@
   cursor: pointer;
 }
 
-.terminal-button:hover:not(:disabled),
+.terminal-button:hover:not(:disabled) {
+  background: var(--color-button-background-hover);
+}
+
 .terminal-button:focus-visible,
 .terminal-button[data-selected="true"] {
   outline: var(--focus-ring-width) solid var(--color-text);

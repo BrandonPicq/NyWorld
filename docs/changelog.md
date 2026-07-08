@@ -4,6 +4,13 @@ This file tracks meaningful project changes by commit-oriented slices.
 
 Keep entries short and practical. When a slice is committed, its changelog section should stay aligned with the commit title so the project history remains easy to read after restores or bisects.
 
+## 2026-07-08 - [FIX]: Block menu keyboard navigation while hovering commands
+
+- Share the pointer-hover keyboard guard across game and editor menu surfaces.
+- Mark custom clickable rows and slot buttons as hover-blocking commands so arrow and confirm keys cannot move a second selection underneath the mouse.
+- Separate hover styling from selected/focused styling so tabs and list entries no longer look like multiple active selections.
+- Unit-test the pointer-hover keyboard guard.
+
 ## 2026-07-08 - [ADD]: Keyboard navigation for the editor
 
 - Add roving-tabindex keyboard navigation to the editor tab bar, including arrow keys and numeric tab shortcuts.

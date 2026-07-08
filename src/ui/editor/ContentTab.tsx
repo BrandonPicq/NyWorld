@@ -5,6 +5,7 @@ import { IdentifierLabel } from "../components/IdentifierLabel";
 import { ScrollRegion } from "../components/ScrollRegion";
 import { TerminalButton } from "../components/TerminalButton";
 import { TerminalPanel } from "../components/TerminalPanel";
+import { consumeIfPointerOverKeyboardBlockingElement } from "../menu/pointerKeyboardBlock";
 import {
   DiagnosticList,
   type EditorContentNavigationTarget,
@@ -87,6 +88,10 @@ export function ContentTab({ draft, onNavigate }: ContentTabProps) {
 
   function handleBrowserKeyDown(event: KeyboardEvent<HTMLElement>): void {
     if (event.key === "ArrowDown") {
+      if (consumeIfPointerOverKeyboardBlockingElement(event)) {
+        return;
+      }
+
       event.preventDefault();
       event.stopPropagation();
       moveKeyboardEntry(1);
@@ -94,6 +99,10 @@ export function ContentTab({ draft, onNavigate }: ContentTabProps) {
     }
 
     if (event.key === "ArrowUp") {
+      if (consumeIfPointerOverKeyboardBlockingElement(event)) {
+        return;
+      }
+
       event.preventDefault();
       event.stopPropagation();
       moveKeyboardEntry(-1);
@@ -105,6 +114,10 @@ export function ContentTab({ draft, onNavigate }: ContentTabProps) {
       if (!entry) {
         return;
       }
+      if (consumeIfPointerOverKeyboardBlockingElement(event)) {
+        return;
+      }
+
       event.preventDefault();
       event.stopPropagation();
       setSelectedRef(entry.ref);

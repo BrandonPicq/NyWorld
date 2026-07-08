@@ -23,6 +23,7 @@ import { EquipmentTab } from "./sheet/EquipmentTab";
 import { MasteryTab } from "./sheet/MasteryTab";
 import { AcademyTab } from "./sheet/AcademyTab";
 import { getNextTabIndex, resolveTabKeyAction } from "../menu/tabNavigation";
+import { consumeIfPointerOverKeyboardBlockingElement } from "../menu/pointerKeyboardBlock";
 
 type CharacterSheetModalProps = {
   audioSettings: AudioSettings;
@@ -102,6 +103,13 @@ export function CharacterSheetModal({
     });
 
     if (action.kind === "none") {
+      return;
+    }
+
+    if (
+      action.kind !== "cancel" &&
+      consumeIfPointerOverKeyboardBlockingElement(event)
+    ) {
       return;
     }
 

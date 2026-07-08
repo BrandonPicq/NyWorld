@@ -4,6 +4,7 @@ import {
   getNextEnabledMenuItemIndex,
   type MenuItem,
 } from "../menu/menuNavigation";
+import { isPointerLockedMenuKey } from "../menu/pointerKeyboardBlock";
 import { TerminalButton } from "./TerminalButton";
 
 export type TerminalMenuItem = MenuItem;
@@ -192,17 +193,5 @@ export function TerminalMenu({
         );
       })}
     </nav>
-  );
-}
-
-function isPointerLockedMenuKey(key: string): boolean {
-  return (
-    key === "ArrowDown" ||
-    key === "ArrowUp" ||
-    key === "ArrowLeft" ||
-    key === "ArrowRight" ||
-    key === "Enter" ||
-    key === " " ||
-    key === "Spacebar"
   );
 }

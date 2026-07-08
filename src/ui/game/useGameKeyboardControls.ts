@@ -4,6 +4,7 @@ import { getGameCommandForKey } from "../controls/gameInput";
 import type { KeyboardLayout } from "../controls/keyboardLayout";
 import type { AudioSettings } from "../audio/audioSettings";
 import { playMenuConfirmSound } from "../audio/menuAudio";
+import { isPointerOverKeyboardBlockingElement } from "../menu/pointerKeyboardBlock";
 import type { DialogueNode } from "./dialogueTypes";
 
 type UseGameKeyboardControlsInput = {
@@ -183,16 +184,4 @@ export function useGameKeyboardControls({
     setIsInventoryOpen,
     setIsQuestsOpen,
   ]);
-}
-
-function isPointerOverKeyboardBlockingElement(): boolean {
-  if (typeof document === "undefined") {
-    return false;
-  }
-
-  return (
-    document.querySelector(
-      '[data-keyboard-blocking-hover="true"]:hover:not(:disabled):not([aria-disabled="true"])',
-    ) !== null
-  );
 }

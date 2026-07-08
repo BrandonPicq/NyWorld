@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import type { AudioSettings } from "../audio/audioSettings";
 import { playMenuConfirmSound, playMenuMoveSound } from "../audio/menuAudio";
+import { consumeIfPointerOverKeyboardBlockingElement } from "../menu/pointerKeyboardBlock";
 
 type UseMenuKeyboardOptions = {
   itemCount: number;
@@ -115,6 +116,13 @@ export function useMenuKeyboard({
       extraKeys: extraKeys ? Object.keys(extraKeys) : undefined,
     });
     if (action.kind === "none") return;
+
+    if (
+      action.kind !== "cancel" &&
+      consumeIfPointerOverKeyboardBlockingElement(e)
+    ) {
+      return;
+    }
 
     e.preventDefault();
     e.stopPropagation();

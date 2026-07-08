@@ -3,6 +3,7 @@ import type { EquippedSlot, Inventory } from "../../../engine";
 import { getItemDef } from "../../../engine/items/itemRegistry";
 import type { AudioSettings } from "../../audio/audioSettings";
 import { playMenuConfirmSound, playMenuMoveSound } from "../../audio/menuAudio";
+import { consumeIfPointerOverKeyboardBlockingElement } from "../../menu/pointerKeyboardBlock";
 import { EquipPickerModal } from "./EquipPickerModal";
 import { resolveEquipmentSlotMove } from "./equipmentSlotNavigation";
 
@@ -55,6 +56,10 @@ export function EquipmentTab({
   ) => {
     const nextSlot = resolveEquipmentSlotMove(slot, event.key);
     if (nextSlot) {
+      if (consumeIfPointerOverKeyboardBlockingElement(event)) {
+        return;
+      }
+
       event.preventDefault();
       event.stopPropagation();
       setSelectedSlot(nextSlot);
@@ -65,6 +70,10 @@ export function EquipmentTab({
     }
 
     if (event.key === "Enter" || event.key === " " || event.key === "Spacebar") {
+      if (consumeIfPointerOverKeyboardBlockingElement(event)) {
+        return;
+      }
+
       event.preventDefault();
       event.stopPropagation();
       openPicker(slot);
@@ -88,6 +97,7 @@ export function EquipmentTab({
               >
                 <button
                   className="equipment-slot-zone__main"
+                  data-keyboard-blocking-hover="true"
                   onClick={() => openPicker(slot)}
                   onFocus={() => setSelectedSlot(slot)}
                   onKeyDown={(event) => handleSlotKeyDown(event, slot)}
@@ -111,6 +121,7 @@ export function EquipmentTab({
                 {itemId && (
                   <button
                     className="equipment-slot-zone__inspect"
+                    data-keyboard-blocking-hover="true"
                     onClick={(e) => {
                       e.stopPropagation();
                       onNavigateToItem(itemId);

@@ -3,6 +3,7 @@ import {
   type ContentDiagnostic,
 } from "../../engine";
 import { useEffect, useRef, useState, type KeyboardEvent } from "react";
+import { consumeIfPointerOverKeyboardBlockingElement } from "../menu/pointerKeyboardBlock";
 
 export type EditorContentNavigationTarget = {
   type: string;
@@ -61,6 +62,10 @@ export function DiagnosticList({
 
   function handleKeyDown(event: KeyboardEvent<HTMLElement>): void {
     if (event.key === "ArrowDown") {
+      if (consumeIfPointerOverKeyboardBlockingElement(event)) {
+        return;
+      }
+
       event.preventDefault();
       event.stopPropagation();
       moveSelection(1);
@@ -68,6 +73,10 @@ export function DiagnosticList({
     }
 
     if (event.key === "ArrowUp") {
+      if (consumeIfPointerOverKeyboardBlockingElement(event)) {
+        return;
+      }
+
       event.preventDefault();
       event.stopPropagation();
       moveSelection(-1);
@@ -75,6 +84,10 @@ export function DiagnosticList({
     }
 
     if (event.key === "Enter") {
+      if (consumeIfPointerOverKeyboardBlockingElement(event)) {
+        return;
+      }
+
       event.preventDefault();
       event.stopPropagation();
       activateDiagnostic(selectedIndex);
@@ -91,6 +104,7 @@ export function DiagnosticList({
           {diagnostic.contentId ? (
             <button
               className="editor-diagnostic-link"
+              data-keyboard-blocking-hover="true"
               onClick={() => activateDiagnostic(index)}
               onFocus={() => setSelectedIndex(index)}
               ref={(button) => {

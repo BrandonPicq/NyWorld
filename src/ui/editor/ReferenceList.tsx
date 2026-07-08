@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, type KeyboardEvent } from "react";
 import type { ContentReference } from "../../engine";
+import { consumeIfPointerOverKeyboardBlockingElement } from "../menu/pointerKeyboardBlock";
 import type { EditorContentNavigationTarget } from "./DiagnosticList";
 import { formatContentRef } from "./editorModel";
 
@@ -45,6 +46,10 @@ export function ReferenceList({
 
   function handleKeyDown(event: KeyboardEvent<HTMLElement>): void {
     if (event.key === "ArrowDown") {
+      if (consumeIfPointerOverKeyboardBlockingElement(event)) {
+        return;
+      }
+
       event.preventDefault();
       event.stopPropagation();
       moveSelection(1);
@@ -52,6 +57,10 @@ export function ReferenceList({
     }
 
     if (event.key === "ArrowUp") {
+      if (consumeIfPointerOverKeyboardBlockingElement(event)) {
+        return;
+      }
+
       event.preventDefault();
       event.stopPropagation();
       moveSelection(-1);
@@ -59,6 +68,10 @@ export function ReferenceList({
     }
 
     if (event.key === "Enter") {
+      if (consumeIfPointerOverKeyboardBlockingElement(event)) {
+        return;
+      }
+
       event.preventDefault();
       event.stopPropagation();
       navigateReference(selectedIndex);
@@ -78,6 +91,7 @@ export function ReferenceList({
               <li key={`${reference.path}-${index}`}>
                 <button
                   className="editor-reference-link"
+                  data-keyboard-blocking-hover="true"
                   onClick={() => navigateReference(index)}
                   onFocus={() => setSelectedIndex(index)}
                   ref={(button) => {
