@@ -4,6 +4,11 @@ This file tracks meaningful project changes by commit-oriented slices.
 
 Keep entries short and practical. When a slice is committed, its changelog section should stay aligned with the commit title so the project history remains easy to read after restores or bisects.
 
+## 2026-07-08 - [FIX]: Stop Escape in menus from opening the pause menu
+
+- Consume handled keys (`preventDefault` + `stopPropagation`) in `useMenuKeyboard` so a menu-closing keydown no longer bubbles to the global window listener; Escape in the inventory closed it AND opened the pause menu, and Escape in the equip picker also closed the whole character sheet.
+- Extract the key-to-action decision as the pure `resolveMenuKeyAction` (unhandled keys keep bubbling so global shortcuts like `i`/`c` still work) and unit-test it.
+
 ## 2026-07-08 - [UPDATE]: Tune combat minigame balance targets
 
 - Add a pure combat balance model for shared poor/average/strong QTE profiles and damage variance bands.

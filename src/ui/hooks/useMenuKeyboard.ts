@@ -12,9 +12,65 @@ type UseMenuKeyboardOptions = {
   initialIndex?: number;
 };
 
+export type MenuKeyAction =
+  | { kind: "cancel" }
+  | { kind: "move"; direction: -1 | 1 }
+  | { kind: "confirm" }
+  | { kind: "extra"; key: string }
+  | { kind: "none" };
+
+type ResolveMenuKeyOptions = {
+  itemCount: number;
+  enableDirectionalLetterKeys: boolean;
+  hasCancel: boolean;
+  extraKeys?: string[];
+};
+
 /**
- * A universal hook to manage keyboard navigation for menus and selection lists.
- * Handles ArrowUp/ArrowDown, optional Z/S/W/S movement keys, Enter
+ * Pure key → menu-action resolution. Any action other than "none" is a
+ * HANDLED key: the hook consumes it (preventDefault + stopPropagation) so
+ * it never reaches the global window listener. Without stopPropagation,
+ * closing a menu re-registers the global handler synchronously and the
+ * same keydown falls through to it (e.g. Escape in the inventory used to
+ * close it AND open the pause menu).
+ */
+export function resolveMenuKeyAction(
+  key: string,
+  options: ResolveMenuKeyOptions,
+): MenuKeyAction {
+  if (key === "Escape") {
+    return options.hasCancel ? { kind: "cancel" } : { kind: "none" };
+  }
+
+  if (options.itemCount <= 0) return { kind: "none" };
+
+  const keyLower = key.toLowerCase();
+
+  if (
+    key === "ArrowDown" ||
+    (options.enableDirectionalLetterKeys && keyLower === "s")
+  ) {
+    return { kind: "move", direction: 1 };
+  }
+  if (
+    key === "ArrowUp" ||
+    (options.enableDirectionalLetterKeys &&
+      (keyLower === "z" || keyLower === "w"))
+  ) {
+    return { kind: "move", direction: -1 };
+  }
+  if (key === "Enter") {
+    return { kind: "confirm" };
+  }
+  if (options.extraKeys?.includes(keyLower)) {
+    return { kind: "extra", key: keyLower };
+  }
+  return { kind: "none" };
+}
+
+/**
+ * A universal hook to manage keyboard navigation for menus and selection
+ * lists. Handles ArrowUp/ArrowDown, optional Z/S/W/S movement keys, Enter
  * confirmation, Escape cancellation, and menu sound cues.
  */
 export function useMenuKeyboard({
@@ -52,46 +108,38 @@ export function useMenuKeyboard({
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLElement> | KeyboardEvent) => {
-    const key = e.key;
+    const action = resolveMenuKeyAction(e.key, {
+      itemCount,
+      enableDirectionalLetterKeys,
+      hasCancel: onCancel !== undefined,
+      extraKeys: extraKeys ? Object.keys(extraKeys) : undefined,
+    });
+    if (action.kind === "none") return;
 
-    if (key === "Escape") {
-      if (onCancel) {
-        e.preventDefault();
+    e.preventDefault();
+    e.stopPropagation();
+
+    switch (action.kind) {
+      case "cancel":
         if (audioSettings.soundEnabled) {
           playMenuConfirmSound();
         }
-        onCancel();
-      }
-      return;
-    }
-
-    if (itemCount <= 0) return;
-
-    const keyLower = key.toLowerCase();
-
-    if (
-      key === "ArrowDown" ||
-      (enableDirectionalLetterKeys && keyLower === "s")
-    ) {
-      e.preventDefault();
-      moveSelection(1);
-    } else if (
-      key === "ArrowUp" ||
-      (enableDirectionalLetterKeys && (keyLower === "z" || keyLower === "w"))
-    ) {
-      e.preventDefault();
-      moveSelection(-1);
-    } else if (key === "Enter") {
-      e.preventDefault();
-      if (onConfirm) {
-        if (audioSettings.soundEnabled) {
-          playMenuConfirmSound();
+        onCancel?.();
+        break;
+      case "move":
+        moveSelection(action.direction);
+        break;
+      case "confirm":
+        if (onConfirm) {
+          if (audioSettings.soundEnabled) {
+            playMenuConfirmSound();
+          }
+          onConfirm(selectedIndex);
         }
-        onConfirm(selectedIndex);
-      }
-    } else if (extraKeys && extraKeys[keyLower]) {
-      e.preventDefault();
-      extraKeys[keyLower](selectedIndex);
+        break;
+      case "extra":
+        extraKeys?.[action.key]?.(selectedIndex);
+        break;
     }
   };
 
