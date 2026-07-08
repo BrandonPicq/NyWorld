@@ -160,6 +160,11 @@ export {
   validateQtePatternRegistry,
 } from "./combat/qtePatternRegistry";
 export type { QtePatternValidationContext } from "./combat/qtePatternRegistry";
+export {
+  canUseCombatPattern,
+  getCombatPatternOptions,
+} from "./combat/qtePatternCombat";
+export type { CombatPatternOption } from "./combat/qtePatternCombat";
 export type {
   KnownPatternMap,
   KnownPatternState,

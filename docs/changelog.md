@@ -4,6 +4,13 @@ This file tracks meaningful project changes by commit-oriented slices.
 
 Keep entries short and practical. When a slice is committed, its changelog section should stay aligned with the commit title so the project history remains easy to read after restores or bisects.
 
+## 2026-07-08 - [ADD]: Execute learned QTE patterns
+
+- Add combat selection for learned QTE patterns from Strike and Cast, with weapon compatibility and MP availability checks.
+- Execute selected patterns as hidden fixed-sequence QTEs, spending MP on selection and applying the authored damage multiplier.
+- Increment learned pattern usage after pattern attacks resolve, preparing the save state for later evolution rules.
+- Add a combat pattern picker UI and tests for pattern availability, combat execution, rejection cases, and hidden sequence behavior.
+
 ## 2026-07-08 - [ADD]: Learn QTE patterns from tomes
 
 - Add `effects.teachesPatternId` for consumable tome items, validate pattern references, expose the field in the item editor, and track tome-to-pattern references in the content graph.

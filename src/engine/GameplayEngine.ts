@@ -349,6 +349,8 @@ export class GameplayEngine {
       random: options.random,
       getCommandMasteryLevel: (cmd) => this.getCommandMasteryLevel(cmd),
       incrementCommandUsage: (cmd) => this.incrementCommandUsage(cmd),
+      getKnownPatterns: () => this.knownPatterns,
+      incrementPatternUsage: (patternId) => this.incrementPatternUsage(patternId),
     });
 
     const playerId = this.world.createEntity();
@@ -1263,6 +1265,12 @@ export class GameplayEngine {
     }
 
     this.statLayers = this.rebuildStatLayers(this.basePlayerStats, this.getPlayerInventory());
+  }
+
+  incrementPatternUsage(patternId: string): void {
+    const state = this.knownPatterns[patternId];
+    if (!state) return;
+    state.timesUsed += 1;
   }
 
   getNpcState(npcId: string): NpcState | undefined {

@@ -44,6 +44,8 @@ export type CombatActionCommand =
  * - SelectCombatAction / SubmitCombatQte / StartOpponentTurn /
  *   ConcludeCombat: combat-only commands driving the QTE turn loop; they are
  *   rejected outside an active combat.
+ * - SelectCombatPattern: combat-only command selecting a learned QTE pattern
+ *   from Strike or Cast.
  */
 export type GameCommand =
   | { type: "MoveNorth" }
@@ -60,6 +62,11 @@ export type GameCommand =
   | { type: "CompleteDialogue" }
   | { type: "AcknowledgeZoneEntryDialogue" }
   | { type: "SelectCombatAction"; actionKind: CombatActionCommand }
+  | {
+      type: "SelectCombatPattern";
+      actionKind: Extract<CombatActionCommand, "strike" | "cast">;
+      patternId: string;
+    }
   | {
       type: "SubmitCombatQte";
       /** True when the full input sequence was entered before the timer ran out. */

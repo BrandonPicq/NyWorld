@@ -117,6 +117,78 @@ describe("Combat Engine Integration", () => {
     expect(snapshot.combatState!.qteSequence).toHaveLength(snapshot.combatState!.qteChallenge!.sequenceLength);
   });
 
+  it("selects a learned magical pattern, consumes MP, and resolves multiplied damage", () => {
+    const save = createEngine().createSaveData();
+    save.knownPatterns = { fireball: { timesUsed: 0 } };
+    save.stats.resources.mp = 50;
+
+    const engine = GameplayEngine.fromSaveData(save, {
+      random: () => 0.5,
+      resolveZone: (zoneId) =>
+        zoneId === "movement_test" ? loadZone(movementZoneData) : undefined,
+    });
+    engine.execute({ type: "MoveEast" });
+
+    const select = engine.execute({
+      type: "SelectCombatPattern",
+      actionKind: "cast",
+      patternId: "fireball",
+    });
+
+    expect(select.success).toBe(true);
+    let snapshot = engine.getSnapshot();
+    expect(snapshot.stats.resources.mp).toBe(36);
+    expect(snapshot.combatState!.phase).toBe("player_qte");
+    expect(snapshot.combatState!.actionKind).toBe("magical");
+    expect(snapshot.combatState!.actionLabel).toBe("Fireball");
+    expect(snapshot.combatState!.minigame).toMatchObject({
+      kind: "sequence",
+      hidden: true,
+      sequence: ["up", "left", "down", "right", "up"],
+    });
+
+    engine.execute({
+      type: "SubmitCombatQte",
+      completed: true,
+      inputAdvantage: 2,
+      mistakes: 0,
+    });
+
+    snapshot = engine.getSnapshot();
+    expect(snapshot.combatState!.opponentStats.resources.hp).toBe(4);
+    expect(snapshot.combatState!.activePatternId).toBeUndefined();
+    expect(snapshot.knownPatterns.fireball.timesUsed).toBe(1);
+    expect(snapshot.log.map((entry) => entry.message)).toContain(
+      "You prepare Fireball and spend 14 MP.",
+    );
+  });
+
+  it("rejects physical patterns when the required weapon is not equipped", () => {
+    const save = createEngine().createSaveData();
+    save.knownPatterns = { crosscut: { timesUsed: 0 } };
+    save.stats.resources.mp = 50;
+
+    const engine = GameplayEngine.fromSaveData(save, {
+      random: () => 0.5,
+      resolveZone: (zoneId) =>
+        zoneId === "movement_test" ? loadZone(movementZoneData) : undefined,
+    });
+    engine.execute({ type: "MoveEast" });
+
+    const result = engine.execute({
+      type: "SelectCombatPattern",
+      actionKind: "strike",
+      patternId: "crosscut",
+    });
+
+    expect(result.success).toBe(false);
+    expect(engine.getSnapshot().combatState!.phase).toBe("action_selection");
+    expect(engine.getSnapshot().knownPatterns.crosscut.timesUsed).toBe(0);
+    expect(engine.getSnapshot().log.map((entry) => entry.message)).toContain(
+      "Crosscut cannot be used right now.",
+    );
+  });
+
   it("resolves player QTE attack and advances to enemy turn if opponent survives", () => {
     const engine = createEngine();
     startSlimeCombat(engine);

@@ -27,6 +27,8 @@ export interface SequenceMinigameSpec {
   challenge: QteChallenge;
   /** Ordered arrow-key sequence the player must type. */
   sequence: string[];
+  /** True for learned patterns: progress is visible, keycaps are hidden. */
+  hidden?: boolean;
 }
 
 /**
@@ -228,6 +230,7 @@ export function cloneCombatMinigameSpec(
         kind: "sequence",
         challenge: { ...spec.challenge },
         sequence: [...spec.sequence],
+        hidden: spec.hidden,
       };
     case "mash":
       return {

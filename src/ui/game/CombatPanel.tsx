@@ -6,8 +6,13 @@ import type {
   CombatActionDef,
   CombatActionId,
   GameCommand,
+  KnownPatternMap,
 } from "../../engine";
-import { getAllCombatActionDefs, getItemDef } from "../../engine";
+import {
+  getAllCombatActionDefs,
+  getCombatPatternOptions,
+  getItemDef,
+} from "../../engine";
 import type { KeyboardLayout } from "../controls/keyboardLayout";
 import type { AudioSettings } from "../audio/audioSettings";
 import {
@@ -18,6 +23,7 @@ import { TerminalPanel } from "../components/TerminalPanel";
 import { TerminalButton } from "../components/TerminalButton";
 import { CombatActionDetailsModal } from "./CombatActionDetailsModal";
 import { CombatItemPickerModal } from "./CombatItemPickerModal";
+import { CombatPatternPickerModal } from "./CombatPatternPickerModal";
 import { SequenceMinigame } from "./combat/SequenceMinigame";
 import { MashMinigame } from "./combat/MashMinigame";
 import { TimingMinigame } from "./combat/TimingMinigame";
@@ -33,6 +39,7 @@ type CombatMenuAction = {
 type CombatPanelProps = {
   combatState: CombatState;
   playerStats: Stats;
+  knownPatterns: KnownPatternMap;
   inventory: Inventory;
   executeCommand: (command: GameCommand) => void;
   keyboardLayout: KeyboardLayout;
@@ -44,6 +51,7 @@ const COMBAT_ACTION_COLUMNS = 3;
 export function CombatPanel({
   combatState,
   playerStats,
+  knownPatterns,
   inventory,
   executeCommand,
   keyboardLayout,
@@ -60,9 +68,29 @@ export function CombatPanel({
   );
 
   const [isItemPickerOpen, setIsItemPickerOpen] = useState(false);
+  const [patternPickerAction, setPatternPickerAction] = useState<
+    "strike" | "cast" | null
+  >(null);
   const [isActionDetailsOpen, setIsActionDetailsOpen] = useState(false);
   const [selectedActionIndex, setSelectedActionIndex] = useState(0);
 
+  const patternOptions = useMemo(
+    () => ({
+      strike: getCombatPatternOptions({
+        actionKind: "strike",
+        knownPatterns,
+        inventory,
+        playerStats,
+      }),
+      cast: getCombatPatternOptions({
+        actionKind: "cast",
+        knownPatterns,
+        inventory,
+        playerStats,
+      }),
+    }),
+    [inventory, knownPatterns, playerStats],
+  );
   const combatActions = useMemo<CombatMenuAction[]>(
     () =>
       combatActionDefs.map((def) => {
@@ -76,18 +104,34 @@ export function CombatPanel({
           };
         }
 
+        const actionPatternOptions =
+          def.actionId === "strike" || def.actionId === "cast"
+            ? patternOptions[def.actionId]
+            : [];
+        const hasEnabledPattern = actionPatternOptions.some(
+          (option) => !option.disabled,
+        );
+        const isBasicCastUnavailable =
+          def.actionId === "cast" && playerStats.resources.mp < 10;
+        const isDisabled = isBasicCastUnavailable && !hasEnabledPattern;
+
         return {
           id: def.actionId,
           def,
           commandKind: def.actionId,
-          disabled: def.actionId === "cast" && playerStats.resources.mp < 10,
+          disabled: isDisabled,
           availabilityNote:
-            def.actionId === "cast" && playerStats.resources.mp < 10
+            isBasicCastUnavailable && !hasEnabledPattern
               ? "Not enough MP."
               : undefined,
         };
       }),
-    [combatActionDefs, combatItems.length, playerStats.resources.mp],
+    [
+      combatActionDefs,
+      combatItems.length,
+      patternOptions,
+      playerStats.resources.mp,
+    ],
   );
   const selectedAction = combatActions[selectedActionIndex];
 
@@ -95,6 +139,7 @@ export function CombatPanel({
   useEffect(() => {
     if (phase !== "action_selection") {
       setIsItemPickerOpen(false);
+      setPatternPickerAction(null);
       setIsActionDetailsOpen(false);
     }
   }, [phase]);
@@ -141,6 +186,14 @@ export function CombatPanel({
       return;
     }
 
+    if (
+      (action.id === "strike" || action.id === "cast") &&
+      patternOptions[action.id].length > 0
+    ) {
+      setPatternPickerAction(action.id);
+      return;
+    }
+
     if (action.commandKind) {
       executeCommand({
         type: "SelectCombatAction",
@@ -163,6 +216,7 @@ export function CombatPanel({
     if (
       phase !== "action_selection" ||
       isItemPickerOpen ||
+      patternPickerAction ||
       isActionDetailsOpen
     ) {
       return;
@@ -199,6 +253,7 @@ export function CombatPanel({
     combatActions,
     isActionDetailsOpen,
     isItemPickerOpen,
+    patternPickerAction,
     moveCombatActionSelection,
     openSelectedActionDetails,
     phase,
@@ -422,6 +477,38 @@ export function CombatPanel({
             setIsItemPickerOpen(false);
             executeCommand({ type: "UseItem", itemId });
           }}
+        />
+      )}
+
+      {patternPickerAction && (
+        <CombatPatternPickerModal
+          actionKind={patternPickerAction}
+          audioSettings={audioSettings}
+          basicAvailabilityNote={
+            patternPickerAction === "cast" && playerStats.resources.mp < 10
+              ? "Not enough MP."
+              : undefined
+          }
+          basicDisabled={
+            patternPickerAction === "cast" && playerStats.resources.mp < 10
+          }
+          onClose={() => setPatternPickerAction(null)}
+          onSelectBasic={() => {
+            executeCommand({
+              type: "SelectCombatAction",
+              actionKind: patternPickerAction,
+            });
+            setPatternPickerAction(null);
+          }}
+          onSelectPattern={(patternId) => {
+            executeCommand({
+              type: "SelectCombatPattern",
+              actionKind: patternPickerAction,
+              patternId,
+            });
+            setPatternPickerAction(null);
+          }}
+          patterns={patternOptions[patternPickerAction]}
         />
       )}
 

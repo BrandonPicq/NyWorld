@@ -222,8 +222,9 @@ numbers by hand.
 
 QTE pattern files live under `src/content/qte-patterns/*.json`. They describe
 learnable techniques such as `fireball` or `crosscut`; tomes learn these
-patterns through item `effects.teachesPatternId`, while combat execution is
-wired in later slices from ADR 0009.
+patterns through item `effects.teachesPatternId`. Learned physical patterns are
+offered from Strike and learned magical patterns are offered from Cast during
+combat when their weapon and MP requirements are met.
 
 A pattern definition owns:
 
@@ -243,7 +244,14 @@ learned or executed silently.
 
 Learned pattern state is mutable save data, not content data:
 `knownPatterns: patternId -> { timesUsed }`. Tome learning creates an entry
-with `timesUsed: 0`; future combat execution increments it for evolution.
+with `timesUsed: 0`; combat execution increments it after a pattern attack
+resolves. Pattern evolution rules are authored but not yet applied
+automatically.
+
+Executing a pattern spends its authored `mpCost` as soon as the player selects
+it, then runs a hidden fixed-sequence QTE from the authored `inputs`. A missed
+hidden input resets the displayed progress without revealing the remaining
+sequence. Successful damage uses the pattern's authored `damageMultiplier`.
 
 ## Quests
 

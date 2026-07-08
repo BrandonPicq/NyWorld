@@ -7,6 +7,7 @@ import { getItemDef } from "../items/itemRegistry";
 import { createNpcStats } from "../stats/npcStats";
 import { cloneStats } from "../stats/characterStats";
 import { getCombatActionDef } from "./combatActionRegistry";
+import type { KnownPatternMap, PatternDef } from "./PatternDef";
 import {
   createQteChallenge,
   resolveQteContest,
@@ -28,6 +29,8 @@ import {
   type CombatMinigameSpec,
 } from "./combatMinigame";
 import type { EquipmentDef } from "../items/ItemDef";
+import { canUseCombatPattern } from "./qtePatternCombat";
+import { getQtePatternDef } from "./qtePatternRegistry";
 
 export type CombatPhase =
   | "action_selection"
@@ -56,6 +59,10 @@ export interface CombatState {
   actionLabel?: string;
   /** Original command ID. */
   actionCommand?: CombatActionCommand;
+  /** Learned pattern currently being executed, if the pending QTE came from a pattern. */
+  activePatternId?: string;
+  /** Damage multiplier from the selected learned pattern. */
+  patternDamageMultiplier?: number;
   /** True while Guard reduces the next incoming enemy attack. */
   isGuarding?: boolean;
   /** Focus multiplier applied to the next damaging player action. */
@@ -109,6 +116,8 @@ export interface CombatSystemContext {
   recoverPlayerFromDefeat: () => void;
   getCommandMasteryLevel: (commandId: string) => number;
   incrementCommandUsage: (commandId: string) => void;
+  getKnownPatterns: () => KnownPatternMap;
+  incrementPatternUsage: (patternId: string) => void;
   random?: () => number;
 }
 
@@ -171,6 +180,12 @@ export class CombatSystem {
 
     if (command.type === "SelectCombatAction") {
       return this.handleSelectCombatAction(command.actionKind);
+    }
+    if (command.type === "SelectCombatPattern") {
+      return this.handleSelectCombatPattern(
+        command.actionKind,
+        command.patternId,
+      );
     }
     if (command.type === "UseItem") {
       return this.handleUseItem(command.itemId);
@@ -236,6 +251,8 @@ export class CombatSystem {
       this.state.phase = "opponent_turn_transition";
       this.state.actionKind = undefined;
       this.state.actionLabel = undefined;
+      this.state.activePatternId = undefined;
+      this.state.patternDamageMultiplier = undefined;
       this.state.minigame = undefined;
       this.context.addLog(
         `You guard and brace for the next attack${formatSpGain(spGained)}.`,
@@ -252,6 +269,8 @@ export class CombatSystem {
       this.state.phase = "opponent_turn_transition";
       this.state.actionKind = undefined;
       this.state.actionLabel = undefined;
+      this.state.activePatternId = undefined;
+      this.state.patternDamageMultiplier = undefined;
       this.state.minigame = undefined;
       this.context.addLog(
         `You focus your next attack${formatSpGain(spGained)}.`,
@@ -286,6 +305,8 @@ export class CombatSystem {
     this.state.actionKind = qteActionKind;
     this.state.actionLabel = getCombatActionLabel(actionKind);
     this.state.actionCommand = actionKind;
+    this.state.activePatternId = undefined;
+    this.state.patternDamageMultiplier = undefined;
     this.state.phase = "player_qte";
 
     const challenge = createQteChallenge({
@@ -302,6 +323,88 @@ export class CombatSystem {
     );
 
     return { success: true };
+  }
+
+  private handleSelectCombatPattern(
+    actionKind: "strike" | "cast",
+    patternId: string,
+  ): CombatExecuteResult {
+    if (!this.state || this.state.phase !== "action_selection") {
+      return { success: false };
+    }
+
+    const pattern = getQtePatternDef(patternId);
+    if (!pattern) {
+      this.context.addLog("Unknown combat pattern.");
+      return { success: false };
+    }
+
+    const playerStats = this.context.getPlayerStats();
+    const inventory = this.context.getPlayerInventory();
+    if (
+      !canUseCombatPattern({
+        actionKind,
+        pattern,
+        knownPatterns: this.context.getKnownPatterns(),
+        inventory,
+        playerStats,
+      })
+    ) {
+      this.context.addLog(`${pattern.name} cannot be used right now.`);
+      return { success: false };
+    }
+
+    playerStats.resources.mp = Math.max(
+      0,
+      playerStats.resources.mp - pattern.mpCost,
+    );
+
+    const opponentStats = this.state.opponentStats;
+    const qteActionKind = pattern.kind;
+    this.state.actionKind = qteActionKind;
+    this.state.actionLabel = pattern.name;
+    this.state.actionCommand = actionKind;
+    this.state.activePatternId = pattern.patternId;
+    this.state.patternDamageMultiplier = pattern.damageMultiplier;
+    this.state.phase = "player_qte";
+
+    this.state.minigame = this.buildPatternMinigame(
+      pattern,
+      playerStats,
+      opponentStats,
+    );
+
+    this.context.addLog(
+      `You prepare ${pattern.name} and spend ${pattern.mpCost} MP.`,
+    );
+    return { success: true };
+  }
+
+  private buildPatternMinigame(
+    pattern: PatternDef,
+    playerStats: Stats,
+    opponentStats: Stats,
+  ): CombatMinigameSpec {
+    const challenge = createQteChallenge({
+      actor: playerStats,
+      opponent: opponentStats,
+      kind: pattern.kind,
+      isPlayerActor: true,
+      baseSequenceLength: pattern.inputs.length,
+      baseTimeLimitMs: pattern.timeLimitMs,
+    });
+
+    return {
+      kind: "sequence",
+      challenge: {
+        ...challenge,
+        sequenceLength: pattern.inputs.length,
+        playerSequenceLength: pattern.inputs.length,
+        timeLimitMs: pattern.timeLimitMs,
+      },
+      sequence: [...pattern.inputs],
+      hidden: true,
+    };
   }
 
   /**
@@ -479,6 +582,8 @@ export class CombatSystem {
     this.state.phase = "opponent_turn_transition";
     this.state.actionKind = undefined;
     this.state.actionLabel = undefined;
+    this.state.activePatternId = undefined;
+    this.state.patternDamageMultiplier = undefined;
     this.state.minigame = undefined;
     this.context.addLog(`Used ${itemDef.name}. Recovered ${actualHpRestored} HP.`);
     this.context.incrementCommandUsage("use_item");
@@ -523,6 +628,8 @@ export class CombatSystem {
     const actionKind = this.state.actionKind ?? "physical";
     const actionLabel = this.state.actionLabel ?? getCombatActionLabel(actionKind);
     const damageBoostMultiplier = this.state.damageBoostMultiplier;
+    const activePatternId = this.state.activePatternId;
+    const patternDamageMultiplier = this.state.patternDamageMultiplier;
     let finalDamage = 0;
     let outcomeLabel = "";
     const mistakeLabel = mistakes === 1 ? " (1 mistake)" : "";
@@ -546,7 +653,7 @@ export class CombatSystem {
       }
 
       const cmd = this.state.actionCommand;
-      if (cmd === "strike" || cmd === "cast") {
+      if ((cmd === "strike" || cmd === "cast") && !activePatternId) {
         const mastery = this.context.getCommandMasteryLevel(cmd);
         if (mastery > 0) {
           finalDamage = Math.floor(finalDamage * (1 + 0.03 * mastery));
@@ -554,10 +661,15 @@ export class CombatSystem {
       }
     }
 
+    if (patternDamageMultiplier !== undefined && finalDamage > 0) {
+      finalDamage = Math.floor(finalDamage * patternDamageMultiplier);
+    }
+
     if (damageBoostMultiplier !== undefined && finalDamage > 0) {
       finalDamage = Math.floor(finalDamage * damageBoostMultiplier);
     }
     this.state.damageBoostMultiplier = undefined;
+    this.state.patternDamageMultiplier = undefined;
 
     finalDamage = applyDamageVariance(finalDamage, () => this.random());
     this.context.addLog(
@@ -581,6 +693,10 @@ export class CombatSystem {
     const finalCmd = this.state.actionCommand;
     if (finalCmd === "strike" || finalCmd === "cast") {
       this.context.incrementCommandUsage(finalCmd);
+      if (activePatternId) {
+        this.context.incrementPatternUsage(activePatternId);
+        this.state.activePatternId = undefined;
+      }
       const weaponType = this.getEquippedWeaponEquipment()?.weaponType;
       if (weaponType) {
         this.context.incrementCommandUsage(`weapon_${weaponType}`);

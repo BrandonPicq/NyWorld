@@ -29,6 +29,7 @@ export function SequenceMinigame({
   audioSettings,
 }: SequenceMinigameProps) {
   const { challenge, sequence: qteSequence } = spec;
+  const isHidden = spec.hidden === true;
 
   const [playerInputIndex, setPlayerInputIndex] = useState(0);
   const [timeElapsed, setTimeElapsed] = useState(0);
@@ -171,8 +172,12 @@ export function SequenceMinigame({
         const nextMistakes = mistakesRef.current + 1;
         setMistakes(nextMistakes);
         mistakesRef.current = nextMistakes;
+        if (isHidden) {
+          setPlayerInputIndex(0);
+          playerInputIndexRef.current = 0;
+        }
 
-        if (nextMistakes >= 2 && !submittedRef.current) {
+        if (!isHidden && nextMistakes >= 2 && !submittedRef.current) {
           submittedRef.current = true;
           if (requestRef.current) cancelAnimationFrame(requestRef.current);
 
@@ -192,6 +197,7 @@ export function SequenceMinigame({
     return () => window.removeEventListener("keydown", handleQteKeys);
   }, [
     phase,
+    isHidden,
     qteSequence,
     playerSequenceLength,
     opponentSequenceLength,
@@ -211,7 +217,9 @@ export function SequenceMinigame({
     <div className="combat-qte-section">
       <p className="combat-phase-instruction">
         {phase === "player_qte"
-          ? "Attack! Complete the QTE:"
+          ? isHidden
+            ? "Execute the memorized pattern:"
+            : "Attack! Complete the QTE:"
           : "Defend! Match the keys to block:"}
       </p>
 
@@ -224,7 +232,7 @@ export function SequenceMinigame({
           }
           return (
             <span key={idx} className={`combat-keycap ${statusClass}`}>
-              {ARROW_GLYPHS[dir] || dir.toUpperCase()}
+              {isHidden ? (idx < playerInputIndex ? "✓" : "?") : ARROW_GLYPHS[dir] || dir.toUpperCase()}
             </span>
           );
         })}
