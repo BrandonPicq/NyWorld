@@ -4,6 +4,12 @@ This file tracks meaningful project changes by commit-oriented slices.
 
 Keep entries short and practical. When a slice is committed, its changelog section should stay aligned with the commit title so the project history remains easy to read after restores or bisects.
 
+## 2026-07-08 - [REFACTOR]: Extract a combat minigame abstraction
+
+- Introduce `CombatMinigameSpec` in `engine/combat/combatMinigame.ts` with its single `sequence` variant wrapping the QTE challenge and arrow sequence; `CombatState` now carries the engine-owned `minigame` spec, keeping `qteChallenge`/`qteSequence` as backward-compatible snapshot mirrors.
+- Extract the QTE real-time loop, key matching, race bars, and countdown out of `CombatPanel.tsx` into a spec-driven `SequenceMinigame` component under `src/ui/game/combat/`; the panel now routes on the spec discriminator and no longer owns QTE state.
+- Zero behavior change: existing tests pass unmodified and a playtest fight resolves identically (strike criticals, enemy defense, victory).
+
 ## 2026-07-08 - [DOCS]: Add the combat minigame and QTE pattern ADR
 
 - Add ADR 0009 (`docs/adr/0009-minigames-arme-et-patterns-qte.md`), designed with the user and accepted 2026-07-08: per-weapon-archetype minigames (sword/staff sequence, hammer single-arrow mash, bow timing volley) all normalizing to the existing QTE contest resolution.

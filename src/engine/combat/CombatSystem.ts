@@ -13,6 +13,10 @@ import {
   type CombatActionKind,
   type QteChallenge,
 } from "./qteCombat";
+import {
+  cloneCombatMinigameSpec,
+  type CombatMinigameSpec,
+} from "./combatMinigame";
 
 export type CombatPhase =
   | "action_selection"
@@ -45,8 +49,17 @@ export interface CombatState {
   isGuarding?: boolean;
   /** Focus multiplier applied to the next damaging player action. */
   damageBoostMultiplier?: number;
+  /**
+   * Active minigame the UI must run for the current turn. The engine owns
+   * this spec; React renders it and reports the normalized QTE result.
+   */
+  minigame?: CombatMinigameSpec;
+  /**
+   * Backward-compatible mirror of the `sequence` minigame, populated in
+   * snapshots only. Undefined for non-sequence minigames.
+   */
   qteChallenge?: QteChallenge;
-  /** Ordered arrow-key sequence the player must type for the active QTE. */
+  /** Backward-compatible mirror of the `sequence` minigame's input sequence. */
   qteSequence?: string[];
 }
 
@@ -128,15 +141,14 @@ export class CombatSystem {
       return undefined;
     }
 
+    const spec = this.state.minigame;
     return {
       ...this.state,
       opponentStats: cloneStats(this.state.opponentStats),
-      qteSequence: this.state.qteSequence
-        ? [...this.state.qteSequence]
-        : undefined,
-      qteChallenge: this.state.qteChallenge
-        ? { ...this.state.qteChallenge }
-        : undefined,
+      minigame: spec ? cloneCombatMinigameSpec(spec) : undefined,
+      qteChallenge:
+        spec?.kind === "sequence" ? { ...spec.challenge } : undefined,
+      qteSequence: spec?.kind === "sequence" ? [...spec.sequence] : undefined,
     };
   }
 
@@ -212,8 +224,7 @@ export class CombatSystem {
       this.state.phase = "opponent_turn_transition";
       this.state.actionKind = undefined;
       this.state.actionLabel = undefined;
-      this.state.qteChallenge = undefined;
-      this.state.qteSequence = undefined;
+      this.state.minigame = undefined;
       this.context.addLog(
         `You guard and brace for the next attack${formatSpGain(spGained)}.`,
       );
@@ -229,8 +240,7 @@ export class CombatSystem {
       this.state.phase = "opponent_turn_transition";
       this.state.actionKind = undefined;
       this.state.actionLabel = undefined;
-      this.state.qteChallenge = undefined;
-      this.state.qteSequence = undefined;
+      this.state.minigame = undefined;
       this.context.addLog(
         `You focus your next attack${formatSpGain(spGained)}.`,
       );
@@ -273,11 +283,13 @@ export class CombatSystem {
       isPlayerActor: true,
     });
 
-    this.state.qteChallenge = challenge;
-    this.state.qteSequence = generateQteSequence(
-      challenge.sequenceLength,
-      () => this.random(),
-    );
+    this.state.minigame = {
+      kind: "sequence",
+      challenge,
+      sequence: generateQteSequence(challenge.sequenceLength, () =>
+        this.random(),
+      ),
+    };
 
     return { success: true };
   }
@@ -312,8 +324,7 @@ export class CombatSystem {
 
     this.context.addLog("Flee attempt failed! The enemy attacks!");
     this.state.phase = "opponent_turn_transition";
-    this.state.qteChallenge = undefined;
-    this.state.qteSequence = undefined;
+    this.state.minigame = undefined;
     return { success: true };
   }
 
@@ -381,8 +392,7 @@ export class CombatSystem {
     this.state.phase = "opponent_turn_transition";
     this.state.actionKind = undefined;
     this.state.actionLabel = undefined;
-    this.state.qteChallenge = undefined;
-    this.state.qteSequence = undefined;
+    this.state.minigame = undefined;
     this.context.addLog(`Used ${itemDef.name}. Recovered ${actualHpRestored} HP.`);
     this.context.incrementCommandUsage("use_item");
 
@@ -478,8 +488,7 @@ export class CombatSystem {
       this.context.recordNpcDefeat(this.state.opponentNpcId);
     } else {
       this.state.phase = "opponent_turn_transition";
-      this.state.qteChallenge = undefined;
-      this.state.qteSequence = undefined;
+      this.state.minigame = undefined;
     }
 
     const finalCmd = this.state.actionCommand;
@@ -570,8 +579,7 @@ export class CombatSystem {
       this.state.phase = "action_selection";
       this.state.actionKind = undefined;
       this.state.actionLabel = undefined;
-      this.state.qteChallenge = undefined;
-      this.state.qteSequence = undefined;
+      this.state.minigame = undefined;
     }
 
     return { success: true };
@@ -592,11 +600,13 @@ export class CombatSystem {
       kind: "physical",
       isPlayerActor: false,
     });
-    this.state.qteChallenge = challenge;
-    this.state.qteSequence = generateQteSequence(
-      challenge.sequenceLength,
-      () => this.random(),
-    );
+    this.state.minigame = {
+      kind: "sequence",
+      challenge,
+      sequence: generateQteSequence(challenge.sequenceLength, () =>
+        this.random(),
+      ),
+    };
 
     return { success: true };
   }

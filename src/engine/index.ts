@@ -175,6 +175,10 @@ export type {
   CombatState,
   CombatSystemContext,
 } from "./combat/CombatSystem";
+export type {
+  CombatMinigameSpec,
+  SequenceMinigameSpec,
+} from "./combat/combatMinigame";
 export {
   cloneEnemyStats,
   getAllEnemyDefs,
