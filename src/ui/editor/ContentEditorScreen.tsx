@@ -1,4 +1,11 @@
-import { useEffect, useMemo, useState } from "react";
+import {
+  forwardRef,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type KeyboardEvent,
+} from "react";
 import {
   CONTENT_TYPES,
   createRuntimeContentCatalogSnapshot,
@@ -7,6 +14,7 @@ import {
   type ContentTypeName,
 } from "../../engine";
 import { TerminalButton } from "../components/TerminalButton";
+import { getNextTabIndex, resolveTabKeyAction } from "../menu/tabNavigation";
 import { ActionsTab } from "./actions/ActionsTab";
 import { ClassTab } from "./classes/ClassTab";
 import { ContentTab } from "./ContentTab";
@@ -67,6 +75,7 @@ export function ContentEditorScreen({
 }: ContentEditorScreenProps) {
   const baseSnapshot = useMemo(() => createRuntimeContentCatalogSnapshot(), []);
   const [tab, setTab] = useState<EditorTab>("content");
+  const tabButtonRefs = useRef<Array<HTMLButtonElement | null>>([]);
   const [playtestError, setPlaytestError] = useState<string | null>(null);
   const drafts = useEditorDrafts(baseSnapshot);
 
@@ -178,6 +187,40 @@ export function ContentEditorScreen({
     }
   }
 
+  function selectTab(nextTab: EditorTab, options: { focus?: boolean } = {}): void {
+    setTab(nextTab);
+    if (options.focus) {
+      const index = EDITOR_TABS.findIndex((entry) => entry.id === nextTab);
+      requestAnimationFrame(() => tabButtonRefs.current[index]?.focus());
+    }
+  }
+
+  function handleTabKeyDown(event: KeyboardEvent<HTMLElement>): void {
+    const action = resolveTabKeyAction(event.key, {
+      tabCount: EDITOR_TABS.length,
+    });
+
+    if (action.kind === "none" || action.kind === "cancel") {
+      return;
+    }
+
+    event.preventDefault();
+    event.stopPropagation();
+
+    if (action.kind === "move") {
+      const activeIndex = EDITOR_TABS.findIndex((entry) => entry.id === tab);
+      const nextIndex = getNextTabIndex(
+        activeIndex,
+        EDITOR_TABS.length,
+        action.direction,
+      );
+      selectTab(EDITOR_TABS[nextIndex].id, { focus: true });
+      return;
+    }
+
+    selectTab(EDITOR_TABS[action.index].id, { focus: true });
+  }
+
   return (
     <main
       className="app-shell app-shell--bounded editor-screen"
@@ -215,8 +258,12 @@ export function ContentEditorScreen({
           </div>
         </header>
 
-        <nav className="editor-tabs" aria-label="Editor sections">
-          {EDITOR_TABS.map((entry) => (
+        <nav
+          className="editor-tabs"
+          aria-label="Editor sections"
+          onKeyDown={handleTabKeyDown}
+        >
+          {EDITOR_TABS.map((entry, index) => (
             <EditorTabButton
               hasUnsavedChanges={tabHasUnsavedChanges(
                 entry.id,
@@ -225,7 +272,10 @@ export function ContentEditorScreen({
               isSelected={tab === entry.id}
               key={entry.id}
               label={entry.label}
-              onClick={() => setTab(entry.id)}
+              onClick={() => selectTab(entry.id)}
+              ref={(button) => {
+                tabButtonRefs.current[index] = button;
+              }}
             />
           ))}
         </nav>
@@ -305,23 +355,25 @@ function findDialogueStem(
   );
 }
 
-function EditorTabButton({
-  label,
-  isSelected,
-  hasUnsavedChanges,
-  onClick,
-}: {
+const EditorTabButton = forwardRef<HTMLButtonElement, {
   label: string;
   isSelected: boolean;
   hasUnsavedChanges: boolean;
   onClick: () => void;
-}) {
+}>(function EditorTabButton({
+  label,
+  isSelected,
+  hasUnsavedChanges,
+  onClick,
+}, ref) {
   return (
     <TerminalButton
       aria-label={hasUnsavedChanges ? `${label} (unsaved)` : label}
       className="editor-tab"
       isSelected={isSelected}
       onClick={onClick}
+      ref={ref}
+      tabIndex={isSelected ? 0 : -1}
     >
       <span className="editor-tab__label">{label}</span>
       {hasUnsavedChanges ? (
@@ -329,7 +381,7 @@ function EditorTabButton({
       ) : null}
     </TerminalButton>
   );
-}
+});
 
 function tabHasUnsavedChanges(
   tab: EditorTab,

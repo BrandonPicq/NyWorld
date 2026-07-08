@@ -1,9 +1,10 @@
-import { useEffect, useState } from "react";
+import { useRef, useState } from "react";
 import type { ContentCatalogSnapshot } from "../../engine";
 import { createZoneEditRenderSnapshot } from "../../rendering/zoneEditRenderSnapshot";
 import type { GridCell } from "../../rendering/canvasCellMapping";
 import { TerminalButton } from "../components/TerminalButton";
 import { TerminalPanel } from "../components/TerminalPanel";
+import { useFocusTrap } from "../hooks/focusTrap";
 import { EditorZoneCanvas } from "./zone/EditorZoneCanvas";
 import { describeZoneCell } from "./zone/zoneEditorModel";
 
@@ -28,19 +29,15 @@ export function MapCoordinatePicker({
   onPick,
   onClose,
 }: MapCoordinatePickerProps) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const cancelButtonRef = useRef<HTMLButtonElement>(null);
   const zone = snapshot.zones[zoneId];
   const [hoveredCell, setHoveredCell] = useState<GridCell | null>(null);
-
-  useEffect(() => {
-    function handleKeyDown(event: KeyboardEvent): void {
-      if (event.key === "Escape") {
-        onClose();
-      }
-    }
-
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [onClose]);
+  const { handleKeyDown } = useFocusTrap({
+    containerRef,
+    initialFocusRef: cancelButtonRef,
+    onEscape: onClose,
+  });
 
   const renderSnapshot = zone ? createZoneEditRenderSnapshot(zone) : null;
   const cellDescription =
@@ -59,7 +56,10 @@ export function MapCoordinatePicker({
       aria-labelledby="map-coordinate-picker-title"
       aria-modal="true"
       className="editor-coordinate-picker"
+      onKeyDown={handleKeyDown}
+      ref={containerRef}
       role="dialog"
+      tabIndex={-1}
     >
       <TerminalPanel className="editor-panel editor-coordinate-picker__panel">
         <header className="editor-coordinate-picker__header">
@@ -69,7 +69,11 @@ export function MapCoordinatePicker({
               {title}
             </h2>
           </div>
-          <TerminalButton className="editor-compact-button" onClick={onClose}>
+          <TerminalButton
+            className="editor-compact-button"
+            onClick={onClose}
+            ref={cancelButtonRef}
+          >
             Cancel
           </TerminalButton>
         </header>

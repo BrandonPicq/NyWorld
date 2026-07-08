@@ -4,6 +4,13 @@ This file tracks meaningful project changes by commit-oriented slices.
 
 Keep entries short and practical. When a slice is committed, its changelog section should stay aligned with the commit title so the project history remains easy to read after restores or bisects.
 
+## 2026-07-08 - [ADD]: Keyboard navigation for the editor
+
+- Add roving-tabindex keyboard navigation to the editor tab bar, including arrow keys and numeric tab shortcuts.
+- Add Up/Down + Enter navigation for the content browser, diagnostics, and reference lists.
+- Add a reusable focus-trap hook and apply it to the map coordinate picker with initial focus, Tab containment, Escape close, and focus return.
+- Unit-test the focus-trap index helper.
+
 ## 2026-07-08 - [ADD]: Keyboard navigation for game menus
 
 - Add horizontal keyboard navigation for inventory category tabs while preserving vertical item selection and item actions.
