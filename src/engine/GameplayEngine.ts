@@ -1271,6 +1271,7 @@ export class GameplayEngine {
     const state = this.knownPatterns[patternId];
     if (!state) return;
     state.timesUsed += 1;
+    this.patternLearning.learnEligibleEvolutions(patternId);
   }
 
   getNpcState(npcId: string): NpcState | undefined {

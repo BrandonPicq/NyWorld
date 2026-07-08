@@ -163,6 +163,55 @@ describe("Combat Engine Integration", () => {
     );
   });
 
+  it("evolves a pattern after use and preserves it through a save round-trip", () => {
+    const save = createEngine().createSaveData();
+    save.knownPatterns = { fireball: { timesUsed: 14 } };
+    save.playerProgression.global.level = 5;
+    save.stats.resources.mp = 50;
+
+    const engine = GameplayEngine.fromSaveData(save, {
+      random: () => 0.5,
+      resolveZone: (zoneId) =>
+        zoneId === "movement_test" ? loadZone(movementZoneData) : undefined,
+    });
+    engine.execute({ type: "MoveEast" });
+    engine.execute({
+      type: "SelectCombatPattern",
+      actionKind: "cast",
+      patternId: "fireball",
+    });
+    engine.execute({
+      type: "SubmitCombatQte",
+      completed: true,
+      inputAdvantage: 2,
+      mistakes: 0,
+    });
+
+    let snapshot = engine.getSnapshot();
+    expect(snapshot.knownPatterns).toEqual({
+      fireball: { timesUsed: 15 },
+      pyrosphere: { timesUsed: 0 },
+    });
+    expect(snapshot.log.map((entry) => entry.message)).toContain(
+      "Your Fireball technique evolved into Pyrosphere.",
+    );
+    expect(engine.consumeNotices()).toContainEqual({
+      title: "Technique Evolved",
+      message: "Your Fireball technique evolved into Pyrosphere.",
+    });
+
+    const restored = GameplayEngine.fromSaveData(engine.createSaveData(), {
+      random: () => 0.5,
+      resolveZone: (zoneId) =>
+        zoneId === "movement_test" ? loadZone(movementZoneData) : undefined,
+    });
+    snapshot = restored.getSnapshot();
+    expect(snapshot.knownPatterns).toEqual({
+      fireball: { timesUsed: 15 },
+      pyrosphere: { timesUsed: 0 },
+    });
+  });
+
   it("rejects physical patterns when the required weapon is not equipped", () => {
     const save = createEngine().createSaveData();
     save.knownPatterns = { crosscut: { timesUsed: 0 } };

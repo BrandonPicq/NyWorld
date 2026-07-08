@@ -384,6 +384,7 @@ export function GameScreen({
               setInitialSelectedInventoryItemId(itemId);
               setIsInventoryOpen(true);
             }}
+            knownPatterns={snapshot.knownPatterns}
             statLayers={snapshot.statLayers}
             stats={snapshot.stats}
           />

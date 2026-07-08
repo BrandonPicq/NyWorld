@@ -73,6 +73,14 @@ describe("resolveWeaponMinigameType", () => {
       "timing",
     );
   });
+
+  it("ships at least one weapon above the starting mastery recommendation", () => {
+    expect(getItemDef("hunter_bow").equipment).toMatchObject({
+      slot: "weapon",
+      weaponType: "bow",
+      recommendedMasteryLevel: 2,
+    });
+  });
 });
 
 describe("computeMashTargetPresses", () => {

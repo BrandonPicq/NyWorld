@@ -3,6 +3,7 @@ import type {
   CoreAttributeKey,
   EquippedSlot,
   Inventory,
+  KnownPatternMap,
   LayeredStatBreakdown,
   Stats,
 } from "../../engine";
@@ -24,6 +25,7 @@ type CharacterSheetModalProps = {
   onEquipSlot: (itemId: string, slot: EquippedSlot) => void;
   onNavigateToItem: (itemId: string) => void;
   inventory: Inventory;
+  knownPatterns: KnownPatternMap;
   stats: Stats;
   statLayers: LayeredStatBreakdown;
 };
@@ -41,6 +43,7 @@ const TAB_LABELS: Record<CharacterTab, string> = {
 export function CharacterSheetModal({
   audioSettings,
   inventory,
+  knownPatterns,
   onChooseAttribute,
   onClose,
   onUnequipSlot,
@@ -106,7 +109,13 @@ export function CharacterSheetModal({
               onNavigateToItem={onNavigateToItem}
             />
           )}
-          {activeTab === "mastery" && <MasteryTab stats={stats} statLayers={statLayers} />}
+          {activeTab === "mastery" && (
+            <MasteryTab
+              knownPatterns={knownPatterns}
+              stats={stats}
+              statLayers={statLayers}
+            />
+          )}
           {activeTab === "academy" && <AcademyTab stats={stats} />}
         </div>
 

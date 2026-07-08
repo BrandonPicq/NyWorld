@@ -4,6 +4,13 @@ This file tracks meaningful project changes by commit-oriented slices.
 
 Keep entries short and practical. When a slice is committed, its changelog section should stay aligned with the commit title so the project history remains easy to read after restores or bisects.
 
+## 2026-07-08 - [ADD]: Pattern evolution and sheet techniques
+
+- Auto-learn eligible QTE pattern evolutions after pattern usage through the shared learning path, with Fireball evolving into Pyrosphere while both techniques remain known.
+- Show known techniques on the character sheet Mastery tab with full input sequences, usage counters, and evolution progress.
+- Add a shipped `hunter_bow` with `recommendedMasteryLevel: 2` so below-recommendation mastery modulation exists in authored content.
+- Unit-test evolution gating, coexistence, no double-learn behavior, and save round-trip persistence for an evolved pattern.
+
 ## 2026-07-08 - [FIX]: Stop Escape in menus from opening the pause menu
 
 - Consume handled keys (`preventDefault` + `stopPropagation`) in `useMenuKeyboard` so a menu-closing keydown no longer bubbles to the global window listener; Escape in the inventory closed it AND opened the pause menu, and Escape in the equip picker also closed the whole character sheet.

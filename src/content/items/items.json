@@ -118,6 +118,20 @@
       }
     }
   },
+  "hunter_bow": {
+    "name": "Hunter Bow",
+    "description": "A heavier field bow that rewards a steadier trained draw.",
+    "category": "equipment",
+    "defaultQuantity": 1,
+    "equipment": {
+      "slot": "weapon",
+      "weaponType": "bow",
+      "recommendedMasteryLevel": 2,
+      "bonuses": {
+        "combat.attack": 3
+      }
+    }
+  },
   "novice_staff": {
     "name": "Novice Staff",
     "description": "A polished wooden staff carved with focusing runes.",

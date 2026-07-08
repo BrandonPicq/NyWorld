@@ -134,4 +134,65 @@ describe("QtePatternLearningSystem", () => {
       { itemId: "crosscut_tome", quantity: 1 },
     ]);
   });
+
+  it("learns an eligible evolved pattern while keeping the source pattern", () => {
+    const harness = createHarness({
+      itemId: "fireball_tome",
+      globalLevel: 5,
+      intelligence: 10,
+      knownPatterns: { fireball: { timesUsed: 15 } },
+    });
+
+    const learnedPatternIds = harness.system.learnEligibleEvolutions("fireball");
+
+    expect(learnedPatternIds).toEqual(["pyrosphere"]);
+    expect(harness.knownPatterns).toEqual({
+      fireball: { timesUsed: 15 },
+      pyrosphere: { timesUsed: 0 },
+    });
+    expect(harness.log).toContain(
+      "Your Fireball technique evolved into Pyrosphere.",
+    );
+    expect(harness.notices).toContainEqual({
+      title: "Technique Evolved",
+      message: "Your Fireball technique evolved into Pyrosphere.",
+    });
+  });
+
+  it("waits for both usage and global level before evolving", () => {
+    const lowUsage = createHarness({
+      itemId: "fireball_tome",
+      globalLevel: 5,
+      knownPatterns: { fireball: { timesUsed: 14 } },
+    });
+    const lowLevel = createHarness({
+      itemId: "fireball_tome",
+      globalLevel: 4,
+      knownPatterns: { fireball: { timesUsed: 15 } },
+    });
+
+    expect(lowUsage.system.learnEligibleEvolutions("fireball")).toEqual([]);
+    expect(lowLevel.system.learnEligibleEvolutions("fireball")).toEqual([]);
+    expect(lowUsage.knownPatterns).toEqual({ fireball: { timesUsed: 14 } });
+    expect(lowLevel.knownPatterns).toEqual({ fireball: { timesUsed: 15 } });
+  });
+
+  it("does not learn or notify an evolution twice", () => {
+    const harness = createHarness({
+      itemId: "fireball_tome",
+      globalLevel: 5,
+      knownPatterns: {
+        fireball: { timesUsed: 20 },
+        pyrosphere: { timesUsed: 1 },
+      },
+    });
+
+    expect(harness.system.learnEligibleEvolutions("fireball")).toEqual([]);
+    expect(harness.knownPatterns).toEqual({
+      fireball: { timesUsed: 20 },
+      pyrosphere: { timesUsed: 1 },
+    });
+    expect(harness.log).toEqual([]);
+    expect(harness.notices).toEqual([]);
+  });
 });

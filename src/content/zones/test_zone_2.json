@@ -78,6 +78,12 @@
       "quantity": 1
     },
     {
+      "itemId": "hunter_bow",
+      "x": 6,
+      "y": 4,
+      "quantity": 1
+    },
+    {
       "itemId": "novice_staff",
       "x": 4,
       "y": 6,
