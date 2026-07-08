@@ -4,7 +4,7 @@
   "description": "A memorized cinder-cast that hurls a bolt of flame.",
   "kind": "magical",
   "inputs": ["up", "left", "down", "right", "up"],
-  "timeLimitMs": 3500,
+  "timeLimitMs": 3700,
   "mpCost": 14,
   "damageMultiplier": 1.6,
   "requiredPlayerLevel": 2,

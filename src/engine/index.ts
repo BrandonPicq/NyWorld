@@ -136,6 +136,20 @@ export type {
   QteContestResult,
 } from "./combat/qteCombat";
 export {
+  computeDamageVarianceRange,
+  estimateCombatDamageBand,
+  HIDDEN_PATTERN_BALANCE_PROFILES,
+  MASH_BALANCE_PROFILES,
+  SEQUENCE_BALANCE_PROFILES,
+  TIMING_BALANCE_PROFILES,
+} from "./combat/combatBalanceModel";
+export type {
+  CombatDamageBand,
+  CombatDamageBandInput,
+  CombatPerformanceProfile,
+  CombatPerformanceProfileId,
+} from "./combat/combatBalanceModel";
+export {
   deriveCombatActionEffects,
   getAllCombatActionDefs,
   getCombatActionDef,

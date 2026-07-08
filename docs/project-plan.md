@@ -77,6 +77,7 @@ Fondations posees (juillet 2026) :
 - edition dev-only des patterns QTE appris : creation de fichiers, sequence d'inputs, kind physique/magique, cout MP, multiplicateur, prerequis, restrictions d'arme, evolution, validation live, references entrantes et sauvegarde JSON.
 - apprentissage des patterns QTE par tomes consommables (`effects.teachesPatternId`) : verification des prerequis niveau global / intelligence effective, refus sans consommation, notices/logs, persistance `knownPatterns` en sauvegarde version 0.11, et tomes de depart rattaches aux recompenses de quetes.
 - execution des patterns QTE appris en combat : selection depuis Strike/Cast, verification arme/MP, QTE a sequence cachee, multiplicateur de degats, depense de MP et increment `timesUsed` pour les evolutions futures.
+- passe d'equilibrage chapitre 8 : profils poor/average/strong partages pour sequence, mash, timing et patterns caches, bandes de variance de degats testees, et timings des patterns de depart adoucis apres integration.
 - jalon Fondations RPG terminé (juillet 2026) : double progression de niveau (global et classe), dérivation de statistiques par couches (layered stats), slots d'équipement et restrictions de classe, maîtrise des commandes (command mastery) avec caps/utilisations/effets, action d'étude restreinte aux zones dédiées (study spot gating), et mise à jour complète du contenu de départ (Tier 0 equipment, quêtes, XP).
 
 Etapes restantes :

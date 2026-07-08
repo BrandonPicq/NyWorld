@@ -4,7 +4,7 @@
   "description": "A roiling sphere of fire, the evolved form of Fireball.",
   "kind": "magical",
   "inputs": ["up", "left", "down", "right", "down", "left", "up"],
-  "timeLimitMs": 4000,
+  "timeLimitMs": 4500,
   "mpCost": 22,
   "damageMultiplier": 2.2,
   "requiredPlayerLevel": 5,

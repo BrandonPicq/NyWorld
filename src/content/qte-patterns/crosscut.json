@@ -4,7 +4,7 @@
   "description": "A crossing blade combo that only a sword can trace.",
   "kind": "physical",
   "inputs": ["left", "right", "up", "down", "up"],
-  "timeLimitMs": 3200,
+  "timeLimitMs": 3400,
   "mpCost": 8,
   "damageMultiplier": 1.4,
   "requiredPlayerLevel": 2,

@@ -4,6 +4,13 @@ This file tracks meaningful project changes by commit-oriented slices.
 
 Keep entries short and practical. When a slice is committed, its changelog section should stay aligned with the commit title so the project history remains easy to read after restores or bisects.
 
+## 2026-07-08 - [UPDATE]: Tune combat minigame balance targets
+
+- Add a pure combat balance model for shared poor/average/strong QTE profiles and damage variance bands.
+- Document weapon minigame and learned-pattern balance targets for sequence, mash, timing, and hidden pattern execution.
+- Slightly ease the hidden timing windows for starter QTE patterns while keeping their MP costs and damage multipliers stable.
+- Unit-test the balance model against tutorial enemies and learned-pattern damage estimates.
+
 ## 2026-07-08 - [ADD]: Execute learned QTE patterns
 
 - Add combat selection for learned QTE patterns from Strike and Cast, with weapon compatibility and MP availability checks.

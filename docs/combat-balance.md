@@ -33,6 +33,53 @@ checking QTE combat changes. These are design targets, not final formulas.
 - Strong performance means the attacker completes the sequence with a lead of
   about 5 inputs and earns a critical result.
 
+These profiles are encoded in `engine/combat/combatBalanceModel.ts` so tests
+and future editor audits can use the same assumptions as this document.
+
+| Mechanic | Poor | Average | Strong |
+| --- | --- | --- | --- |
+| Sequence (sword/staff/default) | incomplete, `inputAdvantage -2`, 1 mistake | complete, `inputAdvantage 2` | complete, `inputAdvantage 5` |
+| Mash (hammer) | same race outcome as sequence | same race outcome as sequence | same race outcome as sequence |
+| Timing volley (bow) | mostly missed shots, `inputAdvantage -2` | about three great shots, `inputAdvantage 3` | about three critical shots, `inputAdvantage 6` |
+| Hidden pattern | same outcome targets as sequence, but mistakes reset progress | complete, `inputAdvantage 2` | complete, `inputAdvantage 5` |
+
+Damage estimates should always quote the final variance range: production rolls
+between 75% and 125% of the calculated damage, using `ceil` for the lower bound
+and `floor` for the upper bound. For example, a calculated 10 damage lands in
+the 8 to 12 range.
+
+## Weapon Minigame Targets
+
+- Sword and staff sequence attacks should remain the most readable baseline:
+  average performance should defeat the Slime in about 2 to 4 successful hits.
+- Hammer mash should feel bursty without being stricter than sequence at the
+  same stats; the target press count should usually stay in the 8 to 14 range
+  for early enemies after mastery modulation.
+- Bow timing should reward precision rather than speed alone. A strong volley
+  should reach the critical threshold through three critical shots, while an
+  average volley should land as a normal hit.
+- Weapon mastery modulation should soften or harden the input challenge only.
+  It should not change the damage formula directly.
+
+## Learned Pattern Targets
+
+Patterns are MP techniques, not free replacements for Strike or Cast. They
+multiply the resolved QTE damage after the hit/critical result and after the
+one-mistake penalty, then normal damage variance still applies.
+
+Starter patterns use these targets after the slice 56 tuning pass:
+
+| Pattern | Role | Inputs | Time | MP | Multiplier | Target |
+| --- | --- | ---: | ---: | ---: | ---: | --- |
+| Crosscut | early sword technique | 5 | 3400 ms | 8 | x1.4 | cheaper physical spike, weapon-gated |
+| Fireball | early magic technique | 5 | 3700 ms | 14 | x1.6 | stronger Cast payoff, limited by MP |
+| Pyrosphere | evolved fire spell | 7 | 4500 ms | 22 | x2.2 | high-risk/high-cost chapter spell |
+
+With a fresh player stat line, average Fireball performance against the Goblin
+calculates 11 pre-variance damage, rolling 9 to 13 after variance. Strong
+pattern performance should feel decisive, but missing the hidden sequence
+should still waste the MP and the turn.
+
 ## Early Enemy Targets
 
 - Tutorial enemy: usually 2 to 4 successful player attacks.
