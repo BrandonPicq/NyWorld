@@ -37,6 +37,8 @@ Most content links are id based:
   state to reusable dialogue sequences.
 - `classId` and `raceId` link RPG progression metadata to class and race
   definitions.
+- `patternId` links learned QTE patterns to future tomes, evolutions, and save
+  state.
 
 Ids should be stable once they appear in saves. Renaming an id later requires a
 save migration or compatibility alias.
@@ -85,10 +87,10 @@ without constructing runtime objects.
 data that has already crossed validation.
 
 Reference validation goes through an explicit `ContentValidationContext`
-holding the known item, NPC, dialogue, enemy, quest, combat action, tile,
-class, race, and zone catalogs. Each validator declares the subset it needs
-(for example `ZoneValidationContext` or `QuestValidationContext`), so editor
-drafts and mod bundles can build their own context and validate before
+holding the known item, NPC, dialogue, enemy, quest, combat action, QTE pattern,
+tile, class, race, and zone catalogs. Each validator declares the subset it
+needs (for example `ZoneValidationContext` or `QuestValidationContext`), so
+editor drafts and mod bundles can build their own context and validate before
 becoming active content. The runtime builder
 `createRuntimeContentValidationContext` lives in its own top-of-graph module
 that registries must never import; registries that need a context at module
@@ -99,7 +101,8 @@ in `contentTypes.ts` (see ADR 0005).
 
 Every content family now has an editor-facing validator that accumulates
 `ContentDiagnostic`s: zones, quests, items, tiles, dialogues, NPCs, global
-presence, enemies, combat actions, classes, races, and the game config.
+presence, enemies, combat actions, QTE patterns, classes, races, and the game
+config.
 
 `validateAllContent` (`engine/content/contentAudit.ts`) runs all of them over a
 `ContentCatalogSnapshot` plus full-context cross checks that per-registry
@@ -208,6 +211,29 @@ in `effects` — keep only the qualitative prose there, so a rebalance in `tunin
 updates the help text automatically. Multiplier tuning has no derived line and
 stays authored prose. The `formula` and `details` strings still restate tuning
 numbers by hand.
+
+## QTE Patterns
+
+QTE pattern files live under `src/content/qte-patterns/*.json`. They describe
+learnable techniques such as `fireball` or `crosscut`; the current slice owns
+the content family and editor loop, while gameplay learning, tomes, and save
+state are wired in later slices from ADR 0009.
+
+A pattern definition owns:
+
+- `patternId`, `name`, and `description`;
+- `kind`: `physical` or `magical`;
+- `inputs`: 4 to 8 entries from `up`, `down`, `left`, and `right`;
+- `timeLimitMs`, `mpCost`, and `damageMultiplier`;
+- `requiredPlayerLevel` and `requiredIntelligence`;
+- optional `requiredWeaponTypes` using equipment weapon archetypes such as
+  `sword`, `hammer`, `bow`, or `staff`;
+- optional `evolvesFrom: { patternId, usageRequired }`.
+
+Pattern evolution references must point to another authored pattern and cannot
+point back to the same `patternId`. Unknown patterns are intentionally inert:
+the registry returns `undefined` rather than a fallback, so a typo cannot be
+learned or executed silently.
 
 ## Quests
 

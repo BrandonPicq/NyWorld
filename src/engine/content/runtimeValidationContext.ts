@@ -1,4 +1,5 @@
 import { getAllCombatActionDefs } from "../combat/combatActionRegistry";
+import { getAllQtePatternIds } from "../combat/qtePatternRegistry";
 import { getAllClassIds } from "../classes/classRegistry";
 import { getAllDialogueIds } from "../dialogues/dialogueRegistry";
 import { getAllEnemyDefs } from "../enemies/enemyRegistry";
@@ -43,6 +44,7 @@ export function createRuntimeContentValidationContext(
     commandMasteryIds: new Set(
       getAllCommandMasteryDefs().map((cmd) => cmd.commandId),
     ),
+    qtePatternIds: new Set(getAllQtePatternIds()),
     tileDefs: getAllTileDefs(),
     zones: resolveAllZonesFromBundle(bundle),
   };

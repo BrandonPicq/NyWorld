@@ -40,7 +40,7 @@ Le code applicatif est decoupe par responsabilite :
 - `ui` : ecrans et composants React, sans regles de gameplay ;
 - `engine` : logique pure du jeu, ECS, commandes, snapshots, registres de contenu, sauvegardes ;
 - `rendering` : rendu Canvas 2D a partir de snapshots de rendu deja prepares ;
-- `content` : donnees JSON (zones, PNJs, dialogues, objets, ennemis, quetes, actions de combat, presence globale, config de jeu) ;
+- `content` : donnees JSON (zones, PNJs, dialogues, objets, ennemis, quetes, actions de combat, patterns QTE, presence globale, config de jeu) ;
 - `styles` : variables de design, styles de base, composants et ecrans.
 
 React ne contient pas les regles du jeu : il affiche des snapshots du moteur et envoie des commandes explicites (`GameCommand`). Le Canvas ne decide pas de l'etat du monde : il dessine un snapshot de rendu.
@@ -59,8 +59,8 @@ Objectif : rendre tout le contenu editable en donnees, puis construire un editeu
 
 Fondations posees (juillet 2026) :
 
-- contenu migre en JSON : effets de consommables, tuiles, inventaire/stats/monnaie de depart, tuning repos/etude, tuning des actions de combat ;
-- chaque famille de contenu a un validateur a diagnostics multi-erreurs (`ContentDiagnostic`) : zones, quetes, objets, tuiles, dialogues, PNJs, presence globale, ennemis, actions de combat, config de jeu ;
+- contenu migre en JSON : effets de consommables, tuiles, inventaire/stats/monnaie de depart, tuning repos/etude, tuning des actions de combat, patterns QTE ;
+- chaque famille de contenu a un validateur a diagnostics multi-erreurs (`ContentDiagnostic`) : zones, quetes, objets, tuiles, dialogues, PNJs, presence globale, ennemis, actions de combat, patterns QTE, config de jeu ;
 - la validation des references passe par un contexte injecte (`ContentValidationContext` et sous-ensembles `Pick`), voir ADR 0005 ;
 - `ContentReferenceGraph` repond a "ou cet id est-il utilise" et "que casse un renommage" (avec indicateur de persistance en sauvegarde) ;
 - `validateAllContent` audite un bundle complet ; un test permanent garde le contenu livre sans erreur.
@@ -74,6 +74,7 @@ Fondations posees (juillet 2026) :
 - edition dev-only des fichiers de dialogues reutilisables : creation de fichiers, ajout de sequences, edition des lignes speaker/text/pitch, suppression bloquee par les references entrantes, validation live du bundle.
 - edition dev-only des fiches PNJ : creation de fichiers PNJ, champs race/importance/presentation/dialogue par defaut, validation live du bundle, et raccourci de creation du dialogue par defaut.
 - edition dev-only des profils ennemis rattaches aux PNJ : toggle combatable, stat block complet, loot, validation live du bundle, sauvegarde et suppression des fichiers de profil.
+- edition dev-only des patterns QTE appris : creation de fichiers, sequence d'inputs, kind physique/magique, cout MP, multiplicateur, prerequis, restrictions d'arme, evolution, validation live, references entrantes et sauvegarde JSON.
 - jalon Fondations RPG terminé (juillet 2026) : double progression de niveau (global et classe), dérivation de statistiques par couches (layered stats), slots d'équipement et restrictions de classe, maîtrise des commandes (command mastery) avec caps/utilisations/effets, action d'étude restreinte aux zones dédiées (study spot gating), et mise à jour complète du contenu de départ (Tier 0 equipment, quêtes, XP).
 
 Etapes restantes :

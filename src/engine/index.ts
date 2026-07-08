@@ -151,6 +151,22 @@ export type {
   CombatActionTuning,
 } from "./combat/CombatActionDef";
 export {
+  cloneQtePatternDef,
+  getAllQtePatternDefs,
+  getAllQtePatternIds,
+  getQtePatternDef,
+  hasQtePatternDef,
+  validateQtePatternDef,
+  validateQtePatternRegistry,
+} from "./combat/qtePatternRegistry";
+export type { QtePatternValidationContext } from "./combat/qtePatternRegistry";
+export type {
+  PatternDef,
+  PatternDefMap,
+  PatternEvolution,
+  PatternKind,
+} from "./combat/PatternDef";
+export {
   cloneClassDef,
   getAllClassDefs,
   getAllClassIds,

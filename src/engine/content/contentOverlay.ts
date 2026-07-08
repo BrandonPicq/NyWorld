@@ -3,6 +3,10 @@ import {
   installCombatActionContentOverlay,
 } from "../combat/combatActionRegistry";
 import {
+  clearQtePatternContentOverlay,
+  installQtePatternContentOverlay,
+} from "../combat/qtePatternRegistry";
+import {
   clearClassContentOverlay,
   installClassContentOverlay,
 } from "../classes/classRegistry";
@@ -70,6 +74,7 @@ export function installContentOverlay(
     installClassContentOverlay(snapshot.classes);
     installRaceContentOverlay(snapshot.races);
     installCommandMasteryContentOverlay(snapshot.commandMasteries ?? []);
+    installQtePatternContentOverlay(snapshot.qtePatterns ?? []);
     installQuestContentOverlay(snapshot.quests, context);
   } catch (error) {
     clearContentOverlay();
@@ -79,6 +84,7 @@ export function installContentOverlay(
 
 export function clearContentOverlay(): void {
   clearQuestContentOverlay();
+  clearQtePatternContentOverlay();
   clearCommandMasteryContentOverlay();
   clearRaceContentOverlay();
   clearClassContentOverlay();

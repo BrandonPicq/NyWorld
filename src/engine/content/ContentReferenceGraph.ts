@@ -1,4 +1,5 @@
 import type { CombatActionDef } from "../combat/CombatActionDef";
+import type { PatternDef } from "../combat/PatternDef";
 import type { ClassDef } from "../classes/ClassDef";
 import type { DialogueDefMap } from "../dialogues/DialogueDef";
 import type { EnemyDef } from "../enemies/EnemyDef";
@@ -75,6 +76,7 @@ export interface ContentCatalogSnapshot {
   classes: ClassDef[];
   races: RaceDef[];
   commandMasteries?: CommandMasteryDef[];
+  qtePatterns?: PatternDef[];
   dialogues: DialogueDefMap;
   dialogueFiles: Record<string, DialogueDefMap>;
   tiles: ReadonlyMap<TileId, TileDef>;
@@ -102,6 +104,7 @@ export function buildContentReferenceGraph(
     ...snapshot.npcPresence.flatMap(collectNpcPresenceReferences),
     ...snapshot.enemies.flatMap(collectEnemyReferences),
     ...snapshot.quests.flatMap(collectQuestReferences),
+    ...(snapshot.qtePatterns ?? []).flatMap(collectQtePatternReferences),
   ];
 
   return {
@@ -161,6 +164,8 @@ function referenceTargetExists(
       return context.tileDefs.has(Number(target.id));
     case CONTENT_TYPES.zone:
       return context.zones.has(target.id);
+    case CONTENT_TYPES.qtePattern:
+      return context.qtePatternIds?.has(target.id) ?? true;
     default:
       return true;
   }
@@ -421,6 +426,27 @@ function collectQuestReferences(quest: QuestDef): ContentReference[] {
       ),
     );
   });
+
+  return references;
+}
+
+function collectQtePatternReferences(pattern: PatternDef): ContentReference[] {
+  const from: ContentRef = {
+    type: CONTENT_TYPES.qtePattern,
+    id: pattern.patternId,
+  };
+  const references: ContentReference[] = [];
+
+  if (pattern.evolvesFrom) {
+    references.push(
+      reference(
+        from,
+        CONTENT_TYPES.qtePattern,
+        pattern.evolvesFrom.patternId,
+        "evolvesFrom.patternId",
+      ),
+    );
+  }
 
   return references;
 }

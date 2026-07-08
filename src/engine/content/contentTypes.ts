@@ -18,6 +18,7 @@ export const CONTENT_TYPES = {
   class: "class",
   race: "race",
   commandMastery: "command-mastery",
+  qtePattern: "qte-pattern",
   game: "game",
 } as const;
 

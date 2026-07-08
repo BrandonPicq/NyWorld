@@ -1,4 +1,5 @@
 import { getAllCombatActionDefs } from "../combat/combatActionRegistry";
+import { getAllQtePatternDefs } from "../combat/qtePatternRegistry";
 import { getAllClassDefs } from "../classes/classRegistry";
 import {
   getAllDialogueIds,
@@ -50,6 +51,7 @@ export function createRuntimeContentCatalogSnapshot(
     classes: getAllClassDefs(),
     races: getAllRaceDefs(),
     commandMasteries: getAllCommandMasteryDefs(),
+    qtePatterns: getAllQtePatternDefs(),
     dialogues: Object.fromEntries(
       getAllDialogueIds().map((dialogueId) => [
         dialogueId,

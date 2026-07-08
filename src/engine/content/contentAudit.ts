@@ -1,4 +1,5 @@
 import { validateCombatActionRegistry } from "../combat/combatActionRegistry";
+import { validateQtePatternRegistry } from "../combat/qtePatternRegistry";
 import { validateClassRegistry } from "../classes/classRegistry";
 import { validateDialogueRegistry } from "../dialogues/dialogueRegistry";
 import { validateEnemyRegistry } from "../enemies/enemyRegistry";
@@ -53,6 +54,7 @@ export function validateAllContent(
     ...validateClassRegistry(snapshot.classes),
     ...validateRaceRegistry(snapshot.races),
     ...validateCommandMasteryRegistry(snapshot.commandMasteries ?? []),
+    ...validateQtePatternRegistry(snapshot.qtePatterns ?? []),
     ...validateKnownScheduleTargetPositions(snapshot, context),
   ];
 

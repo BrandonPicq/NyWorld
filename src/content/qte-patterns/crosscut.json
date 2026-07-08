@@ -1,0 +1,13 @@
+{
+  "patternId": "crosscut",
+  "name": "Crosscut",
+  "description": "A crossing blade combo that only a sword can trace.",
+  "kind": "physical",
+  "inputs": ["left", "right", "up", "down", "up"],
+  "timeLimitMs": 3200,
+  "mpCost": 8,
+  "damageMultiplier": 1.4,
+  "requiredPlayerLevel": 2,
+  "requiredIntelligence": 8,
+  "requiredWeaponTypes": ["sword"]
+}

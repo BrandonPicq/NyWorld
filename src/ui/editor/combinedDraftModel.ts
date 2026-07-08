@@ -9,10 +9,15 @@ import type {
   ItemDefMap,
   NpcDef,
   NpcPresenceDef,
+  PatternDef,
   QuestDef,
   RaceDef,
   ZoneData,
 } from "../../engine";
+import {
+  createPatternDraftSnapshot,
+  createPatternDraftValidationContext,
+} from "./patterns/patternEditorModel";
 import {
   cloneClassDefs,
   createClassDraftValidationContext,
@@ -60,6 +65,7 @@ export interface EditorDraftContents {
   classes: readonly ClassDef[];
   races: readonly RaceDef[];
   quests: readonly QuestDef[];
+  patterns: readonly PatternDef[];
   game: GameContentConfig;
   zones?: readonly ZoneData[];
 }
@@ -84,6 +90,7 @@ export function createCombinedDraftSnapshot(
   snapshot = { ...snapshot, classes: cloneClassDefs(contents.classes) };
   snapshot = { ...snapshot, races: cloneRaceDefs(contents.races) };
   snapshot = { ...snapshot, quests: cloneQuestDefs(contents.quests) };
+  snapshot = createPatternDraftSnapshot(snapshot, contents.patterns);
   for (const zone of contents.zones ?? []) {
     snapshot = createZoneDraftSnapshot(snapshot, zone);
   }
@@ -118,6 +125,7 @@ export function createCombinedDraftValidationContext(
   context = createClassDraftValidationContext(context, contents.classes);
   context = createRaceDraftValidationContext(context, contents.races);
   context = createQuestDraftValidationContext(context, contents.quests);
+  context = createPatternDraftValidationContext(context, contents.patterns);
   for (const zone of contents.zones ?? []) {
     context = createZoneDraftValidationContext(context, zone);
   }

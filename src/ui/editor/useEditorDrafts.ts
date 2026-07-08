@@ -11,6 +11,7 @@ import {
   type ItemDefMap,
   type NpcDef,
   type NpcPresenceDef,
+  type PatternDef,
   type QuestDef,
   type RaceDef,
 } from "../../engine";
@@ -60,6 +61,11 @@ import {
   type QuestDraftController,
 } from "./quests/useQuestDraft";
 import {
+  createQtePatternDraftState,
+  useQtePatternDraft,
+  type QtePatternDraftController,
+} from "./patterns/useQtePatternDraft";
+import {
   createRaceDraftState,
   useRaceDraft,
   type RaceDraftController,
@@ -92,6 +98,7 @@ export interface EditorUnsavedChanges {
   class: boolean;
   race: boolean;
   quest: boolean;
+  pattern: boolean;
   zone: boolean;
   game: boolean;
 }
@@ -106,6 +113,7 @@ export interface EditorDrafts {
   class: ClassDraftController;
   race: RaceDraftController;
   quest: QuestDraftController;
+  pattern: QtePatternDraftController;
   zone: ZoneDraftController;
   game: GameConfigController;
   combined: CombinedDraftView;
@@ -181,6 +189,12 @@ export function useEditorDrafts(base: ContentCatalogSnapshot): EditorDrafts {
   const [savedQuests, setSavedQuests] = useState<QuestDef[]>(() =>
     createQuestDraftState(base),
   );
+  const [draftPatterns, setDraftPatterns] = useState<PatternDef[]>(() =>
+    createQtePatternDraftState(base),
+  );
+  const [savedPatterns, setSavedPatterns] = useState<PatternDef[]>(() =>
+    createQtePatternDraftState(base),
+  );
   const [gameDraft, setGameDraft] = useState<GameContentConfig>(() =>
     createGameConfigDraftState(base),
   );
@@ -211,6 +225,7 @@ export function useEditorDrafts(base: ContentCatalogSnapshot): EditorDrafts {
       classes: draftClasses,
       races: draftRaces,
       quests: draftQuests,
+      patterns: draftPatterns,
       game: gameDraft,
       zones: activeZoneDrafts(zoneHistories),
     }),
@@ -224,6 +239,7 @@ export function useEditorDrafts(base: ContentCatalogSnapshot): EditorDrafts {
       draftClasses,
       draftRaces,
       draftQuests,
+      draftPatterns,
       gameDraft,
       zoneHistories,
     ],
@@ -338,6 +354,13 @@ export function useEditorDrafts(base: ContentCatalogSnapshot): EditorDrafts {
     },
     combined,
   );
+  const pattern = useQtePatternDraft(
+    {
+      draft: { value: draftPatterns, set: setDraftPatterns },
+      saved: { value: savedPatterns, set: setSavedPatterns },
+    },
+    combined,
+  );
   const zone = useZoneDraft(
     base,
     {
@@ -368,6 +391,7 @@ export function useEditorDrafts(base: ContentCatalogSnapshot): EditorDrafts {
     class: classDraft.hasUnsavedChanges,
     race: race.hasUnsavedChanges,
     quest: quest.hasUnsavedChanges,
+    pattern: pattern.hasUnsavedChanges,
     zone: hasAnyUnsavedZoneDraft(base, zoneHistories, savedZoneJson),
     game: game.hasUnsavedChanges,
   };
@@ -383,6 +407,7 @@ export function useEditorDrafts(base: ContentCatalogSnapshot): EditorDrafts {
     class: classDraft,
     race,
     quest,
+    pattern,
     zone,
     game,
     combined,

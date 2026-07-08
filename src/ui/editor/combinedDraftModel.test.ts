@@ -37,6 +37,7 @@ function contentsWith(
     classes: base.classes,
     races: base.races,
     quests: base.quests,
+    patterns: base.qtePatterns ?? [],
     game: base.game,
     ...overrides,
   };

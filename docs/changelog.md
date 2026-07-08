@@ -4,6 +4,14 @@ This file tracks meaningful project changes by commit-oriented slices.
 
 Keep entries short and practical. When a slice is committed, its changelog section should stay aligned with the commit title so the project history remains easy to read after restores or bisects.
 
+## 2026-07-08 - [ADD]: QTE pattern content family
+
+- Add JSON-authored QTE patterns with registry loading, multi-error validation, detached reads, and dev overlay support.
+- Add starter `fireball`, `pyrosphere`, and `crosscut` pattern definitions, including evolution and weapon-type requirements.
+- Wire QTE patterns into content audits, runtime catalog snapshots, validation contexts, and the reference graph.
+- Add a dev editor Patterns tab for creating, editing, saving, deleting, validating, and navigating references for pattern files.
+- Unit-test the registry, shipped content, editor model, draft integration, audits, overlays, and reference handling.
+
 ## 2026-07-08 - [ADD]: Weapon masteries and minigame modulation
 
 - Add per-archetype command masteries (`weapon_sword` / `weapon_hammer` / `weapon_bow` / `weapon_staff`, cap 10, usageRequired 8, empty effects/unlocks) to the command-mastery family and the persisted mastery set; a Strike or Cast with a weapon equipped now increments that weapon type's mastery.

@@ -19,6 +19,7 @@ import { PresenceTab } from "./presence/PresenceTab";
 import { prepareEditorPlaytest } from "./playtestLaunch";
 import { QuestTab } from "./quests/QuestTab";
 import { RaceTab } from "./races/RaceTab";
+import { PatternTab } from "./patterns/PatternTab";
 import { useEditorDrafts } from "./useEditorDrafts";
 import { ZoneEditorPanel } from "./zone/ZoneEditorPanel";
 import type { EditorPlaytestStart } from "./playtestStart";
@@ -42,7 +43,8 @@ type EditorTab =
   | "actions"
   | "classes"
   | "races"
-  | "quests";
+  | "quests"
+  | "patterns";
 
 const EDITOR_TABS: { id: EditorTab; label: string }[] = [
   { id: "content", label: "Content" },
@@ -56,6 +58,7 @@ const EDITOR_TABS: { id: EditorTab; label: string }[] = [
   { id: "classes", label: "Classes" },
   { id: "races", label: "Races" },
   { id: "quests", label: "Quests" },
+  { id: "patterns", label: "Patterns" },
 ];
 
 export function ContentEditorScreen({
@@ -166,6 +169,10 @@ export function ContentEditorScreen({
         drafts.quest.selectQuest(target.id);
         setTab("quests");
         return;
+      case CONTENT_TYPES.qtePattern:
+        drafts.pattern.selectPattern(target.id);
+        setTab("patterns");
+        return;
       default:
         setTab("content");
     }
@@ -263,6 +270,8 @@ export function ContentEditorScreen({
               onNavigate={navigateToContent}
               snapshot={drafts.combined.snapshot}
             />
+          ) : tab === "patterns" ? (
+            <PatternTab draft={drafts.pattern} onNavigate={navigateToContent} />
           ) : (
             <ContentTab draft={drafts.item} onNavigate={navigateToContent} />
           )}
@@ -349,5 +358,7 @@ function tabHasUnsavedChanges(
       return changes.race;
     case "quests":
       return changes.quest;
+    case "patterns":
+      return changes.pattern;
   }
 }
