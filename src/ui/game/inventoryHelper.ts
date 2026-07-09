@@ -23,6 +23,10 @@ export const EQUIPMENT_SLOT_ORDER: readonly EquipmentSlot[] = [
 export interface EquipmentSlotGroup {
   slot: EquipmentSlot;
   label: string;
+  /**
+   * `globalIndex` is the sequential index in the grouped DISPLAY order —
+   * the keyboard cursor order — not the index in the input array.
+   */
   items: Array<{ stack: InventoryStack; globalIndex: number }>;
 }
 
@@ -30,21 +34,25 @@ export function computeEquipmentSlotGroups(
   items: InventoryStack[],
   getEquipmentSlot: (itemId: string) => EquipmentSlot | undefined
 ): EquipmentSlotGroup[] {
-  const groups = new Map<EquipmentSlot, Array<{ stack: InventoryStack; globalIndex: number }>>();
+  const stacksBySlot = new Map<EquipmentSlot, InventoryStack[]>();
 
-  items.forEach((stack, index) => {
+  for (const stack of items) {
     const slot = getEquipmentSlot(stack.itemId);
-    if (!slot) return;
-    if (!groups.has(slot)) groups.set(slot, []);
-    groups.get(slot)!.push({ stack, globalIndex: index });
-  });
+    if (!slot) continue;
+    if (!stacksBySlot.has(slot)) stacksBySlot.set(slot, []);
+    stacksBySlot.get(slot)!.push(stack);
+  }
 
+  let nextIndex = 0;
   return EQUIPMENT_SLOT_ORDER
-    .filter((slot) => groups.has(slot))
+    .filter((slot) => stacksBySlot.has(slot))
     .map((slot) => ({
       slot,
       label: EQUIPMENT_SLOT_LABEL[slot],
-      items: groups.get(slot)!,
+      items: stacksBySlot.get(slot)!.map((stack) => ({
+        stack,
+        globalIndex: nextIndex++,
+      })),
     }));
 }
 

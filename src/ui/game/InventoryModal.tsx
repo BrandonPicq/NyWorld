@@ -70,19 +70,29 @@ export function InventoryModal({
   ];
 
   // Filter items based on active tab
-  const filteredItems = activeTab === "all"
+  const categoryItems = activeTab === "all"
     ? items
     : items.filter((item) => getItemDef(item.itemId).category === activeTab);
-
-  const hasItems = filteredItems.length > 0;
 
   const equipmentSlotGroups = useMemo(() => {
     if (activeTab !== "equipment") return null;
     return computeEquipmentSlotGroups(
-      filteredItems,
+      categoryItems,
       (itemId) => getItemDef(itemId).equipment?.slot
     );
-  }, [activeTab, filteredItems]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeTab, items]);
+
+  // The keyboard cursor is one flat index over the RENDERED order, which is
+  // grouped by slot on the equipment tab — derive the flat list from the
+  // groups so arrows follow what is on screen.
+  const filteredItems = equipmentSlotGroups
+    ? equipmentSlotGroups.flatMap((group) =>
+        group.items.map((entry) => entry.stack),
+      )
+    : categoryItems;
+
+  const hasItems = filteredItems.length > 0;
 
   // Find index of pre-selected item if it exists in current filtered list
   const targetIndex = initialSelectedItemId

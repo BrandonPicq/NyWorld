@@ -30,6 +30,11 @@ Keep entries short and practical. When a slice is committed, its changelog secti
 - Derive displayed damage and costs from pure engine helpers instead of parsing authored formula text.
 - Keep future additional effect codes isolated behind a structured tooltip summary field.
 
+## 2026-07-09 - [FIX]: Align equipment tab keyboard order with slot grouping
+
+- Make the inventory keyboard cursor follow the rendered order on the Equipment tab: the flat selection index is now derived from the slot-grouped display instead of the raw inventory order, so ArrowDown always moves the cursor visually down.
+- `computeEquipmentSlotGroups` now assigns sequential indexes in grouped display order.
+
 ## 2026-07-09 - [FIX]: Scroll menu lists with the keyboard cursor
 
 - Scroll the inventory list so the selected row stays visible while moving the selection with the keyboard.

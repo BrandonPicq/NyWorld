@@ -107,7 +107,7 @@ describe("computeEquipmentSlotGroups", () => {
     expect(groups).toHaveLength(1);
     expect(groups[0].slot).toBe("weapon");
     expect(groups[0].items).toHaveLength(1);
-    expect(groups[0].items[0].globalIndex).toBe(1);
+    expect(groups[0].items[0].globalIndex).toBe(0);
   });
 
   it("groups items by slot in stable order", () => {
@@ -123,14 +123,18 @@ describe("computeEquipmentSlotGroups", () => {
     expect(groups[2].items[0].stack.itemId).toBe("helmet");
   });
 
-  it("preserves the global index for each item", () => {
+  it("assigns sequential indexes in grouped display order", () => {
+    // Input order differs from display order: indexes must follow the
+    // rendered (grouped) order, not the input order.
     const items: InventoryStack[] = [
+      { itemId: "helmet", quantity: 1 },
       { itemId: "sword", quantity: 1 },
       { itemId: "shield", quantity: 1 },
     ];
     const groups = computeEquipmentSlotGroups(items, getSlot);
-    expect(groups[0].items[0].globalIndex).toBe(0);
-    expect(groups[1].items[0].globalIndex).toBe(1);
+    expect(groups[0].items[0].globalIndex).toBe(0); // sword (weapon)
+    expect(groups[1].items[0].globalIndex).toBe(1); // shield (offHand)
+    expect(groups[2].items[0].globalIndex).toBe(2); // helmet (head)
   });
 
   it("keeps multiple items of the same slot together", () => {
