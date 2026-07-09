@@ -30,29 +30,32 @@ export function SequenceMinigame({
 }: SequenceMinigameProps) {
   const { challenge, sequence: qteSequence } = spec;
   const isHidden = spec.hidden === true;
-
-  const [playerInputIndex, setPlayerInputIndex] = useState(0);
-  const [timeElapsed, setTimeElapsed] = useState(0);
-  const [mistakes, setMistakes] = useState(0);
-
-  // Real-time loop refs to avoid stale closures
-  const playerInputIndexRef = useRef(0);
-  const mistakesRef = useRef(0);
-  const requestRef = useRef<number | null>(null);
-  const startTimeRef = useRef<number | null>(null);
-  const submittedRef = useRef(false);
-
   const opponentSpeed = challenge.opponentSpeed;
   // Calculate opponent key delay: faster speed = shorter delay
   const opponentKeyDelayMs = Math.max(400, 1000 - opponentSpeed * 40);
   const playerSequenceLength = challenge.playerSequenceLength;
   const opponentSequenceLength = challenge.opponentSequenceLength;
   const timeLimitMs = challenge.timeLimitMs;
+  const initialInputIndex = Math.min(
+    playerSequenceLength,
+    Math.max(0, spec.initialInputIndex ?? 0),
+  );
+
+  const [playerInputIndex, setPlayerInputIndex] = useState(initialInputIndex);
+  const [timeElapsed, setTimeElapsed] = useState(0);
+  const [mistakes, setMistakes] = useState(0);
+
+  // Real-time loop refs to avoid stale closures
+  const playerInputIndexRef = useRef(initialInputIndex);
+  const mistakesRef = useRef(0);
+  const requestRef = useRef<number | null>(null);
+  const startTimeRef = useRef<number | null>(null);
+  const submittedRef = useRef(false);
 
   // Reset states on phase changes
   useEffect(() => {
-    setPlayerInputIndex(0);
-    playerInputIndexRef.current = 0;
+    setPlayerInputIndex(initialInputIndex);
+    playerInputIndexRef.current = initialInputIndex;
     setTimeElapsed(0);
     setMistakes(0);
     mistakesRef.current = 0;
@@ -63,7 +66,7 @@ export function SequenceMinigame({
       cancelAnimationFrame(requestRef.current);
       requestRef.current = null;
     }
-  }, [phase]);
+  }, [phase, initialInputIndex]);
 
   // Real-time animation loop for QTE timer and opponent progress
   useEffect(() => {
@@ -89,6 +92,7 @@ export function SequenceMinigame({
           completed: false,
           inputAdvantage: advantage,
           mistakes: mistakesRef.current,
+          progressIndex: currentIdx,
         });
         return;
       }
@@ -106,6 +110,7 @@ export function SequenceMinigame({
           completed: false,
           inputAdvantage: advantage,
           mistakes: mistakesRef.current,
+          progressIndex: currentIdx,
         });
         return;
       }
@@ -162,6 +167,7 @@ export function SequenceMinigame({
             completed: true,
             inputAdvantage: advantage,
             mistakes: mistakesRef.current,
+            progressIndex: nextIndex,
           });
         }
       } else {
@@ -172,12 +178,7 @@ export function SequenceMinigame({
         const nextMistakes = mistakesRef.current + 1;
         setMistakes(nextMistakes);
         mistakesRef.current = nextMistakes;
-        if (isHidden) {
-          setPlayerInputIndex(0);
-          playerInputIndexRef.current = 0;
-        }
-
-        if (!isHidden && nextMistakes >= 2 && !submittedRef.current) {
+        if (nextMistakes >= 2 && !submittedRef.current) {
           submittedRef.current = true;
           if (requestRef.current) cancelAnimationFrame(requestRef.current);
 
@@ -188,6 +189,7 @@ export function SequenceMinigame({
             completed: false,
             inputAdvantage: advantage,
             mistakes: nextMistakes,
+            progressIndex: currentIdx,
           });
         }
       }
@@ -232,7 +234,13 @@ export function SequenceMinigame({
           }
           return (
             <span key={idx} className={`combat-keycap ${statusClass}`}>
-              {isHidden ? (idx < playerInputIndex ? "✓" : "?") : ARROW_GLYPHS[dir] || dir.toUpperCase()}
+              {formatSequenceKeycap({
+                dir,
+                idx,
+                isHidden,
+                playerInputIndex,
+                revealedInputIndex: spec.revealedInputIndex,
+              })}
             </span>
           );
         })}
@@ -281,4 +289,29 @@ export function SequenceMinigame({
       </div>
     </div>
   );
+}
+
+function formatSequenceKeycap({
+  dir,
+  idx,
+  isHidden,
+  playerInputIndex,
+  revealedInputIndex,
+}: {
+  dir: string;
+  idx: number;
+  isHidden: boolean;
+  playerInputIndex: number;
+  revealedInputIndex?: number;
+}): string {
+  if (!isHidden) {
+    return ARROW_GLYPHS[dir] || dir.toUpperCase();
+  }
+  if (idx < playerInputIndex) {
+    return "✓";
+  }
+  if (idx === revealedInputIndex) {
+    return ARROW_GLYPHS[dir] || dir.toUpperCase();
+  }
+  return "?";
 }

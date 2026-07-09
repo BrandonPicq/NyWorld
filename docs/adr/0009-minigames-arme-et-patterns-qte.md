@@ -185,6 +185,16 @@ references, drafts combines, overlay playtest, onglet editeur). PatternDef :
   maitrises d'arme, famille de contenu, apprentissage, execution en
   combat, passe d'equilibrage.
 
+## Amendement 2026-07-09 - Echec adouci des patterns magiques
+
+Le reset total a la premiere erreur (decision 6 / execution en combat) est
+remplace pour les patterns caches : une erreur conserve le prefixe correct,
+deux erreurs terminent la tentative du tour sans consommer le MP, et le meme
+pattern peut reprendre au meme index plus tard dans le meme combat avec la
+prochaine touche revelee. Cet etat reste runtime par combat, n'entre pas dans
+les sauvegardes, et se reinitialise a la fin du combat ou quand un autre
+pattern est tente.
+
 ## Differe
 
 - Enseignement de patterns par NPC (chapitre relations).

@@ -122,6 +122,12 @@ export interface CombatSystemContext {
   random?: () => number;
 }
 
+interface PatternAttemptState {
+  patternId: string;
+  inputIndex: number;
+  revealNextInput: boolean;
+}
+
 /**
  * Combat tuning resolved from authored combat action content, with code
  * defaults preserving the original balance when a tuning field is omitted.
@@ -150,6 +156,7 @@ const ACTION_TUNING = resolveActionTuning();
  */
 export class CombatSystem {
   private state?: CombatState;
+  private patternAttemptState?: PatternAttemptState;
 
   constructor(private readonly context: CombatSystemContext) {}
 
@@ -196,6 +203,7 @@ export class CombatSystem {
         command.completed,
         command.inputAdvantage,
         command.mistakes,
+        command.progressIndex,
       );
     }
     if (command.type === "StartOpponentTurn") {
@@ -221,6 +229,7 @@ export class CombatSystem {
       opponentStats: createNpcStats(npc.npcId),
       phase: "action_selection",
     };
+    this.patternAttemptState = undefined;
 
     this.context.addLog(`Combat started with ${npc.name}!`);
 
@@ -355,10 +364,16 @@ export class CombatSystem {
       return { success: false };
     }
 
-    playerStats.resources.mp = Math.max(
-      0,
-      playerStats.resources.mp - pattern.mpCost,
-    );
+    const resumedAttempt =
+      this.patternAttemptState?.patternId === pattern.patternId
+        ? this.patternAttemptState
+        : undefined;
+    if (
+      this.patternAttemptState &&
+      this.patternAttemptState.patternId !== pattern.patternId
+    ) {
+      this.patternAttemptState = undefined;
+    }
 
     const opponentStats = this.state.opponentStats;
     const qteActionKind = pattern.kind;
@@ -373,11 +388,10 @@ export class CombatSystem {
       pattern,
       playerStats,
       opponentStats,
+      resumedAttempt,
     );
 
-    this.context.addLog(
-      `You prepare ${pattern.name} and spend ${pattern.mpCost} MP.`,
-    );
+    this.context.addLog(`You prepare ${pattern.name}.`);
     return { success: true };
   }
 
@@ -385,6 +399,7 @@ export class CombatSystem {
     pattern: PatternDef,
     playerStats: Stats,
     opponentStats: Stats,
+    resumedAttempt?: PatternAttemptState,
   ): CombatMinigameSpec {
     const challenge = createQteChallenge({
       actor: playerStats,
@@ -405,6 +420,10 @@ export class CombatSystem {
       },
       sequence: [...pattern.inputs],
       hidden: true,
+      initialInputIndex: resumedAttempt?.inputIndex ?? 0,
+      revealedInputIndex: resumedAttempt?.revealNextInput
+        ? resumedAttempt.inputIndex
+        : undefined,
     };
   }
 
@@ -600,13 +619,19 @@ export class CombatSystem {
     completed: boolean,
     inputAdvantage: number,
     mistakes: number,
+    progressIndex?: number,
   ): CombatExecuteResult {
     if (!this.state) {
       return { success: false };
     }
 
     if (this.state.phase === "player_qte") {
-      return this.resolvePlayerAttack(completed, inputAdvantage, mistakes);
+      return this.resolvePlayerAttack(
+        completed,
+        inputAdvantage,
+        mistakes,
+        progressIndex,
+      );
     }
 
     if (this.state.phase === "enemy_qte") {
@@ -620,6 +645,7 @@ export class CombatSystem {
     completed: boolean,
     inputAdvantage: number,
     mistakes: number,
+    progressIndex?: number,
   ): CombatExecuteResult {
     if (!this.state) {
       return { success: false };
@@ -632,9 +658,42 @@ export class CombatSystem {
     const damageBoostMultiplier = this.state.damageBoostMultiplier;
     const activePatternId = this.state.activePatternId;
     const patternDamageMultiplier = this.state.patternDamageMultiplier;
+    const activePattern = activePatternId
+      ? getQtePatternDef(activePatternId)
+      : undefined;
     let finalDamage = 0;
     let outcomeLabel = "";
     const mistakeLabel = mistakes === 1 ? " (1 mistake)" : "";
+
+    if (activePattern && (!completed || mistakes >= 2)) {
+      this.patternAttemptState = {
+        patternId: activePattern.patternId,
+        inputIndex: clampPatternProgress(
+          progressIndex ?? inferPatternProgress(activePattern, inputAdvantage),
+          activePattern.inputs.length,
+        ),
+        revealNextInput: mistakes >= 2,
+      };
+      this.state.phase = "opponent_turn_transition";
+      this.state.activePatternId = undefined;
+      this.state.patternDamageMultiplier = undefined;
+      this.state.minigame = undefined;
+      this.context.addLog(
+        `${activePattern.name} fizzles before it can be cast.`,
+      );
+      return { success: true };
+    }
+
+    if (activePattern) {
+      playerStats.resources.mp = Math.max(
+        0,
+        playerStats.resources.mp - activePattern.mpCost,
+      );
+      this.context.addLog(
+        `You spend ${activePattern.mpCost} MP to cast ${activePattern.name}.`,
+      );
+      this.patternAttemptState = undefined;
+    }
 
     if (mistakes >= 2) {
       outcomeLabel = "MISS (input failure)";
@@ -685,6 +744,7 @@ export class CombatSystem {
 
     if (opponentStats.resources.hp <= 0) {
       this.state.phase = "victory";
+      this.patternAttemptState = undefined;
       this.context.addLog(`You defeated the ${this.state.opponentName}!`);
       this.context.recordNpcDefeat(this.state.opponentNpcId);
     } else {
@@ -843,12 +903,14 @@ export class CombatSystem {
       }
 
       this.state = undefined;
+      this.patternAttemptState = undefined;
       return { success: true, effects };
     }
 
     if (this.state.phase === "defeat") {
       this.context.recoverPlayerFromDefeat();
       this.state = undefined;
+      this.patternAttemptState = undefined;
       return { success: true };
     }
 
@@ -971,4 +1033,21 @@ function gainSp(stats: Stats, amount: number): number {
 
 function formatSpGain(amount: number): string {
   return amount > 0 ? ` and gain ${amount} SP` : "";
+}
+
+function inferPatternProgress(
+  pattern: PatternDef,
+  inputAdvantage: number,
+): number {
+  return pattern.inputs.length + Math.min(0, inputAdvantage);
+}
+
+function clampPatternProgress(progressIndex: number, sequenceLength: number): number {
+  if (!Number.isFinite(progressIndex)) {
+    return 0;
+  }
+  return Math.min(
+    sequenceLength,
+    Math.max(0, Math.trunc(progressIndex)),
+  );
 }

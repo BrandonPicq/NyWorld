@@ -29,6 +29,10 @@ export interface SequenceMinigameSpec {
   sequence: string[];
   /** True for learned patterns: progress is visible, keycaps are hidden. */
   hidden?: boolean;
+  /** Prefix length to resume from for runtime-only pattern attempts. */
+  initialInputIndex?: number;
+  /** Hidden-pattern input index to reveal as a helper on resume. */
+  revealedInputIndex?: number;
 }
 
 /**
@@ -293,6 +297,8 @@ export function cloneCombatMinigameSpec(
         challenge: { ...spec.challenge },
         sequence: [...spec.sequence],
         hidden: spec.hidden,
+        initialInputIndex: spec.initialInputIndex,
+        revealedInputIndex: spec.revealedInputIndex,
       };
     case "mash":
       return {

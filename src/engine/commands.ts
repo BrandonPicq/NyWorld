@@ -75,6 +75,8 @@ export type GameCommand =
       inputAdvantage: number;
       /** Wrong keys pressed; 1 weakens the action, 2 fails it outright. */
       mistakes: number;
+      /** Optional current input prefix length for runtime-only QTE resume state. */
+      progressIndex?: number;
     }
   | { type: "StartOpponentTurn" }
   | { type: "ConcludeCombat" };

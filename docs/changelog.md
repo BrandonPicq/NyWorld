@@ -4,6 +4,13 @@ This file tracks meaningful project changes by commit-oriented slices.
 
 Keep entries short and practical. When a slice is committed, its changelog section should stay aligned with the commit title so the project history remains easy to read after restores or bisects.
 
+## 2026-07-09 - [UPDATE]: Softer spell pattern failure
+
+- Keep hidden spell pattern progress on wrong inputs and end the turn after two errors.
+- Spend pattern MP only when the pattern is actually cast.
+- Resume the same failed spell later in the combat with the next expected input revealed.
+- Record the ADR amendment for softer hidden-pattern failures.
+
 ## 2026-07-09 - [UPDATE]: Moving shot window when outclassed on agility
 
 - Move bow timing windows only when the player has lower Agility than the enemy.
