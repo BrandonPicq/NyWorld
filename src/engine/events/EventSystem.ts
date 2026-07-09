@@ -2,6 +2,7 @@ import type { DialogueNode, Inventory, Position, Stats } from "../components";
 import type { GameSaveData } from "../GameSaveData";
 import type { LogEntry } from "../LogEntry";
 import { getDialogue } from "../dialogues/dialogueRegistry";
+import { createWorldTimeSnapshot } from "../time/WorldCalendar";
 import type { EventAction, EventCondition, EventDef, EventRepeatPolicy } from "./EventDef";
 
 export interface EventSystemResult {
@@ -88,6 +89,41 @@ export class EventSystem {
     return this.trigger((event) => {
       if (event.trigger.type !== "interact_on_area" || event.trigger.zoneId !== this.context.getZoneId()) return false;
       return isInsideArea(this.context.getPlayerPosition(), event.trigger.area);
+    });
+  }
+
+  onDialogueEnd(dialogueId: string): EventSystemResult {
+    return this.trigger((event) =>
+      event.trigger.type === "dialogue_end" &&
+      (event.trigger.dialogueId === undefined || event.trigger.dialogueId === dialogueId),
+    );
+  }
+
+  onQuestStateChange(
+    questId: string,
+    state: "not_started" | "active" | "readyToComplete" | "completed",
+  ): EventSystemResult {
+    return this.trigger((event) =>
+      event.trigger.type === "quest_state_change" &&
+      event.trigger.questId === questId &&
+      event.trigger.state === state,
+    );
+  }
+
+  onTimeAdvanced(previousMinutes: number, currentMinutes: number): EventSystemResult {
+    return this.trigger((event) => {
+      if (event.trigger.type !== "calendar_time") return false;
+      const previous = createWorldTimeSnapshot(previousMinutes);
+      const current = createWorldTimeSnapshot(currentMinutes);
+      if (event.trigger.day !== undefined && current.day !== event.trigger.day) return false;
+      if (currentMinutes <= previousMinutes) return false;
+      const target = event.trigger.minutes;
+      const previousDay = previous.day + previous.month * 30 + previous.year * 360;
+      const currentDay = current.day + current.month * 30 + current.year * 360;
+      if (event.trigger.day !== undefined) return current.day === event.trigger.day && current.timeLabel !== previous.timeLabel && current.minute + current.hour * 60 >= target;
+      return currentDay === previousDay
+        ? previous.hour * 60 + previous.minute < target && current.hour * 60 + current.minute >= target
+        : current.hour * 60 + current.minute >= target;
     });
   }
 

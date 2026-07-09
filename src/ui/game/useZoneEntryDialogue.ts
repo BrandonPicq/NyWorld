@@ -11,20 +11,23 @@ export function useZoneEntryDialogue(
   triggerEventDialogue?: (nodes: DialogueNode[], dialogueId?: string) => void,
 ): void {
   const prevZoneIdRef = useRef<string | null>(null);
+  const prevEventDialogueIdRef = useRef<string | undefined>(undefined);
 
   useEffect(() => {
     if (!snapshot) return;
 
-    if (prevZoneIdRef.current === snapshot.zoneId) {
-      return;
-    }
-
+    const zoneChanged = prevZoneIdRef.current !== snapshot.zoneId;
     prevZoneIdRef.current = snapshot.zoneId;
 
-    if (snapshot.entryDialogue.length > 0) {
+    if (zoneChanged && snapshot.entryDialogue.length > 0) {
       triggerDialogue(snapshot.entryDialogue);
     }
-    if (snapshot.eventDialogue && snapshot.eventDialogue.length > 0) {
+    if (
+      snapshot.eventDialogue &&
+      snapshot.eventDialogue.length > 0 &&
+      snapshot.eventDialogueId !== prevEventDialogueIdRef.current
+    ) {
+      prevEventDialogueIdRef.current = snapshot.eventDialogueId;
       triggerEventDialogue?.(snapshot.eventDialogue, snapshot.eventDialogueId);
     }
   }, [snapshot, triggerDialogue, triggerEventDialogue]);

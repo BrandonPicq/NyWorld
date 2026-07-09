@@ -394,12 +394,12 @@ export class GameplayEngine {
       addLog: (message) => this.addLog(message),
       addNotice: (message) => this.notices.push({ title: "World Event", message }),
       startDialogue: () => undefined,
-      startQuest: (questId) => this.quests.startQuest(questId),
+      startQuest: (questId) => this.startQuestWithEvents(questId),
       advanceQuest: (questId) => {
         if (this.getPlayerQuests().active.includes(questId)) {
-          this.quests.completeQuest(questId);
+          this.completeQuestWithEvents(questId);
         } else {
-          this.quests.startQuest(questId);
+          this.startQuestWithEvents(questId);
         }
       },
       spawnEnemy: (enemyId, x, y) => this.spawnEventNpc(enemyId, x, y, undefined, true),
@@ -527,13 +527,20 @@ export class GameplayEngine {
 
     if (command.type === "CompleteDialogue") {
       if (this.pendingEventDialogueBlocking) {
+        const completedEventDialogueId = this.pendingEventDialogueId;
         this.pendingEventDialogueBlocking = false;
         this.pendingEventDialogue = [];
         this.pendingEventDialogueId = undefined;
-        return this.mergeEventResult(
+        const resumed = this.mergeEventResult(
           { success: true },
           this.eventSystem.resumeAfterDialogue(),
         );
+        return completedEventDialogueId
+          ? this.mergeEventResult(
+              resumed,
+              this.eventSystem.onDialogueEnd(completedEventDialogueId),
+            )
+          : resumed;
       }
       const dialogueId = this.pendingDialogueCompletionId;
       this.pendingDialogueCompletionId = undefined;
@@ -545,15 +552,16 @@ export class GameplayEngine {
       const effects: EngineEffect[] = [];
       for (const questDef of getAllQuestDefs()) {
         if (questDef.triggers.start.dialogueId === dialogueId) {
-          this.quests.startQuest(questDef.questId);
+          this.startQuestWithEvents(questDef.questId);
         }
         if (questDef.triggers.complete.dialogueId === dialogueId) {
-          effects.push(...this.quests.completeQuest(questDef.questId));
+          effects.push(...this.completeQuestWithEvents(questDef.questId));
         }
       }
-      return effects.length > 0
+      const result = effects.length > 0
         ? { success: true, effects }
         : { success: true };
+      return this.mergeEventResult(result, this.eventSystem.onDialogueEnd(dialogueId));
     }
 
     if (command.type === "AcknowledgeZoneEntryDialogue") {
@@ -1106,6 +1114,25 @@ export class GameplayEngine {
     return "not_started";
   }
 
+  private startQuestWithEvents(questId: string): void {
+    const previous = this.getEventQuestState(questId);
+    this.quests.startQuest(questId);
+    const next = this.getEventQuestState(questId);
+    if (previous !== next) {
+      this.applyEventResult(this.eventSystem.onQuestStateChange(questId, next));
+    }
+  }
+
+  private completeQuestWithEvents(questId: string): EngineEffect[] {
+    const previous = this.getEventQuestState(questId);
+    const effects = this.quests.completeQuest(questId) as EngineEffect[];
+    const next = this.getEventQuestState(questId);
+    if (previous !== next) {
+      this.applyEventResult(this.eventSystem.onQuestStateChange(questId, next));
+    }
+    return effects;
+  }
+
   private giveEventItem(
     itemId: string,
     quantity: number,
@@ -1244,12 +1271,16 @@ export class GameplayEngine {
   }
 
   private advanceWorldTime(minutes: number): void {
+    const previousMinutes = this.worldTimeMinutes;
     this.worldTimeMinutes += minutes;
     NpcScheduleSystem.apply(
       this.world,
       this.map,
       this.getScheduledNpcSpawns(),
       this.worldTimeMinutes,
+    );
+    this.applyEventResult(
+      this.eventSystem.onTimeAdvanced(previousMinutes, this.worldTimeMinutes),
     );
   }
 

@@ -1411,3 +1411,8 @@ Keep entries short and practical. When a slice is committed, its changelog secti
 - Move shipped test-zone entry scenes into reusable dialogue content plus enter-zone events.
 - Remove the entry-dialogue editor panel and migrate authored zone JSON away from the legacy field.
 - Keep a deprecated compatibility reader and legacy save-id translation so older fixtures and saves remain loadable.
+## 2026-07-09 - [UPDATE]: Dialogue, quest, and time event hooks
+
+- Add dialogue-end, quest-state-change, and calendar-time trigger evaluation.
+- Route event quest actions through the existing quest progression system and fire hooks on real state changes.
+- Keep world flags event-side without changing dialogue or NPC resolution.
