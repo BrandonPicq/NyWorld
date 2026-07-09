@@ -26,38 +26,55 @@ export function spawnNpcsInWorld(
   }
 
   for (const npcData of npcSpawns) {
-    const npcDef = getNpcDef(npcData.npcId);
-    const presentation = getNpcMapPresentation(npcDef);
-    const dialogueId =
-      npcData.dialogueId ??
-      npcStates[npcDef.npcId]?.currentDialogueId ??
-      npcDef.defaultDialogueId;
-    const dialogue = getDialogue(dialogueId);
-    const entityId = world.createEntity();
-
-    world.addComponent(entityId, {
-      type: "Position",
-      x: npcData.x,
-      y: npcData.y,
-    } as Position);
-
-    world.addComponent(entityId, {
-      type: "Renderable",
-      glyph: presentation.glyph,
-      color: presentation.color,
-    } as Renderable);
-
-    world.addComponent(entityId, {
-      type: "Npc",
-      npcId: npcDef.npcId,
-      name: npcDef.name,
-      race: npcDef.race,
-      importance: npcDef.importance ?? "common",
-      baseDialogueId: dialogueId,
-      dialogueId: dialogueId,
-      dialogue,
-    } as Npc);
+    spawnNpcInWorld(world, npcData, npcStates);
   }
+}
+
+export function spawnNpcInWorld(
+  world: World,
+  npcData: NpcSpawnData,
+  npcStates: NpcStateMap,
+): void {
+  const npcDef = getNpcDef(npcData.npcId);
+  const presentation = getNpcMapPresentation(npcDef);
+  const dialogueId =
+    npcData.dialogueId ??
+    npcStates[npcDef.npcId]?.currentDialogueId ??
+    npcDef.defaultDialogueId;
+  const dialogue = getDialogue(dialogueId);
+  const entityId = world.createEntity();
+
+  world.addComponent(entityId, {
+    type: "Position",
+    x: npcData.x,
+    y: npcData.y,
+  } as Position);
+  world.addComponent(entityId, {
+    type: "Renderable",
+    glyph: presentation.glyph,
+    color: presentation.color,
+  } as Renderable);
+  world.addComponent(entityId, {
+    type: "Npc",
+    npcId: npcDef.npcId,
+    name: npcDef.name,
+    race: npcDef.race,
+    importance: npcDef.importance ?? "common",
+    baseDialogueId: dialogueId,
+    dialogueId,
+    dialogue,
+  } as Npc);
+}
+
+export function despawnNpcInWorld(world: World, npcId: string): boolean {
+  for (const entityId of world.entitiesWith("Npc")) {
+    const npc = world.getComponent<Npc>(entityId, "Npc");
+    if (npc?.npcId === npcId) {
+      world.destroyEntity(entityId);
+      return true;
+    }
+  }
+  return false;
 }
 
 /**

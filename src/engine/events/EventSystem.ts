@@ -5,6 +5,7 @@ import { getDialogue } from "../dialogues/dialogueRegistry";
 import type { EventAction, EventCondition, EventDef, EventRepeatPolicy } from "./EventDef";
 
 export interface EventSystemResult {
+  success?: boolean;
   dialogue?: DialogueNode[];
   dialogueId?: string;
   dialogueBlocking?: boolean;
@@ -34,6 +35,12 @@ export interface EventSystemContext {
   startDialogue: (dialogueId: string, nodes: DialogueNode[]) => void;
   startQuest: (questId: string) => void;
   advanceQuest: (questId: string) => void;
+  spawnEnemy: (enemyId: string, x: number, y: number) => boolean;
+  despawnEnemy: (enemyId: string) => boolean;
+  spawnNpc: (npcId: string, x: number, y: number, dialogueId?: string) => boolean;
+  despawnNpc: (npcId: string) => boolean;
+  startCombat: (enemyId: string) => EventSystemResult;
+  teleport: (zoneId: string, x: number, y: number) => boolean;
 }
 
 export interface EventRuntimeState {
@@ -161,6 +168,7 @@ export class EventSystem {
 
       current.actionIndex += 1;
       const actionResult = this.executeAction(action, current.event.eventId);
+      if (actionResult.success) result.success = true;
       if (actionResult.effects) result.effects = [...(result.effects ?? []), ...actionResult.effects];
       if (actionResult.dialogue) {
         this.waitingForDialogue = true;
@@ -190,7 +198,12 @@ export class EventSystem {
       case "notice": this.context.addLog(action.message); this.context.addNotice(action.message); return emptyResult();
       case "start_quest": this.context.startQuest(action.questId); return emptyResult();
       case "advance_quest": this.context.advanceQuest(action.questId); return emptyResult();
-      default: return emptyResult();
+      case "spawn_enemy": this.context.spawnEnemy(action.enemyId, action.x, action.y); return emptyResult();
+      case "despawn_enemy": this.context.despawnEnemy(action.enemyId); return emptyResult();
+      case "spawn_npc": this.context.spawnNpc(action.npcId, action.x, action.y, action.dialogueId); return emptyResult();
+      case "despawn_npc": this.context.despawnNpc(action.npcId); return emptyResult();
+      case "start_combat": return this.context.startCombat(action.enemyId);
+      case "teleport": this.context.teleport(action.zoneId, action.x, action.y); return emptyResult();
     }
   }
 }

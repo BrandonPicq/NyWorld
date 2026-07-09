@@ -1396,3 +1396,8 @@ Keep entries short and practical. When a slice is committed, its changelog secti
 - Add the React-free `EventSystem` with area and zone-entry trigger evaluation, AND conditions, priority ordering, repetition policies, and queued actions.
 - Persist world flags, fired events, cooldowns, and visit state in save data while keeping older payloads loadable.
 - Support blocking event dialogues with queue resume, plus XP, currency, inventory, flags, notices, and quest orchestration.
+## 2026-07-09 - [ADD]: Spawn, combat, and movement event actions
+
+- Route event spawn and despawn actions through the existing ECS spawner and combat opponent state.
+- Add event-driven enemy combat starts and teleportation with destination validation.
+- Reject blocked teleports and active-combat despawns without leaving the player in a soft-locked state.

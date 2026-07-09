@@ -32,7 +32,12 @@ import {
   type NpcState,
   type NpcStateMap,
 } from "./npcs/NpcState";
-import { spawnNpcsInWorld, spawnItemsInWorld } from "./spawner/EntitySpawner";
+import {
+  despawnNpcInWorld,
+  spawnNpcInWorld,
+  spawnNpcsInWorld,
+  spawnItemsInWorld,
+} from "./spawner/EntitySpawner";
 import { serializeSaveData } from "./save/gameSaveSerializer";
 import { World } from "./ecs/World";
 import { GameMap } from "./GameMap";
@@ -102,6 +107,7 @@ import type { KnownPatternMap } from "./combat/PatternDef";
 import { getAllEventDefs } from "./events/eventRegistry";
 import { EventSystem, type EventSystemResult } from "./events/EventSystem";
 import type { EventDef } from "./events/EventDef";
+import { hasEnemyDef } from "./enemies/enemyRegistry";
 
 export type { CombatState } from "./combat/CombatSystem";
 
@@ -397,6 +403,12 @@ export class GameplayEngine {
           this.quests.startQuest(questId);
         }
       },
+      spawnEnemy: (enemyId, x, y) => this.spawnEventNpc(enemyId, x, y, undefined, true),
+      despawnEnemy: (enemyId) => this.despawnEventNpc(enemyId, true),
+      spawnNpc: (npcId, x, y, dialogueId) => this.spawnEventNpc(npcId, x, y, dialogueId, false),
+      despawnNpc: (npcId) => this.despawnEventNpc(npcId, false),
+      startCombat: (enemyId) => this.startEventCombat(enemyId),
+      teleport: (zoneId, x, y) => this.teleportEventPlayer(zoneId, x, y),
     });
 
     const playerId = this.world.createEntity();
@@ -673,6 +685,14 @@ export class GameplayEngine {
       }
     }
 
+    return undefined;
+  }
+
+  private getNpcById(npcId: string): Npc | undefined {
+    for (const entityId of this.world.entitiesWith("Npc")) {
+      const npc = this.world.getComponent<Npc>(entityId, "Npc");
+      if (npc?.npcId === npcId) return npc;
+    }
     return undefined;
   }
 
@@ -1059,7 +1079,7 @@ export class GameplayEngine {
   ): ExecuteResult {
     this.applyEventResult(eventResult);
     const merged: ExecuteResult = {
-      success: base.success,
+      success: base.success || eventResult.success === true,
       dialogue: base.dialogue ?? eventResult.dialogue,
       dialogueId: base.dialogueId ?? eventResult.dialogueId,
     };
@@ -1116,6 +1136,46 @@ export class GameplayEngine {
     if (removed <= 0) return [];
     this.addLog(`Lost ${getItemDef(itemId).name}${removed > 1 ? ` x${removed}` : ""}.`);
     return [{ type: "ItemLost", itemId, quantity: removed, source: "event" }];
+  }
+
+  private spawnEventNpc(
+    npcId: string,
+    x: number,
+    y: number,
+    dialogueId: string | undefined,
+    enemy: boolean,
+  ): boolean {
+    if (enemy && !hasEnemyDef(npcId)) return false;
+    if (!this.map.isInBounds(x, y) || !this.map.isWalkable(x, y)) return false;
+    const player = this.getPlayerPosition();
+    if (this.getNpcAt(x, y) || (player.x === x && player.y === y)) return false;
+    spawnNpcInWorld(this.world, { npcId, x, y, dialogueId }, this.npcStates);
+    return true;
+  }
+
+  private despawnEventNpc(npcId: string, enemy: boolean): boolean {
+    if (enemy && !hasEnemyDef(npcId)) return false;
+    if (this.combat.getActiveOpponentNpcId() === npcId) return false;
+    return despawnNpcInWorld(this.world, npcId);
+  }
+
+  private startEventCombat(enemyId: string): EventSystemResult {
+    if (!hasEnemyDef(enemyId)) return { success: false };
+    const npc = this.getNpcById(enemyId);
+    if (!npc) return { success: false };
+    return { success: this.combat.startCombat(npc).success };
+  }
+
+  private teleportEventPlayer(zoneId: string, x: number, y: number): boolean {
+    if (!this.resolveZone) return false;
+    const nextMap = this.resolveZone(zoneId);
+    if (!nextMap || !nextMap.isInBounds(x, y) || !nextMap.isWalkable(x, y)) {
+      this.addLog(`Cannot teleport to blocked position (${x}, ${y}) in ${zoneId}.`);
+      this.notices.push({ title: "Teleport Rejected", message: "That destination is not walkable." });
+      return false;
+    }
+    this.applyEventResult(this.enterZone(nextMap, x, y));
+    return true;
   }
 
   private restPlayer(): void {

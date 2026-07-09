@@ -164,6 +164,10 @@ export class CombatSystem {
     return this.state !== undefined;
   }
 
+  getActiveOpponentNpcId(): string | undefined {
+    return this.state?.opponentNpcId;
+  }
+
   getSnapshot(): CombatState | undefined {
     if (!this.state) {
       return undefined;
