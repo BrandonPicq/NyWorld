@@ -83,6 +83,7 @@ export function useGameplayEngine({
             resolveZone,
             safeRespawn,
             actions,
+            events: contentBundle.events,
           })
         : new GameplayEngine(resolveNewGameMap(contentBundle, newGameStart), {
             resolveZone,
@@ -90,6 +91,7 @@ export function useGameplayEngine({
             newGame,
             playerRaceId: newGameRaceId,
             actions,
+            events: contentBundle.events,
             initialPlayerPosition: newGameStart
               ? { x: newGameStart.x, y: newGameStart.y }
               : undefined,

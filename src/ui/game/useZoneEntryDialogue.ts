@@ -8,6 +8,7 @@ import type { DialogueNode } from "./dialogueTypes";
 export function useZoneEntryDialogue(
   snapshot: GameSnapshot | null,
   triggerDialogue: (nodes: DialogueNode[]) => void,
+  triggerEventDialogue?: (nodes: DialogueNode[], dialogueId?: string) => void,
 ): void {
   const prevZoneIdRef = useRef<string | null>(null);
 
@@ -23,5 +24,8 @@ export function useZoneEntryDialogue(
     if (snapshot.entryDialogue.length > 0) {
       triggerDialogue(snapshot.entryDialogue);
     }
-  }, [snapshot, triggerDialogue]);
+    if (snapshot.eventDialogue && snapshot.eventDialogue.length > 0) {
+      triggerEventDialogue?.(snapshot.eventDialogue, snapshot.eventDialogueId);
+    }
+  }, [snapshot, triggerDialogue, triggerEventDialogue]);
 }

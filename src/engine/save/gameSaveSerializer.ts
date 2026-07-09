@@ -31,6 +31,10 @@ export interface SaveSerializationState {
   log: LogEntry[];
   pickedUpItemSpawnKeys: Iterable<string>;
   seenZoneEntryEventIds: Iterable<string>;
+  worldFlags?: Iterable<string>;
+  firedEventIds?: Iterable<string>;
+  eventCooldowns?: Record<string, number>;
+  zoneVisitEventIds?: Iterable<string>;
   activeQuests: string[];
   completedQuests: string[];
   completedObjectives: string[];
@@ -63,6 +67,10 @@ export function serializeSaveData(state: SaveSerializationState): GameSaveData {
     log: state.log.map((entry) => ({ ...entry })),
     pickedUpItemSpawnKeys: Array.from(state.pickedUpItemSpawnKeys),
     seenZoneEntryEventIds: Array.from(state.seenZoneEntryEventIds),
+    worldFlags: Array.from(state.worldFlags ?? []),
+    firedEventIds: Array.from(state.firedEventIds ?? []),
+    eventCooldowns: { ...(state.eventCooldowns ?? {}) },
+    zoneVisitEventIds: Array.from(state.zoneVisitEventIds ?? []),
     activeQuests: [...state.activeQuests],
     completedQuests: [...state.completedQuests],
     completedObjectives: [...state.completedObjectives],

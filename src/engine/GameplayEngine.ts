@@ -99,6 +99,9 @@ import {
   QtePatternLearningSystem,
 } from "./combat/QtePatternLearningSystem";
 import type { KnownPatternMap } from "./combat/PatternDef";
+import { getAllEventDefs } from "./events/eventRegistry";
+import { EventSystem, type EventSystemResult } from "./events/EventSystem";
+import type { EventDef } from "./events/EventDef";
 
 export type { CombatState } from "./combat/CombatSystem";
 
@@ -107,13 +110,13 @@ export type EngineEffect =
       type: "ItemCollected";
       itemId: string;
       quantity: number;
-      source?: "ground" | "reward";
+      source?: "ground" | "reward" | "event";
     }
   | {
       type: "ItemLost";
       itemId: string;
       quantity: number;
-      source?: "quest_turn_in";
+      source?: "quest_turn_in" | "event";
     }
   | {
       type: "ItemUsed";
@@ -196,6 +199,10 @@ export interface GameSnapshot {
   entities: RenderEntity[];
   /** Pending one-shot zone entry dialogue; empty once acknowledged. */
   entryDialogue: DialogueNode[];
+  eventDialogue?: DialogueNode[];
+  eventDialogueId?: string;
+  worldFlags?: string[];
+  firedEventIds?: string[];
   /** UI projection of quest progress with live objective quantities. */
   activeQuests: Array<{
     questId: string;
@@ -259,6 +266,7 @@ type GameplayEngineOptions = {
   playerRaceId?: string;
   /** Optional authored tuning for rest and study actions. */
   actions?: ActionTuningConfig;
+  events?: readonly EventDef[];
   random?: () => number;
 };
 
@@ -281,6 +289,9 @@ export class GameplayEngine {
   private npcStates: NpcStateMap = createInitialNpcStateMap();
   private pendingDialogueCompletionId?: string;
   private pendingZoneEntryDialogue: DialogueNode[] = [];
+  private pendingEventDialogue: DialogueNode[] = [];
+  private pendingEventDialogueId?: string;
+  private pendingEventDialogueBlocking = false;
   private seenZoneEntryEventIds = new Set<string>();
   private notices: EngineNotice[] = [];
   private readonly quests: QuestProgressionSystem;
@@ -293,6 +304,7 @@ export class GameplayEngine {
   private playerProgression: PlayerProgressionState;
   private knownPatterns: KnownPatternMap = {};
   private statLayers: LayeredStatBreakdown;
+  private readonly eventSystem: EventSystem;
 
   constructor(map: GameMap, options: GameplayEngineOptions = {}) {
     this.map = map;
@@ -353,6 +365,40 @@ export class GameplayEngine {
       incrementPatternUsage: (patternId) => this.incrementPatternUsage(patternId),
     });
 
+    this.eventSystem = new EventSystem(options.events ?? getAllEventDefs(), {
+      getZoneId: () => this.map.zoneId,
+      getPlayerPosition: () => this.getPlayerPosition(),
+      getPlayerInventory: () => this.getPlayerInventory(),
+      getPlayerStats: () => this.getPlayerStats(),
+      getGlobalLevel: () => this.playerProgression.global.level,
+      getWorldTimeMinutes: () => this.worldTimeMinutes,
+      getTick: () => this.tickCounter.tick,
+      getQuestState: (questId) => this.getEventQuestState(questId),
+      getQuestIds: () => {
+        const quests = this.getPlayerQuests();
+        return { active: quests.active, completed: quests.completed };
+      },
+      awardXp: (amount, source) => this.awardPlayerXp(amount, source),
+      addCurrency: (amount) => {
+        const stats = this.getPlayerStats();
+        stats.currency = Math.max(0, stats.currency + amount);
+      },
+      giveItem: (itemId, quantity) => this.giveEventItem(itemId, quantity),
+      removeItem: (itemId, quantity) => this.removeEventItem(itemId, quantity),
+      setFlagNotice: (flag, value) => this.addLog(`${value ? "Set" : "Cleared"} world flag ${flag}.`),
+      addLog: (message) => this.addLog(message),
+      addNotice: (message) => this.notices.push({ title: "World Event", message }),
+      startDialogue: () => undefined,
+      startQuest: (questId) => this.quests.startQuest(questId),
+      advanceQuest: (questId) => {
+        if (this.getPlayerQuests().active.includes(questId)) {
+          this.quests.completeQuest(questId);
+        } else {
+          this.quests.startQuest(questId);
+        }
+      },
+    });
+
     const playerId = this.world.createEntity();
 
     const initialPlayerPosition =
@@ -394,6 +440,7 @@ export class GameplayEngine {
 
     this.addLog(`Entered ${map.name}.`);
     this.queueZoneEntryDialogue(map);
+    this.applyEventResult(this.eventSystem.onEnterZone());
   }
 
   private spawnNpcs(): void {
@@ -424,6 +471,10 @@ export class GameplayEngine {
    * nearby or direction-limited tiles for contextual actions without moving.
    */
   execute(command: GameCommand): ExecuteResult {
+    if (this.pendingEventDialogueBlocking && command.type !== "CompleteDialogue") {
+      return { success: false };
+    }
+
     if (this.combat.hasActiveCombat()) {
       return this.combat.execute(command);
     }
@@ -438,7 +489,10 @@ export class GameplayEngine {
     }
 
     if (command.type === "Interact") {
-      return this.interact(command.targetNpcId, command.targetDirection);
+      return this.mergeEventResult(
+        this.interact(command.targetNpcId, command.targetDirection),
+        this.eventSystem.onInteract(),
+      );
     }
 
     if (command.type === "UseItem") {
@@ -461,6 +515,15 @@ export class GameplayEngine {
     }
 
     if (command.type === "CompleteDialogue") {
+      if (this.pendingEventDialogueBlocking) {
+        this.pendingEventDialogueBlocking = false;
+        this.pendingEventDialogue = [];
+        this.pendingEventDialogueId = undefined;
+        return this.mergeEventResult(
+          { success: true },
+          this.eventSystem.resumeAfterDialogue(),
+        );
+      }
       const dialogueId = this.pendingDialogueCompletionId;
       this.pendingDialogueCompletionId = undefined;
 
@@ -538,9 +601,10 @@ export class GameplayEngine {
         );
       }
       this.resolvePendingTransition();
-      return effects.length > 0
-        ? { success: true, effects }
-        : { success: true };
+      return this.mergeEventResult(
+        effects.length > 0 ? { success: true, effects } : { success: true },
+        this.eventSystem.onStep(),
+      );
     }
 
     this.addLog(
@@ -640,7 +704,7 @@ export class GameplayEngine {
   /**
    * Moves the existing player entity into another map and respawns map-owned NPCs and items.
    */
-  enterZone(map: GameMap, entryX: number, entryY: number): void {
+  enterZone(map: GameMap, entryX: number, entryY: number): EventSystemResult {
     this.map = map;
     this.spawnNpcs();
     this.spawnItems();
@@ -652,6 +716,7 @@ export class GameplayEngine {
     this.addLog(`Entered ${map.name}.`);
     this.queueZoneEntryDialogue(map);
     this.quests.checkCoordinateObjectives();
+    return this.eventSystem.onEnterZone();
   }
 
   private queueZoneEntryDialogue(map: GameMap): void {
@@ -695,6 +760,7 @@ export class GameplayEngine {
       log: this.log,
       pickedUpItemSpawnKeys: this.pickedUpItemSpawnKeys,
       seenZoneEntryEventIds: this.seenZoneEntryEventIds,
+      ...this.eventSystem.getState(),
       activeQuests: this.getPlayerQuests().active,
       completedQuests: this.getPlayerQuests().completed,
       completedObjectives: this.getPlayerQuests().completedObjectives,
@@ -779,7 +845,16 @@ export class GameplayEngine {
     this.log = saveData.log.map((entry) => ({ ...entry }));
     this.pickedUpItemSpawnKeys = new Set(saveData.pickedUpItemSpawnKeys);
     this.seenZoneEntryEventIds = new Set(saveData.seenZoneEntryEventIds ?? []);
+    this.eventSystem.restoreState({
+      worldFlags: saveData.worldFlags,
+      firedEventIds: saveData.firedEventIds,
+      eventCooldowns: saveData.eventCooldowns,
+      zoneVisitEventIds: saveData.zoneVisitEventIds,
+    });
     this.pendingZoneEntryDialogue = [];
+    this.pendingEventDialogue = [];
+    this.pendingEventDialogueId = undefined;
+    this.pendingEventDialogueBlocking = false;
 
     const pos = this.getPlayerPosition();
     pos.x = saveData.playerX;
@@ -973,7 +1048,74 @@ export class GameplayEngine {
       return;
     }
 
-    this.enterZone(nextMap, transition.targetX, transition.targetY);
+    this.applyEventResult(
+      this.enterZone(nextMap, transition.targetX, transition.targetY),
+    );
+  }
+
+  private mergeEventResult(
+    base: ExecuteResult,
+    eventResult: EventSystemResult,
+  ): ExecuteResult {
+    this.applyEventResult(eventResult);
+    const merged: ExecuteResult = {
+      success: base.success,
+      dialogue: base.dialogue ?? eventResult.dialogue,
+      dialogueId: base.dialogueId ?? eventResult.dialogueId,
+    };
+    const effects = [...(base.effects ?? []), ...(eventResult.effects ?? [])] as EngineEffect[];
+    if (effects.length > 0) merged.effects = effects;
+    return merged;
+  }
+
+  private applyEventResult(result: EventSystemResult): void {
+    if (!result.dialogue) return;
+    this.pendingEventDialogue = result.dialogue.map((dialogue) => ({ ...dialogue }));
+    this.pendingEventDialogueId = result.dialogueId;
+    this.pendingEventDialogueBlocking = result.dialogueBlocking ?? false;
+  }
+
+  private getEventQuestState(
+    questId: string,
+  ): "not_started" | "active" | "readyToComplete" | "completed" {
+    const quests = this.getPlayerQuests();
+    if (quests.completed.includes(questId)) return "completed";
+    if (quests.active.includes(questId)) {
+      return this.isQuestReadyToComplete(questId) ? "readyToComplete" : "active";
+    }
+    return "not_started";
+  }
+
+  private giveEventItem(
+    itemId: string,
+    quantity: number,
+  ): EventSystemResult["effects"] {
+    const inventory = this.getPlayerInventory();
+    const stack = inventory.items.find((item) => item.itemId === itemId);
+    if (stack) stack.quantity += quantity;
+    else inventory.items.push({ itemId, quantity });
+    this.addLog(`Received ${getItemDef(itemId).name}${quantity > 1 ? ` x${quantity}` : ""}.`);
+    return [{ type: "ItemCollected", itemId, quantity, source: "event" }];
+  }
+
+  private removeEventItem(
+    itemId: string,
+    quantity: number,
+  ): EventSystemResult["effects"] {
+    let remaining = quantity;
+    const inventory = this.getPlayerInventory();
+    for (let index = inventory.items.length - 1; index >= 0 && remaining > 0; index -= 1) {
+      const stack = inventory.items[index];
+      if (stack.itemId !== itemId) continue;
+      const removed = Math.min(stack.quantity, remaining);
+      stack.quantity -= removed;
+      remaining -= removed;
+    }
+    inventory.items = inventory.items.filter((item) => item.quantity > 0);
+    const removed = quantity - remaining;
+    if (removed <= 0) return [];
+    this.addLog(`Lost ${getItemDef(itemId).name}${removed > 1 ? ` x${removed}` : ""}.`);
+    return [{ type: "ItemLost", itemId, quantity: removed, source: "event" }];
   }
 
   private restPlayer(): void {
@@ -1176,6 +1318,10 @@ export class GameplayEngine {
       entryDialogue: this.pendingZoneEntryDialogue.map((dialogue) => ({
         ...dialogue,
       })),
+      eventDialogue: this.pendingEventDialogue.map((dialogue) => ({ ...dialogue })),
+      eventDialogueId: this.pendingEventDialogueId,
+      worldFlags: this.eventSystem.getState().worldFlags,
+      firedEventIds: this.eventSystem.getState().firedEventIds,
       activeQuests: activeQuestsSnapshot,
       completedQuests: [...quests.completed],
       combatState: this.combat.getSnapshot(),

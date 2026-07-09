@@ -11,7 +11,7 @@ import type { KnownPatternMap } from "./combat/PatternDef";
  * Increment this when older save payloads can no longer be safely interpreted
  * by the loader without migration.
  */
-export const SAVE_VERSION = "0.11";
+export const SAVE_VERSION = "0.12";
 
 /**
  * Versioned payload written to persistent save slots.
@@ -42,6 +42,11 @@ export interface GameSaveData {
    * Optional because early test saves did not include this field.
    */
   seenZoneEntryEventIds?: string[];
+  /** Mutable world-event state; optional for saves written before slice 66. */
+  worldFlags?: string[];
+  firedEventIds?: string[];
+  eventCooldowns?: Record<string, number>;
+  zoneVisitEventIds?: string[];
   activeQuests: string[];
   completedQuests: string[];
   completedObjectives: string[];

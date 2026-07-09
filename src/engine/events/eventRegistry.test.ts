@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { defaultContentBundle } from "../content/contentBundle";
 import { createRuntimeContentValidationContext } from "../content/runtimeValidationContext";
+import { GameplayEngine } from "../GameplayEngine";
+import { loadZone } from "../zoneLoader";
 import { getAllEventDefs, validateEventDef, validateEventRegistry } from "./eventRegistry";
 
 const validEvent = {
@@ -23,7 +25,9 @@ describe("Event content validation", () => {
   it("accepts a valid area event and resolves the shipped registry", () => {
     const context = createRuntimeContentValidationContext(defaultContentBundle);
     expect(validateEventDef(validEvent, context)).toEqual([]);
-    expect(getAllEventDefs()).toEqual([]);
+    expect(getAllEventDefs().map((event) => event.eventId)).toEqual([
+      "test_fields_welcome",
+    ]);
   });
 
   it("accumulates reference, area, and flag diagnostics", () => {
@@ -64,5 +68,78 @@ describe("Event content validation", () => {
         expect.objectContaining({ path: "eventId", message: 'Duplicate event definition "meet-scholar".' }),
       ]),
     );
+  });
+
+  it("runs the authored area event through the gameplay command path", () => {
+    const map = loadZone({
+      version: "0.1",
+      zoneId: "test_zone",
+      name: "Event Test Zone",
+      width: 7,
+      height: 6,
+      playerStart: { x: 5, y: 4 },
+      tiles: [
+        [1, 1, 1, 1, 1, 1, 1],
+        [1, 0, 0, 0, 0, 0, 1],
+        [1, 0, 0, 0, 0, 0, 1],
+        [1, 0, 0, 0, 0, 0, 1],
+        [1, 0, 0, 0, 0, 0, 1],
+        [1, 1, 1, 1, 1, 1, 1],
+      ],
+    });
+    const engine = new GameplayEngine(map);
+    const result = engine.execute({ type: "Interact" });
+
+    expect(result.success).toBe(false);
+    expect(engine.getSnapshot().worldFlags).toEqual(["test.fields_welcome"]);
+    expect(engine.consumeNotices()).toEqual([
+      {
+        title: "World Event",
+        message: "The test fields remember your arrival.",
+      },
+    ]);
+  });
+
+  it("pauses an action queue on dialogue and resumes after completion", () => {
+    const map = loadZone({
+      version: "0.1",
+      zoneId: "test_zone",
+      name: "Event Dialogue Zone",
+      width: 7,
+      height: 6,
+      playerStart: { x: 5, y: 4 },
+      tiles: [
+        [1, 1, 1, 1, 1, 1, 1],
+        [1, 0, 0, 0, 0, 0, 1],
+        [1, 0, 0, 0, 0, 0, 1],
+        [1, 0, 0, 0, 0, 0, 1],
+        [1, 0, 0, 0, 0, 0, 1],
+        [1, 1, 1, 1, 1, 1, 1],
+      ],
+    });
+    const engine = new GameplayEngine(map, {
+      events: [
+        {
+          eventId: "dialogue_then_notice",
+          trigger: { type: "interact_on_area", zoneId: "test_zone", area: { x: 5, y: 4, width: 1, height: 1 } },
+          conditions: [],
+          actions: [
+            { type: "dialogue", dialogueId: "old_scholar.default" },
+            { type: "notice", message: "The queue resumed." },
+          ],
+          repeatPolicy: "once_per_playthrough",
+          priority: 1,
+        },
+      ],
+    });
+
+    const opened = engine.execute({ type: "Interact" });
+    expect(opened.dialogueId).toBe("old_scholar.default");
+    expect(engine.consumeNotices()).toEqual([]);
+
+    engine.execute({ type: "CompleteDialogue" });
+    expect(engine.consumeNotices()).toEqual([
+      { title: "World Event", message: "The queue resumed." },
+    ]);
   });
 });

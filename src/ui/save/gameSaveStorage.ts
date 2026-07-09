@@ -252,12 +252,25 @@ function isGameSaveData(value: unknown): value is GameSaveData {
     Array.isArray(obj.pickedUpItemSpawnKeys) &&
     obj.pickedUpItemSpawnKeys.every((key) => typeof key === "string") &&
     isOptionalStringArray(obj.seenZoneEntryEventIds) &&
+    isOptionalStringArray(obj.worldFlags) &&
+    isOptionalStringArray(obj.firedEventIds) &&
+    isOptionalStringNumberRecord(obj.eventCooldowns) &&
+    isOptionalStringArray(obj.zoneVisitEventIds) &&
     Array.isArray(obj.activeQuests) &&
     obj.activeQuests.every((qId) => typeof qId === "string") &&
     Array.isArray(obj.completedQuests) &&
     obj.completedQuests.every((qId) => typeof qId === "string") &&
     Array.isArray(obj.completedObjectives) &&
     obj.completedObjectives.every((objId) => typeof objId === "string")
+  );
+}
+
+function isOptionalStringNumberRecord(value: unknown): boolean {
+  if (value === undefined) return true;
+  if (!isRecord(value)) return false;
+  return Object.entries(value).every(
+    ([key, numberValue]) =>
+      key.trim().length > 0 && isNonNegativeInteger(numberValue),
   );
 }
 

@@ -1391,3 +1391,8 @@ Keep entries short and practical. When a slice is committed, its changelog secti
 - Add the event content schema with triggers, AND conditions, ordered actions, repeat policies, and priorities.
 - Validate event references and world-flag names through editor-facing diagnostics.
 - Include events in content bundles, catalog audits, and the cross-content reference graph.
+## 2026-07-09 - [ADD]: Engine event runtime for zone and area triggers
+
+- Add the React-free `EventSystem` with area and zone-entry trigger evaluation, AND conditions, priority ordering, repetition policies, and queued actions.
+- Persist world flags, fired events, cooldowns, and visit state in save data while keeping older payloads loadable.
+- Support blocking event dialogues with queue resume, plus XP, currency, inventory, flags, notices, and quest orchestration.

@@ -1,0 +1,15 @@
+{
+  "eventId": "test_fields_welcome",
+  "trigger": {
+    "type": "interact_on_area",
+    "zoneId": "test_zone",
+    "area": { "x": 5, "y": 4, "width": 1, "height": 1 }
+  },
+  "conditions": [],
+  "actions": [
+    { "type": "notice", "message": "The test fields remember your arrival." },
+    { "type": "set_flag", "flag": "test.fields_welcome" }
+  ],
+  "repeatPolicy": "once_per_playthrough",
+  "priority": 10
+}

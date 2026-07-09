@@ -228,7 +228,11 @@ export function GameScreen({
     }
   }, [snapshot?.log]);
 
-  useZoneEntryDialogue(snapshot, triggerZoneEntryDialogue);
+  useZoneEntryDialogue(
+    snapshot,
+    triggerZoneEntryDialogue,
+    (nodes, dialogueId) => triggerDialogue(nodes, dialogueId),
+  );
   useGameKeyboardControls({
     activeDialogue,
     audioSettings,
