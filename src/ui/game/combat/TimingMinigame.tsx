@@ -1,11 +1,13 @@
 import { useEffect, useRef, useState } from "react";
 import {
   classifyTimingPress,
-  computeTimingWindowCenter,
+  createTimingWindowMotion,
   mapTimingVolley,
+  stepTimingWindowMotion,
   type GameCommand,
   type TimingMinigameSpec,
   type TimingShotOutcome,
+  type TimingWindowMotion,
 } from "../../../engine";
 import type { KeyboardLayout } from "../../controls/keyboardLayout";
 import type { AudioSettings } from "../../audio/audioSettings";
@@ -57,6 +59,8 @@ export function TimingMinigame({
   const shotIndexRef = useRef(0);
   const outcomesRef = useRef<TimingShotOutcome[]>([]);
   const shotStartRef = useRef<number | null>(null);
+  const lastFrameRef = useRef<number | null>(null);
+  const motionRef = useRef<TimingWindowMotion>(createTimingWindowMotion());
   const requestRef = useRef<number | null>(null);
   const submittedRef = useRef(false);
 
@@ -70,6 +74,8 @@ export function TimingMinigame({
     outcomesRef.current = [];
     submittedRef.current = false;
     shotStartRef.current = null;
+    lastFrameRef.current = null;
+    motionRef.current = createTimingWindowMotion();
 
     if (requestRef.current) {
       cancelAnimationFrame(requestRef.current);
@@ -101,6 +107,9 @@ export function TimingMinigame({
       setShotIndex(nextShot);
       shotStartRef.current = null;
       setCursorPos(0);
+      // Each shot gets a fresh window: centered, random drift direction.
+      motionRef.current = createTimingWindowMotion();
+      setWindowCenter(motionRef.current.center);
 
       if (nextShot >= volleySize) {
         finish();
@@ -117,9 +126,17 @@ export function TimingMinigame({
       const elapsedMs = timestamp - shotStartRef.current;
       const pos = elapsedMs / sweepMs;
       setCursorPos(Math.min(1, pos));
-      setWindowCenter(
-        computeTimingWindowCenter(elapsedMs, windowTravelSpeed, greatWindow),
+
+      const deltaMs =
+        lastFrameRef.current === null ? 0 : timestamp - lastFrameRef.current;
+      lastFrameRef.current = timestamp;
+      motionRef.current = stepTimingWindowMotion(
+        motionRef.current,
+        deltaMs,
+        windowTravelSpeed,
+        greatWindow,
       );
+      setWindowCenter(motionRef.current.center);
 
       if (pos >= 1) {
         // The cursor swept past the gauge without a shot: a miss.
@@ -142,17 +159,11 @@ export function TimingMinigame({
         1,
         (performance.now() - shotStartRef.current) / sweepMs,
       );
-      const shotElapsedMs = performance.now() - shotStartRef.current;
-      const currentWindowCenter = computeTimingWindowCenter(
-        shotElapsedMs,
-        windowTravelSpeed,
-        greatWindow,
-      );
       const outcome = classifyTimingPress(
         pos,
         greatWindow,
         criticalWindow,
-        currentWindowCenter,
+        motionRef.current.center,
       );
 
       if (audioSettings.soundEnabled) {

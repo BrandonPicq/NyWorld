@@ -5,15 +5,17 @@ import {
   classifyTimingPress,
   computeMashTargetPresses,
   computeMasteryDelta,
-  computeTimingWindowCenter,
   computeTimingWindowTravelSpeed,
   computeTimingWindows,
+  createTimingWindowMotion,
   mapTimingVolley,
   modulateMashTarget,
   modulateSequenceLength,
   modulateSequenceTimeLimit,
   modulateTimingSweep,
   resolveWeaponMinigameType,
+  stepTimingWindowMotion,
+  TIMING_WINDOW_DIRECTION_MIN_HOLD_MS,
 } from "./combatMinigame";
 
 function weapon(overrides: Partial<EquipmentDef>): EquipmentDef {
@@ -189,16 +191,49 @@ describe("computeTimingWindowTravelSpeed", () => {
   });
 });
 
-describe("computeTimingWindowCenter", () => {
-  it("keeps the window centered when movement is disabled", () => {
-    expect(computeTimingWindowCenter(600, 0, 0.26)).toBe(0.5);
+describe("timing window motion", () => {
+  it("starts at the gauge center with a random direction", () => {
+    expect(createTimingWindowMotion(() => 0).center).toBe(0.5);
+    expect(createTimingWindowMotion(() => 0).direction).toBe(-1);
+    expect(createTimingWindowMotion(() => 0.9).direction).toBe(1);
   });
 
-  it("bounces the moving window while keeping the great window visible", () => {
-    expect(computeTimingWindowCenter(0, 0.2, 0.2)).toBeCloseTo(0.1, 10);
-    expect(computeTimingWindowCenter(2000, 0.2, 0.2)).toBeCloseTo(0.5, 10);
-    expect(computeTimingWindowCenter(4000, 0.2, 0.2)).toBeCloseTo(0.9, 10);
-    expect(computeTimingWindowCenter(6000, 0.2, 0.2)).toBeCloseTo(0.5, 10);
+  it("stays centered when movement is disabled", () => {
+    const motion = createTimingWindowMotion(() => 0.9);
+    expect(stepTimingWindowMotion(motion, 600, 0, 0.26).center).toBe(0.5);
+  });
+
+  it("drifts by travel speed and keeps its direction during the hold", () => {
+    const motion = createTimingWindowMotion(() => 0.9);
+    const next = stepTimingWindowMotion(motion, 100, 0.2, 0.2, () => 0.9);
+    expect(next.center).toBeCloseTo(0.52, 10);
+    expect(next.direction).toBe(1);
+  });
+
+  it("never flips direction before the minimum hold", () => {
+    let motion = createTimingWindowMotion(() => 0);
+    // random() => 0 keeps the hold at its 300ms minimum
+    motion = stepTimingWindowMotion(motion, 299, 0.2, 0.2, () => 0);
+    expect(motion.direction).toBe(-1);
+  });
+
+  it("flips direction once the hold expires", () => {
+    let motion = createTimingWindowMotion(() => 0);
+    motion = stepTimingWindowMotion(
+      motion,
+      TIMING_WINDOW_DIRECTION_MIN_HOLD_MS + 1,
+      0.2,
+      0.2,
+      () => 0,
+    );
+    expect(motion.direction).toBe(1);
+  });
+
+  it("bounces off the gauge edges while keeping the great window visible", () => {
+    const motion = { center: 0.15, direction: -1 as const, msUntilFlip: 800 };
+    const next = stepTimingWindowMotion(motion, 500, 0.2, 0.2, () => 0);
+    expect(next.center).toBeCloseTo(0.1, 10);
+    expect(next.direction).toBe(1);
   });
 });
 

@@ -61,7 +61,9 @@ the 8 to 12 range.
 - Bow timing windows stay static when the player's Agility is equal to or above
   the enemy's. When the player is outclassed, the scoring window moves across
   the gauge at `0.12 + 0.05 * (agilityDeficit - 1)` gauge fractions per
-  second, capped at `0.42`, while still bouncing inside the visible gauge.
+  second, capped at `0.42`. Each shot's window starts at the gauge center and
+  drifts in a random direction, flipping direction at random intervals (never
+  sooner than a 300 ms hold, at most 800 ms) and bouncing off the gauge edges.
 - Weapon mastery modulation should soften or harden the input challenge only.
   It should not change the damage formula directly.
 

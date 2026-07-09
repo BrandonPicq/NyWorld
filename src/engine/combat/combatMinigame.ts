@@ -211,33 +211,92 @@ export function computeTimingWindowTravelSpeed(agilityGap: number): number {
   );
 }
 
+/** Minimum time the moving bow window keeps a direction before flipping. */
+export const TIMING_WINDOW_DIRECTION_MIN_HOLD_MS = 300;
+
+/** Random extra hold added on top of the minimum before a direction flip. */
+export const TIMING_WINDOW_DIRECTION_EXTRA_HOLD_MS = 500;
+
 /**
- * Center of the moving bow timing window for one shot. The window bounces
- * between the gauge edges while keeping the full great window visible.
+ * Runtime state of the moving bow timing window: it starts at the gauge
+ * center and drifts left/right, flipping direction at random intervals
+ * (never sooner than the minimum hold) and bouncing off the gauge edges.
  */
-export function computeTimingWindowCenter(
-  elapsedMs: number,
+export interface TimingWindowMotion {
+  /** Window center as a gauge fraction (0..1). */
+  center: number;
+  direction: -1 | 1;
+  /** Time left before the next random direction flip. */
+  msUntilFlip: number;
+}
+
+/** Fresh per-shot motion: centered, random initial direction. */
+export function createTimingWindowMotion(
+  random: () => number = Math.random,
+): TimingWindowMotion {
+  return {
+    center: 0.5,
+    direction: random() < 0.5 ? -1 : 1,
+    msUntilFlip: drawDirectionHoldMs(random),
+  };
+}
+
+/**
+ * Advances the window motion by `deltaMs`. Edge bounces force a direction
+ * change regardless of the hold timer; random flips only happen once the
+ * hold expires. A non-positive travel speed keeps the window static at
+ * center.
+ */
+export function stepTimingWindowMotion(
+  motion: TimingWindowMotion,
+  deltaMs: number,
   travelSpeed: number,
   greatWindow: number,
-): number {
+  random: () => number = Math.random,
+): TimingWindowMotion {
   if (travelSpeed <= 0) {
-    return 0.5;
+    return { ...motion, center: 0.5 };
   }
 
   const minCenter = greatWindow / 2;
   const maxCenter = 1 - greatWindow / 2;
-  const range = maxCenter - minCenter;
-  if (range <= 0) {
-    return 0.5;
+  if (maxCenter <= minCenter) {
+    return { ...motion, center: 0.5 };
   }
 
-  const travel = (elapsedMs / 1000) * travelSpeed;
-  const cycle = range * 2;
-  const cyclePosition = travel % cycle;
-  const offset = cyclePosition <= range
-    ? cyclePosition
-    : cycle - cyclePosition;
-  return minCenter + offset;
+  const center =
+    motion.center + motion.direction * travelSpeed * (deltaMs / 1000);
+  const msUntilFlip = motion.msUntilFlip - deltaMs;
+
+  if (center >= maxCenter) {
+    return {
+      center: maxCenter,
+      direction: -1,
+      msUntilFlip: drawDirectionHoldMs(random),
+    };
+  }
+  if (center <= minCenter) {
+    return {
+      center: minCenter,
+      direction: 1,
+      msUntilFlip: drawDirectionHoldMs(random),
+    };
+  }
+  if (msUntilFlip <= 0) {
+    return {
+      center,
+      direction: motion.direction === 1 ? -1 : 1,
+      msUntilFlip: drawDirectionHoldMs(random),
+    };
+  }
+  return { center, direction: motion.direction, msUntilFlip };
+}
+
+function drawDirectionHoldMs(random: () => number): number {
+  return (
+    TIMING_WINDOW_DIRECTION_MIN_HOLD_MS +
+    random() * TIMING_WINDOW_DIRECTION_EXTRA_HOLD_MS
+  );
 }
 
 /**

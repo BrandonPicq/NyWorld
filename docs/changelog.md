@@ -30,6 +30,12 @@ Keep entries short and practical. When a slice is committed, its changelog secti
 - Derive displayed damage and costs from pure engine helpers instead of parsing authored formula text.
 - Keep future additional effect codes isolated behind a structured tooltip summary field.
 
+## 2026-07-09 - [UPDATE]: Centered random drift for the moving bow window
+
+- Start each bow shot's moving window at the gauge center instead of the left edge.
+- Drift the window in a random direction, flipping at random intervals with a 300 ms minimum hold, still bouncing off the gauge edges.
+- Replace the deterministic ping-pong center math with a stepped, unit-tested motion model.
+
 ## 2026-07-09 - [FIX]: Align equipment tab keyboard order with slot grouping
 
 - Make the inventory keyboard cursor follow the rendered order on the Equipment tab: the flat selection index is now derived from the slot-grouped display instead of the raw inventory order, so ArrowDown always moves the cursor visually down.
