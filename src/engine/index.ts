@@ -65,6 +65,7 @@ export {
   resolveAllZonesFromBundle,
   resolveZoneFromBundle,
   validateGameConfig,
+  getEventDefs,
 } from "./content/contentBundle";
 export type {
   ActionTuningConfig,
@@ -115,6 +116,24 @@ export type {
 export {
   createRuntimeContentCatalogSnapshot,
 } from "./content/runtimeContentCatalog";
+export type {
+  EventAction,
+  EventArea,
+  EventCondition,
+  EventDef,
+  EventDefMap,
+  EventQuestState,
+  EventRepeatPolicy,
+  EventTrigger,
+} from "./events/EventDef";
+export {
+  getAllEventDefs,
+  getEventDef,
+  hasEventDef,
+  validateEventDefForContext,
+  validateEventRegistry,
+} from "./events/eventRegistry";
+export type { EventValidationContext } from "./events/eventValidation";
 export {
   getContentAuditErrors,
   validateAllContent,

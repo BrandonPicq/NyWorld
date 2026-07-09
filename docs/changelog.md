@@ -1386,3 +1386,8 @@ Keep entries short and practical. When a slice is committed, its changelog secti
 - Add the initial V0 project plan.
 - Add architecture decisions for the web-first stack, gameplay engine, and data format.
 - Add local project guidance for development habits and Git history.
+## 2026-07-09 - [ADD]: Event content family and registry
+
+- Add the event content schema with triggers, AND conditions, ordered actions, repeat policies, and priorities.
+- Validate event references and world-flag names through editor-facing diagnostics.
+- Include events in content bundles, catalog audits, and the cross-content reference graph.

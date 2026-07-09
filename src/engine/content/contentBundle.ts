@@ -15,6 +15,7 @@ import type {
   ZoneTransitionData,
 } from "../ZoneTypes";
 import { loadZone } from "../zoneLoader";
+import type { EventDef } from "../events/EventDef";
 
 /**
  * Author-controlled recovery point used when gameplay needs to return the
@@ -124,10 +125,18 @@ const SKILL_KEYS: readonly (keyof CharacterSkills)[] = [
 export interface ContentBundle {
   game: GameContentConfig;
   zones: Record<string, ZoneData>;
+  events: EventDef[];
 }
 
 const zoneDataModules = getSortedContentModules(
   import.meta.glob<unknown>("../../content/zones/*.json", {
+    eager: true,
+    import: "default",
+  }),
+);
+
+const eventDataModules = getSortedContentModules(
+  import.meta.glob<unknown>("../../content/events/*.json", {
     eager: true,
     import: "default",
   }),
@@ -139,6 +148,7 @@ const zoneDataModules = getSortedContentModules(
 export const defaultContentBundle = createContentBundle({
   gameConfig: gameConfigData,
   zones: zoneDataModules,
+  events: eventDataModules,
 });
 
 /**
@@ -150,6 +160,7 @@ export const defaultContentBundle = createContentBundle({
 export function createContentBundle(input: {
   gameConfig: unknown;
   zones: unknown[];
+  events?: unknown[];
 }): ContentBundle {
   const { zones, zoneMaps } = buildZoneDataRegistry(input.zones);
 
@@ -167,7 +178,12 @@ export function createContentBundle(input: {
   return {
     game: cloneGameContentConfig(input.gameConfig as GameContentConfig),
     zones: cloneZoneRegistry(zones),
+    events: cloneEventRegistry((input.events ?? []) as EventDef[]),
   };
+}
+
+export function getEventDefs(bundle: ContentBundle): EventDef[] {
+  return cloneEventRegistry(bundle.events);
 }
 
 /**
@@ -672,6 +688,23 @@ function cloneZoneRegistry(
       cloneZoneData(zoneData),
     ]),
   );
+}
+
+function cloneEventRegistry(events: EventDef[]): EventDef[] {
+  return events.map((event) => ({
+    ...event,
+    trigger:
+      event.trigger.type === "step_on_area" ||
+      event.trigger.type === "interact_on_area"
+        ? { ...event.trigger, area: { ...event.trigger.area } }
+        : { ...event.trigger },
+    conditions: event.conditions.map((condition) => ({ ...condition })),
+    actions: event.actions.map((action) => ({ ...action })),
+    repeatPolicy:
+      typeof event.repeatPolicy === "string"
+        ? event.repeatPolicy
+        : { ...event.repeatPolicy },
+  }));
 }
 
 /**

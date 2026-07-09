@@ -12,6 +12,7 @@ import type { TileDef } from "../TileRegistry";
 import type { ItemDef, ItemDefMap } from "../items/ItemDef";
 import type { TileId, ZoneData } from "../ZoneTypes";
 import type { GameContentConfig } from "./contentBundle";
+import type { EventDef } from "../events/EventDef";
 import { CONTENT_TYPES, type ContentTypeName } from "./contentTypes";
 import type { ContentValidationContext } from "./ContentValidationContext";
 
@@ -77,6 +78,7 @@ export interface ContentCatalogSnapshot {
   races: RaceDef[];
   commandMasteries?: CommandMasteryDef[];
   qtePatterns?: PatternDef[];
+  events?: EventDef[];
   dialogues: DialogueDefMap;
   dialogueFiles: Record<string, DialogueDefMap>;
   tiles: ReadonlyMap<TileId, TileDef>;
@@ -109,6 +111,7 @@ export function buildContentReferenceGraph(
     ...snapshot.enemies.flatMap(collectEnemyReferences),
     ...snapshot.quests.flatMap(collectQuestReferences),
     ...(snapshot.qtePatterns ?? []).flatMap(collectQtePatternReferences),
+    ...(snapshot.events ?? []).flatMap(collectEventReferences),
   ];
 
   return {
@@ -472,6 +475,36 @@ function collectQtePatternReferences(pattern: PatternDef): ContentReference[] {
       ),
     );
   }
+
+  return references;
+}
+
+function collectEventReferences(event: EventDef): ContentReference[] {
+  const from: ContentRef = { type: CONTENT_TYPES.event, id: event.eventId };
+  const references: ContentReference[] = [];
+  const add = (to: ContentTypeName, id: string, path: string) =>
+    references.push(reference(from, to, id, path));
+
+  const trigger = event.trigger;
+  if ("zoneId" in trigger) add(CONTENT_TYPES.zone, trigger.zoneId, "trigger.zoneId");
+  if (trigger.type === "dialogue_end" && trigger.dialogueId) add(CONTENT_TYPES.dialogue, trigger.dialogueId, "trigger.dialogueId");
+  if (trigger.type === "quest_state_change") add(CONTENT_TYPES.quest, trigger.questId, "trigger.questId");
+
+  event.conditions.forEach((condition, index) => {
+    if (condition.type === "quest_state") add(CONTENT_TYPES.quest, condition.questId, `conditions[${index}].questId`);
+    if (condition.type === "has_item") add(CONTENT_TYPES.item, condition.itemId, `conditions[${index}].itemId`);
+  });
+
+  event.actions.forEach((action, index) => {
+    const path = `actions[${index}]`;
+    if (action.type === "dialogue") add(CONTENT_TYPES.dialogue, action.dialogueId, `${path}.dialogueId`);
+    if (action.type === "give_item" || action.type === "remove_item") add(CONTENT_TYPES.item, action.itemId, `${path}.itemId`);
+    if (action.type === "spawn_enemy" || action.type === "despawn_enemy" || action.type === "start_combat") add(CONTENT_TYPES.enemy, action.enemyId, `${path}.enemyId`);
+    if (action.type === "spawn_npc" || action.type === "despawn_npc") add(CONTENT_TYPES.npc, action.npcId, `${path}.npcId`);
+    if (action.type === "spawn_npc" && action.dialogueId) add(CONTENT_TYPES.dialogue, action.dialogueId, `${path}.dialogueId`);
+    if (action.type === "teleport") add(CONTENT_TYPES.zone, action.zoneId, `${path}.zoneId`);
+    if (action.type === "start_quest" || action.type === "advance_quest") add(CONTENT_TYPES.quest, action.questId, `${path}.questId`);
+  });
 
   return references;
 }

@@ -19,6 +19,7 @@ import {
   defaultContentBundle,
   getGameConfig,
   getZoneData,
+  getEventDefs,
 } from "./contentBundle";
 import type { ContentCatalogSnapshot } from "./ContentReferenceGraph";
 
@@ -40,6 +41,7 @@ export function createRuntimeContentCatalogSnapshot(
         getZoneData(bundle, zoneId)!,
       ]),
     ),
+    events: getEventDefs(bundle),
     items: Object.fromEntries(
       getAllItemIds().map((itemId) => [itemId, getItemDef(itemId)]),
     ),
