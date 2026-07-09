@@ -500,8 +500,9 @@ export class GameplayEngine {
     }
 
     if (command.type === "Interact") {
+      const eventWillFire = this.eventSystem.willFireOnInteract();
       return this.mergeEventResult(
-        this.interact(command.targetNpcId, command.targetDirection),
+        this.interact(command.targetNpcId, command.targetDirection, eventWillFire),
         this.eventSystem.onInteract(),
       );
     }
@@ -636,6 +637,7 @@ export class GameplayEngine {
   private interact(
     targetNpcId?: string,
     targetDirection?: Direction,
+    eventWillFire = false,
   ): ExecuteResult {
     const playerPosition = this.getPlayerPosition();
     const adjacentNpcs: Npc[] = [];
@@ -653,6 +655,9 @@ export class GameplayEngine {
     }
 
     if (adjacentNpcs.length === 0) {
+      if (eventWillFire) {
+        return { success: true };
+      }
       this.addLog(
         targetDirection
           ? "There is nothing to interact with there."

@@ -4,6 +4,47 @@ This file tracks meaningful project changes by commit-oriented slices.
 
 Keep entries short and practical. When a slice is committed, its changelog section should stay aligned with the commit title so the project history remains easy to read after restores or bisects.
 
+## 2026-07-09 - [FIX]: Skip the empty-interact fallback when an event fires
+
+- Stop logging "There is nothing to interact with nearby." when the interact key triggers a world event with no NPC around; the interaction now counts as a success.
+- Expose an eligibility check on the event system so the interact command can ask before logging.
+
+## 2026-07-09 - [UPDATE]: Dialogue, quest, and time event hooks
+
+- Add dialogue-end, quest-state-change, and calendar-time trigger evaluation.
+- Route event quest actions through the existing quest progression system and fire hooks on real state changes.
+- Keep world flags event-side without changing dialogue or NPC resolution.
+
+## 2026-07-09 - [REFACTOR]: Migrate zone entry dialogues to events
+
+- Move shipped test-zone entry scenes into reusable dialogue content plus enter-zone events.
+- Remove the entry-dialogue editor panel and migrate authored zone JSON away from the legacy field.
+- Keep a deprecated compatibility reader and legacy save-id translation so older fixtures and saves remain loadable.
+
+## 2026-07-09 - [ADD]: Events tab in the editor
+
+- Add an Events tab with draft list, trigger/rectangle controls, repetition and priority fields, ordered condition/action editing, diagnostics, and references.
+- Include draft events in combined validation and editor playtests.
+- Show world flags and fired event ids in an editor-playtest-only debug panel.
+
+## 2026-07-09 - [ADD]: Spawn, combat, and movement event actions
+
+- Route event spawn and despawn actions through the existing ECS spawner and combat opponent state.
+- Add event-driven enemy combat starts and teleportation with destination validation.
+- Reject blocked teleports and active-combat despawns without leaving the player in a soft-locked state.
+
+## 2026-07-09 - [ADD]: Engine event runtime for zone and area triggers
+
+- Add the React-free `EventSystem` with area and zone-entry trigger evaluation, AND conditions, priority ordering, repetition policies, and queued actions.
+- Persist world flags, fired events, cooldowns, and visit state in save data while keeping older payloads loadable.
+- Support blocking event dialogues with queue resume, plus XP, currency, inventory, flags, notices, and quest orchestration.
+
+## 2026-07-09 - [ADD]: Event content family and registry
+
+- Add the event content schema with triggers, AND conditions, ordered actions, repeat policies, and priorities.
+- Validate event references and world-flag names through editor-facing diagnostics.
+- Include events in content bundles, catalog audits, and the cross-content reference graph.
+
 ## 2026-07-09 - [UPDATE]: Equipment slot visibility in the inventory
 
 - Group equipment items by slot with section headers in the Equipment tab.
@@ -1386,33 +1427,3 @@ Keep entries short and practical. When a slice is committed, its changelog secti
 - Add the initial V0 project plan.
 - Add architecture decisions for the web-first stack, gameplay engine, and data format.
 - Add local project guidance for development habits and Git history.
-## 2026-07-09 - [ADD]: Event content family and registry
-
-- Add the event content schema with triggers, AND conditions, ordered actions, repeat policies, and priorities.
-- Validate event references and world-flag names through editor-facing diagnostics.
-- Include events in content bundles, catalog audits, and the cross-content reference graph.
-## 2026-07-09 - [ADD]: Engine event runtime for zone and area triggers
-
-- Add the React-free `EventSystem` with area and zone-entry trigger evaluation, AND conditions, priority ordering, repetition policies, and queued actions.
-- Persist world flags, fired events, cooldowns, and visit state in save data while keeping older payloads loadable.
-- Support blocking event dialogues with queue resume, plus XP, currency, inventory, flags, notices, and quest orchestration.
-## 2026-07-09 - [ADD]: Spawn, combat, and movement event actions
-
-- Route event spawn and despawn actions through the existing ECS spawner and combat opponent state.
-- Add event-driven enemy combat starts and teleportation with destination validation.
-- Reject blocked teleports and active-combat despawns without leaving the player in a soft-locked state.
-## 2026-07-09 - [ADD]: Events tab in the editor
-
-- Add an Events tab with draft list, trigger/rectangle controls, repetition and priority fields, ordered condition/action editing, diagnostics, and references.
-- Include draft events in combined validation and editor playtests.
-- Show world flags and fired event ids in an editor-playtest-only debug panel.
-## 2026-07-09 - [REFACTOR]: Migrate zone entry dialogues to events
-
-- Move shipped test-zone entry scenes into reusable dialogue content plus enter-zone events.
-- Remove the entry-dialogue editor panel and migrate authored zone JSON away from the legacy field.
-- Keep a deprecated compatibility reader and legacy save-id translation so older fixtures and saves remain loadable.
-## 2026-07-09 - [UPDATE]: Dialogue, quest, and time event hooks
-
-- Add dialogue-end, quest-state-change, and calendar-time trigger evaluation.
-- Route event quest actions through the existing quest progression system and fire hooks on real state changes.
-- Keep world flags event-side without changing dialogue or NPC resolution.

@@ -92,6 +92,18 @@ export class EventSystem {
     });
   }
 
+  /** Eligibility check without executing — lets the interact command skip its "nothing to interact with" fallback. */
+  willFireOnInteract(): boolean {
+    return this.events.some(
+      (event) =>
+        event.trigger.type === "interact_on_area" &&
+        event.trigger.zoneId === this.context.getZoneId() &&
+        isInsideArea(this.context.getPlayerPosition(), event.trigger.area) &&
+        this.canTrigger(event) &&
+        this.conditionsPass(event.conditions),
+    );
+  }
+
   onDialogueEnd(dialogueId: string): EventSystemResult {
     return this.trigger((event) =>
       event.trigger.type === "dialogue_end" &&

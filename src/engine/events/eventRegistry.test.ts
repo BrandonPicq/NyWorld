@@ -94,7 +94,8 @@ describe("Event content validation", () => {
     });
     const result = engine.execute({ type: "Interact" });
 
-    expect(result.success).toBe(false);
+    // The fired event makes the interaction a success even with no NPC nearby.
+    expect(result.success).toBe(true);
     expect(engine.getSnapshot().worldFlags).toEqual(["test.fields_welcome"]);
     expect(engine.consumeNotices()).toEqual([
       {
