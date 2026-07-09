@@ -48,6 +48,7 @@ export interface EventRuntimeState {
   firedEventIds: string[];
   eventCooldowns: Record<string, number>;
   zoneVisitEventIds: string[];
+  legacySeenZoneEntryEventIds?: string[];
 }
 
 type QueuedEvent = { event: EventDef; actionIndex: number };
@@ -102,6 +103,14 @@ export class EventSystem {
     this.zoneVisitEventIds.clear();
     saved.worldFlags?.forEach((flag) => this.worldFlags.add(flag));
     saved.firedEventIds?.forEach((eventId) => this.firedEventIds.add(eventId));
+    for (const event of this.events) {
+      if (
+        event.trigger.type === "enter_zone" &&
+        saved.legacySeenZoneEntryEventIds?.includes(`zone_entry:${event.trigger.zoneId}`)
+      ) {
+        this.firedEventIds.add(event.eventId);
+      }
+    }
     saved.zoneVisitEventIds?.forEach((eventId) => this.zoneVisitEventIds.add(eventId));
     this.eventCooldowns = { ...(saved.eventCooldowns ?? {}) };
     this.actionQueue = [];

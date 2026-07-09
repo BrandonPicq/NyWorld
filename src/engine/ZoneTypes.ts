@@ -119,11 +119,6 @@ export interface ZoneData {
   npcs?: NpcSpawnData[];
   /** Ground item stacks; must not overlap the player start or an NPC spawn. */
   items?: ItemSpawnData[];
-  /**
-   * Dialogue played the first time the player enters this zone.
-   *
-   * This is a one-shot event per playthrough: once acknowledged it is
-   * recorded in the save and never replays.
-   */
+  /** @deprecated Shipped content uses the events family; retained for old saves and test fixtures. */
   entryDialogue?: DialogueNodeData[];
 }

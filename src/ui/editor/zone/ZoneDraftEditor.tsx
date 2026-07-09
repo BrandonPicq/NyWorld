@@ -11,7 +11,6 @@ import {
 } from "../DiagnosticList";
 import { MapCoordinatePicker } from "../MapCoordinatePicker";
 import { EditorZoneCanvas } from "./EditorZoneCanvas";
-import { EntryDialogueEditor } from "./EntryDialogueEditor";
 import { ZoneContents } from "./ZoneContents";
 import { ZonePlacementControls } from "./ZonePlacementControls";
 import { usePlacementSelection } from "./usePlacementSelection";
@@ -296,7 +295,6 @@ export function ZoneDraftEditor({
             zone={draft}
             zoneIds={placement.zoneIds}
           />
-          <EntryDialogueEditor onUpdate={updateDraft} zone={draft} />
         </TerminalPanel>
       </ScrollRegion>
 

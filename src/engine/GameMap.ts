@@ -23,6 +23,7 @@ export class GameMap {
   readonly playerStart: PlayerStart;
   readonly npcs: NpcSpawnData[];
   readonly items: ItemSpawnData[];
+  /** @deprecated Compatibility projection for pre-event zone data. */
   readonly entryDialogue: DialogueNodeData[];
 
   private tiles: TileId[][];

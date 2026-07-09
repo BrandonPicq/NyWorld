@@ -66,7 +66,8 @@ item catalog.
 ## Zones
 
 Zone JSON describes the map rectangle, tile grid, player start, optional
-transitions, optional entry dialogue, NPC appearances, and ground item stacks.
+transitions, NPC appearances, and ground item stacks. Zone-entry scenes belong
+to the `events` family and use an `enter_zone` trigger with a dialogue action.
 `ContentBundle` discovers authored zones, while `loadZone` rejects invalid tile
 ids, blocked spawn positions, unknown content references, malformed dialogue,
 and invalid schedules before a `GameMap` reaches gameplay code.

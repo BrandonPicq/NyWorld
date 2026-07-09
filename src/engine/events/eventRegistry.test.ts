@@ -27,6 +27,8 @@ describe("Event content validation", () => {
     expect(validateEventDef(validEvent, context)).toEqual([]);
     expect(getAllEventDefs().map((event) => event.eventId)).toEqual([
       "test_fields_welcome",
+      "test_zone_2_entry",
+      "test_zone_entry",
     ]);
   });
 
@@ -87,7 +89,9 @@ describe("Event content validation", () => {
         [1, 1, 1, 1, 1, 1, 1],
       ],
     });
-    const engine = new GameplayEngine(map);
+    const engine = new GameplayEngine(map, {
+      events: getAllEventDefs().filter((event) => event.eventId === "test_fields_welcome"),
+    });
     const result = engine.execute({ type: "Interact" });
 
     expect(result.success).toBe(false);

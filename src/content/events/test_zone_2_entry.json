@@ -1,0 +1,8 @@
+{
+  "eventId": "test_zone_2_entry",
+  "trigger": { "type": "enter_zone", "zoneId": "test_zone_2" },
+  "conditions": [],
+  "actions": [{ "type": "dialogue", "dialogueId": "zone_entry.test_zone_2" }],
+  "repeatPolicy": "once_per_playthrough",
+  "priority": 0
+}

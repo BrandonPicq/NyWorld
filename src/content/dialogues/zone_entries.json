@@ -1,0 +1,21 @@
+{
+  "zone_entry.test_zone": [
+    {
+      "speaker": "Narrator",
+      "text": "Welcome to the test fields of NyWarudo.",
+      "pitch": 1
+    }
+  ],
+  "zone_entry.test_zone_2": [
+    {
+      "speaker": "Narrator",
+      "text": "The air here grows heavy and cold.",
+      "pitch": 0.9
+    },
+    {
+      "speaker": "Mysterious Voice",
+      "text": "Who dares trespass in the Eastern Ruins?",
+      "pitch": 1.4
+    }
+  ]
+}

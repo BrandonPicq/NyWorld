@@ -104,7 +104,6 @@ import {
   QtePatternLearningSystem,
 } from "./combat/QtePatternLearningSystem";
 import type { KnownPatternMap } from "./combat/PatternDef";
-import { getAllEventDefs } from "./events/eventRegistry";
 import { EventSystem, type EventSystemResult } from "./events/EventSystem";
 import type { EventDef } from "./events/EventDef";
 import { hasEnemyDef } from "./enemies/enemyRegistry";
@@ -371,7 +370,7 @@ export class GameplayEngine {
       incrementPatternUsage: (patternId) => this.incrementPatternUsage(patternId),
     });
 
-    this.eventSystem = new EventSystem(options.events ?? getAllEventDefs(), {
+    this.eventSystem = new EventSystem(options.events ?? [], {
       getZoneId: () => this.map.zoneId,
       getPlayerPosition: () => this.getPlayerPosition(),
       getPlayerInventory: () => this.getPlayerInventory(),
@@ -870,6 +869,7 @@ export class GameplayEngine {
       firedEventIds: saveData.firedEventIds,
       eventCooldowns: saveData.eventCooldowns,
       zoneVisitEventIds: saveData.zoneVisitEventIds,
+      legacySeenZoneEntryEventIds: saveData.seenZoneEntryEventIds,
     });
     this.pendingZoneEntryDialogue = [];
     this.pendingEventDialogue = [];

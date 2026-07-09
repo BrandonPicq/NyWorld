@@ -1406,3 +1406,8 @@ Keep entries short and practical. When a slice is committed, its changelog secti
 - Add an Events tab with draft list, trigger/rectangle controls, repetition and priority fields, ordered condition/action editing, diagnostics, and references.
 - Include draft events in combined validation and editor playtests.
 - Show world flags and fired event ids in an editor-playtest-only debug panel.
+## 2026-07-09 - [REFACTOR]: Migrate zone entry dialogues to events
+
+- Move shipped test-zone entry scenes into reusable dialogue content plus enter-zone events.
+- Remove the entry-dialogue editor panel and migrate authored zone JSON away from the legacy field.
+- Keep a deprecated compatibility reader and legacy save-id translation so older fixtures and saves remain loadable.
