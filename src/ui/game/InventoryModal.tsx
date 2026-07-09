@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type KeyboardEvent } from "react";
+import { useEffect, useMemo, useRef, useState, type KeyboardEvent } from "react";
 import type { Inventory, InventoryItemCategory } from "../../engine/components";
 import { getItemDef } from "../../engine/items/itemRegistry";
 import { TerminalButton } from "../components/TerminalButton";
@@ -6,7 +6,7 @@ import { TerminalPanel } from "../components/TerminalPanel";
 import type { AudioSettings } from "../audio/audioSettings";
 import { useMenuKeyboard } from "../hooks/useMenuKeyboard";
 import { playMenuMoveSound } from "../audio/menuAudio";
-import { getCategoriesPresent } from "./inventoryHelper";
+import { getCategoriesPresent, EQUIPMENT_SLOT_LABEL, computeEquipmentSlotGroups } from "./inventoryHelper";
 import { getNextTabIndex, resolveTabKeyAction } from "../menu/tabNavigation";
 import { consumeIfPointerOverKeyboardBlockingElement } from "../menu/pointerKeyboardBlock";
 
@@ -75,6 +75,14 @@ export function InventoryModal({
     : items.filter((item) => getItemDef(item.itemId).category === activeTab);
 
   const hasItems = filteredItems.length > 0;
+
+  const equipmentSlotGroups = useMemo(() => {
+    if (activeTab !== "equipment") return null;
+    return computeEquipmentSlotGroups(
+      filteredItems,
+      (itemId) => getItemDef(itemId).equipment?.slot
+    );
+  }, [activeTab, filteredItems]);
 
   // Find index of pre-selected item if it exists in current filtered list
   const targetIndex = initialSelectedItemId
@@ -209,6 +217,48 @@ export function InventoryModal({
           <div className="stats-modal__inventory-left">
             {!hasItems ? (
               <p className="stats-modal__empty">No items in this category.</p>
+            ) : equipmentSlotGroups ? (
+              equipmentSlotGroups.map((group) => (
+                <div key={group.slot}>
+                  <div className="stats-modal__inventory-section-header">
+                    {group.label}
+                  </div>
+                  {group.items.map(({ stack, globalIndex }) => {
+                    const def = getItemDef(stack.itemId);
+                    const isSelected = globalIndex === selectedIndex;
+                    return (
+                      <div
+                        key={stack.itemId}
+                        className={`stats-modal__inventory-row ${
+                          isSelected ? "stats-modal__inventory-row--selected" : ""
+                        }`}
+                        data-keyboard-blocking-hover="true"
+                        ref={isSelected ? selectedRowRef : undefined}
+                        onClick={() => {
+                          setSelectedIndex(globalIndex);
+                          if (audioSettings.soundEnabled && globalIndex !== selectedIndex) {
+                            playMenuMoveSound();
+                          }
+                        }}
+                      >
+                        <span className="stats-modal__inventory-name">
+                          {isSelected ? "> " : "  "} {def.name}
+                          {def.equipment && (
+                            <span className="stats-modal__inventory-slot-badge">
+                              [{EQUIPMENT_SLOT_LABEL[def.equipment.slot]}]
+                            </span>
+                          )}
+                        </span>
+                        <span className="stats-modal__inventory-qty">
+                          {equippedItemIds.has(stack.itemId)
+                            ? `Equipped x${stack.quantity}`
+                            : `x${stack.quantity}`}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+              ))
             ) : (
               filteredItems.map((stack, index) => {
                 const def = getItemDef(stack.itemId);
@@ -230,6 +280,11 @@ export function InventoryModal({
                   >
                     <span className="stats-modal__inventory-name">
                       {isSelected ? "> " : "  "} {def.name}
+                      {def.category === "equipment" && def.equipment && (
+                        <span className="stats-modal__inventory-slot-badge">
+                          [{EQUIPMENT_SLOT_LABEL[def.equipment.slot]}]
+                        </span>
+                      )}
                     </span>
                     <span className="stats-modal__inventory-qty">
                       {equippedItemIds.has(stack.itemId)

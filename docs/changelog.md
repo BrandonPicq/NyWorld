@@ -4,6 +4,13 @@ This file tracks meaningful project changes by commit-oriented slices.
 
 Keep entries short and practical. When a slice is committed, its changelog section should stay aligned with the commit title so the project history remains easy to read after restores or bisects.
 
+## 2026-07-09 - [UPDATE]: Equipment slot visibility in the inventory
+
+- Group equipment items by slot with section headers in the Equipment tab.
+- Show an inline slot badge on each equipment row in both the Equipment and All tabs.
+- Keep keyboard selection with one flat index across grouped sections so arrow-key navigation stays unchanged.
+- Derive slots from the item definition's equipment block.
+
 ## 2026-07-09 - [UPDATE]: Softer spell pattern failure
 
 - Keep hidden spell pattern progress on wrong inputs and end the turn after two errors.

@@ -722,6 +722,30 @@
   color: var(--color-accent);
 }
 
+.stats-modal__inventory-section-header {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--color-text-muted);
+  padding: var(--space-2) var(--space-2) var(--space-1) var(--space-2);
+  border-bottom: 1px solid var(--color-border-muted);
+  margin-top: var(--space-2);
+}
+
+.stats-modal__inventory-section-header:first-child {
+  margin-top: 0;
+}
+
+.stats-modal__inventory-slot-badge {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  color: var(--color-text-muted);
+  margin-left: var(--space-1);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
 .stats-modal__inventory-name {
   font-family: var(--font-mono);
   font-size: 0.95rem;
