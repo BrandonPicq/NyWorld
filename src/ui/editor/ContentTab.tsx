@@ -1,11 +1,10 @@
-import { useEffect, useMemo, useRef, useState, type KeyboardEvent } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { ItemDef } from "../../engine";
 import type { ContentRef } from "../../engine";
 import { IdentifierLabel } from "../components/IdentifierLabel";
 import { ScrollRegion } from "../components/ScrollRegion";
 import { TerminalButton } from "../components/TerminalButton";
 import { TerminalPanel } from "../components/TerminalPanel";
-import { consumeIfPointerOverKeyboardBlockingElement } from "../menu/pointerKeyboardBlock";
 import {
   DiagnosticList,
   type EditorContentNavigationTarget,
@@ -63,65 +62,14 @@ export function ContentTab({ draft, onNavigate }: ContentTabProps) {
   const [keyboardEntryIndex, setKeyboardEntryIndex] = useState(
     selectedBrowserEntryIndex,
   );
-  const entryButtonRefs = useRef<Array<HTMLButtonElement | null>>([]);
 
   useEffect(() => {
     setKeyboardEntryIndex(selectedBrowserEntryIndex);
   }, [selectedBrowserEntryIndex]);
 
-  function moveKeyboardEntry(direction: -1 | 1): void {
-    if (browserEntries.length === 0) {
-      return;
-    }
-    const nextIndex = clampIndex(
-      keyboardEntryIndex + direction,
-      browserEntries.length,
-    );
-    setKeyboardEntryIndex(nextIndex);
-    requestAnimationFrame(() => entryButtonRefs.current[nextIndex]?.focus());
-  }
-
   function selectBrowserEntry(ref: ContentRef, index: number): void {
     setKeyboardEntryIndex(index);
     setSelectedRef(ref);
-  }
-
-  function handleBrowserKeyDown(event: KeyboardEvent<HTMLElement>): void {
-    if (event.key === "ArrowDown") {
-      if (consumeIfPointerOverKeyboardBlockingElement(event)) {
-        return;
-      }
-
-      event.preventDefault();
-      event.stopPropagation();
-      moveKeyboardEntry(1);
-      return;
-    }
-
-    if (event.key === "ArrowUp") {
-      if (consumeIfPointerOverKeyboardBlockingElement(event)) {
-        return;
-      }
-
-      event.preventDefault();
-      event.stopPropagation();
-      moveKeyboardEntry(-1);
-      return;
-    }
-
-    if (event.key === "Enter") {
-      const entry = browserEntries[keyboardEntryIndex];
-      if (!entry) {
-        return;
-      }
-      if (consumeIfPointerOverKeyboardBlockingElement(event)) {
-        return;
-      }
-
-      event.preventDefault();
-      event.stopPropagation();
-      setSelectedRef(entry.ref);
-    }
   }
 
   return (
@@ -144,11 +92,7 @@ export function ContentTab({ draft, onNavigate }: ContentTabProps) {
               onChange={setListFilter}
               value={listFilter}
             />
-            <ScrollRegion
-              className="editor-scroll"
-              onKeyDown={handleBrowserKeyDown}
-              role="list"
-            >
+            <ScrollRegion className="editor-scroll" role="list">
               {filteredBrowserGroups.length === 0 ? (
                 <p className="editor-empty">No matching entries.</p>
               ) : null}
@@ -172,9 +116,6 @@ export function ContentTab({ draft, onNavigate }: ContentTabProps) {
                           key={`${entry.ref.type}:${entry.ref.id}`}
                           onClick={() => selectBrowserEntry(entry.ref, entryIndex)}
                           onFocus={() => setKeyboardEntryIndex(entryIndex)}
-                          ref={(button) => {
-                            entryButtonRefs.current[entryIndex] = button;
-                          }}
                           tabIndex={isKeyboardSelected ? 0 : -1}
                         >
                           <IdentifierLabel value={entry.label} />
@@ -286,13 +227,6 @@ export function ContentTab({ draft, onNavigate }: ContentTabProps) {
       </div>
     </>
   );
-}
-
-function clampIndex(index: number, itemCount: number): number {
-  if (itemCount <= 0) {
-    return -1;
-  }
-  return Math.max(0, Math.min(itemCount - 1, index));
 }
 
 function parseNumberDraft(value: string): number {

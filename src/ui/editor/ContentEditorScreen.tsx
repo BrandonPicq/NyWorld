@@ -16,7 +16,6 @@ import {
 import { TerminalButton } from "../components/TerminalButton";
 import { getFocusableElements } from "../hooks/focusTrap";
 import { getNextTabIndex, resolveTabKeyAction } from "../menu/tabNavigation";
-import { consumeIfPointerOverKeyboardBlockingElement } from "../menu/pointerKeyboardBlock";
 import { ActionsTab } from "./actions/ActionsTab";
 import { ClassTab } from "./classes/ClassTab";
 import { ContentTab } from "./ContentTab";
@@ -31,7 +30,9 @@ import { QuestTab } from "./quests/QuestTab";
 import { RaceTab } from "./races/RaceTab";
 import { PatternTab } from "./patterns/PatternTab";
 import {
+  controlOwnsVerticalArrowKeys,
   getNextEditorRegionIndex,
+  isEditorFocusRecoveryKey,
   resolveEditorRegionKeyAction,
 } from "./editorRegionNavigation";
 import { useEditorDrafts } from "./useEditorDrafts";
@@ -82,6 +83,7 @@ export function ContentEditorScreen({
   const baseSnapshot = useMemo(() => createRuntimeContentCatalogSnapshot(), []);
   const [tab, setTab] = useState<EditorTab>("content");
   const [selectedRegionIndex, setSelectedRegionIndex] = useState(0);
+  const screenRef = useRef<HTMLElement>(null);
   const tabButtonRefs = useRef<Array<HTMLButtonElement | null>>([]);
   const tabContentRef = useRef<HTMLDivElement>(null);
   const pendingRegionFocusRef = useRef(false);
@@ -128,6 +130,47 @@ export function ContentEditorScreen({
   useEffect(() => {
     setSelectedRegionIndex(0);
   }, [tab]);
+
+  // Nothing is focused when the screen mounts, and every key handler lives
+  // inside the screen — without an initial focus the keyboard is inert.
+  useEffect(() => {
+    const index = EDITOR_TABS.findIndex((entry) => entry.id === tab);
+    tabButtonRefs.current[index]?.focus();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- mount only
+  }, []);
+
+  // Focus can drop to document.body (background click, focused element
+  // unmounting after a save/delete/filter); once there, no editor handler
+  // receives keys anymore. Pull focus back on the first navigation key.
+  useEffect(() => {
+    function handleWindowKeyDown(event: globalThis.KeyboardEvent): void {
+      if (event.defaultPrevented || !isEditorFocusRecoveryKey(event.key)) {
+        return;
+      }
+
+      const activeElement = document.activeElement;
+      if (
+        activeElement instanceof HTMLElement &&
+        screenRef.current?.contains(activeElement)
+      ) {
+        return;
+      }
+
+      event.preventDefault();
+      const regions = getEditorRegions(tabContentRef.current);
+      const selectedRegion = regions.find(
+        (region) => region.dataset.regionSelected === "true",
+      );
+      if (selectedRegion) {
+        selectedRegion.focus();
+      } else {
+        focusActiveTab();
+      }
+    }
+
+    window.addEventListener("keydown", handleWindowKeyDown);
+    return () => window.removeEventListener("keydown", handleWindowKeyDown);
+  });
 
   function handleBack(): void {
     if (
@@ -229,7 +272,14 @@ export function ContentEditorScreen({
   ): void {
     setTab(nextTab);
     setSelectedRegionIndex(0);
-    pendingRegionFocusRef.current = options.focusRegion ?? false;
+    // Re-selecting the current tab bails out of rendering, so the pending-focus
+    // effect would never run; its regions are already in the DOM — focus now.
+    if (options.focusRegion && nextTab === tab) {
+      pendingRegionFocusRef.current = false;
+      focusEditorRegion(tabContentRef.current, 0);
+    } else {
+      pendingRegionFocusRef.current = options.focusRegion ?? false;
+    }
     if (options.focus) {
       const index = EDITOR_TABS.findIndex((entry) => entry.id === nextTab);
       requestAnimationFrame(() => tabButtonRefs.current[index]?.focus());
@@ -242,10 +292,6 @@ export function ContentEditorScreen({
     });
 
     if (action.kind === "none" || action.kind === "cancel") {
-      return;
-    }
-
-    if (consumeIfPointerOverKeyboardBlockingElement(event)) {
       return;
     }
 
@@ -314,7 +360,16 @@ export function ContentEditorScreen({
       return;
     }
 
-    if (activeRegionIndex < 0 || activeElement !== regions[activeRegionIndex]) {
+    if (activeRegionIndex < 0 || !activeElement) {
+      return;
+    }
+
+    if (activeElement !== regions[activeRegionIndex]) {
+      handleRegionControlKeyDown(
+        event,
+        regions[activeRegionIndex],
+        activeElement,
+      );
       return;
     }
 
@@ -322,10 +377,6 @@ export function ContentEditorScreen({
       regionCount: regions.length,
     });
     if (action.kind === "none" || action.kind === "previous") {
-      return;
-    }
-
-    if (consumeIfPointerOverKeyboardBlockingElement(event)) {
       return;
     }
 
@@ -352,6 +403,7 @@ export function ContentEditorScreen({
       className="app-shell app-shell--bounded editor-screen"
       aria-labelledby="editor-heading"
       onKeyDownCapture={handleEditorKeyDownCapture}
+      ref={screenRef}
     >
       <div className="editor-shell">
         <header className="editor-header">
@@ -480,6 +532,58 @@ function findDialogueStem(
       .sort(([a], [b]) => a.localeCompare(b))
       .find(([, dialogues]) => dialogueId in dialogues)?.[0] ?? null
   );
+}
+
+function handleRegionControlKeyDown(
+  event: KeyboardEvent<HTMLElement>,
+  region: HTMLElement,
+  control: HTMLElement,
+): void {
+  if (event.key === "Enter" && control instanceof HTMLSelectElement) {
+    event.preventDefault();
+    event.stopPropagation();
+    openSelectPicker(control);
+    return;
+  }
+
+  if (event.key !== "ArrowUp" && event.key !== "ArrowDown") {
+    return;
+  }
+
+  // Modifier combos stay native (e.g. Alt+ArrowDown opens a select).
+  if (event.altKey || event.ctrlKey || event.metaKey) {
+    return;
+  }
+
+  if (
+    controlOwnsVerticalArrowKeys(
+      control.tagName,
+      control instanceof HTMLInputElement ? control.type : null,
+    )
+  ) {
+    return;
+  }
+
+  const focusable = getFocusableElements(region);
+  const currentIndex = focusable.indexOf(control);
+  if (currentIndex < 0 || focusable.length < 2) {
+    return;
+  }
+
+  event.preventDefault();
+  event.stopPropagation();
+  const direction = event.key === "ArrowDown" ? 1 : -1;
+  focusable[
+    (currentIndex + direction + focusable.length) % focusable.length
+  ].focus();
+}
+
+function openSelectPicker(select: HTMLSelectElement): void {
+  try {
+    select.showPicker();
+  } catch {
+    // Unsupported or blocked; Space still opens the picker natively.
+  }
 }
 
 function getEditorRegions(container: HTMLElement | null): HTMLElement[] {

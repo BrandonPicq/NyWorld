@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
+  controlOwnsVerticalArrowKeys,
   getNextEditorRegionIndex,
+  isEditorFocusRecoveryKey,
   resolveEditorRegionKeyAction,
 } from "./editorRegionNavigation";
 
@@ -40,6 +42,27 @@ describe("editor region navigation", () => {
     expect(resolveEditorRegionKeyAction("x", { regionCount: 3 })).toEqual({
       kind: "none",
     });
+  });
+
+  it("recovers focus on navigation keys only", () => {
+    expect(isEditorFocusRecoveryKey("ArrowDown")).toBe(true);
+    expect(isEditorFocusRecoveryKey("ArrowLeft")).toBe(true);
+    expect(isEditorFocusRecoveryKey("Enter")).toBe(true);
+    expect(isEditorFocusRecoveryKey("Escape")).toBe(true);
+    expect(isEditorFocusRecoveryKey("a")).toBe(false);
+    expect(isEditorFocusRecoveryKey("Tab")).toBe(false);
+  });
+
+  it("leaves vertical arrows to controls that need them to operate", () => {
+    expect(controlOwnsVerticalArrowKeys("TEXTAREA", null)).toBe(true);
+    expect(controlOwnsVerticalArrowKeys("INPUT", "range")).toBe(true);
+    expect(controlOwnsVerticalArrowKeys("INPUT", "radio")).toBe(true);
+    expect(controlOwnsVerticalArrowKeys("INPUT", "text")).toBe(false);
+    expect(controlOwnsVerticalArrowKeys("INPUT", null)).toBe(false);
+    expect(controlOwnsVerticalArrowKeys("BUTTON", null)).toBe(false);
+    // Arrows must not change these while merely passing over them.
+    expect(controlOwnsVerticalArrowKeys("SELECT", null)).toBe(false);
+    expect(controlOwnsVerticalArrowKeys("INPUT", "number")).toBe(false);
   });
 
   it("wraps region indexes", () => {

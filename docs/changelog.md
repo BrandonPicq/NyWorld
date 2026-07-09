@@ -4,6 +4,17 @@ This file tracks meaningful project changes by commit-oriented slices.
 
 Keep entries short and practical. When a slice is committed, its changelog section should stay aligned with the commit title so the project history remains easy to read after restores or bisects.
 
+## 2026-07-08 - [FIX]: Editor keyboard navigation dead spots
+
+- Focus the active editor tab on mount so keyboard control works immediately.
+- Recover keyboard focus from the document body on navigation keys after background clicks or focused elements unmounting.
+- Stop consuming editor keyboard navigation while the pointer hovers a button; the hover guard now only applies to game menu surfaces.
+- Make Enter on the already-selected tab drop focus into the first panel instead of doing nothing (same-value state updates skip the render the pending-focus effect relied on).
+- Add generic control-level Up/Down navigation inside panels (wrapping through focusable controls, filter inputs included) and drop the now-redundant per-list arrow handlers in the content browser, diagnostics, and reference lists.
+- Traverse selects and number inputs with Up/Down instead of silently changing their value in passing; Enter (or Space/click) opens a select's dropdown, digits still type into numbers.
+- Leave vertical arrows to controls that need them to operate (textarea, range/radio/date inputs); Tab still moves past those.
+- Unit-test the focus recovery key set.
+
 ## 2026-07-08 - [ADD]: Hierarchical keyboard navigation for editor panels
 
 - Add an editor panel navigation layer between tab selection and form controls.
