@@ -30,6 +30,11 @@ Keep entries short and practical. When a slice is committed, its changelog secti
 - Derive displayed damage and costs from pure engine helpers instead of parsing authored formula text.
 - Keep future additional effect codes isolated behind a structured tooltip summary field.
 
+## 2026-07-09 - [DOCS]: ADR 0010 world event system
+
+- Record the accepted design for the world event system (scenarization): an `events` content family with triggers, AND-conditions, ordered actions, repeat policies, and explicit priority.
+- World flags become first-class save-persisted booleans; a blocking dialogue suspends the sequential action queue; zone `entryDialogue` will migrate to events.
+
 ## 2026-07-09 - [UPDATE]: Centered random drift for the moving bow window
 
 - Start each bow shot's moving window at the gauge center instead of the left edge.
