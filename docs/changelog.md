@@ -4,6 +4,12 @@ This file tracks meaningful project changes by commit-oriented slices.
 
 Keep entries short and practical. When a slice is committed, its changelog section should stay aligned with the commit title so the project history remains easy to read after restores or bisects.
 
+## 2026-07-09 - [UPDATE]: Moving shot window when outclassed on agility
+
+- Move bow timing windows only when the player has lower Agility than the enemy.
+- Scale the moving-window speed by the Agility deficit while keeping equal or better Agility static.
+- Document and unit-test the moving-window timing constants.
+
 ## 2026-07-09 - [UPDATE]: Compact combat action tooltip
 
 - Replace combat action tooltip prose with compact expected damage, cost, and attack-type rows.

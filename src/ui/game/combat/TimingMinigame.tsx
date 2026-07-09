@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import {
   classifyTimingPress,
+  computeTimingWindowCenter,
   mapTimingVolley,
   type GameCommand,
   type TimingMinigameSpec,
@@ -40,10 +41,17 @@ export function TimingMinigame({
   keyboardLayout,
   audioSettings,
 }: TimingMinigameProps) {
-  const { volleySize, sweepMs, greatWindow, criticalWindow } = spec;
+  const {
+    volleySize,
+    sweepMs,
+    windowTravelSpeed,
+    greatWindow,
+    criticalWindow,
+  } = spec;
 
   const [shotIndex, setShotIndex] = useState(0);
   const [cursorPos, setCursorPos] = useState(0);
+  const [windowCenter, setWindowCenter] = useState(0.5);
   const [outcomes, setOutcomes] = useState<TimingShotOutcome[]>([]);
 
   const shotIndexRef = useRef(0);
@@ -57,6 +65,7 @@ export function TimingMinigame({
     setShotIndex(0);
     shotIndexRef.current = 0;
     setCursorPos(0);
+    setWindowCenter(0.5);
     setOutcomes([]);
     outcomesRef.current = [];
     submittedRef.current = false;
@@ -105,8 +114,12 @@ export function TimingMinigame({
       if (!shotStartRef.current) {
         shotStartRef.current = timestamp;
       }
-      const pos = (timestamp - shotStartRef.current) / sweepMs;
+      const elapsedMs = timestamp - shotStartRef.current;
+      const pos = elapsedMs / sweepMs;
       setCursorPos(Math.min(1, pos));
+      setWindowCenter(
+        computeTimingWindowCenter(elapsedMs, windowTravelSpeed, greatWindow),
+      );
 
       if (pos >= 1) {
         // The cursor swept past the gauge without a shot: a miss.
@@ -129,7 +142,18 @@ export function TimingMinigame({
         1,
         (performance.now() - shotStartRef.current) / sweepMs,
       );
-      const outcome = classifyTimingPress(pos, greatWindow, criticalWindow);
+      const shotElapsedMs = performance.now() - shotStartRef.current;
+      const currentWindowCenter = computeTimingWindowCenter(
+        shotElapsedMs,
+        windowTravelSpeed,
+        greatWindow,
+      );
+      const outcome = classifyTimingPress(
+        pos,
+        greatWindow,
+        criticalWindow,
+        currentWindowCenter,
+      );
 
       if (audioSettings.soundEnabled) {
         if (outcome === "rate") {
@@ -155,6 +179,7 @@ export function TimingMinigame({
     phase,
     volleySize,
     sweepMs,
+    windowTravelSpeed,
     greatWindow,
     criticalWindow,
     executeCommand,
@@ -162,8 +187,8 @@ export function TimingMinigame({
     audioSettings.soundEnabled,
   ]);
 
-  const greatLeft = (0.5 - greatWindow / 2) * 100;
-  const criticalLeft = (0.5 - criticalWindow / 2) * 100;
+  const greatLeft = (windowCenter - greatWindow / 2) * 100;
+  const criticalLeft = (windowCenter - criticalWindow / 2) * 100;
   const displayShot = Math.min(shotIndex + 1, volleySize);
 
   return (

@@ -58,6 +58,11 @@ export interface TimingMinigameSpec {
   volleySize: number;
   /** Time for the cursor to sweep the whole gauge, per shot, in ms. */
   sweepMs: number;
+  /**
+   * Gauge fractions per second for the scoring window's horizontal travel.
+   * Zero keeps the window static at center.
+   */
+  windowTravelSpeed: number;
   /** Width of the great window as a fraction of the gauge (centered). */
   greatWindow: number;
   /** Width of the critical window as a fraction of the gauge (centered). */
@@ -82,6 +87,15 @@ export const WEAPON_ARCHETYPE_MINIGAME: Record<
 
 /** Base sweep time for one bow timing shot, in milliseconds (ADR 0009). */
 export const TIMING_BASE_SWEEP_MS = 1200;
+
+/** Moving bow window speed at a 1-point agility deficit, in gauge fractions/s. */
+export const TIMING_WINDOW_TRAVEL_BASE_SPEED = 0.12;
+
+/** Added moving-window speed per extra agility deficit point. */
+export const TIMING_WINDOW_TRAVEL_SPEED_PER_GAP = 0.05;
+
+/** Cap for moving-window speed so outclassed bows stay playable. */
+export const TIMING_WINDOW_TRAVEL_MAX_SPEED = 0.42;
 
 /** Default number of shots in a bow volley when the weapon omits it. */
 export const DEFAULT_VOLLEY_SIZE = 3;
@@ -176,15 +190,63 @@ export function computeTimingWindows(agilityGap: number): {
 }
 
 /**
+ * Horizontal travel speed for the bow timing scoring window. The window only
+ * moves when the player is outclassed on agility (`agilityGap < 0`), then
+ * scales by the deficit and caps before becoming unreadable.
+ */
+export function computeTimingWindowTravelSpeed(agilityGap: number): number {
+  const agilityDeficit = Math.max(0, -agilityGap);
+  if (agilityDeficit === 0) {
+    return 0;
+  }
+  return clamp(
+    TIMING_WINDOW_TRAVEL_BASE_SPEED +
+      TIMING_WINDOW_TRAVEL_SPEED_PER_GAP * (agilityDeficit - 1),
+    TIMING_WINDOW_TRAVEL_BASE_SPEED,
+    TIMING_WINDOW_TRAVEL_MAX_SPEED,
+  );
+}
+
+/**
+ * Center of the moving bow timing window for one shot. The window bounces
+ * between the gauge edges while keeping the full great window visible.
+ */
+export function computeTimingWindowCenter(
+  elapsedMs: number,
+  travelSpeed: number,
+  greatWindow: number,
+): number {
+  if (travelSpeed <= 0) {
+    return 0.5;
+  }
+
+  const minCenter = greatWindow / 2;
+  const maxCenter = 1 - greatWindow / 2;
+  const range = maxCenter - minCenter;
+  if (range <= 0) {
+    return 0.5;
+  }
+
+  const travel = (elapsedMs / 1000) * travelSpeed;
+  const cycle = range * 2;
+  const cyclePosition = travel % cycle;
+  const offset = cyclePosition <= range
+    ? cyclePosition
+    : cycle - cyclePosition;
+  return minCenter + offset;
+}
+
+/**
  * Classifies a timing shot by the cursor position (0..1) at press time. Both
- * windows are centered on the middle of the gauge.
+ * windows are centered on the current scoring-window center.
  */
 export function classifyTimingPress(
   position: number,
   greatWindow: number,
   criticalWindow: number,
+  windowCenter = 0.5,
 ): TimingShotOutcome {
-  const distanceFromCenter = Math.abs(position - 0.5);
+  const distanceFromCenter = Math.abs(position - windowCenter);
   if (distanceFromCenter <= criticalWindow / 2) {
     return "critical";
   }
@@ -244,6 +306,7 @@ export function cloneCombatMinigameSpec(
         kind: "timing",
         volleySize: spec.volleySize,
         sweepMs: spec.sweepMs,
+        windowTravelSpeed: spec.windowTravelSpeed,
         greatWindow: spec.greatWindow,
         criticalWindow: spec.criticalWindow,
       };

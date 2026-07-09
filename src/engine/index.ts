@@ -225,6 +225,8 @@ export {
   classifyTimingPress,
   computeMashTargetPresses,
   computeMasteryDelta,
+  computeTimingWindowCenter,
+  computeTimingWindowTravelSpeed,
   computeTimingWindows,
   mapTimingVolley,
   modulateMashTarget,
@@ -234,6 +236,9 @@ export {
   resolveWeaponMinigameType,
   DEFAULT_VOLLEY_SIZE,
   TIMING_BASE_SWEEP_MS,
+  TIMING_WINDOW_TRAVEL_BASE_SPEED,
+  TIMING_WINDOW_TRAVEL_MAX_SPEED,
+  TIMING_WINDOW_TRAVEL_SPEED_PER_GAP,
   WEAPON_ARCHETYPE_MINIGAME,
 } from "./combat/combatMinigame";
 export type {

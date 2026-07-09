@@ -5,6 +5,8 @@ import {
   classifyTimingPress,
   computeMashTargetPresses,
   computeMasteryDelta,
+  computeTimingWindowCenter,
+  computeTimingWindowTravelSpeed,
   computeTimingWindows,
   mapTimingVolley,
   modulateMashTarget,
@@ -171,6 +173,35 @@ describe("computeTimingWindows", () => {
   });
 });
 
+describe("computeTimingWindowTravelSpeed", () => {
+  it("keeps the timing window static when the player matches or beats agility", () => {
+    expect(computeTimingWindowTravelSpeed(0)).toBe(0);
+    expect(computeTimingWindowTravelSpeed(3)).toBe(0);
+  });
+
+  it("moves the timing window faster as the agility deficit grows", () => {
+    expect(computeTimingWindowTravelSpeed(-1)).toBeCloseTo(0.12, 10);
+    expect(computeTimingWindowTravelSpeed(-4)).toBeCloseTo(0.27, 10);
+  });
+
+  it("caps the timing window movement speed", () => {
+    expect(computeTimingWindowTravelSpeed(-100)).toBeCloseTo(0.42, 10);
+  });
+});
+
+describe("computeTimingWindowCenter", () => {
+  it("keeps the window centered when movement is disabled", () => {
+    expect(computeTimingWindowCenter(600, 0, 0.26)).toBe(0.5);
+  });
+
+  it("bounces the moving window while keeping the great window visible", () => {
+    expect(computeTimingWindowCenter(0, 0.2, 0.2)).toBeCloseTo(0.1, 10);
+    expect(computeTimingWindowCenter(2000, 0.2, 0.2)).toBeCloseTo(0.5, 10);
+    expect(computeTimingWindowCenter(4000, 0.2, 0.2)).toBeCloseTo(0.9, 10);
+    expect(computeTimingWindowCenter(6000, 0.2, 0.2)).toBeCloseTo(0.5, 10);
+  });
+});
+
 describe("classifyTimingPress", () => {
   const great = 0.4;
   const critical = 0.1;
@@ -188,6 +219,12 @@ describe("classifyTimingPress", () => {
   it("scores a press outside the great window as a rate", () => {
     expect(classifyTimingPress(0.1, great, critical)).toBe("rate");
     expect(classifyTimingPress(0.9, great, critical)).toBe("rate");
+  });
+
+  it("scores against a moving window center", () => {
+    expect(classifyTimingPress(0.2, great, critical, 0.2)).toBe("critical");
+    expect(classifyTimingPress(0.3, great, critical, 0.2)).toBe("great");
+    expect(classifyTimingPress(0.5, great, critical, 0.2)).toBe("rate");
   });
 });
 

@@ -18,6 +18,7 @@ import {
   cloneCombatMinigameSpec,
   computeMashTargetPresses,
   computeMasteryDelta,
+  computeTimingWindowTravelSpeed,
   computeTimingWindows,
   modulateMashTarget,
   modulateSequenceLength,
@@ -440,6 +441,7 @@ export class CombatSystem {
         kind: "timing",
         volleySize: weaponEquipment?.volleySize ?? DEFAULT_VOLLEY_SIZE,
         sweepMs: modulateTimingSweep(TIMING_BASE_SWEEP_MS, delta),
+        windowTravelSpeed: computeTimingWindowTravelSpeed(agilityGap),
         greatWindow,
         criticalWindow,
       };

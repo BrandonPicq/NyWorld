@@ -58,6 +58,10 @@ the 8 to 12 range.
 - Bow timing should reward precision rather than speed alone. A strong volley
   should reach the critical threshold through three critical shots, while an
   average volley should land as a normal hit.
+- Bow timing windows stay static when the player's Agility is equal to or above
+  the enemy's. When the player is outclassed, the scoring window moves across
+  the gauge at `0.12 + 0.05 * (agilityDeficit - 1)` gauge fractions per
+  second, capped at `0.42`, while still bouncing inside the visible gauge.
 - Weapon mastery modulation should soften or harden the input challenge only.
   It should not change the damage formula directly.
 
