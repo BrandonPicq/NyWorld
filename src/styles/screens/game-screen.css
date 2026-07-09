@@ -1461,6 +1461,10 @@
   color: var(--color-text-soft);
 }
 
+.combat-action-tooltip__divider {
+  border-top: 1px solid var(--color-border-muted);
+}
+
 .combat-action-tooltip__warning {
   color: #f38ba8;
 }

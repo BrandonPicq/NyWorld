@@ -12,6 +12,7 @@ import {
   getAllCombatActionDefs,
   getCombatPatternOptions,
   getItemDef,
+  summarizeCombatActionForTooltip,
 } from "../../engine";
 import type { KeyboardLayout } from "../controls/keyboardLayout";
 import type { AudioSettings } from "../audio/audioSettings";
@@ -351,45 +352,63 @@ export function CombatPanel({
             <div className="combat-actions-menu">
               <p className="combat-phase-instruction">Choose your combat action:</p>
               <div className="combat-actions-buttons">
-                {combatActions.map((action, index) => (
-                  <TerminalButton
-                    aria-label={`${action.def.name}. ${action.def.summary} Press I for details.`}
-                    className="combat-action-button"
-                    disabled={action.disabled}
-                    isSelected={index === selectedActionIndex}
-                    key={action.id}
-                    onClick={() => activateCombatAction(action)}
-                    onMouseEnter={() => {
-                      if (!action.disabled) {
-                        setSelectedActionIndex(index);
-                      }
-                    }}
-                  >
-                    <span className="combat-action-button__label">
-                      {action.def.name}
-                    </span>
-                    <span className="combat-action-tooltip" role="tooltip">
-                      <span className="combat-action-tooltip__summary">
-                        {action.def.summary}
+                {combatActions.map((action, index) => {
+                  const tooltipSummary = summarizeCombatActionForTooltip({
+                    action: action.def,
+                    attacker: playerStats,
+                    defender: opponentStats,
+                  });
+
+                  return (
+                    <TerminalButton
+                      aria-label={`${action.def.name}. ${action.def.summary} Press I for details.`}
+                      className="combat-action-button"
+                      disabled={action.disabled}
+                      isSelected={index === selectedActionIndex}
+                      key={action.id}
+                      onClick={() => activateCombatAction(action)}
+                      onMouseEnter={() => {
+                        if (!action.disabled) {
+                          setSelectedActionIndex(index);
+                        }
+                      }}
+                    >
+                      <span className="combat-action-button__label">
+                        {action.def.name}
                       </span>
-                      <span className="combat-action-tooltip__line">
-                        <strong>Formula:</strong> {action.def.formula}
-                      </span>
-                      <span className="combat-action-tooltip__line">
-                        <strong>Effects:</strong>{" "}
-                        {formatConciseEffects(action.def.effects)}
-                      </span>
-                      {action.availabilityNote && (
-                        <span className="combat-action-tooltip__warning">
-                          {action.availabilityNote}
+                      <span className="combat-action-tooltip" role="tooltip">
+                        <span className="combat-action-tooltip__line">
+                          <strong>Expected damage:</strong>{" "}
+                          {tooltipSummary.damage}
                         </span>
-                      )}
-                      <span className="combat-action-tooltip__hint">
-                        Press I for details
+                        <span className="combat-action-tooltip__line">
+                          <strong>Cost:</strong> {tooltipSummary.cost}
+                        </span>
+                        <span className="combat-action-tooltip__line">
+                          <strong>Attack type:</strong>{" "}
+                          {tooltipSummary.attackType}
+                        </span>
+                        {tooltipSummary.additionalEffectCodes.length > 0 && (
+                          <>
+                            <span className="combat-action-tooltip__divider" />
+                            <span className="combat-action-tooltip__line">
+                              <strong>Additional effects:</strong>{" "}
+                              {tooltipSummary.additionalEffectCodes.join(", ")}
+                            </span>
+                          </>
+                        )}
+                        {action.availabilityNote && (
+                          <span className="combat-action-tooltip__warning">
+                            {action.availabilityNote}
+                          </span>
+                        )}
+                        <span className="combat-action-tooltip__hint">
+                          Press I for details
+                        </span>
                       </span>
-                    </span>
-                  </TerminalButton>
-                ))}
+                    </TerminalButton>
+                  );
+                })}
               </div>
             </div>
           )}
@@ -521,10 +540,6 @@ export function CombatPanel({
       )}
     </TerminalPanel>
   );
-}
-
-function formatConciseEffects(effects: string[]): string {
-  return effects.slice(0, 2).join(" ");
 }
 
 function findFirstEnabledActionIndex(actions: CombatMenuAction[]): number {

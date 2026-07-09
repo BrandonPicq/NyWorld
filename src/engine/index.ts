@@ -150,6 +150,13 @@ export type {
   CombatPerformanceProfileId,
 } from "./combat/combatBalanceModel";
 export {
+  summarizeCombatActionForTooltip,
+} from "./combat/combatActionSummary";
+export type {
+  CombatActionTooltipSummary,
+  CombatActionTooltipSummaryInput,
+} from "./combat/combatActionSummary";
+export {
   deriveCombatActionEffects,
   getAllCombatActionDefs,
   getCombatActionDef,

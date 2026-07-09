@@ -4,6 +4,12 @@ This file tracks meaningful project changes by commit-oriented slices.
 
 Keep entries short and practical. When a slice is committed, its changelog section should stay aligned with the commit title so the project history remains easy to read after restores or bisects.
 
+## 2026-07-09 - [UPDATE]: Compact combat action tooltip
+
+- Replace combat action tooltip prose with compact expected damage, cost, and attack-type rows.
+- Derive displayed damage and costs from pure engine helpers instead of parsing authored formula text.
+- Keep future additional effect codes isolated behind a structured tooltip summary field.
+
 ## 2026-07-09 - [FIX]: Scroll menu lists with the keyboard cursor
 
 - Scroll the inventory list so the selected row stays visible while moving the selection with the keyboard.
