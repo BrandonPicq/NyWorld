@@ -5,6 +5,7 @@ import type {
   ContentValidationContext,
   DialogueDefMap,
   EnemyDef,
+  EventDef,
   GameContentConfig,
   ItemDefMap,
   NpcDef,
@@ -40,6 +41,7 @@ import {
 } from "./enemies/enemyEditorModel";
 import { cloneNpcDefs } from "./npcs/npcEditorModel";
 import { createPresenceDraftSnapshot } from "./presence/presenceEditorModel";
+import { createEventDraftSnapshot } from "./events/eventEditorModel";
 import {
   cloneRaceDefs,
   createRaceDraftValidationContext,
@@ -66,6 +68,7 @@ export interface EditorDraftContents {
   races: readonly RaceDef[];
   quests: readonly QuestDef[];
   patterns: readonly PatternDef[];
+  events?: readonly EventDef[];
   game: GameContentConfig;
   zones?: readonly ZoneData[];
 }
@@ -91,6 +94,7 @@ export function createCombinedDraftSnapshot(
   snapshot = { ...snapshot, races: cloneRaceDefs(contents.races) };
   snapshot = { ...snapshot, quests: cloneQuestDefs(contents.quests) };
   snapshot = createPatternDraftSnapshot(snapshot, contents.patterns);
+  snapshot = createEventDraftSnapshot(snapshot, contents.events ?? base.events ?? []);
   for (const zone of contents.zones ?? []) {
     snapshot = createZoneDraftSnapshot(snapshot, zone);
   }

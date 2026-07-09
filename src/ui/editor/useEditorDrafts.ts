@@ -7,6 +7,7 @@ import {
   type ClassDef,
   type ContentCatalogSnapshot,
   type EnemyDef,
+  type EventDef,
   type GameContentConfig,
   type ItemDefMap,
   type NpcDef,
@@ -87,6 +88,11 @@ import {
   type ZoneHistory,
 } from "./zone/useZoneDraft";
 import { serializeZoneData } from "./zone/zoneEditorModel";
+import {
+  createEventDraftState,
+  useEventDraft,
+  type EventDraftController,
+} from "./events/useEventDraft";
 
 export interface EditorUnsavedChanges {
   item: boolean;
@@ -99,6 +105,7 @@ export interface EditorUnsavedChanges {
   race: boolean;
   quest: boolean;
   pattern: boolean;
+  event: boolean;
   zone: boolean;
   game: boolean;
 }
@@ -114,6 +121,7 @@ export interface EditorDrafts {
   race: RaceDraftController;
   quest: QuestDraftController;
   pattern: QtePatternDraftController;
+  event: EventDraftController;
   zone: ZoneDraftController;
   game: GameConfigController;
   combined: CombinedDraftView;
@@ -195,6 +203,12 @@ export function useEditorDrafts(base: ContentCatalogSnapshot): EditorDrafts {
   const [savedPatterns, setSavedPatterns] = useState<PatternDef[]>(() =>
     createQtePatternDraftState(base),
   );
+  const [draftEvents, setDraftEvents] = useState<EventDef[]>(() =>
+    createEventDraftState(base),
+  );
+  const [savedEvents, setSavedEvents] = useState<EventDef[]>(() =>
+    createEventDraftState(base),
+  );
   const [gameDraft, setGameDraft] = useState<GameContentConfig>(() =>
     createGameConfigDraftState(base),
   );
@@ -226,6 +240,7 @@ export function useEditorDrafts(base: ContentCatalogSnapshot): EditorDrafts {
       races: draftRaces,
       quests: draftQuests,
       patterns: draftPatterns,
+      events: draftEvents,
       game: gameDraft,
       zones: activeZoneDrafts(zoneHistories),
     }),
@@ -240,6 +255,7 @@ export function useEditorDrafts(base: ContentCatalogSnapshot): EditorDrafts {
       draftRaces,
       draftQuests,
       draftPatterns,
+      draftEvents,
       gameDraft,
       zoneHistories,
     ],
@@ -361,6 +377,11 @@ export function useEditorDrafts(base: ContentCatalogSnapshot): EditorDrafts {
     },
     combined,
   );
+  const event = useEventDraft(
+    { value: draftEvents, set: setDraftEvents },
+    { value: savedEvents, set: setSavedEvents },
+    combined,
+  );
   const zone = useZoneDraft(
     base,
     {
@@ -392,6 +413,7 @@ export function useEditorDrafts(base: ContentCatalogSnapshot): EditorDrafts {
     race: race.hasUnsavedChanges,
     quest: quest.hasUnsavedChanges,
     pattern: pattern.hasUnsavedChanges,
+    event: event.hasUnsavedChanges,
     zone: hasAnyUnsavedZoneDraft(base, zoneHistories, savedZoneJson),
     game: game.hasUnsavedChanges,
   };
@@ -408,6 +430,7 @@ export function useEditorDrafts(base: ContentCatalogSnapshot): EditorDrafts {
     race,
     quest,
     pattern,
+    event,
     zone,
     game,
     combined,

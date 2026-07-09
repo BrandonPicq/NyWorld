@@ -366,6 +366,14 @@ export function GameScreen({
             </TerminalPanel>
           )}
 
+          {isPlaytest && (
+            <TerminalPanel className="game-layout__active-quests">
+              <p className="terminal-kicker">EVENT DEBUG</p>
+              <p>Flags: {(snapshot.worldFlags ?? []).join(", ") || "none"}</p>
+              <p>Fired: {(snapshot.firedEventIds ?? []).join(", ") || "none"}</p>
+            </TerminalPanel>
+          )}
+
           <ActionLogPanel log={snapshot.log} logRef={logRef} className="game-screen__action-log-panel" />
         </div>
 

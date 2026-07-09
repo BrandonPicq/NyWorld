@@ -47,6 +47,7 @@ export function prepareEditorPlaytest(
     const contentBundle = createContentBundle({
       gameConfig: combined.snapshot.game,
       zones: Object.values(combined.snapshot.zones),
+      events: combined.snapshot.events ?? [],
     });
     return { ok: true, contentBundle, start };
   } catch (error) {

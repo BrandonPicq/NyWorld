@@ -131,6 +131,7 @@ export {
   getEventDef,
   hasEventDef,
   validateEventDefForContext,
+  validateEventDef,
   validateEventRegistry,
 } from "./events/eventRegistry";
 export type { EventValidationContext } from "./events/eventValidation";

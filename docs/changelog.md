@@ -1401,3 +1401,8 @@ Keep entries short and practical. When a slice is committed, its changelog secti
 - Route event spawn and despawn actions through the existing ECS spawner and combat opponent state.
 - Add event-driven enemy combat starts and teleportation with destination validation.
 - Reject blocked teleports and active-combat despawns without leaving the player in a soft-locked state.
+## 2026-07-09 - [ADD]: Events tab in the editor
+
+- Add an Events tab with draft list, trigger/rectangle controls, repetition and priority fields, ordered condition/action editing, diagnostics, and references.
+- Include draft events in combined validation and editor playtests.
+- Show world flags and fired event ids in an editor-playtest-only debug panel.
