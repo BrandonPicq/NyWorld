@@ -118,6 +118,13 @@ export function InventoryModal({
   const selectedDef = selectedItem ? getItemDef(selectedItem.itemId) : null;
   const equippedItemIds = new Set(Object.values(inventory.equipped));
 
+  // Selection is state-based (rows are never focused), so the list would not
+  // scroll with the keyboard cursor without this.
+  const selectedRowRef = useRef<HTMLDivElement | null>(null);
+  useEffect(() => {
+    selectedRowRef.current?.scrollIntoView({ block: "nearest" });
+  }, [selectedIndex, activeTab]);
+
   const handleInventoryKeyDown = (
     event: KeyboardEvent<HTMLElement>,
   ) => {
@@ -213,6 +220,7 @@ export function InventoryModal({
                       isSelected ? "stats-modal__inventory-row--selected" : ""
                     }`}
                     data-keyboard-blocking-hover="true"
+                    ref={isSelected ? selectedRowRef : undefined}
                     onClick={() => {
                       setSelectedIndex(index);
                       if (audioSettings.soundEnabled && index !== selectedIndex) {

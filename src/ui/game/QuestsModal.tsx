@@ -78,6 +78,13 @@ export function QuestsModal({ audioSettings, isOpen, snapshot, onClose }: Quests
     },
   });
 
+  // Selection is state-based (buttons are not focused by keyboard moves), so
+  // the list would not scroll with the keyboard cursor without this.
+  const selectedQuestRowRef = useRef<HTMLButtonElement | null>(null);
+  useEffect(() => {
+    selectedQuestRowRef.current?.scrollIntoView({ block: "nearest" });
+  }, [selectedIndex]);
+
   useEffect(() => {
     if (isOpen) {
       containerRef.current?.focus();
@@ -280,6 +287,7 @@ export function QuestsModal({ audioSettings, isOpen, snapshot, onClose }: Quests
                         handleSelectQuest(quest.questId);
                       }}
                       onFocus={() => setSelectedIndex(index)}
+                      ref={isSelected ? selectedQuestRowRef : undefined}
                       tabIndex={isSelected ? 0 : -1}
                     >
                       <span className="quests-modal__quest-name">{quest.name}</span>
@@ -315,6 +323,7 @@ export function QuestsModal({ audioSettings, isOpen, snapshot, onClose }: Quests
                         handleSelectQuest(questId);
                       }}
                       onFocus={() => setSelectedIndex(index)}
+                      ref={isSelected ? selectedQuestRowRef : undefined}
                       tabIndex={isSelected ? 0 : -1}
                     >
                       <span className="quests-modal__quest-name">{questDef?.name ?? questId}</span>
