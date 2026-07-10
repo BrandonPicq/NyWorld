@@ -104,7 +104,7 @@
   padding-bottom: var(--space-3);
 }
 
-.editor-header .terminal-heading-md {
+.editor-header__title {
   margin-bottom: 0;
 }
 
@@ -1038,14 +1038,14 @@
   padding-bottom: var(--ed-space-2);
 }
 
-.editor-screen .editor-header .terminal-kicker {
+.editor-screen .editor-header__eyebrow {
   margin: 0 0 2px;
   color: var(--ed-text-muted);
   font: 11px/1.2 var(--ed-font-ui);
   letter-spacing: 0;
 }
 
-.editor-screen .editor-header .terminal-heading-md {
+.editor-screen .editor-header__title {
   margin: 0;
   color: var(--ed-text);
   font: 600 16px/1.25 var(--ed-font-ui);
@@ -1460,6 +1460,10 @@
   gap: var(--ed-space-3);
 }
 
+.editor-screen .editor-zone-workbench-header {
+  gap: var(--ed-space-2);
+}
+
 .editor-screen .editor-zone-toolbox {
   gap: var(--ed-space-3);
   border-color: var(--ed-border);
@@ -1471,6 +1475,10 @@
   border-color: var(--ed-border);
   padding: var(--ed-space-2);
   background: var(--ed-bg);
+}
+
+.editor-screen .editor-zone-canvas-frame {
+  border-radius: var(--ed-radius);
 }
 
 .editor-screen .editor-mode-selector,
@@ -1514,6 +1522,7 @@
 
 .editor-screen .editor-zone-row--selected {
   border-color: var(--ed-accent);
+  border-left-width: 3px;
 }
 
 .editor-screen .workbench__statusbar {
@@ -1534,4 +1543,53 @@
 .editor-screen .workbench__statusbar-contents {
   color: var(--ed-text-muted);
   font-size: 12px;
+}
+
+.editor-screen .editor-coordinate-picker {
+  padding: var(--ed-space-4);
+  background: rgba(0, 0, 0, 0.78);
+}
+
+.editor-screen .editor-coordinate-picker__panel {
+  width: min(100%, 64rem);
+  height: min(100%, 42rem);
+  gap: var(--ed-space-3);
+  border-color: #5a5a5a;
+  background: var(--ed-surface-raised);
+  box-shadow: 0 18px 48px rgba(0, 0, 0, 0.45);
+}
+
+.editor-screen .editor-coordinate-picker__header {
+  align-items: center;
+  gap: var(--ed-space-3);
+  border-color: var(--ed-border);
+  padding-bottom: var(--ed-space-2);
+}
+
+.editor-screen .editor-coordinate-picker__eyebrow {
+  margin: 0 0 2px;
+  color: var(--ed-text-muted);
+  font: 11px/1.2 var(--ed-font-ui);
+  letter-spacing: 0;
+}
+
+.editor-screen .editor-coordinate-picker__map {
+  border-radius: var(--ed-radius);
+}
+
+@media (max-width: 640px) {
+  .editor-screen .editor-coordinate-picker {
+    padding: var(--ed-space-2);
+  }
+
+  .editor-screen .editor-coordinate-picker__panel {
+    height: min(100%, 38rem);
+    padding: var(--ed-space-2);
+  }
+
+  .editor-screen .workbench__statusbar {
+    align-items: flex-start;
+    flex-wrap: wrap;
+    white-space: normal;
+  }
 }

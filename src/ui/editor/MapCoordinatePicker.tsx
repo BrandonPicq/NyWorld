@@ -64,7 +64,7 @@ export function MapCoordinatePicker({
       <EditorPanel className="editor-panel editor-coordinate-picker__panel">
         <header className="editor-coordinate-picker__header">
           <div>
-            <p className="terminal-kicker">MAP COORDINATE</p>
+            <p className="editor-coordinate-picker__eyebrow">MAP COORDINATE</p>
             <h2 className="editor-panel__title" id="map-coordinate-picker-title">
               {title}
             </h2>

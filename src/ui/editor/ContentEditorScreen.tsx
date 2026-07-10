@@ -416,8 +416,8 @@ export function ContentEditorScreen({
       <div className="editor-shell">
         <header className="editor-header">
           <div>
-            <p className="terminal-kicker">NYWARUDO // DEV CONTENT</p>
-            <h1 className="terminal-heading-md" id="editor-heading">
+            <p className="editor-header__eyebrow">NYWARUDO // DEV CONTENT</p>
+            <h1 className="editor-header__title" id="editor-heading">
               Content Editor
             </h1>
             {playtestError ? (

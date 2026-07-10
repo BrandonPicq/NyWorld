@@ -4,6 +4,12 @@ This file tracks meaningful project changes by commit-oriented slices.
 
 Keep entries short and practical. When a slice is committed, its changelog section should stay aligned with the commit title so the project history remains easy to read after restores or bisects.
 
+## 2026-07-10 - [UPDATE]: Picker, zone tools, and final sweep
+
+- Finish the compact zone workbench and coordinate-picker treatment, including responsive statusbars and selected placement rows.
+- Replace the last terminal presentation classes in editor JSX with editor-specific header and picker classes.
+- Verify the sidebar, picker Escape handling, local save-blocker message, and game-screen isolation in the dev preview.
+
 ## 2026-07-10 - [UPDATE]: Workbench and form density pass
 
 - Restyle editor workbenches, panels, lists, fields, diagnostics, and scrollbars with the scoped neutral theme.
