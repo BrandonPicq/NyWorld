@@ -38,6 +38,7 @@ export interface ActionListEntry {
   actionId: string;
   name: string;
   order: number;
+  category: CombatActionDef["category"];
   hasUnsavedChanges: boolean;
 }
 
@@ -85,6 +86,7 @@ export function useActionDraft(
     actionId: action.actionId,
     name: action.name,
     order: action.order,
+    category: action.category,
     hasUnsavedChanges:
       serializeCombatActionDef(action) !==
       savedActionJsonById.get(action.actionId),

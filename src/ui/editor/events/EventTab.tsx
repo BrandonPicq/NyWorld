@@ -12,9 +12,8 @@ import { ScrollRegion } from "../../components/ScrollRegion";
 import { EditorButton } from "../components/EditorButton";
 import { EditorPanel } from "../components/EditorPanel";
 import { DiagnosticList, type EditorContentNavigationTarget } from "../DiagnosticList";
-import { ListFilterField } from "../ListFilterField";
+import { EditorGroupedList } from "../EditorGroupedList";
 import { ReferenceList } from "../ReferenceList";
-import { filterByIdOrName } from "../listFilter";
 import { MapCoordinatePicker } from "../MapCoordinatePicker";
 import {
   addEventAction,
@@ -22,6 +21,8 @@ import {
   EVENT_ACTION_TYPES,
   EVENT_CONDITION_TYPES,
   EVENT_TRIGGER_TYPES,
+  type EventGroupingMode,
+  groupEventEntries,
   removeEventAction,
   removeEventCondition,
   setEventTrigger,
@@ -30,9 +31,22 @@ import type { EventDraftController } from "./useEventDraft";
 
 export function EventTab({ draft, onNavigate, snapshot }: { draft: EventDraftController; onNavigate: (target: EditorContentNavigationTarget) => void; snapshot: ContentCatalogSnapshot }) {
   const [listFilter, setListFilter] = useState("");
+  const [groupingMode, setGroupingMode] = useState<EventGroupingMode>("type");
   const [areaPicker, setAreaPicker] = useState<string | null>(null);
   const [areaFirstCell, setAreaFirstCell] = useState<GridCell | null>(null);
-  const filtered = filterByIdOrName(draft.events.map((event) => ({ ...event, id: event.eventId, name: event.eventId })), listFilter);
+  const eventGroups = groupEventEntries(draft.events, groupingMode).map((group) => ({
+    key: group.key,
+    label: group.label,
+    entries: group.entries.map((event) => ({
+      key: event.eventId,
+      id: event.eventId,
+      name: event.eventId,
+      label: <IdentifierLabel value={event.eventId} />,
+      meta: `priority ${event.priority}`,
+      isUnsaved: draft.events.find((entry) => entry.eventId === event.eventId)
+        ?.hasUnsavedChanges,
+    })),
+  }));
   return (
     <>
       <section className="editor-summary" aria-label="Event summary">
@@ -42,8 +56,37 @@ export function EventTab({ draft, onNavigate, snapshot }: { draft: EventDraftCon
       <div className="workbench">
         <ScrollRegion className="workbench__rail"><EditorPanel className="editor-panel">
           <h2 className="editor-panel__title">Events</h2>
-          <ListFilterField label="Filter" onChange={setListFilter} value={listFilter} />
-          <div className="editor-entry-list">{filtered.map((event) => <EditorButton className="editor-entry-button" isSelected={event.eventId === draft.selectedEventId} key={event.eventId} onClick={() => draft.selectEvent(event.eventId)}><IdentifierLabel value={event.eventId} />{event.hasUnsavedChanges ? " *" : ""}</EditorButton>)}</div>
+          <div className="editor-event-grouping">
+            <span className="editor-event-grouping__label">Group by</span>
+            <div
+              aria-label="Event grouping"
+              className="editor-mode-selector"
+              role="group"
+            >
+              {([
+                ["type", "Type"],
+                ["zone", "Zone"],
+              ] as const).map(([mode, label]) => (
+                <EditorButton
+                  aria-pressed={groupingMode === mode}
+                  className="editor-mode-button"
+                  isSelected={groupingMode === mode}
+                  key={mode}
+                  onClick={() => setGroupingMode(mode)}
+                >
+                  {label}
+                </EditorButton>
+              ))}
+            </div>
+          </div>
+          <EditorGroupedList
+            emptyLabel="No matching events."
+            filter={listFilter}
+            groups={eventGroups}
+            onFilterChange={setListFilter}
+            onSelect={(entry) => draft.selectEvent(entry.id)}
+            selectedEntryKey={draft.selectedEventId}
+          />
           <label className="editor-field"><span>New Event Id</span><input onChange={(event) => draft.setNewEventIdDraft(event.target.value)} value={draft.newEventIdDraft} /></label>
           <EditorButton className="editor-action-button" disabled={!draft.canCreateEvent} onClick={draft.createEvent}>Create Event</EditorButton>
         </EditorPanel></ScrollRegion>

@@ -64,7 +64,9 @@ describe("quest editing helpers", () => {
   it("creates, upserts, updates, and lists quests without mutating sources", () => {
     const created = createQuestDef({ questId: "new_quest", name: "New" });
     expect(created.objectives).toEqual([]);
-    expect(created.triggers.start.dialogueId).toBe("");
+    expect(created.targetNpcId).toBeUndefined();
+    expect(created.triggers.start.dialogueId).toBeUndefined();
+    expect(created.triggers.complete.dialogueId).toBeUndefined();
 
     const quests = upsertQuestDef([sampleQuest()], created);
     expect(listQuestDefs(quests).map((entry) => entry.questId)).toEqual([

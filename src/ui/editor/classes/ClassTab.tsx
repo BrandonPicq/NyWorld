@@ -13,8 +13,7 @@ import { ScrollRegion } from "../../components/ScrollRegion";
 import { EditorButton } from "../components/EditorButton";
 import { EditorPanel } from "../components/EditorPanel";
 import type { EditorContentNavigationTarget } from "../DiagnosticList";
-import { ListFilterField } from "../ListFilterField";
-import { filterByIdOrName } from "../listFilter";
+import { EditorGroupedList } from "../EditorGroupedList";
 import { ReferenceList } from "../ReferenceList";
 import type { ClassDraftController } from "./useClassDraft";
 
@@ -25,14 +24,6 @@ type ClassTabProps = {
 
 export function ClassTab({ draft, onNavigate }: ClassTabProps) {
   const [listFilter, setListFilter] = useState("");
-  const filteredClasses = filterByIdOrName(
-    draft.classes.map((classDef) => ({
-      ...classDef,
-      id: classDef.classId,
-      name: classDef.name,
-    })),
-    listFilter,
-  );
 
   return (
     <>
@@ -47,34 +38,25 @@ export function ClassTab({ draft, onNavigate }: ClassTabProps) {
         <ScrollRegion className="workbench__rail">
           <EditorPanel className="editor-panel">
             <h2 className="editor-panel__title">Classes</h2>
-            <ListFilterField
-              label="Filter"
-              onChange={setListFilter}
-              value={listFilter}
+            <EditorGroupedList
+              emptyLabel="No matching classes."
+              filter={listFilter}
+              groups={[{
+                key: "classes",
+                label: "Classes",
+                entries: draft.classes.map((classDef) => ({
+                  key: classDef.classId,
+                  id: classDef.classId,
+                  name: classDef.name,
+                  label: <IdentifierLabel value={classDef.classId} />,
+                  meta: classDef.name,
+                  isUnsaved: classDef.hasUnsavedChanges,
+                })),
+              }]}
+              onFilterChange={setListFilter}
+              onSelect={(entry) => draft.selectClass(entry.id)}
+              selectedEntryKey={draft.selectedClassId}
             />
-            <div className="editor-entry-list">
-              {filteredClasses.length === 0 ? (
-                <p className="editor-empty">No matching classes.</p>
-              ) : null}
-              {filteredClasses.map((classDef) => (
-                <EditorButton
-                  className="editor-entry-button"
-                  isSelected={classDef.classId === draft.selectedClassId}
-                  key={classDef.classId}
-                  onClick={() => draft.selectClass(classDef.classId)}
-                >
-                  <span className="editor-zone-entry">
-                    <span className="editor-zone-entry__name">
-                      <IdentifierLabel value={classDef.classId} />
-                      {classDef.hasUnsavedChanges ? " *" : ""}
-                    </span>
-                    <span className="editor-zone-entry__meta">
-                      {classDef.name}
-                    </span>
-                  </span>
-                </EditorButton>
-              ))}
-            </div>
           </EditorPanel>
         </ScrollRegion>
 

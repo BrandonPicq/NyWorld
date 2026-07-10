@@ -37,11 +37,21 @@ export const EVENT_ACTION_TYPES = [
   "despawn_npc",
   "start_combat",
   "teleport",
+  "set_respawn",
+  "reveal_area",
   "start_quest",
   "advance_quest",
 ] as const;
 
-export type EventEntry = Pick<EventDef, "eventId" | "priority" | "repeatPolicy">;
+export type EventEntry = Pick<EventDef, "eventId" | "priority" | "repeatPolicy" | "trigger">;
+
+export type EventListGroup = {
+  key: string;
+  label: string;
+  entries: EventEntry[];
+};
+
+export type EventGroupingMode = "type" | "zone";
 
 export function cloneEventDef(event: EventDef): EventDef {
   return structuredClone(event);
@@ -54,7 +64,45 @@ export function cloneEventDefs(events: readonly EventDef[]): EventDef[] {
 export function listEventDefs(events: readonly EventDef[]): EventEntry[] {
   return [...events]
     .sort((a, b) => a.eventId.localeCompare(b.eventId))
-    .map(({ eventId, priority, repeatPolicy }) => ({ eventId, priority, repeatPolicy }));
+    .map(({ eventId, priority, repeatPolicy, trigger }) => ({
+      eventId,
+      priority,
+      repeatPolicy,
+      trigger: structuredClone(trigger),
+    }));
+}
+
+export function groupEventEntries(
+  entries: readonly EventEntry[],
+  mode: EventGroupingMode,
+): EventListGroup[] {
+  const groups = new Map<string, EventListGroup>();
+
+  for (const entry of entries) {
+    const zoneId = eventTriggerZoneId(entry.trigger) ?? "Global";
+    const groupValue = mode === "type" ? entry.trigger.type : zoneId;
+    const key = `${mode}:${groupValue}`;
+    const group = groups.get(key) ?? {
+      key,
+      label: groupValue,
+      entries: [],
+    };
+    group.entries.push(entry);
+    groups.set(key, group);
+  }
+
+  return [...groups.values()]
+    .map((group) => ({
+      ...group,
+      entries: [...group.entries].sort((a, b) =>
+        a.eventId.localeCompare(b.eventId),
+      ),
+    }))
+    .sort((a, b) => a.label.localeCompare(b.label));
+}
+
+function eventTriggerZoneId(trigger: EventTrigger): string | undefined {
+  return "zoneId" in trigger ? trigger.zoneId : undefined;
 }
 
 export function eventContentPath(eventId: string): string {
@@ -152,6 +200,8 @@ export function addEventAction(event: EventDef, type: EventAction["type"]): Even
     case "start_combat": next.actions.push({ type, enemyId: "" }); break;
     case "despawn_npc": next.actions.push({ type, npcId: "" }); break;
     case "teleport": next.actions.push({ type, zoneId: "", x: 0, y: 0 }); break;
+    case "set_respawn": next.actions.push({ type, zoneId: "", x: 0, y: 0 }); break;
+    case "reveal_area": next.actions.push({ type, zoneId: "", x: 0, y: 0, width: 1, height: 1 }); break;
     case "start_quest":
     case "advance_quest": next.actions.push({ type, questId: "" }); break;
   }

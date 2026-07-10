@@ -16,8 +16,7 @@ import {
   type EditorContentNavigationTarget,
 } from "../DiagnosticList";
 import { formatContentRef } from "../editorModel";
-import { ListFilterField } from "../ListFilterField";
-import { filterByIdOrName } from "../listFilter";
+import { EditorGroupedList } from "../EditorGroupedList";
 import { MapCoordinatePicker } from "../MapCoordinatePicker";
 import {
   addObjective,
@@ -53,14 +52,6 @@ type CoordinatePickerRequest = {
 
 export function QuestTab({ draft, onNavigate, snapshot }: QuestTabProps) {
   const [listFilter, setListFilter] = useState("");
-  const filteredQuests = filterByIdOrName(
-    draft.quests.map((quest) => ({
-      ...quest,
-      id: quest.questId,
-      name: quest.name,
-    })),
-    listFilter,
-  );
 
   return (
     <>
@@ -75,32 +66,25 @@ export function QuestTab({ draft, onNavigate, snapshot }: QuestTabProps) {
         <ScrollRegion className="workbench__rail">
           <EditorPanel className="editor-panel editor-enemy-list">
             <h2 className="editor-panel__title">Quests</h2>
-            <ListFilterField
-              label="Filter"
-              onChange={setListFilter}
-              value={listFilter}
+            <EditorGroupedList
+              emptyLabel="No matching quests."
+              filter={listFilter}
+              groups={[{
+                key: "quests",
+                label: "Quests",
+                entries: draft.quests.map((quest) => ({
+                  key: quest.questId,
+                  id: quest.questId,
+                  name: quest.name,
+                  label: <IdentifierLabel value={quest.questId} />,
+                  meta: quest.name,
+                  isUnsaved: quest.hasUnsavedChanges,
+                })),
+              }]}
+              onFilterChange={setListFilter}
+              onSelect={(entry) => draft.selectQuest(entry.id)}
+              selectedEntryKey={draft.selectedQuestId}
             />
-            <div className="editor-entry-list">
-              {filteredQuests.length === 0 ? (
-                <p className="editor-empty">No matching quests.</p>
-              ) : null}
-              {filteredQuests.map((quest) => (
-                <EditorButton
-                  className="editor-entry-button"
-                  isSelected={quest.questId === draft.selectedQuestId}
-                  key={quest.questId}
-                  onClick={() => draft.selectQuest(quest.questId)}
-                >
-                  <span className="editor-zone-entry">
-                    <span className="editor-zone-entry__name">
-                      <IdentifierLabel value={quest.questId} />
-                      {quest.hasUnsavedChanges ? " *" : ""}
-                    </span>
-                    <span className="editor-zone-entry__meta">{quest.name}</span>
-                  </span>
-                </EditorButton>
-              ))}
-            </div>
             <NewQuestForm draft={draft} />
           </EditorPanel>
         </ScrollRegion>
@@ -238,19 +222,19 @@ function QuestForm({
       </label>
 
       <label className="editor-field">
-        <span>Target NPC</span>
+        <span>Target NPC (optional)</span>
         <select
           disabled={draft.isSaving}
           onChange={(event) =>
             update((current) => ({
               ...current,
-              targetNpcId: event.target.value,
+              targetNpcId: event.target.value || undefined,
             }))
           }
-          value={quest.targetNpcId}
+          value={quest.targetNpcId ?? ""}
         >
           <option value="">(select an NPC)</option>
-          {optionsWith(draft.npcIds, quest.targetNpcId).map((npcId) => (
+          {optionsWith(draft.npcIds, quest.targetNpcId ?? "").map((npcId) => (
             <option key={npcId} value={npcId}>
               {npcId}
             </option>
@@ -262,20 +246,20 @@ function QuestForm({
         <TriggerField
           dialogueIds={draft.dialogueIds}
           disabled={draft.isSaving}
-          label="Start Dialogue"
+          label="Start Dialogue (optional)"
           onChange={(dialogueId) =>
             update((current) => setQuestTrigger(current, "start", dialogueId))
           }
-          value={quest.triggers.start.dialogueId}
+          value={quest.triggers.start.dialogueId ?? ""}
         />
         <TriggerField
           dialogueIds={draft.dialogueIds}
           disabled={draft.isSaving}
-          label="Complete Dialogue"
+          label="Complete Dialogue (optional)"
           onChange={(dialogueId) =>
             update((current) => setQuestTrigger(current, "complete", dialogueId))
           }
-          value={quest.triggers.complete.dialogueId}
+          value={quest.triggers.complete.dialogueId ?? ""}
         />
       </div>
 

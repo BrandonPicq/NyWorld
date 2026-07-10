@@ -1,9 +1,24 @@
 import {
+  COMBAT_ACTION_CATEGORY_OPTIONS,
   deriveCombatActionEffects,
   type CombatActionDef,
+  type CombatActionCategory,
   type CombatActionTuning,
   type ContentCatalogSnapshot,
 } from "../../../engine";
+
+export function groupActionsByCategory<T extends {
+  actionId: string;
+  category: CombatActionCategory;
+  order: number;
+}>(actions: readonly T[]): { category: CombatActionCategory; actions: T[] }[] {
+  return COMBAT_ACTION_CATEGORY_OPTIONS.map((category) => ({
+    category,
+    actions: actions
+      .filter((action) => action.category === category)
+      .sort((a, b) => a.order - b.order || a.actionId.localeCompare(b.actionId)),
+  })).filter((group) => group.actions.length > 0);
+}
 
 /** Numeric tuning fields exposed in the editor, with label and kind. */
 export interface ActionTuningFieldConfig {

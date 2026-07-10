@@ -87,6 +87,19 @@ describe("Quest content validation", () => {
       .toEqual([]);
   });
 
+  it("allows event-driven quests without an NPC or dialogue triggers", () => {
+    const diagnostics = validateQuestDef(
+      {
+        ...lostNotebookQuestData,
+        targetNpcId: undefined,
+        triggers: { start: {}, complete: {} },
+      },
+      createValidationContext(),
+    );
+
+    expect(diagnostics).toEqual([]);
+  });
+
   it("returns multiple diagnostics with precise paths", () => {
     const diagnostics = validateQuestDef(
       {

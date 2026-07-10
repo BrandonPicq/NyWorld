@@ -1,18 +1,18 @@
-import { useEffect, useMemo, useState } from "react";
+import { useState } from "react";
 import type { ItemDef } from "../../engine";
 import type { ContentRef } from "../../engine";
 import { IdentifierLabel } from "../components/IdentifierLabel";
 import { ScrollRegion } from "../components/ScrollRegion";
-import { EditorButton } from "./components/EditorButton";
 import { EditorPanel } from "./components/EditorPanel";
 import {
   DiagnosticList,
   type EditorContentNavigationTarget,
 } from "./DiagnosticList";
-import { refsEqual } from "./editorModel";
+import {
+  EditorGroupedList,
+  type EditorGroupedListGroup,
+} from "./EditorGroupedList";
 import { ItemDraftEditor } from "./ItemDraftEditor";
-import { ListFilterField } from "./ListFilterField";
-import { filterByIdOrName } from "./listFilter";
 import { ReferenceList } from "./ReferenceList";
 import type { ItemDraftController } from "./useItemDraft";
 
@@ -38,39 +38,19 @@ export function ContentTab({ draft, onNavigate }: ContentTabProps) {
     hasUnsavedChanges,
     updateSelectedItem,
   } = draft;
-  const filteredBrowserGroups = browserGroups
-    .map((group) => ({
-      ...group,
-      entries: filterByIdOrName(
-        group.entries.map((entry) => ({
-          ...entry,
-          id: entry.ref.id,
-          name: entry.searchName ?? entry.label,
-        })),
-        listFilter,
-      ),
-    }))
-    .filter((group) => group.entries.length > 0 || !listFilter.trim());
-  const browserEntries = useMemo(
-    () => filteredBrowserGroups.flatMap((group) => group.entries),
-    [filteredBrowserGroups],
+  const groupedBrowserGroups: EditorGroupedListGroup[] = browserGroups.map(
+    (group) => ({
+      key: group.type,
+      label: group.label,
+      entries: group.entries.map((entry) => ({
+        key: `${entry.ref.type}:${entry.ref.id}`,
+        id: entry.ref.id,
+        name: entry.searchName ?? entry.label,
+        label: <IdentifierLabel value={entry.label} />,
+        data: entry.ref,
+      })),
+    }),
   );
-  const selectedBrowserEntryIndex = Math.max(
-    0,
-    browserEntries.findIndex((entry) => refsEqual(entry.ref, selectedRef)),
-  );
-  const [keyboardEntryIndex, setKeyboardEntryIndex] = useState(
-    selectedBrowserEntryIndex,
-  );
-
-  useEffect(() => {
-    setKeyboardEntryIndex(selectedBrowserEntryIndex);
-  }, [selectedBrowserEntryIndex]);
-
-  function selectBrowserEntry(ref: ContentRef, index: number): void {
-    setKeyboardEntryIndex(index);
-    setSelectedRef(ref);
-  }
 
   return (
     <>
@@ -87,45 +67,15 @@ export function ContentTab({ draft, onNavigate }: ContentTabProps) {
         <div className="workbench__main">
           <EditorPanel className="editor-panel editor-browser">
             <h2 className="editor-panel__title">Content</h2>
-            <ListFilterField
-              label="Filter"
-              onChange={setListFilter}
-              value={listFilter}
+            <EditorGroupedList
+              emptyLabel="No matching entries."
+              filter={listFilter}
+              groups={groupedBrowserGroups}
+              onFilterChange={setListFilter}
+              onSelect={(entry) => setSelectedRef(entry.data as ContentRef)}
+              scrollGroups
+              selectedEntryKey={`${selectedRef.type}:${selectedRef.id}`}
             />
-            <ScrollRegion className="editor-scroll" role="list">
-              {filteredBrowserGroups.length === 0 ? (
-                <p className="editor-empty">No matching entries.</p>
-              ) : null}
-              {filteredBrowserGroups.map((group) => (
-                <section className="editor-family" key={group.type}>
-                  <div className="editor-family__header">
-                    <h3>{group.label}</h3>
-                    <span>{group.entries.length}</span>
-                  </div>
-                  <div className="editor-entry-list">
-                    {group.entries.map((entry) => {
-                      const entryIndex = browserEntries.findIndex((candidate) =>
-                        refsEqual(candidate.ref, entry.ref),
-                      );
-                      const isKeyboardSelected =
-                        entryIndex === keyboardEntryIndex;
-                      return (
-                        <EditorButton
-                          className="editor-entry-button"
-                          isSelected={isKeyboardSelected}
-                          key={`${entry.ref.type}:${entry.ref.id}`}
-                          onClick={() => selectBrowserEntry(entry.ref, entryIndex)}
-                          onFocus={() => setKeyboardEntryIndex(entryIndex)}
-                          tabIndex={isKeyboardSelected ? 0 : -1}
-                        >
-                          <IdentifierLabel value={entry.label} />
-                        </EditorButton>
-                      );
-                    })}
-                  </div>
-                </section>
-              ))}
-            </ScrollRegion>
           </EditorPanel>
 
           <EditorPanel className="editor-panel editor-problems">

@@ -8,6 +8,7 @@ import {
   actionContentPath,
   actionDerivedEffects,
   addActionLine,
+  groupActionsByCategory,
   listAuthoredCombatActionDefs,
   removeActionLine,
   serializeCombatActionDef,
@@ -119,5 +120,24 @@ describe("actionContentPath", () => {
     expect(actionContentPath("guard")).toBe(
       "src/content/combat-actions/guard.json",
     );
+  });
+});
+
+describe("groupActionsByCategory", () => {
+  it("keeps the category order and sorts actions by menu order", () => {
+    const groups = groupActionsByCategory([
+      { actionId: "guard", category: "defense", order: 3 },
+      { actionId: "strike", category: "offense", order: 1 },
+      { actionId: "cast", category: "offense", order: 2 },
+    ]);
+
+    expect(groups.map((group) => group.category)).toEqual([
+      "offense",
+      "defense",
+    ]);
+    expect(groups[0]?.actions.map((action) => action.actionId)).toEqual([
+      "strike",
+      "cast",
+    ]);
   });
 });

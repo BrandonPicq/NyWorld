@@ -9,8 +9,7 @@ import { ScrollRegion } from "../../components/ScrollRegion";
 import { EditorButton } from "../components/EditorButton";
 import { EditorPanel } from "../components/EditorPanel";
 import type { EditorContentNavigationTarget } from "../DiagnosticList";
-import { ListFilterField } from "../ListFilterField";
-import { filterByIdOrName } from "../listFilter";
+import { EditorGroupedList } from "../EditorGroupedList";
 import { ReferenceList } from "../ReferenceList";
 import type { RaceDraftController } from "./useRaceDraft";
 
@@ -21,14 +20,6 @@ type RaceTabProps = {
 
 export function RaceTab({ draft, onNavigate }: RaceTabProps) {
   const [listFilter, setListFilter] = useState("");
-  const filteredRaces = filterByIdOrName(
-    draft.races.map((race) => ({
-      ...race,
-      id: race.raceId,
-      name: race.name,
-    })),
-    listFilter,
-  );
 
   return (
     <>
@@ -43,32 +34,25 @@ export function RaceTab({ draft, onNavigate }: RaceTabProps) {
         <ScrollRegion className="workbench__rail">
           <EditorPanel className="editor-panel">
             <h2 className="editor-panel__title">Races</h2>
-            <ListFilterField
-              label="Filter"
-              onChange={setListFilter}
-              value={listFilter}
+            <EditorGroupedList
+              emptyLabel="No matching races."
+              filter={listFilter}
+              groups={[{
+                key: "races",
+                label: "Races",
+                entries: draft.races.map((race) => ({
+                  key: race.raceId,
+                  id: race.raceId,
+                  name: race.name,
+                  label: <IdentifierLabel value={race.raceId} />,
+                  meta: race.name,
+                  isUnsaved: race.hasUnsavedChanges,
+                })),
+              }]}
+              onFilterChange={setListFilter}
+              onSelect={(entry) => draft.selectRace(entry.id)}
+              selectedEntryKey={draft.selectedRaceId}
             />
-            <div className="editor-entry-list">
-              {filteredRaces.length === 0 ? (
-                <p className="editor-empty">No matching races.</p>
-              ) : null}
-              {filteredRaces.map((race) => (
-                <EditorButton
-                  className="editor-entry-button"
-                  isSelected={race.raceId === draft.selectedRaceId}
-                  key={race.raceId}
-                  onClick={() => draft.selectRace(race.raceId)}
-                >
-                  <span className="editor-zone-entry">
-                    <span className="editor-zone-entry__name">
-                      <IdentifierLabel value={race.raceId} />
-                      {race.hasUnsavedChanges ? " *" : ""}
-                    </span>
-                    <span className="editor-zone-entry__meta">{race.name}</span>
-                  </span>
-                </EditorButton>
-              ))}
-            </div>
           </EditorPanel>
         </ScrollRegion>
 

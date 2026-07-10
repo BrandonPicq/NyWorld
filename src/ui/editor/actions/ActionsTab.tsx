@@ -1,3 +1,4 @@
+import { useState } from "react";
 import {
   COMBAT_ACTION_CATEGORY_OPTIONS,
   formatContentDiagnostic,
@@ -8,8 +9,13 @@ import { ScrollRegion } from "../../components/ScrollRegion";
 import { EditorButton } from "../components/EditorButton";
 import { EditorPanel } from "../components/EditorPanel";
 import {
+  EditorGroupedList,
+  type EditorGroupedListGroup,
+} from "../EditorGroupedList";
+import {
   ACTION_TUNING_FIELDS,
   addActionLine,
+  groupActionsByCategory,
   removeActionLine,
   setActionTuning,
   updateActionLine,
@@ -22,6 +28,22 @@ type ActionsTabProps = {
 };
 
 export function ActionsTab({ draft }: ActionsTabProps) {
+  const actionGroups: EditorGroupedListGroup[] = groupActionsByCategory(
+    draft.actions,
+  ).map(({ category, actions }) => ({
+    key: category,
+    label: category,
+    entries: actions.map((action) => ({
+      key: action.actionId,
+      id: action.actionId,
+      name: action.name,
+      label: <IdentifierLabel value={action.actionId} />,
+      meta: `${action.name} - order ${action.order}`,
+      isUnsaved: action.hasUnsavedChanges,
+    })),
+  }));
+  const [listFilter, setListFilter] = useState("");
+
   return (
     <>
       <section className="editor-summary" aria-label="Combat actions summary">
@@ -35,26 +57,14 @@ export function ActionsTab({ draft }: ActionsTabProps) {
         <ScrollRegion className="workbench__rail">
           <EditorPanel className="editor-panel editor-enemy-list">
             <h2 className="editor-panel__title">Actions</h2>
-            <div className="editor-entry-list">
-              {draft.actions.map((action) => (
-                <EditorButton
-                  className="editor-entry-button"
-                  isSelected={action.actionId === draft.selectedActionId}
-                  key={action.actionId}
-                  onClick={() => draft.selectAction(action.actionId)}
-                >
-                  <span className="editor-zone-entry">
-                    <span className="editor-zone-entry__name">
-                      <IdentifierLabel value={action.actionId} />
-                      {action.hasUnsavedChanges ? " *" : ""}
-                    </span>
-                    <span className="editor-zone-entry__meta">
-                      {action.name} - order {action.order}
-                    </span>
-                  </span>
-                </EditorButton>
-              ))}
-            </div>
+            <EditorGroupedList
+              emptyLabel="No matching actions."
+              filter={listFilter}
+              groups={actionGroups}
+              onFilterChange={setListFilter}
+              onSelect={(entry) => draft.selectAction(entry.id)}
+              selectedEntryKey={draft.selectedActionId}
+            />
           </EditorPanel>
         </ScrollRegion>
 

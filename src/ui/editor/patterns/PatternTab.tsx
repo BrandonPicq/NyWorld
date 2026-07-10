@@ -10,8 +10,7 @@ import { ScrollRegion } from "../../components/ScrollRegion";
 import { EditorButton } from "../components/EditorButton";
 import { EditorPanel } from "../components/EditorPanel";
 import type { EditorContentNavigationTarget } from "../DiagnosticList";
-import { ListFilterField } from "../ListFilterField";
-import { filterByIdOrName } from "../listFilter";
+import { EditorGroupedList } from "../EditorGroupedList";
 import { ReferenceList } from "../ReferenceList";
 import type { QtePatternDraftController } from "./useQtePatternDraft";
 
@@ -26,7 +25,6 @@ type PatternTabProps = {
 export function PatternTab({ draft, onNavigate }: PatternTabProps) {
   const [listFilter, setListFilter] = useState("");
   const [newPatternId, setNewPatternId] = useState("");
-  const filtered = filterByIdOrName(draft.patterns, listFilter);
 
   return (
     <>
@@ -41,34 +39,25 @@ export function PatternTab({ draft, onNavigate }: PatternTabProps) {
         <ScrollRegion className="workbench__rail">
           <EditorPanel className="editor-panel">
             <h2 className="editor-panel__title">Patterns</h2>
-            <ListFilterField
-              label="Filter"
-              onChange={setListFilter}
-              value={listFilter}
+            <EditorGroupedList
+              emptyLabel="No matching patterns."
+              filter={listFilter}
+              groups={[{
+                key: "patterns",
+                label: "Patterns",
+                entries: draft.patterns.map((pattern) => ({
+                  key: pattern.id,
+                  id: pattern.id,
+                  name: pattern.name,
+                  label: <IdentifierLabel value={pattern.id} />,
+                  meta: pattern.name,
+                  isUnsaved: pattern.hasUnsavedChanges,
+                })),
+              }]}
+              onFilterChange={setListFilter}
+              onSelect={(entry) => draft.selectPattern(entry.id)}
+              selectedEntryKey={draft.selectedPatternId}
             />
-            <div className="editor-entry-list">
-              {filtered.length === 0 ? (
-                <p className="editor-empty">No matching patterns.</p>
-              ) : null}
-              {filtered.map((pattern) => (
-                <EditorButton
-                  className="editor-entry-button"
-                  isSelected={pattern.id === draft.selectedPatternId}
-                  key={pattern.id}
-                  onClick={() => draft.selectPattern(pattern.id)}
-                >
-                  <span className="editor-zone-entry">
-                    <span className="editor-zone-entry__name">
-                      <IdentifierLabel value={pattern.id} />
-                      {pattern.hasUnsavedChanges ? " *" : ""}
-                    </span>
-                    <span className="editor-zone-entry__meta">
-                      {pattern.name}
-                    </span>
-                  </span>
-                </EditorButton>
-              ))}
-            </div>
 
             <div className="editor-form-row">
               <label className="editor-field">

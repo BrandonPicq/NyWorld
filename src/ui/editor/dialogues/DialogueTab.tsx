@@ -7,6 +7,7 @@ import { ScrollRegion } from "../../components/ScrollRegion";
 import { EditorButton } from "../components/EditorButton";
 import { EditorPanel } from "../components/EditorPanel";
 import { DialogueNodesEditor } from "../DialogueNodesEditor";
+import { EditorGroupedList } from "../EditorGroupedList";
 import type { EditorContentNavigationTarget } from "../DiagnosticList";
 import { ListFilterField } from "../ListFilterField";
 import { filterByIdOrName } from "../listFilter";
@@ -26,10 +27,6 @@ type DialogueTabProps = {
 export function DialogueTab({ draft, onNavigate }: DialogueTabProps) {
   const [fileFilter, setFileFilter] = useState("");
   const [dialogueFilter, setDialogueFilter] = useState("");
-  const filteredFiles = filterByIdOrName(
-    draft.files.map((file) => ({ ...file, id: file.stem })),
-    fileFilter,
-  );
   const filteredDialogueIds = filterByIdOrName(
     draft.dialogueIds.map((dialogueId) => ({ id: dialogueId })),
     dialogueFilter,
@@ -52,34 +49,26 @@ export function DialogueTab({ draft, onNavigate }: DialogueTabProps) {
         <ScrollRegion className="workbench__rail">
           <EditorPanel className="editor-panel editor-dialogue-files">
             <h2 className="editor-panel__title">Files</h2>
-            <ListFilterField
-              label="Filter"
-              onChange={setFileFilter}
-              value={fileFilter}
+            <EditorGroupedList
+              emptyLabel="No matching files."
+              filter={fileFilter}
+              groups={[
+                {
+                  key: "files",
+                  label: "Files",
+                  entries: draft.files.map((file) => ({
+                    key: file.stem,
+                    id: file.stem,
+                    label: <IdentifierLabel value={file.stem} />,
+                    meta: `${file.dialogueCount} dialogues`,
+                    isUnsaved: file.hasUnsavedChanges,
+                  })),
+                },
+              ]}
+              onFilterChange={setFileFilter}
+              onSelect={(entry) => draft.selectFile(entry.id)}
+              selectedEntryKey={draft.selectedStem}
             />
-            <div className="editor-entry-list">
-              {filteredFiles.length === 0 ? (
-                <p className="editor-empty">No matching files.</p>
-              ) : null}
-              {filteredFiles.map((file) => (
-                <EditorButton
-                  className="editor-entry-button"
-                  isSelected={file.stem === draft.selectedStem}
-                  key={file.stem}
-                  onClick={() => draft.selectFile(file.stem)}
-                >
-                  <span className="editor-zone-entry">
-                    <span className="editor-zone-entry__name">
-                      <IdentifierLabel value={file.stem} />
-                      {file.hasUnsavedChanges ? " *" : ""}
-                    </span>
-                    <span className="editor-zone-entry__meta">
-                      {file.dialogueCount} dialogues
-                    </span>
-                  </span>
-                </EditorButton>
-              ))}
-            </div>
 
             <section className="editor-zone-create">
               <h3 className="editor-panel__title">New File</h3>
@@ -119,7 +108,7 @@ export function DialogueTab({ draft, onNavigate }: DialogueTabProps) {
                     <span>{draft.dialogueIds.length}</span>
                   </div>
                   <ListFilterField
-                    label="Filter"
+                    label="Search"
                     onChange={setDialogueFilter}
                     value={dialogueFilter}
                   />

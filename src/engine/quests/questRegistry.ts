@@ -234,8 +234,9 @@ export function validateQuestDef(
   }
 
   if (
-    typeof value.targetNpcId !== "string" ||
-    !context.npcIds.has(value.targetNpcId)
+    value.targetNpcId !== undefined &&
+    (typeof value.targetNpcId !== "string" ||
+      (value.targetNpcId !== "" && !context.npcIds.has(value.targetNpcId)))
   ) {
     addQuestError(
       diagnostics,
@@ -351,9 +352,23 @@ function validateTrigger(
   diagnostics: ContentDiagnostic[],
   triggerType: "start" | "complete",
 ): void {
-  const dialogueId = isRecord(value) ? value.dialogueId : undefined;
+  if (!isRecord(value)) {
+    addQuestError(
+      diagnostics,
+      questData,
+      `triggers.${triggerType}`,
+      `Quest "${questId}" has an invalid ${triggerType} trigger.`,
+    );
+    return;
+  }
 
-  if (typeof dialogueId !== "string" || !context.dialogueIds.has(dialogueId)) {
+  const dialogueId = value.dialogueId;
+
+  if (
+    dialogueId !== undefined &&
+    (typeof dialogueId !== "string" ||
+      (dialogueId !== "" && !context.dialogueIds.has(dialogueId)))
+  ) {
     addQuestError(
       diagnostics,
       questData,

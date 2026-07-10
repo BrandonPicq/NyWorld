@@ -246,6 +246,75 @@
   gap: var(--space-1);
 }
 
+.editor-grouped-list {
+  display: grid;
+  gap: var(--space-2);
+  align-content: start;
+}
+
+.editor-list-group {
+  display: grid;
+  gap: var(--space-1);
+}
+
+.editor-list-group__toggle {
+  width: 100%;
+  min-height: 28px;
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  border: 0;
+  border-bottom: 1px solid var(--color-border-muted);
+  padding: var(--space-1) 0;
+  color: var(--color-text-soft);
+  background: transparent;
+  font: inherit;
+  text-align: left;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.editor-list-group__toggle:hover,
+.editor-list-group__toggle:focus-visible {
+  color: var(--color-text-strong);
+}
+
+.editor-list-group__toggle:focus-visible {
+  outline: var(--focus-ring-width) solid var(--color-accent);
+  outline-offset: var(--focus-ring-offset);
+}
+
+.editor-list-group__chevron {
+  width: 1rem;
+  color: var(--color-text-muted);
+  font-family: var(--ed-font-mono);
+  text-align: center;
+}
+
+.editor-list-group__count {
+  margin-left: auto;
+  color: var(--color-text-muted);
+  font-size: 0.8rem;
+}
+
+.editor-list-entry {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.editor-list-entry__label,
+.editor-list-entry__meta {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.editor-list-entry__meta {
+  color: var(--color-text-muted);
+  font-size: 0.8rem;
+}
+
 .editor-list-filter {
   margin-bottom: var(--space-2);
 }
@@ -682,6 +751,16 @@
   padding: 0.3rem 0.7rem;
 }
 
+.editor-event-grouping {
+  display: grid;
+  gap: var(--space-1);
+}
+
+.editor-event-grouping__label {
+  color: var(--color-text-muted);
+  font-size: 0.8rem;
+}
+
 .editor-placement-form {
   display: grid;
   gap: var(--space-2);
@@ -836,7 +915,7 @@
   width: min(100%, 72rem);
   height: min(100%, 44rem);
   display: grid;
-  grid-template-rows: auto minmax(0, 1fr) auto;
+  grid-template-rows: auto auto minmax(0, 1fr) auto;
   gap: var(--space-3);
 }
 
@@ -856,6 +935,18 @@
   padding: var(--space-2);
   background: var(--color-panel-background);
   overflow: hidden;
+}
+
+.editor-coordinate-picker__targets,
+.editor-coordinate-picker__target-buttons {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.editor-coordinate-picker__target-label {
+  color: var(--color-text-muted);
+  font-size: 0.8rem;
 }
 
 @media (max-width: 1100px) {
@@ -1133,7 +1224,7 @@
 }
 
 .editor-screen .editor-browser {
-  flex: 2 1 0;
+  flex: 4 1 0;
 }
 
 .editor-screen .editor-problems {
@@ -1211,6 +1302,7 @@
 }
 
 .editor-screen .editor-entry-list,
+.editor-screen .editor-grouped-list,
 .editor-screen .editor-diagnostic-list,
 .editor-screen .editor-reference-list ul,
 .editor-screen .editor-inline-diagnostics,
@@ -1229,6 +1321,45 @@
   background: transparent;
   color: var(--ed-text);
   font-size: 12px;
+}
+
+.editor-screen .editor-list-group {
+  gap: 2px;
+}
+
+.editor-screen .editor-list-group__toggle {
+  min-height: 26px;
+  gap: var(--ed-space-1);
+  border-color: var(--ed-border);
+  padding: 3px 0;
+  color: var(--ed-text-muted);
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.editor-screen .editor-list-group__toggle:hover,
+.editor-screen .editor-list-group__toggle:focus-visible {
+  color: var(--ed-text);
+}
+
+.editor-screen .editor-list-group__toggle:focus-visible {
+  outline: 1px solid var(--ed-focus);
+  outline-offset: 1px;
+}
+
+.editor-screen .editor-list-group__chevron,
+.editor-screen .editor-list-group__count {
+  color: var(--ed-text-muted);
+  font-size: 11px;
+}
+
+.editor-screen .editor-list-entry {
+  gap: 2px;
+}
+
+.editor-screen .editor-list-entry__meta {
+  color: var(--ed-text-muted);
+  font-size: 11px;
 }
 
 .editor-screen .editor-entry-button:hover:not(:disabled) {
@@ -1486,6 +1617,15 @@
   gap: var(--ed-space-1);
 }
 
+.editor-screen .editor-event-grouping {
+  gap: var(--ed-space-1);
+}
+
+.editor-screen .editor-event-grouping__label {
+  color: var(--ed-text-muted);
+  font-size: 11px;
+}
+
 .editor-screen .editor-mode-button[data-selected="true"],
 .editor-screen .editor-tile-swatch[data-selected="true"] {
   border-color: var(--ed-accent);
@@ -1575,6 +1715,21 @@
 
 .editor-screen .editor-coordinate-picker__map {
   border-radius: var(--ed-radius);
+}
+
+.editor-screen .editor-coordinate-picker__targets,
+.editor-screen .editor-coordinate-picker__target-buttons {
+  gap: var(--ed-space-2);
+}
+
+.editor-screen .editor-coordinate-picker__target-label {
+  color: var(--ed-text-muted);
+  font: 400 12px/1.2 var(--ed-font-ui);
+}
+
+.editor-screen .editor-coordinate-picker__target-button {
+  min-height: var(--ed-control-height);
+  padding: 0 var(--ed-space-2);
 }
 
 @media (max-width: 640px) {

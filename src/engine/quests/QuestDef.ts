@@ -44,8 +44,8 @@ export interface QuestRewards {
 }
 
 export interface QuestTriggers {
-  start: { dialogueId: string };
-  complete: { dialogueId: string };
+  start: { dialogueId?: string };
+  complete: { dialogueId?: string };
 }
 
 export interface QuestNpcOverride {
@@ -58,7 +58,7 @@ export interface QuestDef {
   questId: string;
   name: string;
   description: string;
-  targetNpcId: string;
+  targetNpcId?: string;
   triggers: QuestTriggers;
   npcOverrides: Record<string, QuestNpcOverride>;
   objectives: QuestObjective[];

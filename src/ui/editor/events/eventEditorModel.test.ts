@@ -4,6 +4,7 @@ import {
   addEventAction,
   addEventCondition,
   createEventDef,
+  groupEventEntries,
   removeEventAction,
   removeEventCondition,
   validateNewEventId,
@@ -28,5 +29,33 @@ describe("event editor model", () => {
     expect(withAction.actions).toHaveLength(2);
     expect(removeEventAction(withAction, 0).actions).toHaveLength(1);
     expect(removeEventCondition(withAction, 0).conditions).toEqual([]);
+  });
+
+  it("groups events by trigger type and zone with global fallback", () => {
+    const entries = [
+      createEventDef("global_event", "unused"),
+      {
+        ...createEventDef("zone_entry_b", "zone_b"),
+        eventId: "zone_entry_b",
+      },
+      {
+        ...createEventDef("zone_entry_a", "zone_a"),
+        eventId: "zone_entry_a",
+      },
+    ];
+    entries[0] = {
+      ...entries[0],
+      trigger: { type: "calendar_time", minutes: 480 },
+    };
+
+    expect(groupEventEntries(entries, "type").map((group) => group.label)).toEqual([
+      "calendar_time",
+      "enter_zone",
+    ]);
+    expect(groupEventEntries(entries, "zone").map((group) => group.label)).toEqual([
+      "Global",
+      "zone_a",
+      "zone_b",
+    ]);
   });
 });

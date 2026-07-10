@@ -4,6 +4,19 @@ This file tracks meaningful project changes by commit-oriented slices.
 
 Keep entries short and practical. When a slice is committed, its changelog section should stay aligned with the commit title so the project history remains easy to read after restores or bisects.
 
+## 2026-07-10 - [UPDATE]: Allow event-driven quests without NPC dialogues
+
+- Make quest target NPCs and start/complete dialogue triggers optional.
+- Keep empty optional links out of validation diagnostics and content references.
+- Avoid adding a return-to-NPC objective when an active quest has no target NPC.
+
+## 2026-07-10 - [UPDATE]: Grouped editor lists
+
+- Add shared searchable, collapsible groups to the editor's content lists.
+- Group combat actions by category and keep the selected group visible during filtering and navigation.
+- Give the Content browser more space by reducing the Problems panel to a 4:1 workbench ratio.
+- Let the Events list switch between grouping by trigger type or trigger zone, with global events in a dedicated fallback group.
+
 ## 2026-07-10 - [UPDATE]: Event combats no longer require a map entity
 
 - Let the start_combat event action summon a fight directly against the enemy profile when the enemy has no entity in the zone; spawn_enemy stays for visible map presence.

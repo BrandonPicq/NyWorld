@@ -8,8 +8,7 @@ import { ScrollRegion } from "../../components/ScrollRegion";
 import { EditorButton } from "../components/EditorButton";
 import { EditorPanel } from "../components/EditorPanel";
 import type { EditorContentNavigationTarget } from "../DiagnosticList";
-import { ListFilterField } from "../ListFilterField";
-import { filterByIdOrName } from "../listFilter";
+import { EditorGroupedList } from "../EditorGroupedList";
 import { ReferenceList } from "../ReferenceList";
 import {
   addEnemyLootEntry,
@@ -31,10 +30,6 @@ type EnemyTabProps = {
 export function EnemyTab({ draft, onNavigate }: EnemyTabProps) {
   const [listFilter, setListFilter] = useState("");
   const profileCount = draft.npcs.filter((npc) => npc.hasProfile).length;
-  const filteredNpcs = filterByIdOrName(
-    draft.npcs.map((npc) => ({ ...npc, id: npc.npcId, name: npc.name })),
-    listFilter,
-  );
 
   return (
     <>
@@ -50,39 +45,25 @@ export function EnemyTab({ draft, onNavigate }: EnemyTabProps) {
         <ScrollRegion className="workbench__rail">
           <EditorPanel className="editor-panel editor-enemy-list">
             <h2 className="editor-panel__title">NPCs</h2>
-            <ListFilterField
-              label="Filter"
-              onChange={setListFilter}
-              value={listFilter}
+            <EditorGroupedList
+              emptyLabel="No matching NPCs."
+              filter={listFilter}
+              groups={[{
+                key: "npcs",
+                label: "NPCs",
+                entries: draft.npcs.map((npc) => ({
+                  key: npc.npcId,
+                  id: npc.npcId,
+                  name: npc.name,
+                  label: <IdentifierLabel value={npc.npcId} />,
+                  meta: `${npc.name} - ${npc.hasProfile ? npc.combatable ? "combatable" : "inactive profile" : "no profile"}`,
+                  isUnsaved: npc.hasUnsavedChanges,
+                })),
+              }]}
+              onFilterChange={setListFilter}
+              onSelect={(entry) => draft.selectNpc(entry.id)}
+              selectedEntryKey={draft.selectedNpcId}
             />
-            <div className="editor-entry-list">
-              {filteredNpcs.length === 0 ? (
-                <p className="editor-empty">No matching NPCs.</p>
-              ) : null}
-              {filteredNpcs.map((npc) => (
-                <EditorButton
-                  className="editor-entry-button"
-                  isSelected={npc.npcId === draft.selectedNpcId}
-                  key={npc.npcId}
-                  onClick={() => draft.selectNpc(npc.npcId)}
-                >
-                  <span className="editor-zone-entry">
-                    <span className="editor-zone-entry__name">
-                      <IdentifierLabel value={npc.npcId} />
-                      {npc.hasUnsavedChanges ? " *" : ""}
-                    </span>
-                    <span className="editor-zone-entry__meta">
-                      {npc.name} -{" "}
-                      {npc.hasProfile
-                        ? npc.combatable
-                          ? "combatable"
-                          : "inactive profile"
-                        : "no profile"}
-                    </span>
-                  </span>
-                </EditorButton>
-              ))}
-            </div>
           </EditorPanel>
         </ScrollRegion>
 

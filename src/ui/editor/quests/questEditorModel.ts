@@ -91,7 +91,7 @@ export function validateNewQuestId(
   return errors;
 }
 
-/** Builds a blank quest; dialogue triggers and target start empty for the form. */
+/** Builds a blank quest; NPC and dialogue links are optional for event-driven quests. */
 export function createQuestDef(input: {
   questId: string;
   name: string;
@@ -100,10 +100,9 @@ export function createQuestDef(input: {
     questId: input.questId.trim(),
     name: input.name.trim(),
     description: "",
-    targetNpcId: "",
     triggers: {
-      start: { dialogueId: "" },
-      complete: { dialogueId: "" },
+      start: {},
+      complete: {},
     },
     npcOverrides: {},
     objectives: [],
@@ -155,7 +154,9 @@ export function setQuestTrigger(
   dialogueId: string,
 ): QuestDef {
   const next = cloneQuestDef(quest);
-  next.triggers[trigger] = { dialogueId };
+  next.triggers[trigger] = dialogueId.trim()
+    ? { dialogueId: dialogueId.trim() }
+    : {};
   return next;
 }
 

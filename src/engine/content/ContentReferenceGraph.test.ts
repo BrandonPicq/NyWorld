@@ -237,6 +237,27 @@ describe("buildContentReferenceGraph", () => {
     );
   });
 
+  it("does not create empty references for event-driven quests", () => {
+    const snapshot = createSyntheticSnapshot();
+    snapshot.quests = [
+      {
+        questId: "event_driven",
+        name: "Event Driven",
+        description: "Starts and completes through events.",
+        triggers: { start: {}, complete: {} },
+        npcOverrides: {},
+        objectives: [],
+        rewards: {},
+      },
+    ];
+
+    const graph = buildContentReferenceGraph(snapshot);
+
+    expect(
+      graph.getReferencesFrom({ type: "quest", id: "event_driven" }),
+    ).toEqual([]);
+  });
+
   it("tracks item tome references to QTE patterns", () => {
     const graph = buildContentReferenceGraph(createSyntheticSnapshot());
 

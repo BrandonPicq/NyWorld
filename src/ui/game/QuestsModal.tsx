@@ -118,7 +118,7 @@ export function QuestsModal({ audioSettings, isOpen, snapshot, onClose }: Quests
     let statusClass = "";
     let objectives: Array<{ id: string; description: string; currentQuantity: number; requiredQuantity: number }> = [];
     let rewards: { currency?: number; xp?: number; items?: Array<{ itemId: string; quantity: number }> } = {};
-    let targetNpcName = "";
+    let targetNpcName: string | undefined;
 
     if (activeQuest) {
       name = activeQuest.name;
@@ -126,14 +126,16 @@ export function QuestsModal({ audioSettings, isOpen, snapshot, onClose }: Quests
       const isReady = activeQuest.state === "readyToComplete";
       statusLabel = isReady ? "Ready to Turn In" : "In Progress";
       statusClass = isReady ? "ready" : "ongoing";
-      targetNpcName = getNpcDef(activeQuest.targetNpcId)?.name ?? activeQuest.targetNpcId;
+      targetNpcName = activeQuest.targetNpcId
+        ? getNpcDef(activeQuest.targetNpcId)?.name ?? activeQuest.targetNpcId
+        : undefined;
       objectives = activeQuest.objectives.map((obj) => ({
         id: obj.id,
         description: obj.description,
         currentQuantity: obj.currentQuantity,
         requiredQuantity: obj.requiredQuantity,
       }));
-      if (isReady) {
+      if (isReady && targetNpcName) {
         objectives.push({
           id: "return_npc",
           description: `Return to ${targetNpcName}`,
@@ -149,7 +151,9 @@ export function QuestsModal({ audioSettings, isOpen, snapshot, onClose }: Quests
         description = questDef.description;
         statusLabel = "Completed";
         statusClass = "completed";
-        targetNpcName = getNpcDef(questDef.targetNpcId)?.name ?? questDef.targetNpcId;
+        targetNpcName = questDef.targetNpcId
+          ? getNpcDef(questDef.targetNpcId)?.name ?? questDef.targetNpcId
+          : undefined;
         objectives = questDef.objectives.map((obj) => {
           let required = 1;
           if (obj.type === "fetch_item") {

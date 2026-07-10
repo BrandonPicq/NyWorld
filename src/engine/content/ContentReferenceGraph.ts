@@ -378,21 +378,33 @@ function collectEnemyReferences(enemy: EnemyDef): ContentReference[] {
 
 function collectQuestReferences(quest: QuestDef): ContentReference[] {
   const from: ContentRef = { type: CONTENT_TYPES.quest, id: quest.questId };
-  const references: ContentReference[] = [
-    reference(from, CONTENT_TYPES.npc, quest.targetNpcId, "targetNpcId"),
-    reference(
-      from,
-      CONTENT_TYPES.dialogue,
-      quest.triggers.start.dialogueId,
-      "triggers.start.dialogueId",
-    ),
-    reference(
-      from,
-      CONTENT_TYPES.dialogue,
-      quest.triggers.complete.dialogueId,
-      "triggers.complete.dialogueId",
-    ),
-  ];
+  const references: ContentReference[] = [];
+
+  if (quest.targetNpcId) {
+    references.push(
+      reference(from, CONTENT_TYPES.npc, quest.targetNpcId, "targetNpcId"),
+    );
+  }
+  if (quest.triggers.start.dialogueId) {
+    references.push(
+      reference(
+        from,
+        CONTENT_TYPES.dialogue,
+        quest.triggers.start.dialogueId,
+        "triggers.start.dialogueId",
+      ),
+    );
+  }
+  if (quest.triggers.complete.dialogueId) {
+    references.push(
+      reference(
+        from,
+        CONTENT_TYPES.dialogue,
+        quest.triggers.complete.dialogueId,
+        "triggers.complete.dialogueId",
+      ),
+    );
+  }
 
   for (const [npcId, override] of Object.entries(quest.npcOverrides)) {
     references.push(

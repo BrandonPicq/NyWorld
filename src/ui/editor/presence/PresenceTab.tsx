@@ -10,8 +10,7 @@ import { ScrollRegion } from "../../components/ScrollRegion";
 import { EditorButton } from "../components/EditorButton";
 import { EditorPanel } from "../components/EditorPanel";
 import type { EditorContentNavigationTarget } from "../DiagnosticList";
-import { ListFilterField } from "../ListFilterField";
-import { filterByIdOrName } from "../listFilter";
+import { EditorGroupedList } from "../EditorGroupedList";
 import { MapCoordinatePicker } from "../MapCoordinatePicker";
 import { ReferenceList } from "../ReferenceList";
 import { ScheduleEntriesEditor } from "../ScheduleEntriesEditor";
@@ -38,10 +37,6 @@ export function PresenceTab({
     useState<CoordinatePickerRequest | null>(null);
   const [listFilter, setListFilter] = useState("");
   const presenceCount = draft.npcs.filter((npc) => npc.hasPresence).length;
-  const filteredNpcs = filterByIdOrName(
-    draft.npcs.map((npc) => ({ ...npc, id: npc.npcId, name: npc.name })),
-    listFilter,
-  );
 
   return (
     <>
@@ -57,37 +52,25 @@ export function PresenceTab({
         <ScrollRegion className="workbench__rail">
           <EditorPanel className="editor-panel editor-enemy-list">
             <h2 className="editor-panel__title">NPCs</h2>
-            <ListFilterField
-              label="Filter"
-              onChange={setListFilter}
-              value={listFilter}
+            <EditorGroupedList
+              emptyLabel="No matching NPCs."
+              filter={listFilter}
+              groups={[{
+                key: "npcs",
+                label: "NPCs",
+                entries: draft.npcs.map((npc) => ({
+                  key: npc.npcId,
+                  id: npc.npcId,
+                  name: npc.name,
+                  label: <IdentifierLabel value={npc.npcId} />,
+                  meta: `${npc.name} - ${npc.hasPresence ? `${npc.entryCount} entr${npc.entryCount === 1 ? "y" : "ies"}` : "no presence"}`,
+                  isUnsaved: npc.hasUnsavedChanges,
+                })),
+              }]}
+              onFilterChange={setListFilter}
+              onSelect={(entry) => draft.selectNpc(entry.id)}
+              selectedEntryKey={draft.selectedNpcId}
             />
-            <div className="editor-entry-list">
-              {filteredNpcs.length === 0 ? (
-                <p className="editor-empty">No matching NPCs.</p>
-              ) : null}
-              {filteredNpcs.map((npc) => (
-                <EditorButton
-                  className="editor-entry-button"
-                  isSelected={npc.npcId === draft.selectedNpcId}
-                  key={npc.npcId}
-                  onClick={() => draft.selectNpc(npc.npcId)}
-                >
-                  <span className="editor-zone-entry">
-                    <span className="editor-zone-entry__name">
-                      <IdentifierLabel value={npc.npcId} />
-                      {npc.hasUnsavedChanges ? " *" : ""}
-                    </span>
-                    <span className="editor-zone-entry__meta">
-                      {npc.name} -{" "}
-                      {npc.hasPresence
-                        ? `${npc.entryCount} entr${npc.entryCount === 1 ? "y" : "ies"}`
-                        : "no presence"}
-                    </span>
-                  </span>
-                </EditorButton>
-              ))}
-            </div>
           </EditorPanel>
         </ScrollRegion>
 
