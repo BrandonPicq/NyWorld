@@ -514,7 +514,7 @@ function collectEventReferences(event: EventDef): ContentReference[] {
     if (action.type === "spawn_enemy" || action.type === "despawn_enemy" || action.type === "start_combat") add(CONTENT_TYPES.enemy, action.enemyId, `${path}.enemyId`);
     if (action.type === "spawn_npc" || action.type === "despawn_npc") add(CONTENT_TYPES.npc, action.npcId, `${path}.npcId`);
     if (action.type === "spawn_npc" && action.dialogueId) add(CONTENT_TYPES.dialogue, action.dialogueId, `${path}.dialogueId`);
-    if (action.type === "teleport") add(CONTENT_TYPES.zone, action.zoneId, `${path}.zoneId`);
+    if (action.type === "teleport" || action.type === "set_respawn" || action.type === "reveal_area") add(CONTENT_TYPES.zone, action.zoneId, `${path}.zoneId`);
     if (action.type === "start_quest" || action.type === "advance_quest") add(CONTENT_TYPES.quest, action.questId, `${path}.questId`);
   });
 

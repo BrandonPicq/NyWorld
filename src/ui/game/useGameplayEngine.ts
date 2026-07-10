@@ -3,6 +3,7 @@ import {
   getActionTuning,
   getDefaultZoneData,
   getNewGameConfig,
+  getNewGameStart,
   getSafeRespawn,
   GameplayEngine,
   loadZone,
@@ -74,6 +75,7 @@ export function useGameplayEngine({
     };
     const safeRespawn = getSafeRespawn(contentBundle);
     const newGame = getNewGameConfig(contentBundle);
+    const authoredNewGameStart = getNewGameStart(contentBundle);
     const actions = getActionTuning(contentBundle);
 
     try {
@@ -85,7 +87,7 @@ export function useGameplayEngine({
             actions,
             events: contentBundle.events,
           })
-        : new GameplayEngine(resolveNewGameMap(contentBundle, newGameStart), {
+        : new GameplayEngine(resolveNewGameMap(contentBundle, newGameStart ?? authoredNewGameStart), {
             resolveZone,
             safeRespawn,
             newGame,
@@ -94,7 +96,7 @@ export function useGameplayEngine({
             events: contentBundle.events,
             initialPlayerPosition: newGameStart
               ? { x: newGameStart.x, y: newGameStart.y }
-              : undefined,
+              : { x: authoredNewGameStart.x, y: authoredNewGameStart.y },
           });
 
       engineRef.current = engine;

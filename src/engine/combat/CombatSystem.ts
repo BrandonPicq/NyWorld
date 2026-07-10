@@ -158,6 +158,8 @@ const ACTION_TUNING = resolveActionTuning();
 export class CombatSystem {
   private state?: CombatState;
   private patternAttemptState?: PatternAttemptState;
+  /** Magical patterns become visible after one successful cast in this fight. */
+  private readonly revealedPatternIds = new Set<string>();
 
   constructor(private readonly context: CombatSystemContext) {}
 
@@ -235,6 +237,7 @@ export class CombatSystem {
       phase: "action_selection",
     };
     this.patternAttemptState = undefined;
+    this.revealedPatternIds.clear();
 
     this.context.addLog(`Combat started with ${npc.name}!`);
 
@@ -260,6 +263,7 @@ export class CombatSystem {
       phase: "action_selection",
     };
     this.patternAttemptState = undefined;
+    this.revealedPatternIds.clear();
 
     this.context.addLog(`Combat started with ${name}!`);
 
@@ -449,7 +453,7 @@ export class CombatSystem {
         timeLimitMs: pattern.timeLimitMs,
       },
       sequence: [...pattern.inputs],
-      hidden: true,
+      hidden: !this.revealedPatternIds.has(pattern.patternId),
       initialInputIndex: resumedAttempt?.inputIndex ?? 0,
       revealedInputIndex: resumedAttempt?.revealNextInput
         ? resumedAttempt.inputIndex
@@ -560,6 +564,8 @@ export class CombatSystem {
       this.context.addLog("You successfully fled from the combat!");
       this.context.incrementCommandUsage("flee");
       this.state = undefined;
+      this.patternAttemptState = undefined;
+      this.revealedPatternIds.clear();
       return { success: true };
     }
 
@@ -723,6 +729,9 @@ export class CombatSystem {
         `You spend ${activePattern.mpCost} MP to cast ${activePattern.name}.`,
       );
       this.patternAttemptState = undefined;
+      if (activePattern.kind === "magical") {
+        this.revealedPatternIds.add(activePattern.patternId);
+      }
     }
 
     if (mistakes >= 2) {
@@ -936,6 +945,7 @@ export class CombatSystem {
 
       this.state = undefined;
       this.patternAttemptState = undefined;
+      this.revealedPatternIds.clear();
       return { success: true, effects };
     }
 
@@ -943,6 +953,7 @@ export class CombatSystem {
       this.context.recoverPlayerFromDefeat();
       this.state = undefined;
       this.patternAttemptState = undefined;
+      this.revealedPatternIds.clear();
       return { success: true };
     }
 

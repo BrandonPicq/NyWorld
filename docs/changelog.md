@@ -4,6 +4,10 @@ This file tracks meaningful project changes by commit-oriented slices.
 
 Keep entries short and practical. When a slice is committed, its changelog section should stay aligned with the commit title so the project history remains easy to read after restores or bisects.
 
+## 2026-07-10 - [UPDATE]: Move active objectives to the right overlay
+
+- Position the active quest objectives panel on the right side of the game viewport, below the map controls.
+
 ## 2026-07-10 - [UPDATE]: Allow event-driven quests without NPC dialogues
 
 - Make quest target NPCs and start/complete dialogue triggers optional.
@@ -16,6 +20,70 @@ Keep entries short and practical. When a slice is committed, its changelog secti
 - Group combat actions by category and keep the selected group visible during filtering and navigation.
 - Give the Content browser more space by reducing the Problems panel to a 4:1 workbench ratio.
 - Let the Events list switch between grouping by trigger type or trigger zone, with global events in a dedicated fallback group.
+
+## 2026-07-10 - [UPDATE]: Reveal mastered spell patterns during combat
+
+- Reveal a magical pattern after its first successful cast for the rest of the current combat.
+- Reset temporary pattern revelation when the combat ends or a new combat starts.
+- Keep failed-pattern progress and physical pattern concealment unchanged.
+
+## 2026-07-10 - [REFACTOR]: Extract gameplay feature runtimes
+
+- Move persistent log, dialogue state, NPC world presence, and player character progression/equipment into focused engine runtimes.
+- Move the UI snapshot projection and its public types into the gameplay module while preserving the existing engine exports.
+- Keep `GameplayEngine` as the command and system orchestrator; add focused `GameLog` coverage alongside existing engine integration tests.
+
+## 2026-07-10 - [UPDATE]: Reduce movement log noise
+
+- Stop adding a chronicle entry for every successful movement command.
+- Keep geometry-blocked movement visible, while collapsing consecutive identical failures until another log message is produced.
+- Preserve the existing persisted `snapshot.log` format and all other action, item, quest, and event notices.
+
+## 2026-07-10 - [FIX]: Keep the ghost log clear of the player
+
+- Measure the player's projected cell in the map viewport's coordinate space before checking the overlay position.
+- Raise the temporary log when its lower-right placement overlaps the player's safety margin, then restore it when the route is clear.
+- Keep the collision response local to the UI overlay without adding gameplay state or a second log history.
+
+## 2026-07-10 - [UPDATE]: Compact the game viewport chrome
+
+- Remove the redundant active-session kicker and reduce the zone title and map height for short desktop viewports.
+- Keep the status rail visible without page scrolling by switching its actions to a compact two-column layout on short screens.
+- Anchor the ghost log to the map viewport's right side so it no longer covers the movement controls.
+
+## 2026-07-10 - [FIX]: Isolate map camera gestures
+
+- Keep camera toolbar pointer events from being captured as map drags, so the zoom and recenter buttons remain clickable.
+- Cancel wheel gestures at the map surface with a non-passive listener to prevent page scroll chaining while zooming.
+- Keep the viewport bounded with contained overscroll and hidden internal overflow.
+
+## 2026-07-10 - [UPDATE]: Game screen viewport and log surfaces
+
+- Replace the fixed three-column game dashboard with a responsive status and map layout.
+- Add a bounded gameplay camera with follow, pan, zoom, recenter, and visible-cell rendering while preserving the editor canvas path.
+- Move the complete read-only `snapshot.log` history into a focused `Logs` modal with the `L` shortcut and Escape handling.
+- Add a three-entry ghost log overlay with a three-second timeout, plus compact active-objective and playtest event-debug bands.
+- Keep effect toasts separate from the chronicle surfaces and block gameplay keyboard commands while the logs modal is open.
+
+## 2026-07-10 - [FIX]: Make the shared location picker choose its target visibly
+
+- Replace the modal's clipped native selector with visible Game start and Safe respawn segmented controls.
+- Give the picker grid an explicit target-control row so the map retains its intended space.
+- Switch the displayed map immediately when the selected target belongs to another zone.
+
+## 2026-07-10 - [ADD]: Configurable starts and dynamic respawns
+
+- Add an optional `newGame.startPosition` in `game.json`, falling back to the selected zone's player start for existing content.
+- Replace the Game tab's separate coordinate flows with one picker that targets either the game start or safe respawn.
+- Add the persisted `set_respawn` event action, backed by a focused respawn-state module and runtime walkability checks.
+- Bump prototype saves to version `0.14` for the new mutable respawn state.
+
+## 2026-07-10 - [ADD]: Zone fog of war and event revelations
+
+- Add per-zone `fogOfWar`, persistent explored cells, and engine-owned 3x3 local visibility.
+- Render discovered terrain dimly while hiding non-local entities and unknown cells.
+- Add the validated `reveal_area` event action and record the authoring/runtime decisions in ADR 0011.
+- Persist explored cells per zone in version `0.14` saves.
 
 ## 2026-07-10 - [UPDATE]: Event combats no longer require a map entity
 

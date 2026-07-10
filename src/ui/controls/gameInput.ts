@@ -6,6 +6,7 @@ export type MovementCommandType = Extract<
   "MoveNorth" | "MoveSouth" | "MoveWest" | "MoveEast"
 >;
 export type KeyboardGameCommandType = MovementCommandType | "Interact";
+export type GameUiShortcut = "logs";
 
 const arrowKeyCommands: Record<string, MovementCommandType> = {
   ArrowUp: "MoveNorth",
@@ -81,4 +82,9 @@ export function getMovementKeyLabel(
  */
 export function getInteractKeyLabel(): string {
   return "E";
+}
+
+/** Returns the keyboard shortcut for non-gameplay game-screen surfaces. */
+export function getGameUiShortcutForKey(key: string): GameUiShortcut | undefined {
+  return key.toLowerCase() === "l" ? "logs" : undefined;
 }

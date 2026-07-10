@@ -2,7 +2,7 @@
   "zone_entry.test_zone": [
     {
       "speaker": "Narrator",
-      "text": "Welcome to the test fields of NyWarudo.",
+      "text": "Welcome to the world of NyWarudo.",
       "pitch": 1
     }
   ],
@@ -16,6 +16,23 @@
       "speaker": "Mysterious Voice",
       "text": "Who dares trespass in the Eastern Ruins?",
       "pitch": 1.4
+    }
+  ],
+  "zone_entries.beginner_forest": [
+    {
+      "speaker": "Narrator",
+      "text": "Welcome in the world of NyWarudo.\nThis is a test version and a test map, so please expect inconsistencies.",
+      "pitch": 1
+    },
+    {
+      "speaker": "Narrator",
+      "text": "Your current objective is to get out of the forest. \nBe warned that the way there shall not go without hurdles.",
+      "pitch": 1
+    },
+    {
+      "speaker": "SYSTEM NOTICE",
+      "text": "You can move using the arrow keys, or the usual direction keys (wasd).\nTry to proceed forward.",
+      "pitch": 1
     }
   ]
 }

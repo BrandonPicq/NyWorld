@@ -231,9 +231,14 @@ function validateActions(
       validateCoordinates(action.x, action.y, path, eventId, event, diagnostics);
       if (action.dialogueId !== undefined) validateDialogueReference(action.dialogueId, refPath("dialogueId"), eventId, event, context, diagnostics);
     } else if (action.type === "despawn_npc") validateNpcReference(action.npcId, refPath("npcId"), eventId, event, context, diagnostics);
-    else if (action.type === "teleport") {
+    else if (action.type === "teleport" || action.type === "set_respawn") {
       validateZoneReference(action.zoneId, refPath("zoneId"), eventId, event, context, diagnostics);
       validateCoordinates(action.x, action.y, path, eventId, event, diagnostics);
+    } else if (action.type === "reveal_area") {
+      validateZoneReference(action.zoneId, refPath("zoneId"), eventId, event, context, diagnostics);
+      validateCoordinates(action.x, action.y, path, eventId, event, diagnostics);
+      validatePositiveInteger(action.width, refPath("width"), eventId, event, diagnostics);
+      validatePositiveInteger(action.height, refPath("height"), eventId, event, diagnostics);
     } else if (action.type === "start_quest" || action.type === "advance_quest") validateQuestReference(action.questId, refPath("questId"), eventId, event, context, diagnostics);
     else addError(diagnostics, event, `${path}.type`, `Event "${eventId || "?"}" has unknown action type "${action.type}".`);
   });

@@ -175,6 +175,20 @@ describe("Combat Engine Integration", () => {
     expect(snapshot.log.map((entry) => entry.message)).toContain(
       "You spend 14 MP to cast Fireball.",
     );
+
+    resolveEnemyTurn(engine);
+    engine.execute({
+      type: "SelectCombatPattern",
+      actionKind: "cast",
+      patternId: "fireball",
+    });
+
+    snapshot = engine.getSnapshot();
+    expect(snapshot.combatState!.minigame).toMatchObject({
+      kind: "sequence",
+      hidden: false,
+      sequence: ["up", "left", "down", "right", "up"],
+    });
   });
 
   it("keeps failed spell pattern progress without spending MP", () => {

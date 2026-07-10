@@ -70,4 +70,25 @@ describe("createGridRenderSnapshot", () => {
       entities: [],
     });
   });
+
+  it("keeps explored terrain but hides entities outside current visibility", () => {
+    const snapshot: GameSnapshot = {
+      ...gameSnapshot,
+      mapVisibility: [
+        ["visible", "hidden"],
+        ["explored", "visible"],
+      ],
+      entities: [
+        { x: 0, y: 1, glyph: "!", color: "#fff" },
+        { x: 1, y: 0, glyph: "K", color: "#fff" },
+        { x: 1, y: 1, glyph: "N", color: "#fff" },
+      ],
+    };
+
+    const render = createGridRenderSnapshot(snapshot);
+
+    expect(render.tiles[1][0].visibility).toBe("explored");
+    expect(render.tiles[0][1].visibility).toBe("hidden");
+    expect(render.entities).toEqual([{ x: 1, y: 1, glyph: "N", color: "#fff" }]);
+  });
 });

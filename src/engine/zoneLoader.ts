@@ -125,6 +125,10 @@ export function validateZoneData(
   const playerStart = validatePlayerStart(data, diagnostics);
   const tiles = validateTileGrid(data, width, height, diagnostics, context);
 
+  if (data.fogOfWar !== undefined && typeof data.fogOfWar !== "boolean") {
+    addZoneError(diagnostics, data, "fogOfWar", "fogOfWar must be a boolean");
+  }
+
   validatePlayerStartBounds(data, playerStart, width, height, diagnostics);
   validatePlayerStartWalkability(
     data,

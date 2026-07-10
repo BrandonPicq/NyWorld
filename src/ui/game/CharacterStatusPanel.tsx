@@ -16,6 +16,7 @@ type SidebarActionButtonProps = {
 type CharacterStatusPanelProps = {
   controlsDisabled?: boolean;
   onOpenInventory: () => void;
+  onOpenLogs: () => void;
   onOpenSheet: () => void;
   onOpenJournal: () => void;
   onRest: () => void;
@@ -31,6 +32,7 @@ export function CharacterStatusPanel({
   controlsDisabled = false,
   isCombatActive = false,
   onOpenInventory,
+  onOpenLogs,
   onOpenSheet,
   onOpenJournal,
   onRest,
@@ -121,6 +123,12 @@ export function CharacterStatusPanel({
               keyLabel={keyboardLayout === "azerty" ? "A" : "Q"}
               label="Journal"
               onClick={onOpenJournal}
+            />
+            <SidebarActionButton
+              disabled={controlsDisabled}
+              keyLabel="L"
+              label="Logs"
+              onClick={onOpenLogs}
             />
           </div>
 

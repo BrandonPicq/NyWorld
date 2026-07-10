@@ -42,6 +42,8 @@ export interface EventSystemContext {
   despawnNpc: (npcId: string) => boolean;
   startCombat: (enemyId: string) => EventSystemResult;
   teleport: (zoneId: string, x: number, y: number) => boolean;
+  setRespawn: (zoneId: string, x: number, y: number) => boolean;
+  revealArea: (zoneId: string, x: number, y: number, width: number, height: number) => boolean;
 }
 
 export interface EventRuntimeState {
@@ -283,6 +285,16 @@ export class EventSystem {
         return combatResult;
       }
       case "teleport": this.context.teleport(action.zoneId, action.x, action.y); return emptyResult();
+      case "set_respawn":
+        if (!this.context.setRespawn(action.zoneId, action.x, action.y)) {
+          this.reportActionFailure(eventId, `could not set respawn to (${action.x}, ${action.y}) in "${action.zoneId}"`);
+        }
+        return emptyResult();
+      case "reveal_area":
+        if (!this.context.revealArea(action.zoneId, action.x, action.y, action.width, action.height)) {
+          this.reportActionFailure(eventId, `could not reveal area at (${action.x}, ${action.y}) in "${action.zoneId}"`);
+        }
+        return emptyResult();
     }
   }
 

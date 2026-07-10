@@ -2,11 +2,12 @@ import { useState } from "react";
 import type { ContentCatalogSnapshot } from "../../../engine";
 import { IdentifierLabel } from "../../components/IdentifierLabel";
 import { ScrollRegion } from "../../components/ScrollRegion";
-import { EditorButton } from "../components/EditorButton";
 import { EditorPanel } from "../components/EditorPanel";
 import type { EditorContentNavigationTarget } from "../DiagnosticList";
-import { ListFilterField } from "../ListFilterField";
-import { filterByIdOrName } from "../listFilter";
+import {
+  EditorGroupedList,
+  type EditorGroupedListGroup,
+} from "../EditorGroupedList";
 import { ZoneCreateForm } from "./ZoneCreateForm";
 import { ZoneDraftEditor } from "./ZoneDraftEditor";
 import type { ZoneDraftController } from "./useZoneDraft";
@@ -31,44 +32,43 @@ export function ZoneEditorPanel({
 }: ZoneEditorPanelProps) {
   const [listFilter, setListFilter] = useState("");
   const { zones, selectedZoneId, selectZone } = draft;
-  const filteredZones = filterByIdOrName(
-    zones.map((zone) => ({ ...zone, id: zone.zoneId, name: zone.name })),
-    listFilter,
-  );
+  const zoneGroups: EditorGroupedListGroup[] = [
+    {
+      key: "zones",
+      label: "Zones",
+      entries: zones.map((zone) => ({
+        key: zone.zoneId,
+        id: zone.zoneId,
+        name: zone.name,
+        label: zone.name,
+        meta: (
+          <>
+            <IdentifierLabel value={zone.zoneId} /> · {zone.npcCount}N {" "}
+            {zone.itemCount}I {zone.transitionCount}T
+          </>
+        ),
+      })),
+    },
+  ];
 
   return (
     <div className="workbench">
       <ScrollRegion className="workbench__rail">
-        <EditorPanel className="editor-panel editor-zone-list">
-          <h2 className="editor-panel__title">Zones</h2>
-          <ListFilterField
-            label="Filter"
-            onChange={setListFilter}
-            value={listFilter}
-          />
-          {zones.length === 0 ? (
-            <p className="editor-empty">No zones authored.</p>
-          ) : filteredZones.length === 0 ? (
-            <p className="editor-empty">No matching zones.</p>
-          ) : (
-            <div className="editor-entry-list" role="list">
-              {filteredZones.map((zone) => (
-                <EditorButton
-                  className="editor-entry-button editor-zone-entry"
-                  isSelected={zone.zoneId === selectedZoneId}
-                  key={zone.zoneId}
-                  onClick={() => selectZone(zone.zoneId)}
-                >
-                  <span className="editor-zone-entry__name">{zone.name}</span>
-                  <span className="editor-zone-entry__meta">
-                    <IdentifierLabel value={zone.zoneId} /> · {zone.npcCount}N{" "}
-                    {zone.itemCount}I {zone.transitionCount}T
-                  </span>
-                </EditorButton>
-              ))}
-            </div>
-          )}
-          <ZoneCreateForm existingZoneIds={zones.map((zone) => zone.zoneId)} />
+          <EditorPanel className="editor-panel editor-zone-list">
+            <h2 className="editor-panel__title">Zones</h2>
+            {zones.length === 0 ? (
+              <p className="editor-empty">No zones authored.</p>
+            ) : (
+              <EditorGroupedList
+                emptyLabel="No matching zones."
+                filter={listFilter}
+                groups={zoneGroups}
+                onFilterChange={setListFilter}
+                onSelect={(entry) => selectZone(entry.id)}
+                selectedEntryKey={selectedZoneId}
+              />
+            )}
+            <ZoneCreateForm existingZoneIds={zones.map((zone) => zone.zoneId)} />
         </EditorPanel>
       </ScrollRegion>
 

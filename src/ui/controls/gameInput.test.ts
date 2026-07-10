@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   getGameCommandForKey,
+  getGameUiShortcutForKey,
   getInteractKeyLabel,
   getMovementKeyLabel,
 } from "./gameInput";
@@ -60,5 +61,11 @@ describe("game input mapping", () => {
 
   it("returns the interact key label", () => {
     expect(getInteractKeyLabel()).toBe("E");
+  });
+
+  it("maps L to the logs surface", () => {
+    expect(getGameUiShortcutForKey("l")).toBe("logs");
+    expect(getGameUiShortcutForKey("L")).toBe("logs");
+    expect(getGameUiShortcutForKey("k")).toBeUndefined();
   });
 });

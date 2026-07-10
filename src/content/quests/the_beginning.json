@@ -1,0 +1,29 @@
+{
+  "questId": "the_beginning",
+  "name": "Exit the Forest",
+  "description": "You have awaken in a weird looking forest. Try to get out of here.",
+  "targetNpcId": "",
+  "triggers": {
+    "start": {
+      "dialogueId": ""
+    },
+    "complete": {
+      "dialogueId": ""
+    }
+  },
+  "npcOverrides": {},
+  "objectives": [
+    {
+      "type": "visit_coordinate",
+      "id": "objective_1",
+      "zoneId": "hajimari_no_mori",
+      "x": 13,
+      "y": 11,
+      "description": "Exit the forest"
+    }
+  ],
+  "rewards": {
+    "xp": 15,
+    "currency": 10
+  }
+}

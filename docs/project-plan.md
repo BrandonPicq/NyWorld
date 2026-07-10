@@ -101,6 +101,26 @@ Objectif : faire de l'editeur un outil compact a theme sombre neutre, independan
 
 Le lancement du Playtest conserve sa validation globale ; les commandes Save se calent sur la validation du fichier qu'elles ecrivent.
 
+## Prochaine boucle - Production from scratch et exploration
+
+Le premier passage de creation de contenu sans les cartes de test sert de
+validation produit de l'editeur. Les erreurs liees aux anciens ids et fixtures
+retirees sont attendues pendant cette migration; les blocages de creation,
+validation, sauvegarde ou playtest sont les retours a corriger.
+
+- `[ADD]` point de depart explicite dans `game.json`, picker Game unique pour
+  le depart et le respawn, et action d'evenement `set_respawn` persistante;
+- `[ADD]` brouillard de guerre active par zone, cellules explorees persistantes
+  et revelation rectangulaire par evenement;
+- `[UPDATE]` ecran de jeu recentre sur une carte viewport camera, objectifs et
+  debug en bandeaux, journal complet en modale et journal fantome temporaire;
+- ajouter des tests purs pour la camera et le journal, puis verifier en
+  navigateur le drag, la molette, le recentrage, le raccourci `L` et le rendu
+  mobile sans debordement horizontal;
+- apres chaque cycle de playtests, faire une passe de documentation des API
+  publiques et des parcours de jeu qui ont ete reellement eprouves, puis
+  mettre a jour l'index CocoIndex.
+
 ## Tests et validation
 
 Tests unitaires Vitest existants : moteur (deplacements, collisions, ticks, calendrier, zones, transitions, PNJs, schedules, dialogues, inventaire, quetes, combat QTE, equilibrage, sauvegardes et migrations) et logique UI (menus, themes, vitesse de texte, audio, layouts clavier, reglages gameplay, stockage des sauvegardes).

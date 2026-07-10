@@ -8,6 +8,7 @@ import {
   type GameContentConfig,
   getDefaultZoneData,
   getNewGameConfig,
+  getNewGameStart,
   getSafeRespawn,
   getZoneData,
   resolveAllZonesFromBundle,
@@ -137,6 +138,21 @@ describe("validateGameConfig", () => {
       }),
     ]);
   });
+
+  it("rejects a new-game start that is blocked in the default zone", () => {
+    const blocked = findBlockedCoordinate();
+    const config = gameConfigWith({
+      defaultZoneId: blocked.zoneId,
+      newGame: {
+        ...gameConfigData.newGame,
+        startPosition: { x: blocked.x, y: blocked.y },
+      },
+    });
+
+    expect(validateGameConfig(config, createGameConfigContext())).toEqual([
+      expect.objectContaining({ path: "newGame.startPosition" }),
+    ]);
+  });
 });
 
 describe("contentBundle", () => {
@@ -163,6 +179,32 @@ describe("contentBundle", () => {
     expect(safeRespawn.y).toBeLessThan(zoneData!.height);
     expect(getTileDef(zoneData!.tiles[safeRespawn.y][safeRespawn.x]).walkable)
       .toBe(true);
+  });
+
+  it("uses an explicit new-game start and falls back to the zone playerStart", () => {
+    const fallback = getNewGameStart(defaultContentBundle);
+    const defaultZone = getZoneData(defaultContentBundle, fallback.zoneId)!;
+
+    expect(fallback).toEqual({
+      zoneId: defaultZone.zoneId,
+      ...defaultZone.playerStart,
+    });
+
+    const configured = {
+      ...defaultContentBundle,
+      game: {
+        ...defaultContentBundle.game,
+        newGame: {
+          ...defaultContentBundle.game.newGame,
+          startPosition: { x: 2, y: 2 },
+        },
+      },
+    };
+    expect(getNewGameStart(configured)).toEqual({
+      zoneId: defaultZone.zoneId,
+      x: 2,
+      y: 2,
+    });
   });
 
   it("resolves zones into runtime maps", () => {

@@ -1,0 +1,26 @@
+{
+  "eventId": "kobold_ambush",
+  "trigger": {
+    "type": "step_on_area",
+    "zoneId": "test_zone",
+    "area": {
+      "x": 1,
+      "y": 6,
+      "width": 1,
+      "height": 1
+    }
+  },
+  "conditions": [],
+  "actions": [
+    {
+      "type": "dialogue",
+      "dialogueId": "kobold_ambush.default"
+    },
+    {
+      "type": "start_combat",
+      "enemyId": "kobold"
+    }
+  ],
+  "repeatPolicy": "once_per_playthrough",
+  "priority": 0
+}

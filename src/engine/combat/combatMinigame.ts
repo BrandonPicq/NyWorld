@@ -27,7 +27,7 @@ export interface SequenceMinigameSpec {
   challenge: QteChallenge;
   /** Ordered arrow-key sequence the player must type. */
   sequence: string[];
-  /** True for learned patterns: progress is visible, keycaps are hidden. */
+  /** Whether the sequence keycaps are hidden during this challenge. */
   hidden?: boolean;
   /** Prefix length to resume from for runtime-only pattern attempts. */
   initialInputIndex?: number;

@@ -51,21 +51,15 @@
       "quantity": 1
     },
     {
-      "itemId": "old_coin",
-      "x": 9,
-      "y": 3,
-      "quantity": 1
-    },
-    {
-      "itemId": "chalk_piece",
+      "itemId": "fireball_tome",
       "x": 6,
       "y": 7,
       "quantity": 1
     },
     {
       "itemId": "stone_hammer",
-      "x": 10,
-      "y": 8,
+      "x": 9,
+      "y": 3,
       "quantity": 1
     }
   ]

@@ -1,6 +1,9 @@
 import { useEffect, type Dispatch, type SetStateAction } from "react";
 import type { GameCommand } from "../../engine";
-import { getGameCommandForKey } from "../controls/gameInput";
+import {
+  getGameCommandForKey,
+  getGameUiShortcutForKey,
+} from "../controls/gameInput";
 import type { KeyboardLayout } from "../controls/keyboardLayout";
 import type { AudioSettings } from "../audio/audioSettings";
 import { playMenuConfirmSound } from "../audio/menuAudio";
@@ -18,6 +21,7 @@ type UseGameKeyboardControlsInput = {
   isPauseMenuOpen: boolean;
   isQuestsOpen: boolean;
   isSaveSlotsOpen?: boolean;
+  isLogsOpen?: boolean;
   isCombatActive?: boolean;
   keyboardLayout: KeyboardLayout;
   onOpenPauseMenu: () => void;
@@ -28,6 +32,7 @@ type UseGameKeyboardControlsInput = {
   setIsInventoryOpen: Dispatch<SetStateAction<boolean>>;
   setIsQuestsOpen: Dispatch<SetStateAction<boolean>>;
   setIsSaveSlotsOpen?: Dispatch<SetStateAction<boolean>>;
+  setIsLogsOpen?: Dispatch<SetStateAction<boolean>>;
 };
 
 /**
@@ -47,6 +52,7 @@ export function useGameKeyboardControls({
   isPauseMenuOpen,
   isQuestsOpen,
   isSaveSlotsOpen = false,
+  isLogsOpen = false,
   keyboardLayout,
   onOpenPauseMenu,
   progressDialogue,
@@ -56,10 +62,20 @@ export function useGameKeyboardControls({
   setIsInventoryOpen,
   setIsQuestsOpen,
   setIsSaveSlotsOpen,
+  setIsLogsOpen,
   isCombatActive = false,
 }: UseGameKeyboardControlsInput): void {
   useEffect(() => {
     function handleKeyDown(event: KeyboardEvent) {
+      if (isLogsOpen) {
+        if (event.key === "Escape") {
+          event.preventDefault();
+          event.stopPropagation();
+          setIsLogsOpen?.(false);
+        }
+        return;
+      }
+
       if (isInteractChoiceOpen || isPauseMenuOpen || isSaveSlotsOpen || isCombatActive) {
         return;
       }
@@ -74,6 +90,12 @@ export function useGameKeyboardControls({
           event.preventDefault();
           skipDialogueLine();
         }
+        return;
+      }
+
+      if (getGameUiShortcutForKey(event.key) === "logs" && setIsLogsOpen) {
+        event.preventDefault();
+        setIsLogsOpen(true);
         return;
       }
 
@@ -106,6 +128,7 @@ export function useGameKeyboardControls({
           keyLower === journalKey ||
           keyLower === "r" ||
           keyLower === "t" ||
+          keyLower === "l" ||
           commandType
         ) {
           event.preventDefault();
@@ -175,6 +198,7 @@ export function useGameKeyboardControls({
     isPauseMenuOpen,
     isQuestsOpen,
     isSaveSlotsOpen,
+    isLogsOpen,
     keyboardLayout,
     onOpenPauseMenu,
     progressDialogue,
@@ -183,5 +207,6 @@ export function useGameKeyboardControls({
     setIsNoticeOpen,
     setIsInventoryOpen,
     setIsQuestsOpen,
+    setIsLogsOpen,
   ]);
 }

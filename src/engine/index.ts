@@ -60,6 +60,7 @@ export {
   getDefaultZoneData,
   getGameConfig,
   getNewGameConfig,
+  getNewGameStart,
   getSafeRespawn,
   getZoneData,
   resolveAllZonesFromBundle,

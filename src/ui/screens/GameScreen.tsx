@@ -1,9 +1,8 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import { createGridRenderSnapshot } from "../../rendering";
 import {
   defaultContentBundle,
   getItemDef,
-  getNpcDef,
   getQtePatternDef,
   type ContentBundle,
   type DialogueNode,
@@ -18,11 +17,16 @@ import type { KeyboardLayout } from "../controls/keyboardLayout";
 import type { AudioSettings } from "../audio/audioSettings";
 import type { TextSpeed } from "../controls/textSpeed";
 import type { GameplaySettings } from "../controls/gameplaySettings";
-import { ActionLogPanel } from "../game/ActionLogPanel";
 import { CharacterSheetModal } from "../game/CharacterSheetModal";
 import { CharacterStatusPanel } from "../game/CharacterStatusPanel";
+import { CompactLogOverlay } from "../game/CompactLogOverlay";
 import { DialogueBox } from "../game/DialogueBox";
 import { GameCenterPanel } from "../game/GameCenterPanel";
+import { GameLogModal } from "../game/GameLogModal";
+import {
+  ActiveObjectivesOverlay,
+  EventDebugOverlay,
+} from "../game/GameOverlayPanels";
 import { useDialogueSequence } from "../game/useDialogueSequence";
 import { useGameKeyboardControls } from "../game/useGameKeyboardControls";
 import { useGameplayEngine } from "../game/useGameplayEngine";
@@ -88,8 +92,8 @@ export function GameScreen({
   const [gameNotice, setGameNotice] = useState<EngineNotice | null>(null);
   const [isPauseMenuOpen, setIsPauseMenuOpen] = useState(false);
   const [isSaveSlotsOpen, setIsSaveSlotsOpen] = useState(false);
+  const [isLogsOpen, setIsLogsOpen] = useState(false);
   const [gameToasts, setGameToasts] = useState<GameToastEntry[]>([]);
-  const logRef = useRef<HTMLDivElement>(null);
   const nextToastIdRef = useRef(1);
 
   const pushGameToast = useCallback((toast: Omit<GameToastEntry, "id">) => {
@@ -154,6 +158,7 @@ export function GameScreen({
     isQuestsOpen ||
     isPauseMenuOpen ||
     isSaveSlotsOpen ||
+    isLogsOpen ||
     snapshot?.combatState !== undefined;
 
   const interactionTargets = snapshot
@@ -222,12 +227,6 @@ export function GameScreen({
     [executeCommand, triggerDialogue],
   );
 
-  useEffect(() => {
-    if (logRef.current) {
-      logRef.current.scrollTop = logRef.current.scrollHeight;
-    }
-  }, [snapshot?.log]);
-
   useZoneEntryDialogue(
     snapshot,
     triggerZoneEntryDialogue,
@@ -244,6 +243,7 @@ export function GameScreen({
     isPauseMenuOpen,
     isQuestsOpen,
     isSaveSlotsOpen,
+    isLogsOpen,
     isCombatActive: snapshot?.combatState !== undefined,
     keyboardLayout,
     onOpenPauseMenu: () => setIsPauseMenuOpen(true),
@@ -259,6 +259,7 @@ export function GameScreen({
     setIsInventoryOpen,
     setIsQuestsOpen,
     setIsSaveSlotsOpen,
+    setIsLogsOpen,
   });
 
   if (!snapshot) {
@@ -294,6 +295,7 @@ export function GameScreen({
         <CharacterStatusPanel
           controlsDisabled={controlsDisabled}
           onOpenInventory={() => setIsInventoryOpen(true)}
+          onOpenLogs={() => setIsLogsOpen(true)}
           onOpenSheet={() => setIsCharacterSheetOpen(true)}
           onOpenJournal={() => setIsQuestsOpen(true)}
           onRest={() => handleExecuteCommand({ type: "Rest" })}
@@ -311,6 +313,18 @@ export function GameScreen({
             gameplaySettings.smartInteract && interactionTargets.length === 0
           }
           keyboardLayout={keyboardLayout}
+          mapOverlay={(playerRect) =>
+            !snapshot.combatState ? (
+              <>
+                <CompactLogOverlay
+                  hidden={activeDialogue !== null}
+                  log={snapshot.log}
+                  playerRect={playerRect}
+                />
+                <ActiveObjectivesOverlay activeQuests={snapshot.activeQuests} />
+              </>
+            ) : null
+          }
           onExecuteCommand={handleExecuteCommand}
           renderSnapshot={gridRenderSnapshot}
           snapshot={snapshot}
@@ -329,53 +343,15 @@ export function GameScreen({
             onDismiss={dismissGameToast}
             toasts={gameToasts}
           />
+
+          {isPlaytest && !snapshot.combatState && (
+            <EventDebugOverlay
+              firedEventIds={snapshot.firedEventIds}
+              worldFlags={snapshot.worldFlags}
+            />
+          )}
+
         </GameCenterPanel>
-
-        <div className={`game-layout__sidebar-right ${snapshot.activeQuests && snapshot.activeQuests.length > 0 ? "game-layout__sidebar-right--with-quests" : ""}`}>
-          {snapshot.activeQuests && snapshot.activeQuests.length > 0 && (
-            <TerminalPanel className="game-layout__active-quests">
-              <p className="terminal-kicker">OBJECTIVES</p>
-              <h2 className="terminal-heading-sm" style={{ marginBottom: "var(--space-2)" }}>Active Quests</h2>
-              <div className="active-quests-sidebar">
-                {snapshot.activeQuests.map((quest) => {
-                  const targetNpcName = getNpcDef(quest.targetNpcId)?.name ?? quest.targetNpcId;
-                  return (
-                    <div key={quest.questId} className="active-quests-sidebar__item">
-                      <p className="active-quests-sidebar__quest-name">{quest.name}</p>
-                      <ul className="active-quests-sidebar__obj-list">
-                        {quest.objectives.map((obj) => {
-                          const met = obj.currentQuantity >= obj.requiredQuantity;
-                          return (
-                            <li key={obj.id} className={met ? "met" : ""}>
-                              <span>{met ? "[x]" : "[ ]"}</span>
-                              <span>{obj.description} ({obj.currentQuantity}/{obj.requiredQuantity})</span>
-                            </li>
-                          );
-                        })}
-                        {quest.state === "readyToComplete" && (
-                          <li>
-                            <span>[ ]</span>
-                            <span>Return to {targetNpcName}</span>
-                          </li>
-                        )}
-                      </ul>
-                    </div>
-                  );
-                })}
-              </div>
-            </TerminalPanel>
-          )}
-
-          {isPlaytest && (
-            <TerminalPanel className="game-layout__active-quests">
-              <p className="terminal-kicker">EVENT DEBUG</p>
-              <p>Flags: {(snapshot.worldFlags ?? []).join(", ") || "none"}</p>
-              <p>Fired: {(snapshot.firedEventIds ?? []).join(", ") || "none"}</p>
-            </TerminalPanel>
-          )}
-
-          <ActionLogPanel log={snapshot.log} logRef={logRef} className="game-screen__action-log-panel" />
-        </div>
 
         {isCharacterSheetOpen && (
           <CharacterSheetModal
@@ -428,6 +404,12 @@ export function GameScreen({
             onClose={() => setIsQuestsOpen(false)}
           />
         )}
+
+        <GameLogModal
+          isOpen={isLogsOpen}
+          log={snapshot.log}
+          onClose={() => setIsLogsOpen(false)}
+        />
 
         {gameNotice !== null && (
           <div

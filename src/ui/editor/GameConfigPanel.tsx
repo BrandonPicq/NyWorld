@@ -27,7 +27,8 @@ export function GameConfigPanel({
   onNavigate,
   snapshot,
 }: GameConfigPanelProps) {
-  const [isRespawnPickerOpen, setRespawnPickerOpen] = useState(false);
+  const [isLocationPickerOpen, setLocationPickerOpen] = useState(false);
+  const [locationTarget, setLocationTarget] = useState<"start" | "respawn">("start");
   const {
     draft: config,
     zoneIds,
@@ -39,12 +40,19 @@ export function GameConfigPanel({
     isSaving,
     saveStatus,
     setDefaultZone,
+    setStartPosition,
     setRespawn,
     reset,
     save,
   } = draft;
-  const canPickRespawn =
-    !isSaving && !!snapshot.zones[config.safeRespawn.zoneId];
+  const startPosition = config.newGame.startPosition ??
+    snapshot.zones[config.defaultZoneId]?.playerStart;
+  const pickerTargets = [
+    { id: "start", label: "Game start", zoneId: config.defaultZoneId },
+    { id: "respawn", label: "Safe respawn", zoneId: config.safeRespawn.zoneId },
+  ] as const;
+  const activePickerTarget = pickerTargets.find((target) => target.id === locationTarget)!;
+  const canPickLocation = !isSaving && !!snapshot.zones[activePickerTarget.zoneId];
 
   return (
     <>
@@ -68,6 +76,10 @@ export function GameConfigPanel({
                 </select>
               </label>
 
+              <p className="editor-placement-hint">
+                Game start: ({startPosition?.x ?? "-"}, {startPosition?.y ?? "-"})
+              </p>
+
               <label className="editor-field">
                 <span>Safe Respawn Zone</span>
                 <select
@@ -83,45 +95,16 @@ export function GameConfigPanel({
                 </select>
               </label>
 
-              <div className="editor-form-row">
-                <label className="editor-field">
-                  <span>Respawn X</span>
-                  <input
-                    disabled={isSaving}
-                    min={0}
-                    onChange={(event) =>
-                      setRespawn({
-                        x: intOr(event.target.value, config.safeRespawn.x),
-                      })
-                    }
-                    step={1}
-                    type="number"
-                    value={config.safeRespawn.x}
-                  />
-                </label>
-                <label className="editor-field">
-                  <span>Respawn Y</span>
-                  <input
-                    disabled={isSaving}
-                    min={0}
-                    onChange={(event) =>
-                      setRespawn({
-                        y: intOr(event.target.value, config.safeRespawn.y),
-                      })
-                    }
-                    step={1}
-                    type="number"
-                    value={config.safeRespawn.y}
-                  />
-                </label>
-                <EditorButton
-                  className="editor-compact-button"
-                  disabled={!canPickRespawn}
-                  onClick={() => setRespawnPickerOpen(true)}
-                >
-                  Pick on Map
-                </EditorButton>
-              </div>
+              <p className="editor-placement-hint">
+                Safe respawn: ({config.safeRespawn.x}, {config.safeRespawn.y})
+              </p>
+              <EditorButton
+                className="editor-compact-button"
+                disabled={!canPickLocation}
+                onClick={() => setLocationPickerOpen(true)}
+              >
+                Pick Location
+              </EditorButton>
 
               <div className="editor-actions">
                 <EditorButton
@@ -172,20 +155,28 @@ export function GameConfigPanel({
         </ScrollRegion>
       </div>
 
-      {isRespawnPickerOpen ? (
+      {isLocationPickerOpen ? (
         <MapCoordinatePicker
-          onClose={() => setRespawnPickerOpen(false)}
-          onPick={(cell) => setRespawn({ x: cell.x, y: cell.y })}
+          onClose={() => setLocationPickerOpen(false)}
+          onPick={(cell) => {
+            if (locationTarget === "start") {
+              setStartPosition(cell);
+            } else {
+              setRespawn({ x: cell.x, y: cell.y });
+            }
+          }}
+          onTargetChange={(targetId) => {
+            if (targetId === "start" || targetId === "respawn") {
+              setLocationTarget(targetId);
+            }
+          }}
           snapshot={snapshot}
-          title="Pick safe respawn"
-          zoneId={config.safeRespawn.zoneId}
+          targetId={locationTarget}
+          targets={pickerTargets}
+          title="Pick location"
+          zoneId={activePickerTarget.zoneId}
         />
       ) : null}
     </>
   );
-}
-
-function intOr(value: string, fallback: number): number {
-  const parsed = Math.round(Number(value));
-  return Number.isFinite(parsed) ? parsed : fallback;
 }

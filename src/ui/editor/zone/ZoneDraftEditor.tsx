@@ -138,6 +138,19 @@ export function ZoneDraftEditor({
               {draft.width} × {draft.height} tiles · start ({draft.playerStart.x},{" "}
               {draft.playerStart.y})
             </p>
+            <label className="editor-field">
+              <span>Fog of War</span>
+              <input
+                checked={draft.fogOfWar ?? false}
+                onChange={(event) =>
+                  updateDraft((zone) => ({
+                    ...zone,
+                    fogOfWar: event.target.checked,
+                  }))
+                }
+                type="checkbox"
+              />
+            </label>
           </div>
           <div className="editor-zone-canvas-frame">
             <EditorZoneCanvas

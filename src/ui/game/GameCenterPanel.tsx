@@ -2,12 +2,13 @@ import type { ReactNode } from "react";
 import type { GameCommand, GameSnapshot } from "../../engine";
 import { getNpcDef } from "../../engine";
 import type { GridRenderSnapshot } from "../../rendering";
-import { GameCanvas } from "../components/GameCanvas";
+import type { MapCameraCellRect } from "../../rendering/mapCamera";
 import { TerminalButton } from "../components/TerminalButton";
 import { TerminalPanel } from "../components/TerminalPanel";
 import { getInteractKeyLabel, getMovementKeyLabel } from "../controls/gameInput";
 import type { KeyboardLayout } from "../controls/keyboardLayout";
 import { CombatPanel } from "./CombatPanel";
+import { GameMapViewport } from "./GameMapViewport";
 import type { AudioSettings } from "../audio/audioSettings";
 
 type GameCenterPanelProps = {
@@ -15,6 +16,7 @@ type GameCenterPanelProps = {
   controlsDisabled?: boolean;
   isInteractDisabled?: boolean;
   keyboardLayout: KeyboardLayout;
+  mapOverlay?: (playerRect: MapCameraCellRect | undefined) => ReactNode;
   onExecuteCommand: (command: GameCommand) => void;
   renderSnapshot: GridRenderSnapshot;
   snapshot: GameSnapshot;
@@ -26,6 +28,7 @@ export function GameCenterPanel({
   controlsDisabled = false,
   isInteractDisabled = false,
   keyboardLayout,
+  mapOverlay,
   onExecuteCommand,
   renderSnapshot,
   snapshot,
@@ -45,16 +48,18 @@ export function GameCenterPanel({
         />
       ) : (
         <>
-          <p className="terminal-kicker">SESSION ACTIVE</p>
-          <h1 className="terminal-heading-md" id="game-heading">
+          <h1 className="terminal-heading-md game-screen__zone-title" id="game-heading">
             {snapshot.zoneName}
           </h1>
 
-          <GameCanvas
-            ariaLabel="Zone grid"
-            className="game-screen__canvas"
-            renderSnapshot={renderSnapshot}
-          />
+          <div className="game-map-stage">
+            <GameMapViewport
+              ariaLabel="Zone grid"
+              mapOverlay={mapOverlay}
+              renderSnapshot={renderSnapshot}
+              zoneId={snapshot.zoneId}
+            />
+          </div>
 
           <div className="game-screen__debug">
             <p>

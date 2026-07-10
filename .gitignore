@@ -43,4 +43,7 @@ AGENTS.md
 docs/collaboration-method.md
 CLAUDE.md
 PLAN-OPUS.md
-.claude/launch.json
+.claude/*
+.agent/*
+PROMPT-SLICES-61-64.local.md
+PROMPT-SLICES-65-71.local.md

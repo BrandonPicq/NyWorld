@@ -21,6 +21,8 @@ export class GameMap {
   readonly width: number;
   readonly height: number;
   readonly playerStart: PlayerStart;
+  /** Whether the player must discover this zone's grid during play. */
+  readonly fogOfWar: boolean;
   readonly npcs: NpcSpawnData[];
   readonly items: ItemSpawnData[];
   /** @deprecated Compatibility projection for pre-event zone data. */
@@ -35,6 +37,7 @@ export class GameMap {
     this.width = data.width;
     this.height = data.height;
     this.playerStart = { ...data.playerStart };
+    this.fogOfWar = data.fogOfWar ?? false;
     this.tiles = data.tiles.map((row) => [...row]);
     this.transitions = new Map();
     this.npcs = data.npcs

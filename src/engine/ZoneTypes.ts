@@ -111,6 +111,8 @@ export interface ZoneData {
   height: number;
   /** Where the player appears on a fresh game; must be a walkable tile. */
   playerStart: PlayerStart;
+  /** Enables persistent 3x3 local visibility for this zone. */
+  fogOfWar?: boolean;
   /** Tile grid indexed as tiles[y][x]; ids must exist in the tile catalog. */
   tiles: TileGrid;
   /** Doorways to other zones; each must sit on a walkable tile. */

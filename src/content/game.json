@@ -1,9 +1,9 @@
 {
-  "defaultZoneId": "test_zone",
+  "defaultZoneId": "hajimari_no_mori",
   "safeRespawn": {
-    "zoneId": "test_zone",
-    "x": 5,
-    "y": 4
+    "zoneId": "hajimari_no_mori",
+    "x": 1,
+    "y": 1
   },
   "actions": {
     "rest": {
@@ -46,6 +46,10 @@
       "athletics": 1,
       "scholarship": 1,
       "speech": 1
+    },
+    "startPosition": {
+      "x": 1,
+      "y": 1
     }
   }
 }

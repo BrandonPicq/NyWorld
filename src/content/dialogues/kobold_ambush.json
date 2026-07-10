@@ -1,0 +1,9 @@
+{
+  "kobold_ambush.default": [
+    {
+      "speaker": "Kobold",
+      "text": "I got you let's fight",
+      "pitch": 1
+    }
+  ]
+}

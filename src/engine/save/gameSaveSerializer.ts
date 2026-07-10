@@ -35,6 +35,8 @@ export interface SaveSerializationState {
   firedEventIds?: Iterable<string>;
   eventCooldowns?: Record<string, number>;
   zoneVisitEventIds?: Iterable<string>;
+  currentSafeRespawn?: GameSaveData["currentSafeRespawn"];
+  exploredCellsByZone?: GameSaveData["exploredCellsByZone"];
   activeQuests: string[];
   completedQuests: string[];
   completedObjectives: string[];
@@ -71,6 +73,15 @@ export function serializeSaveData(state: SaveSerializationState): GameSaveData {
     firedEventIds: Array.from(state.firedEventIds ?? []),
     eventCooldowns: { ...(state.eventCooldowns ?? {}) },
     zoneVisitEventIds: Array.from(state.zoneVisitEventIds ?? []),
+    ...(state.currentSafeRespawn
+      ? { currentSafeRespawn: { ...state.currentSafeRespawn } }
+      : {}),
+    exploredCellsByZone: Object.fromEntries(
+      Object.entries(state.exploredCellsByZone ?? {}).map(([zoneId, cells]) => [
+        zoneId,
+        [...cells],
+      ]),
+    ),
     activeQuests: [...state.activeQuests],
     completedQuests: [...state.completedQuests],
     completedObjectives: [...state.completedObjectives],

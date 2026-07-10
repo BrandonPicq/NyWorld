@@ -37,6 +37,7 @@ export interface GameConfigController {
   isSaving: boolean;
   saveStatus: SaveStatus;
   setDefaultZone: (zoneId: string) => void;
+  setStartPosition: (position: { x: number; y: number }) => void;
   setRespawn: (patch: Partial<GameContentConfig["safeRespawn"]>) => void;
   reset: () => void;
   save: () => Promise<void>;
@@ -75,7 +76,23 @@ export function useGameConfigDraft(
   });
 
   function setDefaultZone(zoneId: string): void {
-    setDraft((current) => ({ ...current, defaultZoneId: zoneId }));
+    const zoneStart = combined.snapshot.zones[zoneId]?.playerStart;
+    setDraft((current) => ({
+      ...current,
+      defaultZoneId: zoneId,
+      newGame: {
+        ...current.newGame,
+        ...(zoneStart ? { startPosition: { ...zoneStart } } : {}),
+      },
+    }));
+    setSaveStatus({ state: "idle", message: "" });
+  }
+
+  function setStartPosition(position: { x: number; y: number }): void {
+    setDraft((current) => ({
+      ...current,
+      newGame: { ...current.newGame, startPosition: { ...position } },
+    }));
     setSaveStatus({ state: "idle", message: "" });
   }
 
@@ -129,6 +146,7 @@ export function useGameConfigDraft(
     isSaving,
     saveStatus: displayStatus,
     setDefaultZone,
+    setStartPosition,
     setRespawn,
     reset,
     save,

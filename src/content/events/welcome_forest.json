@@ -1,0 +1,20 @@
+{
+  "eventId": "welcome_forest",
+  "trigger": {
+    "type": "enter_zone",
+    "zoneId": "hajimari_no_mori"
+  },
+  "conditions": [],
+  "actions": [
+    {
+      "type": "dialogue",
+      "dialogueId": "zone_entries.beginner_forest"
+    },
+    {
+      "type": "start_quest",
+      "questId": "the_beginning"
+    }
+  ],
+  "repeatPolicy": "once_per_playthrough",
+  "priority": 0
+}

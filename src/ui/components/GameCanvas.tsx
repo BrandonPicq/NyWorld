@@ -1,6 +1,7 @@
 import { useEffect, useRef, type PointerEvent as ReactPointerEvent } from "react";
 import { GridRenderer } from "../../rendering/GridRenderer";
 import { pointerToCell, type GridCell } from "../../rendering/canvasCellMapping";
+import type { MapCamera } from "../../rendering/mapCamera";
 import type { GridRenderSnapshot } from "../../rendering/renderSnapshot";
 
 type GameCanvasProps = {
@@ -8,6 +9,10 @@ type GameCanvasProps = {
   cellSize?: number;
   className?: string;
   renderSnapshot: GridRenderSnapshot;
+  /** Optional gameplay camera; omitted by the editor for the full-map view. */
+  camera?: MapCamera | null;
+  /** CSS viewport dimensions used when a gameplay camera is active. */
+  viewportSize?: { width: number; height: number };
   /**
    * When provided, the canvas becomes interactive: it maps pointer positions to
    * grid cells (accounting for CSS scaling) and reports press and drag. The
@@ -26,6 +31,8 @@ export function GameCanvas({
   cellSize = 32,
   className,
   renderSnapshot,
+  camera = null,
+  viewportSize,
   onCellPointer,
   onCellHover,
 }: GameCanvasProps) {
@@ -33,14 +40,26 @@ export function GameCanvas({
   const rendererRef = useRef<GridRenderer | null>(null);
   const pressedRef = useRef(false);
   const snapshotRef = useRef(renderSnapshot);
+  const cameraRef = useRef<MapCamera | null>(camera);
   snapshotRef.current = renderSnapshot;
+  cameraRef.current = camera;
 
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
 
     const renderer = new GridRenderer(canvas, cellSize);
-    renderer.setDimensions(renderSnapshot.width, renderSnapshot.height);
+    if (viewportSize) {
+      renderer.setViewportDimensions(
+        renderSnapshot.width,
+        renderSnapshot.height,
+        viewportSize.width,
+        viewportSize.height,
+      );
+    } else {
+      renderer.setDimensions(renderSnapshot.width, renderSnapshot.height);
+    }
+    renderer.setCamera(cameraRef.current);
     rendererRef.current = renderer;
     // Resizing the canvas wipes it; repaint immediately so a cellSize-only
     // change (editor auto-fit) does not leave the map black until the next
@@ -52,11 +71,22 @@ export function GameCanvas({
       renderer.destroy();
       rendererRef.current = null;
     };
-  }, [cellSize, renderSnapshot.height, renderSnapshot.width]);
+  }, [
+    cellSize,
+    renderSnapshot.height,
+    renderSnapshot.width,
+    viewportSize?.height,
+    viewportSize?.width,
+  ]);
 
   useEffect(() => {
     rendererRef.current?.render(renderSnapshot);
   }, [renderSnapshot]);
+
+  useEffect(() => {
+    rendererRef.current?.setCamera(camera);
+    rendererRef.current?.render(snapshotRef.current);
+  }, [camera]);
 
   function cellFromEvent(
     event: ReactPointerEvent<HTMLCanvasElement>,

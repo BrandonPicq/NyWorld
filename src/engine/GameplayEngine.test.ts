@@ -269,15 +269,26 @@ describe("GameplayEngine", () => {
     });
   });
 
-  it("records movement and blocked movement in the action log", () => {
+  it("keeps successful movement silent and collapses repeated blocked movement", () => {
     const engine = createEngine();
 
+    engine.execute({ type: "MoveEast" });
     engine.execute({ type: "MoveEast" });
     engine.execute({ type: "MoveEast" });
 
     expect(engine.getSnapshot().log.map((entry) => entry.message)).toEqual([
       "Entered Movement Test.",
-      "Moved east to (2, 1).",
+      "Cannot move east — blocked at (3, 1).",
+    ]);
+
+    engine.execute({ type: "Rest" });
+    engine.execute({ type: "MoveEast" });
+
+    expect(engine.getSnapshot().log.map((entry) => entry.message)).toEqual([
+      "Entered Movement Test.",
+      "Cannot move east — blocked at (3, 1).",
+      "Gained 2 XP from resting.",
+      "Rested and recovered 15 energy.",
       "Cannot move east — blocked at (3, 1).",
     ]);
   });
@@ -397,7 +408,6 @@ describe("GameplayEngine", () => {
     });
     expect(engine.getSnapshot().log.map((entry) => entry.message)).toEqual([
       "Entered Movement Test.",
-      "Moved east to (2, 1).",
       "Entered Next Zone.",
     ]);
   });
@@ -502,9 +512,7 @@ describe("GameplayEngine", () => {
     });
     expect(engine.getSnapshot().log.map((entry) => entry.message)).toEqual([
       "Entered First Zone.",
-      "Moved east to (9, 4).",
       "Entered Second Zone.",
-      "Moved east to (2, 4).",
     ]);
   });
 
@@ -544,12 +552,7 @@ describe("GameplayEngine", () => {
     });
     expect(engine.getSnapshot().log.map((entry) => entry.message)).toEqual([
       "Entered Test Zone.",
-      "Moved east to (6, 4).",
-      "Moved east to (7, 4).",
-      "Moved east to (8, 4).",
-      "Moved east to (9, 4).",
       "Entered Test Zone 2.",
-      "Moved east to (2, 4).",
     ]);
   });
 
@@ -1037,7 +1040,6 @@ describe("GameplayEngine", () => {
     expect(herbStacks).toEqual([{ itemId: "healing_herb", quantity: 1 }]);
     expect(engine.getSnapshot().log.map((e) => e.message)).toEqual([
       "Entered Movement Test.",
-      "Moved east to (2, 1).",
       "Picked up Healing Herb.",
     ]);
   });
@@ -1810,7 +1812,7 @@ describe("GameplayEngine", () => {
 
       const logMessages = restored.getSnapshot().log.map((e) => e.message);
       expect(logMessages).toContain("Entered Movement Test.");
-      expect(logMessages).toContain("Moved east to (2, 1).");
+      expect(logMessages).not.toContain("Moved east to (2, 1).");
     });
 
     it("fromSaveData does not treat loading as a fresh zone entry", () => {

@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { GameplayEngine } from "../GameplayEngine";
 import { loadZone } from "../zoneLoader";
 
-function makeZone(zoneId: string, blocked = false) {
+function makeZone(zoneId: string, blocked = false, fogOfWar = false) {
   return loadZone({
     version: "0.1",
     zoneId,
@@ -10,6 +10,7 @@ function makeZone(zoneId: string, blocked = false) {
     width: 4,
     height: 4,
     playerStart: { x: 1, y: 1 },
+    fogOfWar,
     tiles: [
       [1, 1, 1, 1],
       [1, 0, blocked ? 1 : 0, 1],
@@ -180,5 +181,75 @@ describe("Event spawn, combat, and movement actions", () => {
     expect(engine.consumeNotices()).toEqual([
       { title: "Teleport Rejected", message: "That destination is not walkable." },
     ]);
+  });
+
+  it("persists a valid event-authored safe respawn", () => {
+    const engine = new GameplayEngine(makeZone("event_zone"), {
+      events: [
+        {
+          eventId: "set_camp",
+          trigger,
+          conditions: [],
+          actions: [{ type: "set_respawn", zoneId: "event_zone", x: 2, y: 2 }],
+          repeatPolicy: "once_per_playthrough",
+          priority: 1,
+        },
+      ],
+    });
+
+    engine.execute({ type: "Interact" });
+
+    expect(engine.createSaveData().currentSafeRespawn).toEqual({
+      zoneId: "event_zone",
+      x: 2,
+      y: 2,
+    });
+  });
+
+  it("reports an event respawn that is not walkable", () => {
+    const engine = new GameplayEngine(makeZone("event_zone"), {
+      events: [
+        {
+          eventId: "bad_camp",
+          trigger,
+          conditions: [],
+          actions: [{ type: "set_respawn", zoneId: "event_zone", x: 0, y: 0 }],
+          repeatPolicy: "once_per_playthrough",
+          priority: 1,
+        },
+      ],
+    });
+
+    engine.execute({ type: "Interact" });
+
+    expect(engine.consumeNotices()).toEqual([
+      {
+        title: "World Event",
+        message: 'Event bad_camp: could not set respawn to (0, 0) in "event_zone".',
+      },
+    ]);
+  });
+
+  it("lets events permanently reveal an explored area", () => {
+    const engine = new GameplayEngine(makeZone("event_zone", false, true), {
+      events: [
+        {
+          eventId: "reveal_landmark",
+          trigger,
+          conditions: [],
+          actions: [
+            { type: "reveal_area", zoneId: "event_zone", x: 3, y: 2, width: 1, height: 1 },
+          ],
+          repeatPolicy: "once_per_playthrough",
+          priority: 1,
+        },
+      ],
+    });
+
+    expect(engine.getSnapshot().mapVisibility?.[2][3]).toBe("hidden");
+    engine.execute({ type: "Interact" });
+
+    expect(engine.getSnapshot().mapVisibility?.[2][3]).toBe("explored");
+    expect(engine.createSaveData().exploredCellsByZone?.event_zone).toContain("3,2");
   });
 });

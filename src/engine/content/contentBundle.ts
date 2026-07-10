@@ -42,6 +42,11 @@ export interface NewGameStartingStack {
  * fresh playthroughs.
  */
 export interface NewGameConfig {
+  /** Optional explicit start in defaultZoneId; falls back to zone.playerStart. */
+  startPosition?: {
+    x: number;
+    y: number;
+  };
   startingCurrency: number;
   maxEnergy: number;
   startingInventory: NewGameStartingStack[];
@@ -235,6 +240,23 @@ export function getNewGameConfig(bundle: ContentBundle): NewGameConfig {
 }
 
 /**
+ * Resolves the authored fresh-playthrough location.
+ *
+ * Zones retain playerStart as a local fallback so older authored content and
+ * isolated maps stay valid while game.json can override the default-zone start.
+ */
+export function getNewGameStart(bundle: ContentBundle): SafeRespawnPoint {
+  const zone = bundle.zones[bundle.game.defaultZoneId];
+  if (!zone) {
+    throw new Error(
+      `Content bundle default zone "${bundle.game.defaultZoneId}" is not available.`,
+    );
+  }
+  const position = bundle.game.newGame.startPosition ?? zone.playerStart;
+  return { zoneId: zone.zoneId, x: position.x, y: position.y };
+}
+
+/**
  * Returns the authored action tuning as a detached value.
  */
 export function getActionTuning(bundle: ContentBundle): ActionTuningConfig {
@@ -336,7 +358,7 @@ export function validateGameConfig(
 
   validateSafeRespawn(value.safeRespawn, context, diagnostics);
   validateActionTuning(value.actions, diagnostics);
-  validateNewGameConfig(value.newGame, context, diagnostics);
+  validateNewGameConfig(value.newGame, value.defaultZoneId, context, diagnostics);
 
   return diagnostics;
 }
@@ -513,6 +535,7 @@ function validateSafeRespawn(
 
 function validateNewGameConfig(
   value: unknown,
+  defaultZoneId: unknown,
   context: GameConfigValidationContext,
   diagnostics: ContentDiagnostic[],
 ): void {
@@ -523,6 +546,37 @@ function validateNewGameConfig(
       "Game content config has invalid or missing newGame.",
     );
     return;
+  }
+
+  if (value.startPosition !== undefined) {
+    if (!isRecord(value.startPosition)) {
+      addGameConfigError(
+        diagnostics,
+        "newGame.startPosition",
+        "Game content newGame.startPosition must be an object.",
+      );
+    } else {
+      const { x, y } = value.startPosition;
+      if (!isNonNegativeGridCoordinate(x) || !isNonNegativeGridCoordinate(y)) {
+        addGameConfigError(
+          diagnostics,
+          "newGame.startPosition",
+          "Game content newGame.startPosition must use non-negative integer coordinates.",
+        );
+      } else if (typeof defaultZoneId === "string") {
+        const zone = context.zones.get(defaultZoneId);
+        if (
+          zone &&
+          (x >= zone.width || y >= zone.height || !zone.isWalkable(x, y))
+        ) {
+          addGameConfigError(
+            diagnostics,
+            "newGame.startPosition",
+            "Game content newGame.startPosition must be in the default zone on a walkable tile.",
+          );
+        }
+      }
+    }
   }
 
   if (
@@ -624,6 +678,10 @@ function validateStatSection(
   }
 }
 
+function isNonNegativeGridCoordinate(value: unknown): value is number {
+  return typeof value === "number" && Number.isInteger(value) && value >= 0;
+}
+
 function addGameConfigError(
   diagnostics: ContentDiagnostic[],
   path: string,
@@ -667,6 +725,7 @@ function cloneActionTuningConfig(config: ActionTuningConfig): ActionTuningConfig
 
 function cloneNewGameConfig(config: NewGameConfig): NewGameConfig {
   return {
+    ...(config.startPosition ? { startPosition: { ...config.startPosition } } : {}),
     startingCurrency: config.startingCurrency,
     maxEnergy: config.maxEnergy,
     startingInventory: config.startingInventory.map((stack) => ({ ...stack })),

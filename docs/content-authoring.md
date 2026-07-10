@@ -7,7 +7,8 @@ content is replaced by larger worlds or mods.
 ## Content Flow
 
 Content starts as JSON under `src/content`. The central game config in
-`src/content/game.json` declares the default zone and safe respawn point.
+`src/content/game.json` declares the default zone, fresh-game start, and safe
+respawn point.
 Registries discover content files, validate references where they can, and
 expose detached copies to the engine. `ContentBundle` discovers zone files,
 validates the global references, and resolves zones into `GameMap` instances.
@@ -48,7 +49,9 @@ save migration or compatibility alias.
 `src/content/game.json` owns global authoring choices that should not be
 hardcoded in React or the gameplay engine. `defaultZoneId` selects the starting
 zone for a new game. `safeRespawn` selects where the player returns after a
-combat defeat or similar recovery event.
+combat defeat or similar recovery event. `newGame.startPosition` optionally
+selects a walkable coordinate inside `defaultZoneId`; when absent, the zone's
+`playerStart` stays the compatible fallback.
 
 The safe respawn point must reference an authored zone and a walkable tile.
 
@@ -63,16 +66,23 @@ attribute and skill values. Saves store the full mutable player state, so this
 section never affects loaded games. Starting inventory ids must exist in the
 item catalog.
 
+An event can use `set_respawn` to replace the safe respawn for the current
+playthrough. This is mutable save state, not a content-file edit.
+
 ## Zones
 
 Zone JSON describes the map rectangle, tile grid, player start, optional
-transitions, NPC appearances, and ground item stacks. Zone-entry scenes belong
-to the `events` family and use an `enter_zone` trigger with a dialogue action.
+transitions, NPC appearances, and ground item stacks. `fogOfWar: true` enables
+a persistent 3x3 local view: visited terrain remains dimly visible while
+unknown cells and non-local entities stay hidden. Zone-entry scenes belong to
+the `events` family and use an `enter_zone` trigger with a dialogue action.
 `ContentBundle` discovers authored zones, while `loadZone` rejects invalid tile
 ids, blocked spawn positions, unknown content references, malformed dialogue,
 and invalid schedules before a `GameMap` reaches gameplay code.
 
 Zone coordinates use integer grid space with `(0, 0)` at the top-left corner.
+`reveal_area` events permanently reveal an authored rectangle (`zoneId`, `x`,
+`y`, `width`, `height`) in the current save.
 
 ## Validation And Runtime Conversion
 

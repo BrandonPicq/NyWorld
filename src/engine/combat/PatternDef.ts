@@ -20,8 +20,8 @@ export interface PatternEvolution {
  * Authored definition of a learnable QTE pattern (fireball, crosscut, ...).
  *
  * Patterns are learned (tomes / evolution), never derived from masteries. The
- * sequence is fixed and hidden during execution; only the picker and the sheet
- * reveal it (ADR 0009).
+ * sequence is fixed. Learned patterns normally hide it during execution;
+ * combat may reveal a magical pattern after a successful cast in that encounter.
  */
 export interface PatternDef {
   patternId: string;

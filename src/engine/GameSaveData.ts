@@ -11,7 +11,7 @@ import type { KnownPatternMap } from "./combat/PatternDef";
  * Increment this when older save payloads can no longer be safely interpreted
  * by the loader without migration.
  */
-export const SAVE_VERSION = "0.12";
+export const SAVE_VERSION = "0.14";
 
 /**
  * Versioned payload written to persistent save slots.
@@ -47,6 +47,14 @@ export interface GameSaveData {
   firedEventIds?: string[];
   eventCooldowns?: Record<string, number>;
   zoneVisitEventIds?: string[];
+  /** Runtime override written by set_respawn events, if one has fired. */
+  currentSafeRespawn?: {
+    zoneId: string;
+    x: number;
+    y: number;
+  };
+  /** Persistent discovered grid cells, grouped by zone id. */
+  exploredCellsByZone?: Record<string, string[]>;
   activeQuests: string[];
   completedQuests: string[];
   completedObjectives: string[];

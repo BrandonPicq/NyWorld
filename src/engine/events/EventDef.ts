@@ -42,6 +42,8 @@ export type EventAction =
   | { type: "despawn_npc"; npcId: string }
   | { type: "start_combat"; enemyId: string }
   | { type: "teleport"; zoneId: string; x: number; y: number }
+  | { type: "set_respawn"; zoneId: string; x: number; y: number }
+  | { type: "reveal_area"; zoneId: string; x: number; y: number; width: number; height: number }
   | { type: "start_quest"; questId: string }
   | { type: "advance_quest"; questId: string };
 

@@ -256,12 +256,36 @@ function isGameSaveData(value: unknown): value is GameSaveData {
     isOptionalStringArray(obj.firedEventIds) &&
     isOptionalStringNumberRecord(obj.eventCooldowns) &&
     isOptionalStringArray(obj.zoneVisitEventIds) &&
+    isOptionalSafeRespawn(obj.currentSafeRespawn) &&
+    isOptionalExploredCellsByZone(obj.exploredCellsByZone) &&
     Array.isArray(obj.activeQuests) &&
     obj.activeQuests.every((qId) => typeof qId === "string") &&
     Array.isArray(obj.completedQuests) &&
     obj.completedQuests.every((qId) => typeof qId === "string") &&
     Array.isArray(obj.completedObjectives) &&
     obj.completedObjectives.every((objId) => typeof objId === "string")
+  );
+}
+
+function isOptionalSafeRespawn(value: unknown): boolean {
+  if (value === undefined) return true;
+  if (!isRecord(value)) return false;
+  return (
+    typeof value.zoneId === "string" &&
+    value.zoneId.trim().length > 0 &&
+    isNonNegativeInteger(value.x) &&
+    isNonNegativeInteger(value.y)
+  );
+}
+
+function isOptionalExploredCellsByZone(value: unknown): boolean {
+  if (value === undefined) return true;
+  if (!isRecord(value)) return false;
+  return Object.entries(value).every(
+    ([zoneId, cells]) =>
+      zoneId.trim().length > 0 &&
+      Array.isArray(cells) &&
+      cells.every((cell) => typeof cell === "string" && /^\d+,\d+$/.test(cell)),
   );
 }
 

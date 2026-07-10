@@ -6,6 +6,7 @@ export type GridTileRenderRole = "blocked" | "open";
 export type GridRenderTile = {
   glyph: string;
   role: GridTileRenderRole;
+  visibility?: "hidden" | "explored" | "visible";
 };
 
 export type GridRenderSnapshot = {
@@ -34,17 +35,25 @@ export function createGridRenderSnapshot(
       x: snapshot.playerX,
       y: snapshot.playerY,
     },
-    tiles: snapshot.tiles.map((row) =>
-      row.map((tileId) => {
+    tiles: snapshot.tiles.map((row, y) =>
+      row.map((tileId, x) => {
         const tileDef = getTileDef(tileId);
 
         return {
           glyph: tileDef.glyph,
           role: tileDef.walkable ? "open" : "blocked",
+          ...(snapshot.mapVisibility?.[y]?.[x]
+            ? { visibility: snapshot.mapVisibility[y][x] }
+            : {}),
         };
       }),
     ),
     width: snapshot.mapWidth,
-    entities: snapshot.entities.map((e) => ({ ...e })),
+    entities: snapshot.entities
+      .filter((entity) => {
+        const visibility = snapshot.mapVisibility?.[entity.y]?.[entity.x];
+        return visibility !== "hidden" && visibility !== "explored";
+      })
+      .map((entity) => ({ ...entity })),
   };
 }

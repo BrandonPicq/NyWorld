@@ -14,6 +14,9 @@ type MapCoordinatePickerProps = {
   zoneId: string;
   onPick: (cell: GridCell) => void;
   onClose: () => void;
+  targets?: readonly { id: string; label: string; zoneId: string }[];
+  targetId?: string;
+  onTargetChange?: (targetId: string) => void;
 };
 
 /**
@@ -28,6 +31,9 @@ export function MapCoordinatePicker({
   zoneId,
   onPick,
   onClose,
+  targets,
+  targetId,
+  onTargetChange,
 }: MapCoordinatePickerProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const cancelButtonRef = useRef<HTMLButtonElement>(null);
@@ -77,6 +83,31 @@ export function MapCoordinatePicker({
             Cancel
           </EditorButton>
         </header>
+
+        {targets && targetId && onTargetChange ? (
+          <div
+            aria-label="Set location for"
+            className="editor-coordinate-picker__targets"
+            role="group"
+          >
+            <span className="editor-coordinate-picker__target-label">
+              Set location for
+            </span>
+            <div className="editor-coordinate-picker__target-buttons">
+              {targets.map((target) => (
+                <EditorButton
+                  aria-pressed={target.id === targetId}
+                  className="editor-coordinate-picker__target-button"
+                  isSelected={target.id === targetId}
+                  key={target.id}
+                  onClick={() => onTargetChange(target.id)}
+                >
+                  {target.label}
+                </EditorButton>
+              ))}
+            </div>
+          </div>
+        ) : null}
 
         {zone && renderSnapshot ? (
           <>
