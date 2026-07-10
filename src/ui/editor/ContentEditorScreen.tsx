@@ -296,6 +296,7 @@ export function ContentEditorScreen({
   function handleTabKeyDown(event: KeyboardEvent<HTMLElement>): void {
     const action = resolveTabKeyAction(event.key, {
       tabCount: EDITOR_TABS.length,
+      orientation: "vertical",
     });
 
     if (action.kind === "none" || action.kind === "cancel") {
@@ -346,7 +347,7 @@ export function ContentEditorScreen({
       event.stopPropagation();
 
       if (
-        activeElement?.closest(".editor-tabs") ||
+        activeElement?.closest(".editor-sidebar") ||
         activeElement?.closest(".editor-header__actions")
       ) {
         handleBack();
@@ -445,7 +446,7 @@ export function ContentEditorScreen({
         </header>
 
         <nav
-          className="editor-tabs"
+          className="editor-sidebar"
           aria-label="Editor sections"
           onKeyDown={handleTabKeyDown}
         >
@@ -627,15 +628,15 @@ const EditorTabButton = forwardRef<HTMLButtonElement, {
   return (
     <EditorButton
       aria-label={hasUnsavedChanges ? `${label} (unsaved)` : label}
-      className="editor-tab"
+      className="editor-sidebar__item"
       isSelected={isSelected}
       onClick={onClick}
       ref={ref}
       tabIndex={isSelected ? 0 : -1}
     >
-      <span className="editor-tab__label">{label}</span>
+      <span className="editor-sidebar__label">{label}</span>
       {hasUnsavedChanges ? (
-        <span aria-hidden="true" className="editor-tab__dirty" />
+        <span aria-hidden="true" className="editor-sidebar__dirty" />
       ) : null}
     </EditorButton>
   );

@@ -13,6 +13,27 @@ describe("tab navigation", () => {
     });
   });
 
+  it("uses vertical arrows when requested for a sidebar", () => {
+    expect(
+      resolveTabKeyAction("ArrowUp", {
+        tabCount: 5,
+        orientation: "vertical",
+      }),
+    ).toEqual({ kind: "move", direction: -1 });
+    expect(
+      resolveTabKeyAction("ArrowDown", {
+        tabCount: 5,
+        orientation: "vertical",
+      }),
+    ).toEqual({ kind: "move", direction: 1 });
+    expect(
+      resolveTabKeyAction("ArrowRight", {
+        tabCount: 5,
+        orientation: "vertical",
+      }),
+    ).toEqual({ kind: "none" });
+  });
+
   it("maps numeric keys to one-based tab indexes", () => {
     expect(resolveTabKeyAction("1", { tabCount: 5 })).toEqual({
       kind: "select",

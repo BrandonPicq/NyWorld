@@ -4,6 +4,12 @@ This file tracks meaningful project changes by commit-oriented slices.
 
 Keep entries short and practical. When a slice is committed, its changelog section should stay aligned with the commit title so the project history remains easy to read after restores or bisects.
 
+## 2026-07-10 - [UPDATE]: Sidebar navigation shell
+
+- Replace the editor's two-row section tabs with a compact left sidebar and a reduced top toolbar.
+- Move section navigation to Up/Down while preserving numeric shortcuts, focus hierarchy, and Escape behavior.
+- Add unit coverage for vertical tab navigation.
+
 ## 2026-07-10 - [ADD]: Editor design tokens and primitives
 
 - Add editor-scoped neutral dark-theme tokens, compact control measurements, and system UI typography.

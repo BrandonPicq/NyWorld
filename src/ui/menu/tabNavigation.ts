@@ -4,9 +4,15 @@ export type TabKeyAction =
   | { kind: "cancel" }
   | { kind: "none" };
 
+export type TabOrientation = "horizontal" | "vertical";
+
 export function resolveTabKeyAction(
   key: string,
-  options: { tabCount: number; hasCancel?: boolean },
+  options: {
+    tabCount: number;
+    hasCancel?: boolean;
+    orientation?: TabOrientation;
+  },
 ): TabKeyAction {
   if (key === "Escape") {
     return options.hasCancel ? { kind: "cancel" } : { kind: "none" };
@@ -16,10 +22,14 @@ export function resolveTabKeyAction(
     return { kind: "none" };
   }
 
-  if (key === "ArrowLeft") {
+  const orientation = options.orientation ?? "horizontal";
+  const previousKey = orientation === "horizontal" ? "ArrowLeft" : "ArrowUp";
+  const nextKey = orientation === "horizontal" ? "ArrowRight" : "ArrowDown";
+
+  if (key === previousKey) {
     return { kind: "move", direction: -1 };
   }
-  if (key === "ArrowRight") {
+  if (key === nextKey) {
     return { kind: "move", direction: 1 };
   }
 
