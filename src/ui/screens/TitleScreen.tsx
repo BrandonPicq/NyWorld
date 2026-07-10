@@ -37,17 +37,17 @@ export function TitleScreen({
     { label: "New Game", onSelect: onStartNewGame },
     ...(hasAnySave
       ? Array.from({ length: SAVE_SLOT_COUNT }, (_, i) => {
-          const save = saves[i];
-          if (!save || !onLoadSlot) {
-            return { label: `Continue — Slot ${i + 1} — Empty`, disabled: true };
-          }
-          return {
-            label: `Continue — ${save.zoneId} — ${formatWorldDateTime(
-              save.worldTimeMinutes,
-            )}`,
-            onSelect: () => onLoadSlot(i),
-          };
-        })
+        const save = saves[i];
+        if (!save || !onLoadSlot) {
+          return { label: `Continue — Slot ${i + 1} — Empty`, disabled: true };
+        }
+        return {
+          label: `Continue — ${save.zoneId} — ${formatWorldDateTime(
+            save.worldTimeMinutes,
+          )}`,
+          onSelect: () => onLoadSlot(i),
+        };
+      })
       : [{ label: "Continue — No saved games", disabled: true }]),
     { label: "Options", onSelect: onOpenOptions },
     ...(onOpenEditor
@@ -58,7 +58,7 @@ export function TitleScreen({
   return (
     <main className="app-shell title-screen" aria-labelledby="title-heading">
       <TerminalPanel className="title-panel">
-        <p className="terminal-kicker">NYWARUDO // V0.0.1</p>
+        <p className="terminal-kicker">NYWARUDO // V0.0.2</p>
         <h1 className="terminal-heading" id="title-heading">
           NyWarudo
         </h1>

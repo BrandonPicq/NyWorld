@@ -1,9 +1,9 @@
 {
-  "defaultZoneId": "hajimari_no_mori",
+  "defaultZoneId": "test_zone",
   "safeRespawn": {
-    "zoneId": "hajimari_no_mori",
-    "x": 1,
-    "y": 1
+    "zoneId": "test_zone",
+    "x": 5,
+    "y": 4
   },
   "actions": {
     "rest": {
@@ -19,6 +19,10 @@
     }
   },
   "newGame": {
+    "startPosition": {
+      "x": 5,
+      "y": 4
+    },
     "startingCurrency": 1550,
     "maxEnergy": 100,
     "startingInventory": [
@@ -46,10 +50,6 @@
       "athletics": 1,
       "scholarship": 1,
       "speech": 1
-    },
-    "startPosition": {
-      "x": 1,
-      "y": 1
     }
   }
 }
