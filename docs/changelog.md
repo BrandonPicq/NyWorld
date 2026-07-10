@@ -4,6 +4,12 @@ This file tracks meaningful project changes by commit-oriented slices.
 
 Keep entries short and practical. When a slice is committed, its changelog section should stay aligned with the commit title so the project history remains easy to read after restores or bisects.
 
+## 2026-07-10 - [FIX]: Per-file save gating with a visible reason
+
+- Let each editor save command validate only the file it writes, so unrelated draft errors no longer block it.
+- Show the selected file's blocking error count beside the save action and keep full-bundle validation for Playtest.
+- Cover the shared file-save gate with focused unit tests.
+
 ## 2026-07-09 - [FIX]: Skip the empty-interact fallback when an event fires
 
 - Stop logging "There is nothing to interact with nearby." when the interact key triggers a world event with no NPC around; the interaction now counts as a success.

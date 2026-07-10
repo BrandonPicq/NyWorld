@@ -89,6 +89,18 @@ Etapes restantes :
 - etendre les boucles d'edition aux autres familles de contenu, en gardant les metadonnees d'edition separees des types gameplay ;
 - reevaluer a terme la separation de l'editeur dans une application dediee si sa surface depasse le simple outil dev integre.
 
+## PLAN-OPUS §12 - Refonte de l'editeur
+
+Objectif : faire de l'editeur un outil compact a theme sombre neutre, independant de l'identite terminal du jeu, sans modifier les ecrans de jeu.
+
+- Slice 72 - `[FIX]: Per-file save gating with a visible reason` : `[STATUS: complete]`.
+- Slice 73 - `[ADD]: Editor design tokens and primitives` : `[STATUS: pending]`.
+- Slice 74 - `[UPDATE]: Sidebar navigation shell` : `[STATUS: pending]`.
+- Slice 75 - `[UPDATE]: Workbench and form density pass` : `[STATUS: pending]`.
+- Slice 76 - `[UPDATE]: Picker, zone tools, and final sweep` : `[STATUS: pending]`.
+
+Le lancement du Playtest conserve sa validation globale ; les commandes Save se calent sur la validation du fichier qu'elles ecrivent.
+
 ## Tests et validation
 
 Tests unitaires Vitest existants : moteur (deplacements, collisions, ticks, calendrier, zones, transitions, PNJs, schedules, dialogues, inventaire, quetes, combat QTE, equilibrage, sauvegardes et migrations) et logique UI (menus, themes, vitesse de texte, audio, layouts clavier, reglages gameplay, stockage des sauvegardes).

@@ -1,12 +1,15 @@
 import { useMemo, useState } from "react";
-import type {
-  ContentCatalogSnapshot,
-  ContentDiagnostic,
-  GameContentConfig,
+import {
+  validateGameConfig,
+  type ContentCatalogSnapshot,
+  type ContentDiagnostic,
+  type GameContentConfig,
 } from "../../engine";
 import { GAME_CONFIG_CONTENT_PATH, saveEditorContent } from "./editorSaveClient";
 import {
-  draftHasBlockingErrors,
+  formatFileSaveBlocker,
+  getFileSaveGate,
+  getFileSaveStatus,
   serializeGameConfig,
   type SaveStatus,
 } from "./editorModel";
@@ -61,14 +64,15 @@ export function useGameConfigDraft(
   const serialized = useMemo(() => serializeGameConfig(draft), [draft]);
   const hasUnsavedChanges = serialized !== savedJson;
   const isSaving = saveStatus.state === "saving";
-  const canSave = hasUnsavedChanges && combined.errorCount === 0 && !isSaving;
-  const displayStatus: SaveStatus =
-    saveStatus.state === "idle"
-      ? {
-          state: "idle",
-          message: hasUnsavedChanges ? "Unsaved changes." : "No changes.",
-        }
-      : saveStatus;
+  const gameSaveGate = getFileSaveGate(
+    validateGameConfig(draft, combined.context),
+    { hasUnsavedChanges, isSaving },
+  );
+  const canSave = gameSaveGate.canSave;
+  const displayStatus = getFileSaveStatus(saveStatus, {
+    hasUnsavedChanges,
+    errorCount: gameSaveGate.errorCount,
+  });
 
   function setDefaultZone(zoneId: string): void {
     setDraft((current) => ({ ...current, defaultZoneId: zoneId }));
@@ -93,10 +97,14 @@ export function useGameConfigDraft(
     if (!hasUnsavedChanges || isSaving) {
       return;
     }
-    if (draftHasBlockingErrors(combined.snapshot, combined.context)) {
+    const saveGate = getFileSaveGate(
+      validateGameConfig(draft, combined.context),
+      { hasUnsavedChanges, isSaving },
+    );
+    if (saveGate.errorCount > 0) {
       setSaveStatus({
         state: "error",
-        message: "Resolve errors before saving.",
+        message: formatFileSaveBlocker(saveGate.errorCount),
       });
       return;
     }

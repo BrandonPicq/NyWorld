@@ -9,7 +9,12 @@ import {
   type EventDef,
 } from "../../../engine";
 import { deleteEditorContent, saveEditorContent } from "../editorSaveClient";
-import { draftHasBlockingErrors, type SaveStatus } from "../editorModel";
+import {
+  formatFileSaveBlocker,
+  getFileSaveGate,
+  getFileSaveStatus,
+  type SaveStatus,
+} from "../editorModel";
 import type { CombinedDraftView, DraftSlot } from "../editorDraftTypes";
 import {
   cloneEventDefs,
@@ -81,6 +86,10 @@ export function useEventDraft(
   const hasUnsavedChanges = slot.value.some((event) => serializeEventDef(event) !== savedJson.get(event.eventId)) || savedSlot.value.some((event) => !slot.value.some((draft) => draft.eventId === event.eventId));
   const isSaving = saveStatus.state === "saving";
   const newEventErrors = validateNewEventId(newEventIdDraft, slot.value);
+  const selectedEventSaveGate = getFileSaveGate(
+    selectedEvent ? validateEventDef(selectedEvent, combined.context) : [],
+    { hasUnsavedChanges: selectedEventHasUnsavedChanges, isSaving },
+  );
 
   useEffect(() => {
     if (!selectedEventId || slot.value.some((event) => event.eventId === selectedEventId)) return;
@@ -107,8 +116,15 @@ export function useEventDraft(
   }
   async function saveSelectedEvent(): Promise<void> {
     if (!selectedEvent || !selectedEventHasUnsavedChanges) return;
-    if (draftHasBlockingErrors(combined.snapshot, combined.context) || validateEventDef(selectedEvent, combined.context).length > 0) {
-      setSaveStatus({ state: "error", message: "Resolve errors before saving." });
+    const saveGate = getFileSaveGate(
+      validateEventDef(selectedEvent, combined.context),
+      { hasUnsavedChanges: selectedEventHasUnsavedChanges, isSaving },
+    );
+    if (saveGate.errorCount > 0) {
+      setSaveStatus({
+        state: "error",
+        message: formatFileSaveBlocker(saveGate.errorCount),
+      });
       return;
     }
     setSaveStatus({ state: "saving", message: "Saving..." });
@@ -142,10 +158,10 @@ export function useEventDraft(
     questIds: combined.snapshot.quests.map((quest) => quest.questId).sort(),
     errorCount: combined.errorCount, warningCount: combined.warningCount,
     hasUnsavedChanges, selectedEventHasUnsavedChanges,
-    canSaveSelectedEvent: !!selectedEvent && selectedEventHasUnsavedChanges && combined.errorCount === 0 && !isSaving,
+    canSaveSelectedEvent: !!selectedEvent && selectedEventSaveGate.canSave,
     canResetSelectedEvent: !!selectedEvent && selectedEventHasUnsavedChanges && !isSaving,
     canDeleteSelectedEvent: !!selectedEvent && selectedEventReferences.length === 0 && !isSaving,
-    isSaving, saveStatus: saveStatus.state === "idle" ? { state: "idle", message: hasUnsavedChanges ? "Unsaved changes." : "No changes." } : saveStatus,
+    isSaving, saveStatus: getFileSaveStatus(saveStatus, { hasUnsavedChanges: selectedEventHasUnsavedChanges, errorCount: selectedEventSaveGate.errorCount }),
     newEventIdDraft, canCreateEvent: newEventErrors.length === 0 && !isSaving,
     setNewEventIdDraft, selectEvent: setSelectedEventId, createEvent, updateSelectedEvent,
     resetSelectedEvent, saveSelectedEvent, deleteSelectedEvent,

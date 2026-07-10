@@ -19,6 +19,9 @@ import {
   createItemDraftSnapshot,
   createItemDraftValidationContext,
   draftHasBlockingErrors,
+  formatFileSaveBlocker,
+  getFileSaveGate,
+  getFileSaveStatus,
   groupDiagnosticsByContentType,
   hasAnyUnsavedEditorChanges,
   serializeGameConfig,
@@ -271,6 +274,51 @@ describe("draftHasBlockingErrors", () => {
       },
     };
     expect(draftHasBlockingErrors(broken, context)).toBe(true);
+  });
+});
+
+describe("file save gating", () => {
+  it("does not let an error in another file block this file", () => {
+    expect(
+      getFileSaveGate([], { hasUnsavedChanges: true, isSaving: false }),
+    ).toEqual({ errorCount: 0, canSave: true });
+  });
+
+  it("blocks saving and reports the selected file's errors", () => {
+    const diagnostics: ContentDiagnostic[] = [
+      {
+        severity: "error",
+        contentType: "dialogue",
+        contentId: "blocked.default",
+        path: "[0].text",
+        message: "Text is required.",
+      },
+      {
+        severity: "error",
+        contentType: "dialogue",
+        contentId: "blocked.default",
+        path: "[0].speaker",
+        message: "Speaker is required.",
+      },
+    ];
+    const gate = getFileSaveGate(diagnostics, {
+      hasUnsavedChanges: true,
+      isSaving: false,
+    });
+
+    expect(gate).toEqual({ errorCount: 2, canSave: false });
+    expect(formatFileSaveBlocker(gate.errorCount)).toBe(
+      "2 errors in this file block saving.",
+    );
+    expect(
+      getFileSaveStatus(
+        { state: "idle", message: "" },
+        { hasUnsavedChanges: true, errorCount: gate.errorCount },
+      ),
+    ).toEqual({
+      state: "error",
+      message: "2 errors in this file block saving.",
+    });
   });
 });
 

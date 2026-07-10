@@ -10,7 +10,12 @@ import {
   type NpcDef,
 } from "../../../engine";
 import { deleteEditorContent, saveEditorContent } from "../editorSaveClient";
-import { draftHasBlockingErrors, type SaveStatus } from "../editorModel";
+import {
+  formatFileSaveBlocker,
+  getFileSaveGate,
+  getFileSaveStatus,
+  type SaveStatus,
+} from "../editorModel";
 import type { CombinedDraftView, DraftSlot } from "../editorDraftTypes";
 import {
   cloneEnemyDefs,
@@ -128,13 +133,14 @@ export function useEnemyDraft(
       savedEnemyJsonById.get(selectedEnemy.npcId);
   const hasUnsavedChanges = hasAnyUnsavedEnemy(draftEnemies, savedEnemies);
   const isSaving = saveStatus.state === "saving";
+  const selectedEnemySaveGate = getFileSaveGate(
+    selectedEnemy ? validateEnemyDef(selectedEnemy, combined.context) : [],
+    { hasUnsavedChanges: selectedEnemyHasUnsavedChanges, isSaving },
+  );
   const canCreateSelectedEnemy =
     selectedNpc !== null && selectedEnemy === null && !isSaving;
   const canSaveSelectedEnemy =
-    selectedEnemy !== null &&
-    selectedEnemyHasUnsavedChanges &&
-    combined.errorCount === 0 &&
-    !isSaving;
+    selectedEnemy !== null && selectedEnemySaveGate.canSave;
   const canResetSelectedEnemy =
     selectedNpcId !== "" &&
     hasSelectedEnemyUnsavedState(selectedNpcId, draftEnemies, savedEnemies) &&
@@ -143,13 +149,10 @@ export function useEnemyDraft(
     selectedEnemy !== null &&
     selectedEnemyReferences.length === 0 &&
     !isSaving;
-  const displayStatus: SaveStatus =
-    saveStatus.state === "idle"
-      ? {
-          state: "idle",
-          message: hasUnsavedChanges ? "Unsaved changes." : "No changes.",
-        }
-      : saveStatus;
+  const displayStatus = getFileSaveStatus(saveStatus, {
+    hasUnsavedChanges: selectedEnemyHasUnsavedChanges,
+    errorCount: selectedEnemySaveGate.errorCount,
+  });
 
   useEffect(() => {
     if (!selectedNpcId || base.npcs.some((npc) => npc.npcId === selectedNpcId)) {
@@ -210,13 +213,14 @@ export function useEnemyDraft(
       setSaveStatus({ state: "idle", message: "" });
       return;
     }
-    if (
-      draftHasBlockingErrors(combined.snapshot, combined.context) ||
-      validateEnemyDef(selectedEnemy, combined.context).length > 0
-    ) {
+    const saveGate = getFileSaveGate(
+      validateEnemyDef(selectedEnemy, combined.context),
+      { hasUnsavedChanges: selectedEnemyHasUnsavedChanges, isSaving },
+    );
+    if (saveGate.errorCount > 0) {
       setSaveStatus({
         state: "error",
-        message: "Resolve errors before saving.",
+        message: formatFileSaveBlocker(saveGate.errorCount),
       });
       return;
     }

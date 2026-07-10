@@ -10,13 +10,17 @@ import {
   type DialogueNodeData,
 } from "../../../engine";
 import { saveEditorContent } from "../editorSaveClient";
-import { draftHasBlockingErrors, type SaveStatus } from "../editorModel";
+import {
+  formatFileSaveBlocker,
+  getFileSaveGate,
+  getFileSaveStatus,
+  type SaveStatus,
+} from "../editorModel";
 import type { CombinedDraftView, DraftSlot } from "../editorDraftTypes";
 import {
   addDialogueFile,
   addDialogueToFile,
   cloneDialogueFiles,
-  createDialogueDraftValidationContext,
   dialogueContentPath,
   listDialogueFiles,
   removeDialogueFromFile,
@@ -148,11 +152,12 @@ export function useDialogueDraft(
     serializeDialogueFile(selectedFile) !==
       serializeFiles(savedFiles).get(selectedStem);
   const isSaving = saveStatus.state === "saving";
+  const selectedFileSaveGate = getFileSaveGate(
+    selectedFile ? validateDialogueFile(selectedFile) : [],
+    { hasUnsavedChanges: selectedFileHasUnsavedChanges, isSaving },
+  );
   const canSaveSelectedFile =
-    selectedFile !== null &&
-    selectedFileHasUnsavedChanges &&
-    combined.errorCount === 0 &&
-    !isSaving;
+    selectedFile !== null && selectedFileSaveGate.canSave;
   const canDeleteSelectedDialogue =
     selectedFile !== null &&
     Boolean(selectedDialogueId) &&
@@ -165,13 +170,10 @@ export function useDialogueDraft(
     newDialogueIdDraft,
     draftFiles,
   );
-  const displayStatus: SaveStatus =
-    saveStatus.state === "idle"
-      ? {
-          state: "idle",
-          message: hasUnsavedChanges ? "Unsaved changes." : "No changes.",
-        }
-      : saveStatus;
+  const displayStatus = getFileSaveStatus(saveStatus, {
+    hasUnsavedChanges: selectedFileHasUnsavedChanges,
+    errorCount: selectedFileSaveGate.errorCount,
+  });
 
   useEffect(() => {
     if (selectedStem && draftFiles[selectedStem]) {
@@ -323,16 +325,14 @@ export function useDialogueDraft(
       setSaveStatus({ state: "idle", message: "" });
       return;
     }
-    if (
-      draftHasBlockingErrors(
-        combined.snapshot,
-        createDialogueDraftValidationContext(combined.context, base, draftFiles),
-      ) ||
-      validateDialogueFile(selectedFile).length > 0
-    ) {
+    const saveGate = getFileSaveGate(validateDialogueFile(selectedFile), {
+      hasUnsavedChanges: selectedFileHasUnsavedChanges,
+      isSaving,
+    });
+    if (saveGate.errorCount > 0) {
       setSaveStatus({
         state: "error",
-        message: "Resolve errors before saving.",
+        message: formatFileSaveBlocker(saveGate.errorCount),
       });
       return;
     }

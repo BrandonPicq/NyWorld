@@ -7,7 +7,12 @@ import {
   type ContentDiagnostic,
 } from "../../../engine";
 import { saveEditorContent } from "../editorSaveClient";
-import { draftHasBlockingErrors, type SaveStatus } from "../editorModel";
+import {
+  formatFileSaveBlocker,
+  getFileSaveGate,
+  getFileSaveStatus,
+  type SaveStatus,
+} from "../editorModel";
 import type { CombinedDraftView, DraftSlot } from "../editorDraftTypes";
 import {
   actionContentPath,
@@ -105,20 +110,18 @@ export function useActionDraft(
     (entry) => entry.hasUnsavedChanges,
   );
   const isSaving = saveStatus.state === "saving";
+  const selectedActionSaveGate = getFileSaveGate(
+    selectedAction ? validateCombatActionDef(selectedAction) : [],
+    { hasUnsavedChanges: selectedActionHasUnsavedChanges, isSaving },
+  );
   const canSaveSelectedAction =
-    selectedAction !== null &&
-    selectedActionHasUnsavedChanges &&
-    combined.errorCount === 0 &&
-    !isSaving;
+    selectedAction !== null && selectedActionSaveGate.canSave;
   const canResetSelectedAction =
     selectedActionHasUnsavedChanges && !isSaving;
-  const displayStatus: SaveStatus =
-    saveStatus.state === "idle"
-      ? {
-          state: "idle",
-          message: hasUnsavedChanges ? "Unsaved changes." : "No changes.",
-        }
-      : saveStatus;
+  const displayStatus = getFileSaveStatus(saveStatus, {
+    hasUnsavedChanges: selectedActionHasUnsavedChanges,
+    errorCount: selectedActionSaveGate.errorCount,
+  });
 
   function selectAction(actionId: string): void {
     setSelectedActionId(actionId);
@@ -166,13 +169,14 @@ export function useActionDraft(
       setSaveStatus({ state: "idle", message: "" });
       return;
     }
-    if (
-      draftHasBlockingErrors(combined.snapshot, combined.context) ||
-      validateCombatActionDef(selectedAction).length > 0
-    ) {
+    const saveGate = getFileSaveGate(validateCombatActionDef(selectedAction), {
+      hasUnsavedChanges: selectedActionHasUnsavedChanges,
+      isSaving,
+    });
+    if (saveGate.errorCount > 0) {
       setSaveStatus({
         state: "error",
-        message: "Resolve errors before saving.",
+        message: formatFileSaveBlocker(saveGate.errorCount),
       });
       return;
     }

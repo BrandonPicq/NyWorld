@@ -11,7 +11,12 @@ import {
   type NpcPresenceDef,
 } from "../../../engine";
 import { deleteEditorContent, saveEditorContent } from "../editorSaveClient";
-import { draftHasBlockingErrors, type SaveStatus } from "../editorModel";
+import {
+  formatFileSaveBlocker,
+  getFileSaveGate,
+  getFileSaveStatus,
+  type SaveStatus,
+} from "../editorModel";
 import type { CombinedDraftView, DraftSlot } from "../editorDraftTypes";
 import {
   addPresenceScheduleEntry,
@@ -142,13 +147,16 @@ export function useNpcPresenceDraft(
       savedPresenceJsonById.get(selectedPresence.npcId);
   const hasUnsavedChanges = hasAnyUnsavedPresence(draftPresence, savedPresence);
   const isSaving = saveStatus.state === "saving";
+  const selectedPresenceSaveGate = getFileSaveGate(
+    selectedPresence
+      ? validateNpcPresenceDef(selectedPresence, combined.context)
+      : [],
+    { hasUnsavedChanges: selectedPresenceHasUnsavedChanges, isSaving },
+  );
   const canCreateSelectedPresence =
     selectedNpc !== null && selectedPresence === null && !isSaving;
   const canSaveSelectedPresence =
-    selectedPresence !== null &&
-    selectedPresenceHasUnsavedChanges &&
-    combined.errorCount === 0 &&
-    !isSaving;
+    selectedPresence !== null && selectedPresenceSaveGate.canSave;
   const canResetSelectedPresence =
     selectedNpcId !== "" &&
     hasSelectedPresenceUnsavedState(
@@ -161,13 +169,10 @@ export function useNpcPresenceDraft(
     selectedPresence !== null &&
     selectedPresenceReferences.length === 0 &&
     !isSaving;
-  const displayStatus: SaveStatus =
-    saveStatus.state === "idle"
-      ? {
-          state: "idle",
-          message: hasUnsavedChanges ? "Unsaved changes." : "No changes.",
-        }
-      : saveStatus;
+  const displayStatus = getFileSaveStatus(saveStatus, {
+    hasUnsavedChanges: selectedPresenceHasUnsavedChanges,
+    errorCount: selectedPresenceSaveGate.errorCount,
+  });
 
   useEffect(() => {
     if (!selectedNpcId || base.npcs.some((npc) => npc.npcId === selectedNpcId)) {
@@ -249,13 +254,14 @@ export function useNpcPresenceDraft(
       setSaveStatus({ state: "idle", message: "" });
       return;
     }
-    if (
-      draftHasBlockingErrors(combined.snapshot, combined.context) ||
-      validateNpcPresenceDef(selectedPresence, combined.context).length > 0
-    ) {
+    const saveGate = getFileSaveGate(
+      validateNpcPresenceDef(selectedPresence, combined.context),
+      { hasUnsavedChanges: selectedPresenceHasUnsavedChanges, isSaving },
+    );
+    if (saveGate.errorCount > 0) {
       setSaveStatus({
         state: "error",
-        message: "Resolve errors before saving.",
+        message: formatFileSaveBlocker(saveGate.errorCount),
       });
       return;
     }

@@ -9,7 +9,12 @@ import {
   type QuestDef,
 } from "../../../engine";
 import { deleteEditorContent, saveEditorContent } from "../editorSaveClient";
-import { draftHasBlockingErrors, type SaveStatus } from "../editorModel";
+import {
+  formatFileSaveBlocker,
+  getFileSaveGate,
+  getFileSaveStatus,
+  type SaveStatus,
+} from "../editorModel";
 import type { CombinedDraftView, DraftSlot } from "../editorDraftTypes";
 import {
   cloneQuestDefs,
@@ -155,16 +160,17 @@ export function useQuestDraft(
       savedQuestJsonById.get(selectedQuest.questId);
   const hasUnsavedChanges = hasAnyUnsavedQuest(draftQuests, savedQuests);
   const isSaving = saveStatus.state === "saving";
+  const selectedQuestSaveGate = getFileSaveGate(
+    selectedQuest ? validateQuestDef(selectedQuest, combined.context) : [],
+    { hasUnsavedChanges: selectedQuestHasUnsavedChanges, isSaving },
+  );
   const newQuestIdErrors = validateNewQuestId(newQuestIdDraft, draftQuests);
   const canCreateQuest =
     newQuestIdErrors.length === 0 &&
     newQuestNameDraft.trim().length > 0 &&
     !isSaving;
   const canSaveSelectedQuest =
-    selectedQuest !== null &&
-    selectedQuestHasUnsavedChanges &&
-    combined.errorCount === 0 &&
-    !isSaving;
+    selectedQuest !== null && selectedQuestSaveGate.canSave;
   const canResetSelectedQuest =
     selectedQuestId !== "" &&
     hasSelectedQuestUnsavedState(selectedQuestId, draftQuests, savedQuests) &&
@@ -173,13 +179,10 @@ export function useQuestDraft(
     selectedQuest !== null &&
     selectedQuestReferences.length === 0 &&
     !isSaving;
-  const displayStatus: SaveStatus =
-    saveStatus.state === "idle"
-      ? {
-          state: "idle",
-          message: hasUnsavedChanges ? "Unsaved changes." : "No changes.",
-        }
-      : saveStatus;
+  const displayStatus = getFileSaveStatus(saveStatus, {
+    hasUnsavedChanges: selectedQuestHasUnsavedChanges,
+    errorCount: selectedQuestSaveGate.errorCount,
+  });
 
   useEffect(() => {
     if (
@@ -254,13 +257,14 @@ export function useQuestDraft(
       setSaveStatus({ state: "idle", message: "" });
       return;
     }
-    if (
-      draftHasBlockingErrors(combined.snapshot, combined.context) ||
-      validateQuestDef(selectedQuest, combined.context).length > 0
-    ) {
+    const saveGate = getFileSaveGate(
+      validateQuestDef(selectedQuest, combined.context),
+      { hasUnsavedChanges: selectedQuestHasUnsavedChanges, isSaving },
+    );
+    if (saveGate.errorCount > 0) {
       setSaveStatus({
         state: "error",
-        message: "Resolve errors before saving.",
+        message: formatFileSaveBlocker(saveGate.errorCount),
       });
       return;
     }

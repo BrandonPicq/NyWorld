@@ -16,7 +16,9 @@ import {
 import {
   buildContentBrowserGroups,
   cloneItemCatalog,
-  draftHasBlockingErrors,
+  formatFileSaveBlocker,
+  getFileSaveGate,
+  getFileSaveStatus,
   groupDiagnosticsByContentType,
   serializeItemCatalog,
   type SaveStatus,
@@ -112,8 +114,15 @@ export function useItemDraft(
     0,
   );
   const isSaving = saveStatus.state === "saving";
-  const canSaveItems =
-    hasUnsavedChanges && combined.errorCount === 0 && !isSaving;
+  const itemSaveGate = getFileSaveGate(itemCatalogDiagnostics, {
+    hasUnsavedChanges,
+    isSaving,
+  });
+  const canSaveItems = itemSaveGate.canSave;
+  const displayStatus = getFileSaveStatus(saveStatus, {
+    hasUnsavedChanges,
+    errorCount: itemSaveGate.errorCount,
+  });
 
   useEffect(() => {
     setItemIdDraft(selectedRef.id);
@@ -198,10 +207,14 @@ export function useItemDraft(
       return;
     }
 
-    if (draftHasBlockingErrors(combined.snapshot, combined.context)) {
+    const saveGate = getFileSaveGate(
+      validateItemCatalog(draftItems, combined.context),
+      { hasUnsavedChanges, isSaving },
+    );
+    if (saveGate.errorCount > 0) {
       setSaveStatus({
         state: "error",
-        message: "Resolve errors before saving.",
+        message: formatFileSaveBlocker(saveGate.errorCount),
       });
       return;
     }
@@ -237,7 +250,7 @@ export function useItemDraft(
     setItemIdDraft,
     isSaving,
     canSaveItems,
-    saveStatus,
+    saveStatus: displayStatus,
     updateSelectedItem,
     renameSelectedItem,
     resetItemDraft,

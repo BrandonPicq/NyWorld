@@ -9,7 +9,12 @@ import {
   type PatternDef,
 } from "../../../engine";
 import { deleteEditorContent, saveEditorContent } from "../editorSaveClient";
-import { draftHasBlockingErrors, type SaveStatus } from "../editorModel";
+import {
+  formatFileSaveBlocker,
+  getFileSaveGate,
+  getFileSaveStatus,
+  type SaveStatus,
+} from "../editorModel";
 import type { CombinedDraftView, DraftSlot } from "../editorDraftTypes";
 import {
   clonePatternDefs,
@@ -128,11 +133,14 @@ export function useQtePatternDraft(
       savedJsonById.get(selectedPattern.patternId);
   const hasUnsavedChanges = hasAnyUnsavedPattern(draftPatterns, savedPatterns);
   const isSaving = saveStatus.state === "saving";
+  const selectedPatternSaveGate = getFileSaveGate(
+    selectedPattern
+      ? validateQtePatternDef(selectedPattern, combined.context)
+      : [],
+    { hasUnsavedChanges: selectedPatternHasUnsavedChanges, isSaving },
+  );
   const canSaveSelectedPattern =
-    selectedPattern !== null &&
-    selectedPatternHasUnsavedChanges &&
-    combined.errorCount === 0 &&
-    !isSaving;
+    selectedPattern !== null && selectedPatternSaveGate.canSave;
   const canResetSelectedPattern =
     selectedPatternId !== "" &&
     hasSelectedPatternUnsavedState(
@@ -145,13 +153,10 @@ export function useQtePatternDraft(
     selectedPattern !== null &&
     selectedPatternReferences.length === 0 &&
     !isSaving;
-  const displayStatus: SaveStatus =
-    saveStatus.state === "idle"
-      ? {
-          state: "idle",
-          message: hasUnsavedChanges ? "Unsaved changes." : "No changes.",
-        }
-      : saveStatus;
+  const displayStatus = getFileSaveStatus(saveStatus, {
+    hasUnsavedChanges: selectedPatternHasUnsavedChanges,
+    errorCount: selectedPatternSaveGate.errorCount,
+  });
 
   useEffect(() => {
     if (
@@ -223,11 +228,15 @@ export function useQtePatternDraft(
       setSaveStatus({ state: "idle", message: "" });
       return;
     }
-    if (
-      draftHasBlockingErrors(combined.snapshot, combined.context) ||
-      validateQtePatternDef(selectedPattern, combined.context).length > 0
-    ) {
-      setSaveStatus({ state: "error", message: "Resolve errors before saving." });
+    const saveGate = getFileSaveGate(
+      validateQtePatternDef(selectedPattern, combined.context),
+      { hasUnsavedChanges: selectedPatternHasUnsavedChanges, isSaving },
+    );
+    if (saveGate.errorCount > 0) {
+      setSaveStatus({
+        state: "error",
+        message: formatFileSaveBlocker(saveGate.errorCount),
+      });
       return;
     }
 

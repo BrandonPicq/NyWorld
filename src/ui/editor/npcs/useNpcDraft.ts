@@ -10,7 +10,12 @@ import {
   type NpcDef,
 } from "../../../engine";
 import { saveEditorContent } from "../editorSaveClient";
-import { draftHasBlockingErrors, type SaveStatus } from "../editorModel";
+import {
+  formatFileSaveBlocker,
+  getFileSaveGate,
+  getFileSaveStatus,
+  type SaveStatus,
+} from "../editorModel";
 import type { CombinedDraftView, DraftSlot } from "../editorDraftTypes";
 import type { DialogueDraftSlot } from "../dialogues/useDialogueDraft";
 import {
@@ -180,18 +185,16 @@ export function useNpcDraft(
     generatedDefaultDialogueId !== "" &&
     !generatedDialogueAlreadyExists &&
     !isSaving;
+  const selectedNpcSaveGate = getFileSaveGate(
+    selectedNpc ? validateNpcDef(selectedNpc, combined.context) : [],
+    { hasUnsavedChanges: selectedNpcHasUnsavedChanges, isSaving },
+  );
   const canSaveSelectedNpc =
-    selectedNpc !== null &&
-    selectedNpcHasUnsavedChanges &&
-    combined.errorCount === 0 &&
-    !isSaving;
-  const displayStatus: SaveStatus =
-    saveStatus.state === "idle"
-      ? {
-          state: "idle",
-          message: hasUnsavedChanges ? "Unsaved changes." : "No changes.",
-        }
-      : saveStatus;
+    selectedNpc !== null && selectedNpcSaveGate.canSave;
+  const displayStatus = getFileSaveStatus(saveStatus, {
+    hasUnsavedChanges: selectedNpcHasUnsavedChanges,
+    errorCount: selectedNpcSaveGate.errorCount,
+  });
 
   useEffect(() => {
     if (!selectedNpcId || draftNpcs.some((npc) => npc.npcId === selectedNpcId)) {
@@ -339,13 +342,14 @@ export function useNpcDraft(
       setSaveStatus({ state: "idle", message: "" });
       return;
     }
-    if (
-      draftHasBlockingErrors(combined.snapshot, combined.context) ||
-      validateNpcDef(selectedNpc, combined.context).length > 0
-    ) {
+    const saveGate = getFileSaveGate(
+      validateNpcDef(selectedNpc, combined.context),
+      { hasUnsavedChanges: selectedNpcHasUnsavedChanges, isSaving },
+    );
+    if (saveGate.errorCount > 0) {
       setSaveStatus({
         state: "error",
-        message: "Resolve errors before saving.",
+        message: formatFileSaveBlocker(saveGate.errorCount),
       });
       return;
     }

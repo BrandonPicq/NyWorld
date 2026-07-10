@@ -1,14 +1,20 @@
 import { useMemo, useState } from "react";
-import type {
-  ContentCatalogSnapshot,
-  ContentDiagnostic,
-  ZoneData,
+import {
+  validateZoneData,
+  type ContentCatalogSnapshot,
+  type ContentDiagnostic,
+  type ZoneData,
 } from "../../../engine";
 import type { GridCell } from "../../../rendering/canvasCellMapping";
 import type { GridRenderSnapshot } from "../../../rendering/renderSnapshot";
 import { createZoneEditRenderSnapshot } from "../../../rendering/zoneEditRenderSnapshot";
 import { saveEditorContent } from "../editorSaveClient";
-import { draftHasBlockingErrors, type SaveStatus } from "../editorModel";
+import {
+  formatFileSaveBlocker,
+  getFileSaveGate,
+  getFileSaveStatus,
+  type SaveStatus,
+} from "../editorModel";
 import type { CombinedDraftView, DraftSlot } from "../editorDraftTypes";
 import {
   cloneZoneData,
@@ -108,17 +114,18 @@ export function useZoneDraft(
 
   const hasUnsavedChanges = draft !== null && serialized !== savedJson;
   const isSaving = saveStatus.state === "saving";
-  const canSave = hasUnsavedChanges && combined.errorCount === 0 && !isSaving;
+  const zoneSaveGate = getFileSaveGate(
+    draft ? validateZoneData(draft, combined.context) : [],
+    { hasUnsavedChanges, isSaving },
+  );
+  const canSave = zoneSaveGate.canSave;
   const canUndo = (history?.past.length ?? 0) > 0;
   const canRedo = (history?.future.length ?? 0) > 0;
 
-  const displayStatus: SaveStatus =
-    saveStatus.state === "idle"
-      ? {
-          state: "idle",
-          message: hasUnsavedChanges ? "Unsaved changes." : "No changes.",
-        }
-      : saveStatus;
+  const displayStatus = getFileSaveStatus(saveStatus, {
+    hasUnsavedChanges,
+    errorCount: zoneSaveGate.errorCount,
+  });
 
   function markEditing(): void {
     setSaveStatus((prev) =>
@@ -230,10 +237,14 @@ export function useZoneDraft(
       return;
     }
 
-    if (draftHasBlockingErrors(combined.snapshot, combined.context)) {
+    const saveGate = getFileSaveGate(
+      validateZoneData(draft, combined.context),
+      { hasUnsavedChanges, isSaving },
+    );
+    if (saveGate.errorCount > 0) {
       setSaveStatus({
         state: "error",
-        message: "Resolve errors before saving.",
+        message: formatFileSaveBlocker(saveGate.errorCount),
       });
       return;
     }

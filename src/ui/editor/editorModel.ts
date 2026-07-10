@@ -18,6 +18,56 @@ export type SaveStatus =
   | { state: "saved"; message: string }
   | { state: "error"; message: string };
 
+export interface FileSaveGate {
+  errorCount: number;
+  canSave: boolean;
+}
+
+/**
+ * Computes save eligibility for the one content file behind a Save button.
+ *
+ * Whole-bundle diagnostics are deliberately not involved here: unrelated
+ * drafts must not make a valid file impossible to save. Playtest validation
+ * remains responsible for the full-bundle gate.
+ */
+export function getFileSaveGate(
+  diagnostics: readonly ContentDiagnostic[],
+  options: { hasUnsavedChanges: boolean; isSaving: boolean },
+): FileSaveGate {
+  const errorCount = diagnostics.filter(
+    (diagnostic) => diagnostic.severity === "error",
+  ).length;
+
+  return {
+    errorCount,
+    canSave: options.hasUnsavedChanges && errorCount === 0 && !options.isSaving,
+  };
+}
+
+export function formatFileSaveBlocker(errorCount: number): string {
+  const noun = errorCount === 1 ? "error" : "errors";
+  return `${errorCount} ${noun} in this file block saving.`;
+}
+
+export function getFileSaveStatus(
+  status: SaveStatus,
+  options: { hasUnsavedChanges: boolean; errorCount: number },
+): SaveStatus {
+  if (status.state !== "idle") {
+    return status;
+  }
+  if (!options.hasUnsavedChanges) {
+    return { state: "idle", message: "No changes." };
+  }
+  if (options.errorCount > 0) {
+    return {
+      state: "error",
+      message: formatFileSaveBlocker(options.errorCount),
+    };
+  }
+  return { state: "idle", message: "Unsaved changes." };
+}
+
 export interface ContentBrowserEntry {
   ref: ContentRef;
   label: string;

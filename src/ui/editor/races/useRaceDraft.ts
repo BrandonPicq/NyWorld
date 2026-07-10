@@ -6,7 +6,12 @@ import {
   type ContentReference,
   type RaceDef,
 } from "../../../engine";
-import { draftHasBlockingErrors, type SaveStatus } from "../editorModel";
+import {
+  formatFileSaveBlocker,
+  getFileSaveGate,
+  getFileSaveStatus,
+  type SaveStatus,
+} from "../editorModel";
 import { saveEditorContent } from "../editorSaveClient";
 import type { CombinedDraftView, DraftSlot } from "../editorDraftTypes";
 import {
@@ -105,18 +110,16 @@ export function useRaceDraft(
     serializeRaceDef(selectedRace) !== savedRaceJsonById.get(selectedRace.raceId);
   const hasUnsavedChanges = raceEntries.some((entry) => entry.hasUnsavedChanges);
   const isSaving = saveStatus.state === "saving";
+  const selectedRaceSaveGate = getFileSaveGate(
+    selectedRace ? validateRaceDef(selectedRace) : [],
+    { hasUnsavedChanges: selectedRaceHasUnsavedChanges, isSaving },
+  );
   const canSaveSelectedRace =
-    selectedRace !== null &&
-    selectedRaceHasUnsavedChanges &&
-    combined.errorCount === 0 &&
-    !isSaving;
-  const displayStatus: SaveStatus =
-    saveStatus.state === "idle"
-      ? {
-          state: "idle",
-          message: hasUnsavedChanges ? "Unsaved changes." : "No changes.",
-        }
-      : saveStatus;
+    selectedRace !== null && selectedRaceSaveGate.canSave;
+  const displayStatus = getFileSaveStatus(saveStatus, {
+    hasUnsavedChanges: selectedRaceHasUnsavedChanges,
+    errorCount: selectedRaceSaveGate.errorCount,
+  });
 
   useEffect(() => {
     if (
@@ -159,15 +162,14 @@ export function useRaceDraft(
       setSaveStatus({ state: "idle", message: "" });
       return;
     }
-    if (
-      draftHasBlockingErrors(combined.snapshot, combined.context) ||
-      validateRaceDef(selectedRace).some(
-        (diagnostic) => diagnostic.severity === "error",
-      )
-    ) {
+    const saveGate = getFileSaveGate(validateRaceDef(selectedRace), {
+      hasUnsavedChanges: selectedRaceHasUnsavedChanges,
+      isSaving,
+    });
+    if (saveGate.errorCount > 0) {
       setSaveStatus({
         state: "error",
-        message: "Resolve errors before saving.",
+        message: formatFileSaveBlocker(saveGate.errorCount),
       });
       return;
     }

@@ -7,7 +7,12 @@ import {
   type ContentDiagnostic,
   type ContentReference,
 } from "../../../engine";
-import { draftHasBlockingErrors, type SaveStatus } from "../editorModel";
+import {
+  formatFileSaveBlocker,
+  getFileSaveGate,
+  getFileSaveStatus,
+  type SaveStatus,
+} from "../editorModel";
 import { saveEditorContent } from "../editorSaveClient";
 import type { CombinedDraftView, DraftSlot } from "../editorDraftTypes";
 import {
@@ -111,18 +116,16 @@ export function useClassDraft(
     (entry) => entry.hasUnsavedChanges,
   );
   const isSaving = saveStatus.state === "saving";
+  const selectedClassSaveGate = getFileSaveGate(
+    selectedClass ? validateClassDef(selectedClass) : [],
+    { hasUnsavedChanges: selectedClassHasUnsavedChanges, isSaving },
+  );
   const canSaveSelectedClass =
-    selectedClass !== null &&
-    selectedClassHasUnsavedChanges &&
-    combined.errorCount === 0 &&
-    !isSaving;
-  const displayStatus: SaveStatus =
-    saveStatus.state === "idle"
-      ? {
-          state: "idle",
-          message: hasUnsavedChanges ? "Unsaved changes." : "No changes.",
-        }
-      : saveStatus;
+    selectedClass !== null && selectedClassSaveGate.canSave;
+  const displayStatus = getFileSaveStatus(saveStatus, {
+    hasUnsavedChanges: selectedClassHasUnsavedChanges,
+    errorCount: selectedClassSaveGate.errorCount,
+  });
 
   useEffect(() => {
     if (
@@ -169,15 +172,14 @@ export function useClassDraft(
       setSaveStatus({ state: "idle", message: "" });
       return;
     }
-    if (
-      draftHasBlockingErrors(combined.snapshot, combined.context) ||
-      validateClassDef(selectedClass).some(
-        (diagnostic) => diagnostic.severity === "error",
-      )
-    ) {
+    const saveGate = getFileSaveGate(validateClassDef(selectedClass), {
+      hasUnsavedChanges: selectedClassHasUnsavedChanges,
+      isSaving,
+    });
+    if (saveGate.errorCount > 0) {
       setSaveStatus({
         state: "error",
-        message: "Resolve errors before saving.",
+        message: formatFileSaveBlocker(saveGate.errorCount),
       });
       return;
     }
