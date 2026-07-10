@@ -310,6 +310,9 @@ describe("file save gating", () => {
     expect(formatFileSaveBlocker(gate.errorCount)).toBe(
       "2 errors in this file block saving.",
     );
+    expect(formatFileSaveBlocker(1)).toBe(
+      "1 error in this file blocks saving.",
+    );
     expect(
       getFileSaveStatus(
         { state: "idle", message: "" },

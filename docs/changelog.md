@@ -4,6 +4,12 @@ This file tracks meaningful project changes by commit-oriented slices.
 
 Keep entries short and practical. When a slice is committed, its changelog section should stay aligned with the commit title so the project history remains easy to read after restores or bisects.
 
+## 2026-07-10 - [FIX]: Surface failed event actions in the log
+
+- Log and notify when spawn, despawn, or start-combat event actions fail instead of silently doing nothing (e.g. starting combat with an enemy absent from the zone).
+- Keep the event registry test stable as authored content grows.
+- Pluralize the file save-blocker message correctly.
+
 ## 2026-07-10 - [UPDATE]: Picker, zone tools, and final sweep
 
 - Finish the compact zone workbench and coordinate-picker treatment, including responsive statusbars and selected placement rows.

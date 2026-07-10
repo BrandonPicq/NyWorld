@@ -255,13 +255,42 @@ export class EventSystem {
       case "notice": this.context.addLog(action.message); this.context.addNotice(action.message); return emptyResult();
       case "start_quest": this.context.startQuest(action.questId); return emptyResult();
       case "advance_quest": this.context.advanceQuest(action.questId); return emptyResult();
-      case "spawn_enemy": this.context.spawnEnemy(action.enemyId, action.x, action.y); return emptyResult();
-      case "despawn_enemy": this.context.despawnEnemy(action.enemyId); return emptyResult();
-      case "spawn_npc": this.context.spawnNpc(action.npcId, action.x, action.y, action.dialogueId); return emptyResult();
-      case "despawn_npc": this.context.despawnNpc(action.npcId); return emptyResult();
-      case "start_combat": return this.context.startCombat(action.enemyId);
+      case "spawn_enemy":
+        if (!this.context.spawnEnemy(action.enemyId, action.x, action.y)) {
+          this.reportActionFailure(eventId, `could not spawn enemy "${action.enemyId}" at (${action.x}, ${action.y})`);
+        }
+        return emptyResult();
+      case "despawn_enemy":
+        if (!this.context.despawnEnemy(action.enemyId)) {
+          this.reportActionFailure(eventId, `could not despawn enemy "${action.enemyId}"`);
+        }
+        return emptyResult();
+      case "spawn_npc":
+        if (!this.context.spawnNpc(action.npcId, action.x, action.y, action.dialogueId)) {
+          this.reportActionFailure(eventId, `could not spawn NPC "${action.npcId}" at (${action.x}, ${action.y})`);
+        }
+        return emptyResult();
+      case "despawn_npc":
+        if (!this.context.despawnNpc(action.npcId)) {
+          this.reportActionFailure(eventId, `could not despawn NPC "${action.npcId}"`);
+        }
+        return emptyResult();
+      case "start_combat": {
+        const combatResult = this.context.startCombat(action.enemyId);
+        if (combatResult.success !== true) {
+          this.reportActionFailure(eventId, `could not start combat with "${action.enemyId}" (not present in this zone — spawn it first)`);
+        }
+        return combatResult;
+      }
       case "teleport": this.context.teleport(action.zoneId, action.x, action.y); return emptyResult();
     }
+  }
+
+  /** Authoring mistakes must be visible, not silent: log + notice. */
+  private reportActionFailure(eventId: string, message: string): void {
+    const line = `Event ${eventId}: ${message}.`;
+    this.context.addLog(line);
+    this.context.addNotice(line);
   }
 }
 

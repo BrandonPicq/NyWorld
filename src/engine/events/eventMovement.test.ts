@@ -50,6 +50,57 @@ describe("Event spawn, combat, and movement actions", () => {
     expect(engine.getSnapshot().entities.some((entity) => entity.npcId === "slime")).toBe(true);
   });
 
+  it("resumes spawn and combat actions after a blocking event dialogue", () => {
+    const engine = new GameplayEngine(makeZone("event_zone"), {
+      events: [
+        {
+          eventId: "ambush",
+          trigger,
+          conditions: [],
+          actions: [
+            { type: "dialogue", dialogueId: "goblin.default" },
+            { type: "spawn_enemy", enemyId: "slime", x: 2, y: 2 },
+            { type: "start_combat", enemyId: "slime" },
+          ],
+          repeatPolicy: "once_per_playthrough",
+          priority: 1,
+        },
+      ],
+    });
+
+    engine.execute({ type: "Interact" });
+    expect(engine.getSnapshot().combatState?.opponentNpcId).toBeUndefined();
+
+    engine.execute({ type: "CompleteDialogue" });
+    expect(engine.getSnapshot().combatState?.opponentNpcId).toBe("slime");
+  });
+
+  it("reports a start_combat action whose enemy is absent from the zone", () => {
+    const engine = new GameplayEngine(makeZone("event_zone"), {
+      events: [
+        {
+          eventId: "ghost_fight",
+          trigger,
+          conditions: [],
+          actions: [{ type: "start_combat", enemyId: "kobold" }],
+          repeatPolicy: "once_per_playthrough",
+          priority: 1,
+        },
+      ],
+    });
+
+    engine.execute({ type: "Interact" });
+
+    const expectedLine =
+      'Event ghost_fight: could not start combat with "kobold" (not present in this zone — spawn it first).';
+    expect(engine.consumeNotices()).toEqual([
+      { title: "World Event", message: expectedLine },
+    ]);
+    const messages = engine.getSnapshot().log.map((entry) => entry.message);
+    expect(messages).toContain(expectedLine);
+    expect(engine.getSnapshot().combatState?.opponentNpcId).toBeUndefined();
+  });
+
   it("rejects event teleports to blocked tiles without moving the player", () => {
     const source = makeZone("event_zone");
     const blockedTarget = makeZone("blocked_zone", true);

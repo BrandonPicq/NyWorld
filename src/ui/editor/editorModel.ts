@@ -45,8 +45,9 @@ export function getFileSaveGate(
 }
 
 export function formatFileSaveBlocker(errorCount: number): string {
-  const noun = errorCount === 1 ? "error" : "errors";
-  return `${errorCount} ${noun} in this file block saving.`;
+  return errorCount === 1
+    ? "1 error in this file blocks saving."
+    : `${errorCount} errors in this file block saving.`;
 }
 
 export function getFileSaveStatus(

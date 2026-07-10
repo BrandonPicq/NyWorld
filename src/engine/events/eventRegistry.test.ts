@@ -25,11 +25,15 @@ describe("Event content validation", () => {
   it("accepts a valid area event and resolves the shipped registry", () => {
     const context = createRuntimeContentValidationContext(defaultContentBundle);
     expect(validateEventDef(validEvent, context)).toEqual([]);
-    expect(getAllEventDefs().map((event) => event.eventId)).toEqual([
-      "test_fields_welcome",
-      "test_zone_2_entry",
-      "test_zone_entry",
-    ]);
+    // Content authors add events over time; assert the shipped baseline is
+    // present instead of pinning the full list.
+    expect(getAllEventDefs().map((event) => event.eventId)).toEqual(
+      expect.arrayContaining([
+        "test_fields_welcome",
+        "test_zone_2_entry",
+        "test_zone_entry",
+      ]),
+    );
   });
 
   it("accumulates reference, area, and flag diagnostics", () => {
