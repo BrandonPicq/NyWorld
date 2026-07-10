@@ -60,6 +60,19 @@ production de contenu a besoin d'un systeme generique et authorable.
    quetes restent tels quels ; leur unification sera reevaluee apres
    l'experience de la production de contenu.
 
+## Amendement (2026-07-10) — combats invoques sans presence carte
+
+Demande utilisateur pendant le playtest de scenarisation : `start_combat`
+ne doit pas exiger que l'ennemi existe sur la carte. Desormais, si
+l'ennemi vise est present dans la zone, le combat classique s'engage
+(l'entite est retiree a la victoire) ; sinon le combat demarre quand
+meme contre le profil de l'ennemi, sans entite sur la carte (« combat
+invoque »). `spawn_enemy` reste utile uniquement quand on veut que le
+monstre soit visible/persistant sur la carte avant ou sans combat. Pour
+memoire : les entites spawnees par evenement sont transitoires — le
+monde est reconstruit depuis les spawns de zone a chaque entree de zone
+ou chargement de sauvegarde.
+
 ## Consequences
 
 - Nouveau composant runtime (flags de monde, evenements declenches,

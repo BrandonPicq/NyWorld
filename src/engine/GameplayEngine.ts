@@ -19,6 +19,7 @@ import {
   normalizeCompletedObjectiveKeys,
 } from "./quests/QuestProgressionSystem";
 import { getDialogue } from "./dialogues/dialogueRegistry";
+import { getNpcDef, hasNpcDef } from "./npcs/npcRegistry";
 import { InventorySystem } from "./items/InventorySystem";
 import { getItemDef } from "./items/itemRegistry";
 import type { EquipmentBonusMap } from "./items/ItemDef";
@@ -1192,10 +1193,18 @@ export class GameplayEngine {
   }
 
   private startEventCombat(enemyId: string): EventSystemResult {
-    if (!hasEnemyDef(enemyId)) return { success: false };
+    if (!hasEnemyDef(enemyId) || !hasNpcDef(enemyId)) return { success: false };
     const npc = this.getNpcById(enemyId);
-    if (!npc) return { success: false };
-    return { success: this.combat.startCombat(npc).success };
+    if (npc) {
+      return { success: this.combat.startCombat(npc).success };
+    }
+    // No map presence required: event combats can summon the enemy directly.
+    return {
+      success: this.combat.startCombatWithoutEntity(
+        enemyId,
+        getNpcDef(enemyId).name,
+      ).success,
+    };
   }
 
   private teleportEventPlayer(zoneId: string, x: number, y: number): boolean {

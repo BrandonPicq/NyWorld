@@ -278,7 +278,7 @@ export class EventSystem {
       case "start_combat": {
         const combatResult = this.context.startCombat(action.enemyId);
         if (combatResult.success !== true) {
-          this.reportActionFailure(eventId, `could not start combat with "${action.enemyId}" (not present in this zone — spawn it first)`);
+          this.reportActionFailure(eventId, `could not start combat with "${action.enemyId}" (unknown enemy)`);
         }
         return combatResult;
       }

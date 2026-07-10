@@ -75,11 +75,11 @@ describe("Event spawn, combat, and movement actions", () => {
     expect(engine.getSnapshot().combatState?.opponentNpcId).toBe("slime");
   });
 
-  it("reports a start_combat action whose enemy is absent from the zone", () => {
+  it("starts an event combat even when the enemy has no map entity", () => {
     const engine = new GameplayEngine(makeZone("event_zone"), {
       events: [
         {
-          eventId: "ghost_fight",
+          eventId: "summoned_fight",
           trigger,
           conditions: [],
           actions: [{ type: "start_combat", enemyId: "kobold" }],
@@ -89,15 +89,72 @@ describe("Event spawn, combat, and movement actions", () => {
       ],
     });
 
+    const result = engine.execute({ type: "Interact" });
+
+    expect(result.success).toBe(true);
+    expect(engine.getSnapshot().combatState?.opponentNpcId).toBe("kobold");
+    // The summoned opponent never exists on the map.
+    expect(
+      engine.getSnapshot().entities.some((entity) => entity.npcId === "kobold"),
+    ).toBe(false);
+  });
+
+  it("concludes an event-summoned combat victory without a map entity", () => {
+    const engine = new GameplayEngine(makeZone("event_zone"), {
+      random: () => 0.5,
+      events: [
+        {
+          eventId: "summon_slime",
+          trigger,
+          conditions: [],
+          actions: [{ type: "start_combat", enemyId: "slime" }],
+          repeatPolicy: "once_per_playthrough",
+          priority: 1,
+        },
+      ],
+    });
+
+    engine.execute({ type: "Interact" });
+    expect(engine.getSnapshot().combatState?.opponentNpcId).toBe("slime");
+
+    // Two critical strikes finish the slime (see combatEngine.test.ts math).
+    engine.execute({ type: "SelectCombatAction", actionKind: "strike" });
+    engine.execute({ type: "SubmitCombatQte", completed: true, inputAdvantage: 6, mistakes: 0 });
+    engine.execute({ type: "StartOpponentTurn" });
+    engine.execute({ type: "SubmitCombatQte", completed: true, inputAdvantage: 5, mistakes: 0 });
+    engine.execute({ type: "SelectCombatAction", actionKind: "strike" });
+    engine.execute({ type: "SubmitCombatQte", completed: true, inputAdvantage: 6, mistakes: 0 });
+
+    expect(engine.getSnapshot().combatState?.phase).toBe("victory");
+    const conclude = engine.execute({ type: "ConcludeCombat" });
+    expect(conclude.success).toBe(true);
+    expect(engine.getSnapshot().combatState).toBeUndefined();
+    expect(
+      engine.getSnapshot().inventory.items.some((item) => item.itemId === "slime_remains"),
+    ).toBe(true);
+  });
+
+  it("reports a start_combat action against an unknown enemy", () => {
+    const engine = new GameplayEngine(makeZone("event_zone"), {
+      events: [
+        {
+          eventId: "ghost_fight",
+          trigger,
+          conditions: [],
+          actions: [{ type: "start_combat", enemyId: "ghost" }],
+          repeatPolicy: "once_per_playthrough",
+          priority: 1,
+        },
+      ],
+    });
+
     engine.execute({ type: "Interact" });
 
     const expectedLine =
-      'Event ghost_fight: could not start combat with "kobold" (not present in this zone — spawn it first).';
+      'Event ghost_fight: could not start combat with "ghost" (unknown enemy).';
     expect(engine.consumeNotices()).toEqual([
       { title: "World Event", message: expectedLine },
     ]);
-    const messages = engine.getSnapshot().log.map((entry) => entry.message);
-    expect(messages).toContain(expectedLine);
     expect(engine.getSnapshot().combatState?.opponentNpcId).toBeUndefined();
   });
 

@@ -4,6 +4,12 @@ This file tracks meaningful project changes by commit-oriented slices.
 
 Keep entries short and practical. When a slice is committed, its changelog section should stay aligned with the commit title so the project history remains easy to read after restores or bisects.
 
+## 2026-07-10 - [UPDATE]: Event combats no longer require a map entity
+
+- Let the start_combat event action summon a fight directly against the enemy profile when the enemy has no entity in the zone; spawn_enemy stays for visible map presence.
+- Guard the victory cleanup so summoned fights conclude without a world entity to remove.
+- Record the ADR 0010 amendment.
+
 ## 2026-07-10 - [FIX]: Surface failed event actions in the log
 
 - Log and notify when spawn, despawn, or start-combat event actions fail instead of silently doing nothing (e.g. starting combat with an enemy absent from the zone).

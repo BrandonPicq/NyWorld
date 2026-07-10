@@ -48,7 +48,8 @@ export type CombatPhase =
  * combat panel renders phases, meters, and the QTE race from this shape.
  */
 export interface CombatState {
-  opponentId: EntityId;
+  /** World entity of the opponent; undefined for event-summoned fights with no map presence. */
+  opponentId?: EntityId;
   opponentNpcId: string;
   opponentName: string;
   /** Detached copy of the opponent's live stats. */
@@ -236,6 +237,31 @@ export class CombatSystem {
     this.patternAttemptState = undefined;
 
     this.context.addLog(`Combat started with ${npc.name}!`);
+
+    return { success: true };
+  }
+
+  /**
+   * Starts combat against an enemy that has no entity on the map — used by
+   * event-summoned fights that do not want a visible spawn.
+   */
+  startCombatWithoutEntity(
+    enemyId: string,
+    name: string,
+  ): CombatExecuteResult {
+    if (!isCombatEnemy(enemyId)) {
+      return { success: false };
+    }
+
+    this.state = {
+      opponentNpcId: enemyId,
+      opponentName: name,
+      opponentStats: createNpcStats(enemyId),
+      phase: "action_selection",
+    };
+    this.patternAttemptState = undefined;
+
+    this.context.addLog(`Combat started with ${name}!`);
 
     return { success: true };
   }
@@ -891,7 +917,9 @@ export class CombatSystem {
 
     if (this.state.phase === "victory") {
       const effects: CombatEffect[] = [];
-      this.context.world.destroyEntity(this.state.opponentId);
+      if (this.state.opponentId !== undefined) {
+        this.context.world.destroyEntity(this.state.opponentId);
+      }
 
       const enemyDef = getEnemyDef(this.state.opponentNpcId);
       for (const lootEntry of enemyDef?.loot ?? []) {
