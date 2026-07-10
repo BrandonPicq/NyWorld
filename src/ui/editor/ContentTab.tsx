@@ -85,7 +85,7 @@ export function ContentTab({ draft, onNavigate }: ContentTabProps) {
 
       <div className="workbench workbench--content-layout">
         <div className="workbench__main">
-          <EditorPanel className="editor-panel editor-browser" style={{ flex: 2, minHeight: 0 }}>
+          <EditorPanel className="editor-panel editor-browser">
             <h2 className="editor-panel__title">Content</h2>
             <ListFilterField
               label="Filter"
@@ -128,7 +128,7 @@ export function ContentTab({ draft, onNavigate }: ContentTabProps) {
             </ScrollRegion>
           </EditorPanel>
 
-          <EditorPanel className="editor-panel editor-problems" style={{ flex: 1, minHeight: 0 }}>
+          <EditorPanel className="editor-panel editor-problems">
             <h2 className="editor-panel__title">Problems</h2>
             {diagnosticGroups.length === 0 ? (
               <p className="editor-empty">No content problems.</p>

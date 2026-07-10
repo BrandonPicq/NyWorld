@@ -4,6 +4,12 @@ This file tracks meaningful project changes by commit-oriented slices.
 
 Keep entries short and practical. When a slice is committed, its changelog section should stay aligned with the commit title so the project history remains easy to read after restores or bisects.
 
+## 2026-07-10 - [UPDATE]: Workbench and form density pass
+
+- Restyle editor workbenches, panels, lists, fields, diagnostics, and scrollbars with the scoped neutral theme.
+- Use compact 26 px controls, sentence-case labels, monospace technical values, and severity-specific diagnostics.
+- Replace the content browser's inline layout styles with reusable CSS classes.
+
 ## 2026-07-10 - [UPDATE]: Sidebar navigation shell
 
 - Replace the editor's two-row section tabs with a compact left sidebar and a reduced top toolbar.

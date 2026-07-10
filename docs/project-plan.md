@@ -96,7 +96,7 @@ Objectif : faire de l'editeur un outil compact a theme sombre neutre, independan
 - Slice 72 - `[FIX]: Per-file save gating with a visible reason` : `[STATUS: complete]`.
 - Slice 73 - `[ADD]: Editor design tokens and primitives` : `[STATUS: complete]`.
 - Slice 74 - `[UPDATE]: Sidebar navigation shell` : `[STATUS: complete]`.
-- Slice 75 - `[UPDATE]: Workbench and form density pass` : `[STATUS: pending]`.
+- Slice 75 - `[UPDATE]: Workbench and form density pass` : `[STATUS: complete]`.
 - Slice 76 - `[UPDATE]: Picker, zone tools, and final sweep` : `[STATUS: pending]`.
 
 Le lancement du Playtest conserve sa validation globale ; les commandes Save se calent sur la validation du fichier qu'elles ecrivent.
