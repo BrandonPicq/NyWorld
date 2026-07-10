@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { getAllTileDefs } from "../../../engine";
-import { TerminalButton } from "../../components/TerminalButton";
+import { EditorButton } from "../components/EditorButton";
 import { saveEditorContent } from "../editorSaveClient";
 import type { SaveStatus } from "../editorModel";
 import {
@@ -119,13 +119,13 @@ export function ZoneCreateForm({
           ))}
         </ul>
       )}
-      <TerminalButton
+      <EditorButton
         className="editor-action-button"
         disabled={!canCreate}
         onClick={create}
       >
         Create Zone
-      </TerminalButton>
+      </EditorButton>
       <p
         aria-live="polite"
         className={`editor-save-status editor-save-status--${status.state}`}

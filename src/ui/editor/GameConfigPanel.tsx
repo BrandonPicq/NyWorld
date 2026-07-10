@@ -1,8 +1,8 @@
 import { useState } from "react";
 import type { ContentCatalogSnapshot } from "../../engine";
 import { ScrollRegion } from "../components/ScrollRegion";
-import { TerminalButton } from "../components/TerminalButton";
-import { TerminalPanel } from "../components/TerminalPanel";
+import { EditorButton } from "./components/EditorButton";
+import { EditorPanel } from "./components/EditorPanel";
 import {
   DiagnosticList,
   type EditorContentNavigationTarget,
@@ -50,7 +50,7 @@ export function GameConfigPanel({
     <>
       <div className="workbench workbench--game-layout">
         <ScrollRegion className="workbench__main">
-          <TerminalPanel className="editor-panel">
+          <EditorPanel className="editor-panel">
             <h2 className="editor-panel__title">Game Config</h2>
             <section className="editor-item-form">
               <label className="editor-field">
@@ -114,30 +114,30 @@ export function GameConfigPanel({
                     value={config.safeRespawn.y}
                   />
                 </label>
-                <TerminalButton
+                <EditorButton
                   className="editor-compact-button"
                   disabled={!canPickRespawn}
                   onClick={() => setRespawnPickerOpen(true)}
                 >
                   Pick on Map
-                </TerminalButton>
+                </EditorButton>
               </div>
 
               <div className="editor-actions">
-                <TerminalButton
+                <EditorButton
                   className="editor-action-button"
                   disabled={!canSave}
                   onClick={save}
                 >
                   Save Config
-                </TerminalButton>
-                <TerminalButton
+                </EditorButton>
+                <EditorButton
                   className="editor-action-button"
                   disabled={!hasUnsavedChanges || isSaving}
                   onClick={reset}
                 >
                   Reset
-                </TerminalButton>
+                </EditorButton>
               </div>
               <p
                 aria-live="polite"
@@ -146,11 +146,11 @@ export function GameConfigPanel({
                 {saveStatus.message}
               </p>
             </section>
-          </TerminalPanel>
+          </EditorPanel>
         </ScrollRegion>
 
         <ScrollRegion className="workbench__inspector">
-          <TerminalPanel className="editor-panel">
+          <EditorPanel className="editor-panel">
             <h2 className="editor-panel__title">Problems</h2>
             <section className="editor-zone-section">
               <div className="editor-family__header">
@@ -168,7 +168,7 @@ export function GameConfigPanel({
                 />
               )}
             </section>
-          </TerminalPanel>
+          </EditorPanel>
         </ScrollRegion>
       </div>
 

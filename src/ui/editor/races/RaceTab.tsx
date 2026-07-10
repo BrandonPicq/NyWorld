@@ -6,8 +6,8 @@ import {
 } from "../../../engine";
 import { IdentifierLabel } from "../../components/IdentifierLabel";
 import { ScrollRegion } from "../../components/ScrollRegion";
-import { TerminalButton } from "../../components/TerminalButton";
-import { TerminalPanel } from "../../components/TerminalPanel";
+import { EditorButton } from "../components/EditorButton";
+import { EditorPanel } from "../components/EditorPanel";
 import type { EditorContentNavigationTarget } from "../DiagnosticList";
 import { ListFilterField } from "../ListFilterField";
 import { filterByIdOrName } from "../listFilter";
@@ -41,7 +41,7 @@ export function RaceTab({ draft, onNavigate }: RaceTabProps) {
 
       <div className="workbench">
         <ScrollRegion className="workbench__rail">
-          <TerminalPanel className="editor-panel">
+          <EditorPanel className="editor-panel">
             <h2 className="editor-panel__title">Races</h2>
             <ListFilterField
               label="Filter"
@@ -53,7 +53,7 @@ export function RaceTab({ draft, onNavigate }: RaceTabProps) {
                 <p className="editor-empty">No matching races.</p>
               ) : null}
               {filteredRaces.map((race) => (
-                <TerminalButton
+                <EditorButton
                   className="editor-entry-button"
                   isSelected={race.raceId === draft.selectedRaceId}
                   key={race.raceId}
@@ -66,25 +66,25 @@ export function RaceTab({ draft, onNavigate }: RaceTabProps) {
                     </span>
                     <span className="editor-zone-entry__meta">{race.name}</span>
                   </span>
-                </TerminalButton>
+                </EditorButton>
               ))}
             </div>
-          </TerminalPanel>
+          </EditorPanel>
         </ScrollRegion>
 
         <ScrollRegion className="workbench__main">
-          <TerminalPanel className="editor-panel">
+          <EditorPanel className="editor-panel">
             <h2 className="editor-panel__title">Race Sheet</h2>
             {draft.selectedRace ? (
               <RaceSheetForm draft={draft} race={draft.selectedRace} />
             ) : (
               <p className="editor-empty">No race selected.</p>
             )}
-          </TerminalPanel>
+          </EditorPanel>
         </ScrollRegion>
 
         <ScrollRegion className="workbench__inspector">
-          <TerminalPanel className="editor-panel">
+          <EditorPanel className="editor-panel">
             <h2 className="editor-panel__title">Problems</h2>
             {draft.selectedRaceDiagnostics.length === 0 ? (
               <p className="editor-empty">No problems.</p>
@@ -108,7 +108,7 @@ export function RaceTab({ draft, onNavigate }: RaceTabProps) {
               title="Incoming References"
               useTarget={false}
             />
-          </TerminalPanel>
+          </EditorPanel>
         </ScrollRegion>
       </div>
     </>
@@ -192,20 +192,20 @@ function RaceSheetForm({
       </section>
 
       <div className="editor-actions">
-        <TerminalButton
+        <EditorButton
           className="editor-action-button"
           disabled={!draft.canSaveSelectedRace}
           onClick={draft.saveSelectedRace}
         >
           Save Race
-        </TerminalButton>
-        <TerminalButton
+        </EditorButton>
+        <EditorButton
           className="editor-action-button"
           disabled={!draft.selectedRaceHasUnsavedChanges || draft.isSaving}
           onClick={draft.resetSelectedRace}
         >
           Reset
-        </TerminalButton>
+        </EditorButton>
       </div>
 
       <p

@@ -5,8 +5,8 @@ import {
 } from "../../../engine";
 import { IdentifierLabel } from "../../components/IdentifierLabel";
 import { ScrollRegion } from "../../components/ScrollRegion";
-import { TerminalButton } from "../../components/TerminalButton";
-import { TerminalPanel } from "../../components/TerminalPanel";
+import { EditorButton } from "../components/EditorButton";
+import { EditorPanel } from "../components/EditorPanel";
 import type { EditorContentNavigationTarget } from "../DiagnosticList";
 import { ListFilterField } from "../ListFilterField";
 import { filterByIdOrName } from "../listFilter";
@@ -48,7 +48,7 @@ export function EnemyTab({ draft, onNavigate }: EnemyTabProps) {
 
       <div className="workbench">
         <ScrollRegion className="workbench__rail">
-          <TerminalPanel className="editor-panel editor-enemy-list">
+          <EditorPanel className="editor-panel editor-enemy-list">
             <h2 className="editor-panel__title">NPCs</h2>
             <ListFilterField
               label="Filter"
@@ -60,7 +60,7 @@ export function EnemyTab({ draft, onNavigate }: EnemyTabProps) {
                 <p className="editor-empty">No matching NPCs.</p>
               ) : null}
               {filteredNpcs.map((npc) => (
-                <TerminalButton
+                <EditorButton
                   className="editor-entry-button"
                   isSelected={npc.npcId === draft.selectedNpcId}
                   key={npc.npcId}
@@ -80,14 +80,14 @@ export function EnemyTab({ draft, onNavigate }: EnemyTabProps) {
                         : "no profile"}
                     </span>
                   </span>
-                </TerminalButton>
+                </EditorButton>
               ))}
             </div>
-          </TerminalPanel>
+          </EditorPanel>
         </ScrollRegion>
 
         <ScrollRegion className="workbench__main">
-          <TerminalPanel className="editor-panel editor-enemy-editor">
+          <EditorPanel className="editor-panel editor-enemy-editor">
             <h2 className="editor-panel__title">Profile</h2>
             {draft.selectedNpc ? (
               draft.selectedEnemy ? (
@@ -98,11 +98,11 @@ export function EnemyTab({ draft, onNavigate }: EnemyTabProps) {
             ) : (
               <p className="editor-empty">No NPC selected.</p>
             )}
-          </TerminalPanel>
+          </EditorPanel>
         </ScrollRegion>
 
         <ScrollRegion className="workbench__inspector">
-          <TerminalPanel className="editor-panel editor-enemy-problems">
+          <EditorPanel className="editor-panel editor-enemy-problems">
             <h2 className="editor-panel__title">Problems</h2>
             <section className="editor-zone-section">
               <div className="editor-family__header">
@@ -132,7 +132,7 @@ export function EnemyTab({ draft, onNavigate }: EnemyTabProps) {
               title="Incoming References"
               useTarget={false}
             />
-          </TerminalPanel>
+          </EditorPanel>
         </ScrollRegion>
       </div>
     </>
@@ -150,13 +150,13 @@ function CreateEnemyProfile({ draft }: { draft: EnemyDraftController }) {
         No combat profile exists for this NPC.
       </p>
       <BalanceHint />
-      <TerminalButton
+      <EditorButton
         className="editor-action-button"
         disabled={!draft.canCreateSelectedEnemy}
         onClick={draft.createSelectedEnemy}
       >
         Create Profile
-      </TerminalButton>
+      </EditorButton>
       <p
         aria-live="polite"
         className={`editor-save-status editor-save-status--${draft.saveStatus.state}`}
@@ -270,28 +270,28 @@ function EnemyProfileForm({
       <EnemyLootEditor draft={draft} enemy={enemy} />
 
       <div className="editor-actions">
-        <TerminalButton
+        <EditorButton
           className="editor-action-button"
           disabled={!draft.canSaveSelectedEnemy}
           onClick={draft.saveSelectedEnemy}
         >
           Save Profile
-        </TerminalButton>
-        <TerminalButton
+        </EditorButton>
+        <EditorButton
           className="editor-action-button"
           disabled={!draft.canResetSelectedEnemy}
           onClick={draft.resetSelectedEnemy}
         >
           Reset
-        </TerminalButton>
+        </EditorButton>
       </div>
-      <TerminalButton
+      <EditorButton
         className="editor-action-button"
         disabled={!draft.canDeleteSelectedEnemy}
         onClick={draft.deleteSelectedEnemy}
       >
         Delete Profile
-      </TerminalButton>
+      </EditorButton>
 
       <p
         aria-live="polite"
@@ -406,7 +406,7 @@ function EnemyLootEditor({
                   />
                 </label>
               </div>
-              <TerminalButton
+              <EditorButton
                 className="editor-compact-button"
                 disabled={draft.isSaving}
                 onClick={() =>
@@ -416,12 +416,12 @@ function EnemyLootEditor({
                 }
               >
                 Remove Loot
-              </TerminalButton>
+              </EditorButton>
             </li>
           ))}
         </ul>
       )}
-      <TerminalButton
+      <EditorButton
         className="editor-compact-button"
         disabled={draft.isSaving || draft.itemIds.length === 0}
         onClick={() =>
@@ -431,7 +431,7 @@ function EnemyLootEditor({
         }
       >
         Add Loot
-      </TerminalButton>
+      </EditorButton>
     </section>
   );
 }

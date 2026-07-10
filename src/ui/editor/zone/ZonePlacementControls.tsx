@@ -1,4 +1,4 @@
-import { TerminalButton } from "../../components/TerminalButton";
+import { EditorButton } from "../components/EditorButton";
 import { ZoneTilePalette } from "./ZoneTilePalette";
 import type { ZonePlacement, ZonePlacementMode } from "./usePlacementSelection";
 
@@ -35,7 +35,7 @@ export function ZonePlacementControls({
         role="group"
       >
         {MODES.map(({ mode, label }) => (
-          <TerminalButton
+          <EditorButton
             className="editor-mode-button"
             disabled={disabled}
             isSelected={placement.mode === mode}
@@ -43,7 +43,7 @@ export function ZonePlacementControls({
             onClick={() => placement.setMode(mode)}
           >
             {label}
-          </TerminalButton>
+          </EditorButton>
         ))}
       </div>
       <ModeControls
@@ -201,7 +201,7 @@ function ModeControls({
                 value={placement.targetY}
               />
             </label>
-            <TerminalButton
+            <EditorButton
               className="editor-compact-button"
               disabled={
                 disabled ||
@@ -211,7 +211,7 @@ function ModeControls({
               onClick={onPickTransitionTarget}
             >
               Pick on Map
-            </TerminalButton>
+            </EditorButton>
           </div>
           <p className="editor-placement-hint">
             Click a walkable tile to place the transition source.

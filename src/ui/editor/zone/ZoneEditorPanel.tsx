@@ -2,8 +2,8 @@ import { useState } from "react";
 import type { ContentCatalogSnapshot } from "../../../engine";
 import { IdentifierLabel } from "../../components/IdentifierLabel";
 import { ScrollRegion } from "../../components/ScrollRegion";
-import { TerminalButton } from "../../components/TerminalButton";
-import { TerminalPanel } from "../../components/TerminalPanel";
+import { EditorButton } from "../components/EditorButton";
+import { EditorPanel } from "../components/EditorPanel";
 import type { EditorContentNavigationTarget } from "../DiagnosticList";
 import { ListFilterField } from "../ListFilterField";
 import { filterByIdOrName } from "../listFilter";
@@ -39,7 +39,7 @@ export function ZoneEditorPanel({
   return (
     <div className="workbench">
       <ScrollRegion className="workbench__rail">
-        <TerminalPanel className="editor-panel editor-zone-list">
+        <EditorPanel className="editor-panel editor-zone-list">
           <h2 className="editor-panel__title">Zones</h2>
           <ListFilterField
             label="Filter"
@@ -53,7 +53,7 @@ export function ZoneEditorPanel({
           ) : (
             <div className="editor-entry-list" role="list">
               {filteredZones.map((zone) => (
-                <TerminalButton
+                <EditorButton
                   className="editor-entry-button editor-zone-entry"
                   isSelected={zone.zoneId === selectedZoneId}
                   key={zone.zoneId}
@@ -64,12 +64,12 @@ export function ZoneEditorPanel({
                     <IdentifierLabel value={zone.zoneId} /> · {zone.npcCount}N{" "}
                     {zone.itemCount}I {zone.transitionCount}T
                   </span>
-                </TerminalButton>
+                </EditorButton>
               ))}
             </div>
           )}
           <ZoneCreateForm existingZoneIds={zones.map((zone) => zone.zoneId)} />
-        </TerminalPanel>
+        </EditorPanel>
       </ScrollRegion>
 
       {draft.draft && draft.renderSnapshot ? (
@@ -81,16 +81,16 @@ export function ZoneEditorPanel({
       ) : (
         <>
           <ScrollRegion className="workbench__main">
-            <TerminalPanel className="editor-panel">
+            <EditorPanel className="editor-panel">
               <h2 className="editor-panel__title">Paint</h2>
               <p className="editor-empty">No zone selected.</p>
-            </TerminalPanel>
+            </EditorPanel>
           </ScrollRegion>
           <ScrollRegion className="workbench__inspector">
-            <TerminalPanel className="editor-panel">
+            <EditorPanel className="editor-panel">
               <h2 className="editor-panel__title">Contents</h2>
               <p className="editor-empty">No zone selected.</p>
-            </TerminalPanel>
+            </EditorPanel>
           </ScrollRegion>
         </>
       )}

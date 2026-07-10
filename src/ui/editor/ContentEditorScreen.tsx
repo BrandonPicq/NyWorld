@@ -13,7 +13,7 @@ import {
   type ContentRef,
   type ContentTypeName,
 } from "../../engine";
-import { TerminalButton } from "../components/TerminalButton";
+import { EditorButton } from "./components/EditorButton";
 import { getFocusableElements } from "../hooks/focusTrap";
 import { getNextTabIndex, resolveTabKeyAction } from "../menu/tabNavigation";
 import { ActionsTab } from "./actions/ActionsTab";
@@ -425,7 +425,7 @@ export function ContentEditorScreen({
           </div>
           <div className="editor-header__actions">
             {onStartPlaytest ? (
-              <TerminalButton
+              <EditorButton
                 className="editor-header__playtest"
                 disabled={drafts.combined.errorCount > 0}
                 onClick={handleStartPlaytest}
@@ -436,11 +436,11 @@ export function ContentEditorScreen({
                 }
               >
                 Playtest
-              </TerminalButton>
+              </EditorButton>
             ) : null}
-            <TerminalButton className="editor-header__back" onClick={handleBack}>
+            <EditorButton className="editor-header__back" onClick={handleBack}>
               Back
-            </TerminalButton>
+            </EditorButton>
           </div>
         </header>
 
@@ -625,7 +625,7 @@ const EditorTabButton = forwardRef<HTMLButtonElement, {
   onClick,
 }, ref) {
   return (
-    <TerminalButton
+    <EditorButton
       aria-label={hasUnsavedChanges ? `${label} (unsaved)` : label}
       className="editor-tab"
       isSelected={isSelected}
@@ -637,7 +637,7 @@ const EditorTabButton = forwardRef<HTMLButtonElement, {
       {hasUnsavedChanges ? (
         <span aria-hidden="true" className="editor-tab__dirty" />
       ) : null}
-    </TerminalButton>
+    </EditorButton>
   );
 });
 

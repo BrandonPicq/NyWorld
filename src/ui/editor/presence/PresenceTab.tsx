@@ -7,8 +7,8 @@ import {
 import type { GridCell } from "../../../rendering/canvasCellMapping";
 import { IdentifierLabel } from "../../components/IdentifierLabel";
 import { ScrollRegion } from "../../components/ScrollRegion";
-import { TerminalButton } from "../../components/TerminalButton";
-import { TerminalPanel } from "../../components/TerminalPanel";
+import { EditorButton } from "../components/EditorButton";
+import { EditorPanel } from "../components/EditorPanel";
 import type { EditorContentNavigationTarget } from "../DiagnosticList";
 import { ListFilterField } from "../ListFilterField";
 import { filterByIdOrName } from "../listFilter";
@@ -55,7 +55,7 @@ export function PresenceTab({
 
       <div className="workbench">
         <ScrollRegion className="workbench__rail">
-          <TerminalPanel className="editor-panel editor-enemy-list">
+          <EditorPanel className="editor-panel editor-enemy-list">
             <h2 className="editor-panel__title">NPCs</h2>
             <ListFilterField
               label="Filter"
@@ -67,7 +67,7 @@ export function PresenceTab({
                 <p className="editor-empty">No matching NPCs.</p>
               ) : null}
               {filteredNpcs.map((npc) => (
-                <TerminalButton
+                <EditorButton
                   className="editor-entry-button"
                   isSelected={npc.npcId === draft.selectedNpcId}
                   key={npc.npcId}
@@ -85,14 +85,14 @@ export function PresenceTab({
                         : "no presence"}
                     </span>
                   </span>
-                </TerminalButton>
+                </EditorButton>
               ))}
             </div>
-          </TerminalPanel>
+          </EditorPanel>
         </ScrollRegion>
 
         <ScrollRegion className="workbench__main">
-          <TerminalPanel className="editor-panel editor-enemy-editor">
+          <EditorPanel className="editor-panel editor-enemy-editor">
             <h2 className="editor-panel__title">Presence</h2>
             {draft.selectedNpc ? (
               draft.selectedPresence ? (
@@ -107,11 +107,11 @@ export function PresenceTab({
             ) : (
               <p className="editor-empty">No NPC selected.</p>
             )}
-          </TerminalPanel>
+          </EditorPanel>
         </ScrollRegion>
 
         <ScrollRegion className="workbench__inspector">
-          <TerminalPanel className="editor-panel editor-enemy-problems">
+          <EditorPanel className="editor-panel editor-enemy-problems">
             <h2 className="editor-panel__title">Problems</h2>
             <section className="editor-zone-section">
               <div className="editor-family__header">
@@ -141,7 +141,7 @@ export function PresenceTab({
               title="Incoming References"
               useTarget={false}
             />
-          </TerminalPanel>
+          </EditorPanel>
         </ScrollRegion>
       </div>
 
@@ -168,13 +168,13 @@ function CreatePresence({ draft }: { draft: NpcPresenceDraftController }) {
       <p className="editor-empty">
         This NPC has no global presence. Create one to give it a daily schedule.
       </p>
-      <TerminalButton
+      <EditorButton
         className="editor-action-button"
         disabled={!draft.canCreateSelectedPresence}
         onClick={draft.createSelectedPresence}
       >
         Create Presence
-      </TerminalButton>
+      </EditorButton>
       <p
         aria-live="polite"
         className={`editor-save-status editor-save-status--${draft.saveStatus.state}`}
@@ -229,28 +229,28 @@ function PresenceForm({
       />
 
       <div className="editor-actions">
-        <TerminalButton
+        <EditorButton
           className="editor-action-button"
           disabled={!draft.canSaveSelectedPresence}
           onClick={draft.saveSelectedPresence}
         >
           Save Presence
-        </TerminalButton>
-        <TerminalButton
+        </EditorButton>
+        <EditorButton
           className="editor-action-button"
           disabled={!draft.canResetSelectedPresence}
           onClick={draft.resetSelectedPresence}
         >
           Reset
-        </TerminalButton>
+        </EditorButton>
       </div>
-      <TerminalButton
+      <EditorButton
         className="editor-action-button"
         disabled={!draft.canDeleteSelectedPresence}
         onClick={draft.deleteSelectedPresence}
       >
         Delete Presence
-      </TerminalButton>
+      </EditorButton>
 
       <p
         aria-live="polite"

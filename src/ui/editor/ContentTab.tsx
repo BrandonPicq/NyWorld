@@ -3,8 +3,8 @@ import type { ItemDef } from "../../engine";
 import type { ContentRef } from "../../engine";
 import { IdentifierLabel } from "../components/IdentifierLabel";
 import { ScrollRegion } from "../components/ScrollRegion";
-import { TerminalButton } from "../components/TerminalButton";
-import { TerminalPanel } from "../components/TerminalPanel";
+import { EditorButton } from "./components/EditorButton";
+import { EditorPanel } from "./components/EditorPanel";
 import {
   DiagnosticList,
   type EditorContentNavigationTarget,
@@ -85,7 +85,7 @@ export function ContentTab({ draft, onNavigate }: ContentTabProps) {
 
       <div className="workbench workbench--content-layout">
         <div className="workbench__main">
-          <TerminalPanel className="editor-panel editor-browser" style={{ flex: 2, minHeight: 0 }}>
+          <EditorPanel className="editor-panel editor-browser" style={{ flex: 2, minHeight: 0 }}>
             <h2 className="editor-panel__title">Content</h2>
             <ListFilterField
               label="Filter"
@@ -110,7 +110,7 @@ export function ContentTab({ draft, onNavigate }: ContentTabProps) {
                       const isKeyboardSelected =
                         entryIndex === keyboardEntryIndex;
                       return (
-                        <TerminalButton
+                        <EditorButton
                           className="editor-entry-button"
                           isSelected={isKeyboardSelected}
                           key={`${entry.ref.type}:${entry.ref.id}`}
@@ -119,16 +119,16 @@ export function ContentTab({ draft, onNavigate }: ContentTabProps) {
                           tabIndex={isKeyboardSelected ? 0 : -1}
                         >
                           <IdentifierLabel value={entry.label} />
-                        </TerminalButton>
+                        </EditorButton>
                       );
                     })}
                   </div>
                 </section>
               ))}
             </ScrollRegion>
-          </TerminalPanel>
+          </EditorPanel>
 
-          <TerminalPanel className="editor-panel editor-problems" style={{ flex: 1, minHeight: 0 }}>
+          <EditorPanel className="editor-panel editor-problems" style={{ flex: 1, minHeight: 0 }}>
             <h2 className="editor-panel__title">Problems</h2>
             {diagnosticGroups.length === 0 ? (
               <p className="editor-empty">No content problems.</p>
@@ -153,11 +153,11 @@ export function ContentTab({ draft, onNavigate }: ContentTabProps) {
                 ))}
               </ScrollRegion>
             )}
-          </TerminalPanel>
+          </EditorPanel>
         </div>
 
         <ScrollRegion className="workbench__inspector">
-          <TerminalPanel className="editor-panel editor-reference">
+          <EditorPanel className="editor-panel editor-reference">
             <h2 className="editor-panel__title">Editor</h2>
             <ItemDraftEditor
               canSave={draft.canSaveItems}
@@ -222,7 +222,7 @@ export function ContentTab({ draft, onNavigate }: ContentTabProps) {
                 useTarget
               />
             </div>
-          </TerminalPanel>
+          </EditorPanel>
         </ScrollRegion>
       </div>
     </>

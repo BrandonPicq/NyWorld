@@ -94,7 +94,7 @@ Etapes restantes :
 Objectif : faire de l'editeur un outil compact a theme sombre neutre, independant de l'identite terminal du jeu, sans modifier les ecrans de jeu.
 
 - Slice 72 - `[FIX]: Per-file save gating with a visible reason` : `[STATUS: complete]`.
-- Slice 73 - `[ADD]: Editor design tokens and primitives` : `[STATUS: pending]`.
+- Slice 73 - `[ADD]: Editor design tokens and primitives` : `[STATUS: complete]`.
 - Slice 74 - `[UPDATE]: Sidebar navigation shell` : `[STATUS: pending]`.
 - Slice 75 - `[UPDATE]: Workbench and form density pass` : `[STATUS: pending]`.
 - Slice 76 - `[UPDATE]: Picker, zone tools, and final sweep` : `[STATUS: pending]`.

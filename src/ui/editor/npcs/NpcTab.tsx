@@ -9,8 +9,8 @@ import {
 } from "../../../engine";
 import { IdentifierLabel } from "../../components/IdentifierLabel";
 import { ScrollRegion } from "../../components/ScrollRegion";
-import { TerminalButton } from "../../components/TerminalButton";
-import { TerminalPanel } from "../../components/TerminalPanel";
+import { EditorButton } from "../components/EditorButton";
+import { EditorPanel } from "../components/EditorPanel";
 import type { EditorContentNavigationTarget } from "../DiagnosticList";
 import { ListFilterField } from "../ListFilterField";
 import { filterByIdOrName } from "../listFilter";
@@ -40,7 +40,7 @@ export function NpcTab({ draft, onNavigate }: NpcTabProps) {
 
       <div className="workbench">
         <ScrollRegion className="workbench__rail">
-          <TerminalPanel className="editor-panel editor-npc-list">
+          <EditorPanel className="editor-panel editor-npc-list">
             <h2 className="editor-panel__title">NPCs</h2>
             <ListFilterField
               label="Filter"
@@ -52,7 +52,7 @@ export function NpcTab({ draft, onNavigate }: NpcTabProps) {
                 <p className="editor-empty">No matching NPCs.</p>
               ) : null}
               {filteredNpcs.map((npc) => (
-                <TerminalButton
+                <EditorButton
                   className="editor-entry-button"
                   isSelected={npc.npcId === draft.selectedNpcId}
                   key={npc.npcId}
@@ -67,7 +67,7 @@ export function NpcTab({ draft, onNavigate }: NpcTabProps) {
                       {npc.name}
                     </span>
                   </span>
-                </TerminalButton>
+                </EditorButton>
               ))}
             </div>
 
@@ -115,38 +115,38 @@ export function NpcTab({ draft, onNavigate }: NpcTabProps) {
                 </select>
               </label>
               <div className="editor-actions">
-                <TerminalButton
+                <EditorButton
                   className="editor-action-button"
                   disabled={!draft.canCreateNpcDraft}
                   onClick={draft.createNpcDraft}
                 >
                   Create Draft
-                </TerminalButton>
-                <TerminalButton
+                </EditorButton>
+                <EditorButton
                   className="editor-action-button"
                   disabled={!draft.canCreateNpcWithDefaultDialogue}
                   onClick={draft.createNpcWithDefaultDialogue}
                 >
                   Create + Dialogue
-                </TerminalButton>
+                </EditorButton>
               </div>
             </section>
-          </TerminalPanel>
+          </EditorPanel>
         </ScrollRegion>
 
         <ScrollRegion className="workbench__main">
-          <TerminalPanel className="editor-panel editor-npc-editor">
+          <EditorPanel className="editor-panel editor-npc-editor">
             <h2 className="editor-panel__title">Sheet</h2>
             {draft.selectedNpc ? (
               <NpcSheetForm draft={draft} npc={draft.selectedNpc} />
             ) : (
               <p className="editor-empty">No NPC selected.</p>
             )}
-          </TerminalPanel>
+          </EditorPanel>
         </ScrollRegion>
 
         <ScrollRegion className="workbench__inspector">
-          <TerminalPanel className="editor-panel editor-npc-problems">
+          <EditorPanel className="editor-panel editor-npc-problems">
             <h2 className="editor-panel__title">Problems</h2>
             <section className="editor-zone-section">
               <div className="editor-family__header">
@@ -176,7 +176,7 @@ export function NpcTab({ draft, onNavigate }: NpcTabProps) {
               title="Incoming References"
               useTarget={false}
             />
-          </TerminalPanel>
+          </EditorPanel>
         </ScrollRegion>
       </div>
     </>
@@ -425,20 +425,20 @@ function NpcSheetForm({
       ) : null}
 
       <div className="editor-actions">
-        <TerminalButton
+        <EditorButton
           className="editor-action-button"
           disabled={!draft.canSaveSelectedNpc}
           onClick={draft.saveSelectedNpc}
         >
           Save NPC
-        </TerminalButton>
-        <TerminalButton
+        </EditorButton>
+        <EditorButton
           className="editor-action-button"
           disabled={!draft.selectedNpcHasUnsavedChanges || draft.isSaving}
           onClick={draft.resetSelectedNpc}
         >
           Reset
-        </TerminalButton>
+        </EditorButton>
       </div>
 
       <p

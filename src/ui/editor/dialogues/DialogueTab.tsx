@@ -4,8 +4,8 @@ import {
 } from "../../../engine";
 import { IdentifierLabel } from "../../components/IdentifierLabel";
 import { ScrollRegion } from "../../components/ScrollRegion";
-import { TerminalButton } from "../../components/TerminalButton";
-import { TerminalPanel } from "../../components/TerminalPanel";
+import { EditorButton } from "../components/EditorButton";
+import { EditorPanel } from "../components/EditorPanel";
 import { DialogueNodesEditor } from "../DialogueNodesEditor";
 import type { EditorContentNavigationTarget } from "../DiagnosticList";
 import { ListFilterField } from "../ListFilterField";
@@ -50,7 +50,7 @@ export function DialogueTab({ draft, onNavigate }: DialogueTabProps) {
 
       <div className="workbench">
         <ScrollRegion className="workbench__rail">
-          <TerminalPanel className="editor-panel editor-dialogue-files">
+          <EditorPanel className="editor-panel editor-dialogue-files">
             <h2 className="editor-panel__title">Files</h2>
             <ListFilterField
               label="Filter"
@@ -62,7 +62,7 @@ export function DialogueTab({ draft, onNavigate }: DialogueTabProps) {
                 <p className="editor-empty">No matching files.</p>
               ) : null}
               {filteredFiles.map((file) => (
-                <TerminalButton
+                <EditorButton
                   className="editor-entry-button"
                   isSelected={file.stem === draft.selectedStem}
                   key={file.stem}
@@ -77,7 +77,7 @@ export function DialogueTab({ draft, onNavigate }: DialogueTabProps) {
                       {file.dialogueCount} dialogues
                     </span>
                   </span>
-                </TerminalButton>
+                </EditorButton>
               ))}
             </div>
 
@@ -97,19 +97,19 @@ export function DialogueTab({ draft, onNavigate }: DialogueTabProps) {
               draft.newFileStemErrors.length > 0 ? (
                 <InlineProblems problems={draft.newFileStemErrors} />
               ) : null}
-              <TerminalButton
+              <EditorButton
                 className="editor-action-button"
                 disabled={draft.newFileStemErrors.length > 0}
                 onClick={draft.createDialogueFile}
               >
                 Create File
-              </TerminalButton>
+              </EditorButton>
             </section>
-          </TerminalPanel>
+          </EditorPanel>
         </ScrollRegion>
 
         <ScrollRegion className="workbench__main">
-          <TerminalPanel className="editor-panel editor-dialogue-editor">
+          <EditorPanel className="editor-panel editor-dialogue-editor">
             <h2 className="editor-panel__title">Dialogues</h2>
             {draft.selectedFile ? (
               <>
@@ -130,14 +130,14 @@ export function DialogueTab({ draft, onNavigate }: DialogueTabProps) {
                   ) : (
                     <div className="editor-entry-list">
                       {filteredDialogueIds.map((dialogueId) => (
-                        <TerminalButton
+                        <EditorButton
                           className="editor-entry-button"
                           isSelected={dialogueId === draft.selectedDialogueId}
                           key={dialogueId}
                           onClick={() => draft.selectDialogue(dialogueId)}
                         >
                           <IdentifierLabel value={dialogueId} />
-                        </TerminalButton>
+                        </EditorButton>
                       ))}
                     </div>
                   )}
@@ -159,7 +159,7 @@ export function DialogueTab({ draft, onNavigate }: DialogueTabProps) {
                   draft.newDialogueIdErrors.length > 0 ? (
                     <InlineProblems problems={draft.newDialogueIdErrors} />
                   ) : null}
-                  <TerminalButton
+                  <EditorButton
                     className="editor-action-button"
                     disabled={
                       !draft.selectedFile ||
@@ -168,7 +168,7 @@ export function DialogueTab({ draft, onNavigate }: DialogueTabProps) {
                     onClick={draft.addDialogueToSelectedFile}
                   >
                     Add Dialogue
-                  </TerminalButton>
+                  </EditorButton>
                 </section>
 
                 {draft.selectedDialogueId ? (
@@ -194,14 +194,14 @@ export function DialogueTab({ draft, onNavigate }: DialogueTabProps) {
 
                 <section className="editor-zone-section">
                   <div className="editor-actions">
-                    <TerminalButton
+                    <EditorButton
                       className="editor-action-button"
                       disabled={!draft.canSaveSelectedFile}
                       onClick={draft.saveSelectedFile}
                     >
                       Save File
-                    </TerminalButton>
-                    <TerminalButton
+                    </EditorButton>
+                    <EditorButton
                       className="editor-action-button"
                       disabled={
                         !draft.selectedFileHasUnsavedChanges || draft.isSaving
@@ -209,9 +209,9 @@ export function DialogueTab({ draft, onNavigate }: DialogueTabProps) {
                       onClick={draft.resetSelectedFile}
                     >
                       Reset File
-                    </TerminalButton>
+                    </EditorButton>
                   </div>
-                  <TerminalButton
+                  <EditorButton
                     className="editor-action-button"
                     disabled={
                       !draft.selectedDialogueId ||
@@ -220,7 +220,7 @@ export function DialogueTab({ draft, onNavigate }: DialogueTabProps) {
                     onClick={draft.deleteSelectedDialogue}
                   >
                     Delete Dialogue
-                  </TerminalButton>
+                  </EditorButton>
                   <p
                     aria-live="polite"
                     className={`editor-save-status editor-save-status--${draft.saveStatus.state}`}
@@ -232,11 +232,11 @@ export function DialogueTab({ draft, onNavigate }: DialogueTabProps) {
             ) : (
               <p className="editor-empty">No dialogue file selected.</p>
             )}
-          </TerminalPanel>
+          </EditorPanel>
         </ScrollRegion>
 
         <ScrollRegion className="workbench__inspector">
-          <TerminalPanel className="editor-panel editor-dialogue-problems">
+          <EditorPanel className="editor-panel editor-dialogue-problems">
             <h2 className="editor-panel__title">Problems</h2>
             <section className="editor-zone-section">
               <div className="editor-family__header">
@@ -266,7 +266,7 @@ export function DialogueTab({ draft, onNavigate }: DialogueTabProps) {
               title="Incoming References"
               useTarget={false}
             />
-          </TerminalPanel>
+          </EditorPanel>
         </ScrollRegion>
       </div>
     </>

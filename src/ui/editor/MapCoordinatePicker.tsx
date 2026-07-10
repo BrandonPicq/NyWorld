@@ -2,8 +2,8 @@ import { useRef, useState } from "react";
 import type { ContentCatalogSnapshot } from "../../engine";
 import { createZoneEditRenderSnapshot } from "../../rendering/zoneEditRenderSnapshot";
 import type { GridCell } from "../../rendering/canvasCellMapping";
-import { TerminalButton } from "../components/TerminalButton";
-import { TerminalPanel } from "../components/TerminalPanel";
+import { EditorButton } from "./components/EditorButton";
+import { EditorPanel } from "./components/EditorPanel";
 import { useFocusTrap } from "../hooks/focusTrap";
 import { EditorZoneCanvas } from "./zone/EditorZoneCanvas";
 import { describeZoneCell } from "./zone/zoneEditorModel";
@@ -61,7 +61,7 @@ export function MapCoordinatePicker({
       role="dialog"
       tabIndex={-1}
     >
-      <TerminalPanel className="editor-panel editor-coordinate-picker__panel">
+      <EditorPanel className="editor-panel editor-coordinate-picker__panel">
         <header className="editor-coordinate-picker__header">
           <div>
             <p className="terminal-kicker">MAP COORDINATE</p>
@@ -69,13 +69,13 @@ export function MapCoordinatePicker({
               {title}
             </h2>
           </div>
-          <TerminalButton
+          <EditorButton
             className="editor-compact-button"
             onClick={onClose}
             ref={cancelButtonRef}
           >
             Cancel
-          </TerminalButton>
+          </EditorButton>
         </header>
 
         {zone && renderSnapshot ? (
@@ -135,7 +135,7 @@ export function MapCoordinatePicker({
         ) : (
           <p className="editor-empty">Unknown zone: {zoneId || "(none)"}</p>
         )}
-      </TerminalPanel>
+      </EditorPanel>
     </div>
   );
 }

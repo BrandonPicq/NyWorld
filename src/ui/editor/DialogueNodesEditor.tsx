@@ -1,5 +1,5 @@
 import type { DialogueNodeData } from "../../engine";
-import { TerminalButton } from "../components/TerminalButton";
+import { EditorButton } from "./components/EditorButton";
 
 type DialogueNodesEditorProps = {
   title: string;
@@ -71,21 +71,21 @@ export function DialogueNodesEditor({
                     value={node.pitch}
                   />
                 </label>
-                <TerminalButton
+                <EditorButton
                   className="editor-compact-button"
                   onClick={() => onRemoveNode(index)}
                 >
                   Delete
-                </TerminalButton>
+                </EditorButton>
               </div>
             </li>
           ))}
         </ul>
       )}
 
-      <TerminalButton className="editor-action-button" onClick={onAddNode}>
+      <EditorButton className="editor-action-button" onClick={onAddNode}>
         {addLabel}
-      </TerminalButton>
+      </EditorButton>
     </section>
   );
 }

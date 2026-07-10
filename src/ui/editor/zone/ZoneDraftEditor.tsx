@@ -3,8 +3,8 @@ import type { ContentCatalogSnapshot } from "../../../engine";
 import type { GridCell } from "../../../rendering/canvasCellMapping";
 import { createZoneEditRenderSnapshot } from "../../../rendering/zoneEditRenderSnapshot";
 import { ScrollRegion } from "../../components/ScrollRegion";
-import { TerminalButton } from "../../components/TerminalButton";
-import { TerminalPanel } from "../../components/TerminalPanel";
+import { EditorButton } from "../components/EditorButton";
+import { EditorPanel } from "../components/EditorPanel";
 import {
   DiagnosticList,
   type EditorContentNavigationTarget,
@@ -131,7 +131,7 @@ export function ZoneDraftEditor({
   return (
     <>
       <ScrollRegion className="workbench__main">
-        <TerminalPanel className="editor-panel editor-zone-edit-panel">
+        <EditorPanel className="editor-panel editor-zone-edit-panel">
           <div className="editor-zone-workbench-header">
             <h2 className="editor-panel__title">Edit</h2>
             <p className="editor-zone-dimensions">
@@ -186,11 +186,11 @@ export function ZoneDraftEditor({
               </>
             )}
           </div>
-        </TerminalPanel>
+        </EditorPanel>
       </ScrollRegion>
 
       <ScrollRegion className="workbench__inspector">
-        <TerminalPanel className="editor-panel">
+        <EditorPanel className="editor-panel">
           <section className="editor-zone-section">
             <div className="editor-family__header">
               <h3>Schedule Preview</h3>
@@ -231,36 +231,36 @@ export function ZoneDraftEditor({
           <div className="editor-zone-save">
             <h3 className="editor-zone-toolbox__title">Draft</h3>
             <div className="editor-actions">
-              <TerminalButton
+              <EditorButton
                 className="editor-action-button"
                 disabled={!canUndo || isSaving}
                 onClick={undo}
               >
                 Undo
-              </TerminalButton>
-              <TerminalButton
+              </EditorButton>
+              <EditorButton
                 className="editor-action-button"
                 disabled={!canRedo || isSaving}
                 onClick={redo}
               >
                 Redo
-              </TerminalButton>
+              </EditorButton>
             </div>
             <div className="editor-actions">
-              <TerminalButton
+              <EditorButton
                 className="editor-action-button"
                 disabled={!canSave}
                 onClick={saveDraft}
               >
                 Save Zone
-              </TerminalButton>
-              <TerminalButton
+              </EditorButton>
+              <EditorButton
                 className="editor-action-button"
                 disabled={!hasUnsavedChanges || isSaving}
                 onClick={resetDraft}
               >
                 Reset
-              </TerminalButton>
+              </EditorButton>
             </div>
             <p
               aria-live="polite"
@@ -295,7 +295,7 @@ export function ZoneDraftEditor({
             zone={draft}
             zoneIds={placement.zoneIds}
           />
-        </TerminalPanel>
+        </EditorPanel>
       </ScrollRegion>
 
       {coordinatePicker ? (

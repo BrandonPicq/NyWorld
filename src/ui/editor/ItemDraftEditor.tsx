@@ -14,7 +14,7 @@ import {
   type ContentRef,
   type ItemDef,
 } from "../../engine";
-import { TerminalButton } from "../components/TerminalButton";
+import { EditorButton } from "./components/EditorButton";
 import type { SaveStatus } from "./editorModel";
 
 export function ItemDraftEditor({
@@ -100,13 +100,13 @@ export function ItemDraftEditor({
               type="text"
               value={itemIdDraft}
             />
-            <TerminalButton
+            <EditorButton
               className="editor-compact-button"
               disabled={isSaving}
               onClick={onApplyItemId}
             >
               Apply
-            </TerminalButton>
+            </EditorButton>
           </div>
         </label>
 
@@ -228,20 +228,20 @@ export function ItemDraftEditor({
         )}
 
         <div className="editor-actions">
-          <TerminalButton
+          <EditorButton
             className="editor-action-button"
             disabled={!canSave}
             onClick={onSave}
           >
             Save Items
-          </TerminalButton>
-          <TerminalButton
+          </EditorButton>
+          <EditorButton
             className="editor-action-button"
             disabled={!hasUnsavedChanges || isSaving}
             onClick={onReset}
           >
             Reset
-          </TerminalButton>
+          </EditorButton>
         </div>
 
         <p

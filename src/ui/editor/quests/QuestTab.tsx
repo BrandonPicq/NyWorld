@@ -9,8 +9,8 @@ import {
 import type { GridCell } from "../../../rendering/canvasCellMapping";
 import { IdentifierLabel } from "../../components/IdentifierLabel";
 import { ScrollRegion } from "../../components/ScrollRegion";
-import { TerminalButton } from "../../components/TerminalButton";
-import { TerminalPanel } from "../../components/TerminalPanel";
+import { EditorButton } from "../components/EditorButton";
+import { EditorPanel } from "../components/EditorPanel";
 import {
   DiagnosticList,
   type EditorContentNavigationTarget,
@@ -73,7 +73,7 @@ export function QuestTab({ draft, onNavigate, snapshot }: QuestTabProps) {
 
       <div className="workbench">
         <ScrollRegion className="workbench__rail">
-          <TerminalPanel className="editor-panel editor-enemy-list">
+          <EditorPanel className="editor-panel editor-enemy-list">
             <h2 className="editor-panel__title">Quests</h2>
             <ListFilterField
               label="Filter"
@@ -85,7 +85,7 @@ export function QuestTab({ draft, onNavigate, snapshot }: QuestTabProps) {
                 <p className="editor-empty">No matching quests.</p>
               ) : null}
               {filteredQuests.map((quest) => (
-                <TerminalButton
+                <EditorButton
                   className="editor-entry-button"
                   isSelected={quest.questId === draft.selectedQuestId}
                   key={quest.questId}
@@ -98,15 +98,15 @@ export function QuestTab({ draft, onNavigate, snapshot }: QuestTabProps) {
                     </span>
                     <span className="editor-zone-entry__meta">{quest.name}</span>
                   </span>
-                </TerminalButton>
+                </EditorButton>
               ))}
             </div>
             <NewQuestForm draft={draft} />
-          </TerminalPanel>
+          </EditorPanel>
         </ScrollRegion>
 
         <ScrollRegion className="workbench__main">
-          <TerminalPanel className="editor-panel editor-enemy-editor">
+          <EditorPanel className="editor-panel editor-enemy-editor">
             <h2 className="editor-panel__title">Quest</h2>
             {draft.selectedQuest ? (
               <QuestForm
@@ -117,11 +117,11 @@ export function QuestTab({ draft, onNavigate, snapshot }: QuestTabProps) {
             ) : (
               <p className="editor-empty">No quest selected.</p>
             )}
-          </TerminalPanel>
+          </EditorPanel>
         </ScrollRegion>
 
         <ScrollRegion className="workbench__inspector">
-          <TerminalPanel className="editor-panel editor-enemy-problems">
+          <EditorPanel className="editor-panel editor-enemy-problems">
             <h2 className="editor-panel__title">Problems</h2>
             <section className="editor-zone-section">
               <div className="editor-family__header">
@@ -141,7 +141,7 @@ export function QuestTab({ draft, onNavigate, snapshot }: QuestTabProps) {
               onNavigate={onNavigate}
               references={draft.selectedQuestReferences}
             />
-          </TerminalPanel>
+          </EditorPanel>
         </ScrollRegion>
       </div>
     </>
@@ -174,13 +174,13 @@ function NewQuestForm({ draft }: { draft: QuestDraftController }) {
       {draft.newQuestIdErrors.length > 0 && draft.newQuestIdDraft.trim() ? (
         <p className="editor-field-error">{draft.newQuestIdErrors[0]}</p>
       ) : null}
-      <TerminalButton
+      <EditorButton
         className="editor-action-button"
         disabled={!draft.canCreateQuest}
         onClick={draft.createQuest}
       >
         Create Quest
-      </TerminalButton>
+      </EditorButton>
     </section>
   );
 }
@@ -284,28 +284,28 @@ function QuestForm({
       <QuestObjectivesEditor draft={draft} quest={quest} snapshot={snapshot} />
 
       <div className="editor-actions">
-        <TerminalButton
+        <EditorButton
           className="editor-action-button"
           disabled={!draft.canSaveSelectedQuest}
           onClick={draft.saveSelectedQuest}
         >
           Save Quest
-        </TerminalButton>
-        <TerminalButton
+        </EditorButton>
+        <EditorButton
           className="editor-action-button"
           disabled={!draft.canResetSelectedQuest}
           onClick={draft.resetSelectedQuest}
         >
           Reset
-        </TerminalButton>
+        </EditorButton>
       </div>
-      <TerminalButton
+      <EditorButton
         className="editor-action-button"
         disabled={!draft.canDeleteSelectedQuest}
         onClick={draft.deleteSelectedQuest}
       >
         Delete Quest
-      </TerminalButton>
+      </EditorButton>
       <p className="editor-placement-hint">
         Deleting a quest orphans any save-state entry for it; saves are
         disposable, so this is only a warning.
@@ -376,7 +376,7 @@ function QuestOverridesEditor({
             <li className="editor-zone-row" key={npcId}>
               <div className="editor-zone-row__head">
                 <strong>{npcId}</strong>
-                <TerminalButton
+                <EditorButton
                   className="editor-compact-button"
                   disabled={draft.isSaving}
                   onClick={() =>
@@ -386,7 +386,7 @@ function QuestOverridesEditor({
                   }
                 >
                   Remove
-                </TerminalButton>
+                </EditorButton>
               </div>
               {(["active", "activeReady", "completed"] as const).map((field) => (
                 <label className="editor-field" key={field}>
@@ -432,7 +432,7 @@ function QuestOverridesEditor({
             ))}
           </select>
         </label>
-        <TerminalButton
+        <EditorButton
           className="editor-compact-button"
           disabled={draft.isSaving || !addNpcId}
           onClick={() =>
@@ -442,7 +442,7 @@ function QuestOverridesEditor({
           }
         >
           Add Override
-        </TerminalButton>
+        </EditorButton>
       </div>
     </section>
   );
@@ -535,7 +535,7 @@ function QuestRewardsEditor({
                     value={item.quantity}
                   />
                 </label>
-                <TerminalButton
+                <EditorButton
                   className="editor-compact-button"
                   disabled={draft.isSaving}
                   onClick={() =>
@@ -545,13 +545,13 @@ function QuestRewardsEditor({
                   }
                 >
                   Remove
-                </TerminalButton>
+                </EditorButton>
               </div>
             </li>
           ))}
         </ul>
       ) : null}
-      <TerminalButton
+      <EditorButton
         className="editor-compact-button"
         disabled={draft.isSaving || draft.itemIds.length === 0}
         onClick={() =>
@@ -561,7 +561,7 @@ function QuestRewardsEditor({
         }
       >
         Add Reward Item
-      </TerminalButton>
+      </EditorButton>
     </section>
   );
 }
@@ -668,7 +668,7 @@ function QuestObjectivesEditor({
               </label>
 
               <div className="editor-actions">
-                <TerminalButton
+                <EditorButton
                   className="editor-compact-button"
                   disabled={draft.isSaving || index === 0}
                   onClick={() =>
@@ -676,8 +676,8 @@ function QuestObjectivesEditor({
                   }
                 >
                   Up
-                </TerminalButton>
-                <TerminalButton
+                </EditorButton>
+                <EditorButton
                   className="editor-compact-button"
                   disabled={
                     draft.isSaving || index === quest.objectives.length - 1
@@ -687,8 +687,8 @@ function QuestObjectivesEditor({
                   }
                 >
                   Down
-                </TerminalButton>
-                <TerminalButton
+                </EditorButton>
+                <EditorButton
                   className="editor-compact-button"
                   disabled={draft.isSaving}
                   onClick={() =>
@@ -696,7 +696,7 @@ function QuestObjectivesEditor({
                   }
                 >
                   Delete
-                </TerminalButton>
+                </EditorButton>
               </div>
             </li>
           ))}
@@ -719,7 +719,7 @@ function QuestObjectivesEditor({
             ))}
           </select>
         </label>
-        <TerminalButton
+        <EditorButton
           className="editor-compact-button"
           disabled={draft.isSaving}
           onClick={() =>
@@ -727,7 +727,7 @@ function QuestObjectivesEditor({
           }
         >
           Add Objective
-        </TerminalButton>
+        </EditorButton>
       </div>
       {coordinatePicker ? (
         <MapCoordinatePicker
@@ -844,13 +844,13 @@ function ObjectiveTypeFields({
             value={objective.y}
           />
         </label>
-        <TerminalButton
+        <EditorButton
           className="editor-compact-button"
           disabled={draft.isSaving || !draft.zoneIds.includes(objective.zoneId)}
           onClick={() => onPickCoordinate(objective.zoneId)}
         >
           Pick on Map
-        </TerminalButton>
+        </EditorButton>
       </div>
     );
   }

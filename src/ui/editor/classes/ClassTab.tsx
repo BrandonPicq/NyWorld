@@ -10,8 +10,8 @@ import {
 } from "../../../engine";
 import { IdentifierLabel } from "../../components/IdentifierLabel";
 import { ScrollRegion } from "../../components/ScrollRegion";
-import { TerminalButton } from "../../components/TerminalButton";
-import { TerminalPanel } from "../../components/TerminalPanel";
+import { EditorButton } from "../components/EditorButton";
+import { EditorPanel } from "../components/EditorPanel";
 import type { EditorContentNavigationTarget } from "../DiagnosticList";
 import { ListFilterField } from "../ListFilterField";
 import { filterByIdOrName } from "../listFilter";
@@ -45,7 +45,7 @@ export function ClassTab({ draft, onNavigate }: ClassTabProps) {
 
       <div className="workbench">
         <ScrollRegion className="workbench__rail">
-          <TerminalPanel className="editor-panel">
+          <EditorPanel className="editor-panel">
             <h2 className="editor-panel__title">Classes</h2>
             <ListFilterField
               label="Filter"
@@ -57,7 +57,7 @@ export function ClassTab({ draft, onNavigate }: ClassTabProps) {
                 <p className="editor-empty">No matching classes.</p>
               ) : null}
               {filteredClasses.map((classDef) => (
-                <TerminalButton
+                <EditorButton
                   className="editor-entry-button"
                   isSelected={classDef.classId === draft.selectedClassId}
                   key={classDef.classId}
@@ -72,25 +72,25 @@ export function ClassTab({ draft, onNavigate }: ClassTabProps) {
                       {classDef.name}
                     </span>
                   </span>
-                </TerminalButton>
+                </EditorButton>
               ))}
             </div>
-          </TerminalPanel>
+          </EditorPanel>
         </ScrollRegion>
 
         <ScrollRegion className="workbench__main">
-          <TerminalPanel className="editor-panel">
+          <EditorPanel className="editor-panel">
             <h2 className="editor-panel__title">Class Sheet</h2>
             {draft.selectedClass ? (
               <ClassSheetForm classDef={draft.selectedClass} draft={draft} />
             ) : (
               <p className="editor-empty">No class selected.</p>
             )}
-          </TerminalPanel>
+          </EditorPanel>
         </ScrollRegion>
 
         <ScrollRegion className="workbench__inspector">
-          <TerminalPanel className="editor-panel">
+          <EditorPanel className="editor-panel">
             <h2 className="editor-panel__title">Problems</h2>
             {draft.selectedClassDiagnostics.length === 0 ? (
               <p className="editor-empty">No problems.</p>
@@ -114,7 +114,7 @@ export function ClassTab({ draft, onNavigate }: ClassTabProps) {
               title="Incoming References"
               useTarget={false}
             />
-          </TerminalPanel>
+          </EditorPanel>
         </ScrollRegion>
       </div>
     </>
@@ -255,7 +255,7 @@ function ClassSheetForm({
                   value={entry.level}
                 />
               </label>
-              <TerminalButton
+              <EditorButton
                 className="editor-action-button"
                 disabled={draft.isSaving}
                 onClick={() =>
@@ -268,7 +268,7 @@ function ClassSheetForm({
                 }
               >
                 Remove
-              </TerminalButton>
+              </EditorButton>
             </div>
             <div className="editor-stat-grid">
               {CORE_ATTRIBUTE_OPTIONS.map((attribute) => (
@@ -302,7 +302,7 @@ function ClassSheetForm({
             </div>
           </div>
         ))}
-        <TerminalButton
+        <EditorButton
           className="editor-action-button"
           disabled={draft.isSaving}
           onClick={() =>
@@ -316,24 +316,24 @@ function ClassSheetForm({
           }
         >
           Add Growth Entry
-        </TerminalButton>
+        </EditorButton>
       </section>
 
       <div className="editor-actions">
-        <TerminalButton
+        <EditorButton
           className="editor-action-button"
           disabled={!draft.canSaveSelectedClass}
           onClick={draft.saveSelectedClass}
         >
           Save Class
-        </TerminalButton>
-        <TerminalButton
+        </EditorButton>
+        <EditorButton
           className="editor-action-button"
           disabled={!draft.selectedClassHasUnsavedChanges || draft.isSaving}
           onClick={draft.resetSelectedClass}
         >
           Reset
-        </TerminalButton>
+        </EditorButton>
       </div>
 
       <p

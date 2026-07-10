@@ -5,8 +5,8 @@ import {
 } from "../../../engine";
 import { IdentifierLabel } from "../../components/IdentifierLabel";
 import { ScrollRegion } from "../../components/ScrollRegion";
-import { TerminalButton } from "../../components/TerminalButton";
-import { TerminalPanel } from "../../components/TerminalPanel";
+import { EditorButton } from "../components/EditorButton";
+import { EditorPanel } from "../components/EditorPanel";
 import {
   ACTION_TUNING_FIELDS,
   addActionLine,
@@ -33,11 +33,11 @@ export function ActionsTab({ draft }: ActionsTabProps) {
 
       <div className="workbench">
         <ScrollRegion className="workbench__rail">
-          <TerminalPanel className="editor-panel editor-enemy-list">
+          <EditorPanel className="editor-panel editor-enemy-list">
             <h2 className="editor-panel__title">Actions</h2>
             <div className="editor-entry-list">
               {draft.actions.map((action) => (
-                <TerminalButton
+                <EditorButton
                   className="editor-entry-button"
                   isSelected={action.actionId === draft.selectedActionId}
                   key={action.actionId}
@@ -52,25 +52,25 @@ export function ActionsTab({ draft }: ActionsTabProps) {
                       {action.name} - order {action.order}
                     </span>
                   </span>
-                </TerminalButton>
+                </EditorButton>
               ))}
             </div>
-          </TerminalPanel>
+          </EditorPanel>
         </ScrollRegion>
 
         <ScrollRegion className="workbench__main">
-          <TerminalPanel className="editor-panel editor-enemy-editor">
+          <EditorPanel className="editor-panel editor-enemy-editor">
             <h2 className="editor-panel__title">Action</h2>
             {draft.selectedAction ? (
               <ActionForm action={draft.selectedAction} draft={draft} />
             ) : (
               <p className="editor-empty">No action selected.</p>
             )}
-          </TerminalPanel>
+          </EditorPanel>
         </ScrollRegion>
 
         <ScrollRegion className="workbench__inspector">
-          <TerminalPanel className="editor-panel editor-enemy-problems">
+          <EditorPanel className="editor-panel editor-enemy-problems">
             <h2 className="editor-panel__title">Problems</h2>
             <section className="editor-zone-section">
               <div className="editor-family__header">
@@ -92,7 +92,7 @@ export function ActionsTab({ draft }: ActionsTabProps) {
                 </ul>
               )}
             </section>
-          </TerminalPanel>
+          </EditorPanel>
         </ScrollRegion>
       </div>
     </>
@@ -269,20 +269,20 @@ function ActionForm({
       />
 
       <div className="editor-actions">
-        <TerminalButton
+        <EditorButton
           className="editor-action-button"
           disabled={!draft.canSaveSelectedAction}
           onClick={draft.saveSelectedAction}
         >
           Save Action
-        </TerminalButton>
-        <TerminalButton
+        </EditorButton>
+        <EditorButton
           className="editor-action-button"
           disabled={!draft.canResetSelectedAction}
           onClick={draft.resetSelectedAction}
         >
           Reset
-        </TerminalButton>
+        </EditorButton>
       </div>
       <p
         aria-live="polite"
@@ -338,7 +338,7 @@ function ActionLineList({
                     value={line}
                   />
                 </label>
-                <TerminalButton
+                <EditorButton
                   className="editor-compact-button"
                   disabled={draft.isSaving}
                   onClick={() =>
@@ -348,13 +348,13 @@ function ActionLineList({
                   }
                 >
                   Delete
-                </TerminalButton>
+                </EditorButton>
               </div>
             </li>
           ))}
         </ul>
       )}
-      <TerminalButton
+      <EditorButton
         className="editor-action-button"
         disabled={draft.isSaving}
         onClick={() =>
@@ -362,7 +362,7 @@ function ActionLineList({
         }
       >
         Add Line
-      </TerminalButton>
+      </EditorButton>
     </section>
   );
 }

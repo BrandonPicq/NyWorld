@@ -1,4 +1,4 @@
-import { TerminalButton } from "../../components/TerminalButton";
+import { EditorButton } from "../components/EditorButton";
 import type { ZonePaletteTile } from "./usePlacementSelection";
 
 type ZoneTilePaletteProps = {
@@ -23,7 +23,7 @@ export function ZoneTilePalette({
   return (
     <div className="editor-tile-palette" role="listbox" aria-label="Tile palette">
       {tiles.map(({ id, def }) => (
-        <TerminalButton
+        <EditorButton
           aria-label={`Tile ${id} ${def.name}`}
           className="editor-tile-swatch"
           disabled={disabled}
@@ -43,7 +43,7 @@ export function ZoneTilePalette({
           >
             {def.walkable ? "walkable" : "blocked"}
           </span>
-        </TerminalButton>
+        </EditorButton>
       ))}
     </div>
   );

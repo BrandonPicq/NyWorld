@@ -1,5 +1,5 @@
 import type { NpcScheduleEntryData } from "../../engine";
-import { TerminalButton } from "../components/TerminalButton";
+import { EditorButton } from "./components/EditorButton";
 import { isValidScheduleTime } from "./zone/zoneEditorModel";
 
 type ScheduleEntriesEditorProps = {
@@ -121,19 +121,19 @@ export function ScheduleEntriesEditor({
                       value={entry.y}
                     />
                   </label>
-                  <TerminalButton
+                  <EditorButton
                     className="editor-compact-button"
                     disabled={!canPickCoordinate}
                     onClick={() => onPickCoordinate?.(index, resolvedZoneId)}
                   >
                     Pick on Map
-                  </TerminalButton>
-                  <TerminalButton
+                  </EditorButton>
+                  <EditorButton
                     className="editor-compact-button"
                     onClick={() => onRemove(index)}
                   >
                     Delete
-                  </TerminalButton>
+                  </EditorButton>
                 </div>
                 <label className="editor-field">
                   <span>Dialogue (optional)</span>
@@ -159,9 +159,9 @@ export function ScheduleEntriesEditor({
         </ul>
       )}
 
-      <TerminalButton className="editor-action-button" onClick={onAdd}>
+      <EditorButton className="editor-action-button" onClick={onAdd}>
         {addLabel}
-      </TerminalButton>
+      </EditorButton>
     </section>
   );
 }

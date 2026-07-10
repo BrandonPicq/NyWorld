@@ -1,7 +1,79 @@
 .editor-screen {
+  --ed-bg: #1e1e1e;
+  --ed-surface: #252526;
+  --ed-surface-raised: #2d2d30;
+  --ed-border: #3c3c3c;
+  --ed-text: #cccccc;
+  --ed-text-muted: #8c8c8c;
+  --ed-accent: #3794ff;
+  --ed-danger: #f14c4c;
+  --ed-warning: #cca700;
+  --ed-focus: #3794ff;
+  --ed-font-ui: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --ed-font-mono: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+  --ed-space-1: 4px;
+  --ed-space-2: 8px;
+  --ed-space-3: 12px;
+  --ed-space-4: 16px;
+  --ed-radius: 3px;
+  --ed-control-height: 26px;
+
   align-items: stretch;
+  background: var(--ed-bg);
+  color: var(--ed-text);
+  font-family: var(--ed-font-ui);
+  font-size: 13px;
   justify-items: stretch;
   place-items: stretch;
+}
+
+.editor-screen .editor-button {
+  min-height: var(--ed-control-height);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--ed-space-1);
+  border: 1px solid var(--ed-border);
+  border-radius: var(--ed-radius);
+  padding: 0 var(--ed-space-2);
+  background: var(--ed-surface-raised);
+  color: var(--ed-text);
+  font: inherit;
+  line-height: 1;
+  text-align: center;
+  cursor: pointer;
+}
+
+.editor-screen .editor-button:hover:not(:disabled) {
+  background: #37373d;
+}
+
+.editor-screen .editor-button:focus-visible {
+  outline: 1px solid var(--ed-focus);
+  outline-offset: -1px;
+}
+
+.editor-screen .editor-button[data-selected="true"],
+.editor-screen .editor-button--primary {
+  border-color: var(--ed-accent);
+  background: #0e639c;
+  color: #ffffff;
+}
+
+.editor-screen .editor-button--danger {
+  border-color: var(--ed-danger);
+  color: #ffffff;
+  background: #a1260d;
+}
+
+.editor-screen .editor-button--ghost {
+  border-color: transparent;
+  background: transparent;
+}
+
+.editor-screen .editor-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
 }
 
 /*
@@ -106,6 +178,10 @@
   flex-direction: column;
   gap: var(--space-3);
   flex-shrink: 0;
+  border: 1px solid var(--ed-border);
+  border-radius: var(--ed-radius);
+  padding: var(--ed-space-3);
+  background: var(--ed-surface);
 }
 
 .editor-panel[data-editor-region="true"] {

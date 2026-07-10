@@ -4,6 +4,12 @@ This file tracks meaningful project changes by commit-oriented slices.
 
 Keep entries short and practical. When a slice is committed, its changelog section should stay aligned with the commit title so the project history remains easy to read after restores or bisects.
 
+## 2026-07-10 - [ADD]: Editor design tokens and primitives
+
+- Add editor-scoped neutral dark-theme tokens, compact control measurements, and system UI typography.
+- Replace editor uses of terminal buttons and panels with editor-only primitives, leaving the game components unchanged.
+- Remove editor emission of the game menu hover-blocking data attribute.
+
 ## 2026-07-10 - [FIX]: Per-file save gating with a visible reason
 
 - Let each editor save command validate only the file it writes, so unrelated draft errors no longer block it.

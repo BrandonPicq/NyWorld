@@ -7,8 +7,8 @@ import {
 } from "../../../engine";
 import { IdentifierLabel } from "../../components/IdentifierLabel";
 import { ScrollRegion } from "../../components/ScrollRegion";
-import { TerminalButton } from "../../components/TerminalButton";
-import { TerminalPanel } from "../../components/TerminalPanel";
+import { EditorButton } from "../components/EditorButton";
+import { EditorPanel } from "../components/EditorPanel";
 import type { EditorContentNavigationTarget } from "../DiagnosticList";
 import { ListFilterField } from "../ListFilterField";
 import { filterByIdOrName } from "../listFilter";
@@ -39,7 +39,7 @@ export function PatternTab({ draft, onNavigate }: PatternTabProps) {
 
       <div className="workbench">
         <ScrollRegion className="workbench__rail">
-          <TerminalPanel className="editor-panel">
+          <EditorPanel className="editor-panel">
             <h2 className="editor-panel__title">Patterns</h2>
             <ListFilterField
               label="Filter"
@@ -51,7 +51,7 @@ export function PatternTab({ draft, onNavigate }: PatternTabProps) {
                 <p className="editor-empty">No matching patterns.</p>
               ) : null}
               {filtered.map((pattern) => (
-                <TerminalButton
+                <EditorButton
                   className="editor-entry-button"
                   isSelected={pattern.id === draft.selectedPatternId}
                   key={pattern.id}
@@ -66,7 +66,7 @@ export function PatternTab({ draft, onNavigate }: PatternTabProps) {
                       {pattern.name}
                     </span>
                   </span>
-                </TerminalButton>
+                </EditorButton>
               ))}
             </div>
 
@@ -80,7 +80,7 @@ export function PatternTab({ draft, onNavigate }: PatternTabProps) {
                   value={newPatternId}
                 />
               </label>
-              <TerminalButton
+              <EditorButton
                 className="editor-action-button"
                 disabled={!draft.canCreatePattern(newPatternId)}
                 onClick={() => {
@@ -89,24 +89,24 @@ export function PatternTab({ draft, onNavigate }: PatternTabProps) {
                 }}
               >
                 Create
-              </TerminalButton>
+              </EditorButton>
             </div>
-          </TerminalPanel>
+          </EditorPanel>
         </ScrollRegion>
 
         <ScrollRegion className="workbench__main">
-          <TerminalPanel className="editor-panel">
+          <EditorPanel className="editor-panel">
             <h2 className="editor-panel__title">Pattern Sheet</h2>
             {draft.selectedPattern ? (
               <PatternForm draft={draft} pattern={draft.selectedPattern} />
             ) : (
               <p className="editor-empty">No pattern selected.</p>
             )}
-          </TerminalPanel>
+          </EditorPanel>
         </ScrollRegion>
 
         <ScrollRegion className="workbench__inspector">
-          <TerminalPanel className="editor-panel">
+          <EditorPanel className="editor-panel">
             <h2 className="editor-panel__title">Problems</h2>
             {draft.selectedPatternDiagnostics.length === 0 ? (
               <p className="editor-empty">No problems.</p>
@@ -130,7 +130,7 @@ export function PatternTab({ draft, onNavigate }: PatternTabProps) {
               title="Incoming References"
               useTarget={false}
             />
-          </TerminalPanel>
+          </EditorPanel>
         </ScrollRegion>
       </div>
     </>
@@ -242,7 +242,7 @@ function PatternForm({
           ))}
         </div>
         <div className="editor-actions">
-          <TerminalButton
+          <EditorButton
             className="editor-action-button"
             disabled={draft.isSaving}
             onClick={() =>
@@ -253,8 +253,8 @@ function PatternForm({
             }
           >
             Add Input
-          </TerminalButton>
-          <TerminalButton
+          </EditorButton>
+          <EditorButton
             className="editor-action-button"
             disabled={draft.isSaving || pattern.inputs.length === 0}
             onClick={() =>
@@ -265,7 +265,7 @@ function PatternForm({
             }
           >
             Remove Last
-          </TerminalButton>
+          </EditorButton>
         </div>
       </section>
 
@@ -413,27 +413,27 @@ function PatternForm({
       </section>
 
       <div className="editor-actions">
-        <TerminalButton
+        <EditorButton
           className="editor-action-button"
           disabled={!draft.canSaveSelectedPattern}
           onClick={draft.saveSelectedPattern}
         >
           Save Pattern
-        </TerminalButton>
-        <TerminalButton
+        </EditorButton>
+        <EditorButton
           className="editor-action-button"
           disabled={!draft.canResetSelectedPattern}
           onClick={draft.resetSelectedPattern}
         >
           Reset
-        </TerminalButton>
-        <TerminalButton
+        </EditorButton>
+        <EditorButton
           className="editor-action-button"
           disabled={!draft.canDeleteSelectedPattern}
           onClick={draft.deleteSelectedPattern}
         >
           Delete
-        </TerminalButton>
+        </EditorButton>
       </div>
 
       <p

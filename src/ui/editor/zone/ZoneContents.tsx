@@ -1,7 +1,7 @@
 import { useEffect, useRef, type ReactNode } from "react";
 import type { ZoneData } from "../../../engine";
 import type { GridCell } from "../../../rendering/canvasCellMapping";
-import { TerminalButton } from "../../components/TerminalButton";
+import { EditorButton } from "../components/EditorButton";
 import { ScheduleEntriesEditor } from "../ScheduleEntriesEditor";
 import {
   addNpcScheduleEntry,
@@ -85,14 +85,14 @@ export function ZoneContents({
                 </p>
               )}
               {isSelected("npc", index) && (
-                <TerminalButton
+                <EditorButton
                   className="editor-compact-button"
                   onClick={() =>
                     onUpdate((current) => removeNpcAt(current, npc.x, npc.y))
                   }
                 >
                   Delete Spawn
-                </TerminalButton>
+                </EditorButton>
               )}
               <ScheduleEntriesEditor
                 dialogueIds={dialogueIds}
@@ -158,14 +158,14 @@ export function ZoneContents({
                 </span>
               </div>
               {isSelected("item", index) && (
-                <TerminalButton
+                <EditorButton
                   className="editor-compact-button"
                   onClick={() =>
                     onUpdate((current) => removeItemAt(current, item.x, item.y))
                   }
                 >
                   Delete Stack
-                </TerminalButton>
+                </EditorButton>
               )}
             </li>
           ))}
@@ -190,7 +190,7 @@ export function ZoneContents({
                 </span>
               </div>
               {isSelected("transition", index) && (
-                <TerminalButton
+                <EditorButton
                   className="editor-compact-button"
                   onClick={() =>
                     onUpdate((current) =>
@@ -199,7 +199,7 @@ export function ZoneContents({
                   }
                 >
                   Delete Transition
-                </TerminalButton>
+                </EditorButton>
               )}
             </li>
           ))}
